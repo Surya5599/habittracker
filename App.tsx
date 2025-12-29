@@ -4,9 +4,15 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, BarChart, Bar
 } from 'recharts';
-import { ChevronLeft, ChevronRight, Check, Plus, Trash2, Save, Settings, LayoutDashboard, Calendar, Trophy, Zap, Target, Award, TrendingUp, TrendingDown, ArrowRight, Clock } from 'lucide-react';
+import { 
+  ChevronLeft, ChevronRight, Check, Plus, Trash2, Save, Settings, 
+  LayoutDashboard, Calendar, Trophy, Zap, Target, Award, 
+  TrendingUp, TrendingDown, ArrowRight, Clock, LogOut, User, LogIn 
+} from 'lucide-react';
 import { Habit, HabitCompletion } from './types';
 import { INITIAL_HABITS, MONTHS, DAYS_OF_WEEK_SHORT } from './constants';
+import { supabase } from './supabase';
+import toast, { Toaster } from 'react-hot-toast';
 
 const THEMES = [
   { name: 'Sage & Rose', primary: '#8da18d', secondary: '#d1b1b1' },
@@ -16,31 +22,295 @@ const THEMES = [
   { name: 'Forest & Earth', primary: '#5a7a5a', secondary: '#a18d7c' },
 ];
 
+const LOCAL_HABITS_KEY = 'guest_habits';
+const LOCAL_COMPLETIONS_KEY = 'guest_completions';
+
+interface AuthFormProps {
+  onContinueAsGuest: () => void;
+}
+
+const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) toast.error(error.message);
+    else toast.success('Logged in successfully!');
+    setLoading(false);
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    const { error } = await supabase.auth.signUp({ email, password });
+    if (error) toast.error(error.message);
+    else toast.success('Check your email to confirm your account.');
+    setLoading(false);
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#e5e5e5] p-4">
+      <div className="max-w-md w-full bg-white border-[2px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] p-6 space-y-6">
+        <h2 className="text-2xl font-bold text-center text-[#444] uppercase tracking-widest">Habit Tracker</h2>
+        <p className="text-center text-sm text-stone-500">Sign in to sync your progress across devices.</p>
+        <form className="space-y-4">
+          <div>
+            <label htmlFor="email" className="block text-xs font-bold uppercase text-stone-500 mb-1">Email</label>
+            <input
+              id="email"
+              type="email"
+              placeholder="your@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full p-2 border-[2px] border-black focus:outline-none focus:ring-2 focus:ring-stone-300 text-sm"
+              disabled={loading}
+            />
+          </div>
+          <div>
+            <label htmlFor="password" className="block text-xs font-bold uppercase text-stone-500 mb-1">Password</label>
+            <input
+              id="password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-2 border-[2px] border-black focus:outline-none focus:ring-2 focus:ring-stone-300 text-sm"
+              disabled={loading}
+            />
+          </div>
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={handleLogin}
+                className="flex-1 px-4 py-2 border-[2px] border-black text-sm font-black uppercase tracking-widest bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all"
+                disabled={loading}
+              >
+                {loading ? 'Loading...' : 'Sign In'}
+              </button>
+              <button
+                onClick={handleSignUp}
+                className="flex-1 px-4 py-2 border-[2px] border-black text-sm font-black uppercase tracking-widest bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all"
+                disabled={loading}
+              >
+                {loading ? 'Loading...' : 'Sign Up'}
+              </button>
+            </div>
+            <div className="relative flex items-center py-2">
+              <div className="flex-grow border-t border-stone-200"></div>
+              <span className="flex-shrink mx-4 text-stone-400 text-[10px] font-bold uppercase">or</span>
+              <div className="flex-grow border-t border-stone-200"></div>
+            </div>
+            <button
+              onClick={(e) => { e.preventDefault(); onContinueAsGuest(); }}
+              className="w-full px-4 py-2 border-[2px] border-dashed border-stone-400 text-xs font-bold uppercase tracking-widest text-stone-500 hover:bg-stone-50 hover:border-black hover:text-black transition-all flex items-center justify-center gap-2"
+            >
+              <User size={14} />
+              Continue as Guest
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 const App: React.FC = () => {
+  const [session, setSession] = useState<any>(null);
+  const [guestMode, setGuestMode] = useState(false);
   const [view, setView] = useState<'monthly' | 'dashboard'>('monthly');
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [currentMonthIndex, setCurrentMonthIndex] = useState(new Date().getMonth());
   const [editingHabitId, setEditingHabitId] = useState<string | null>(null);
+  const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const goalInputRef = useRef<HTMLInputElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
+  const [loading, setLoading] = useState(true);
   
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem('habit_theme');
     return saved ? JSON.parse(saved) : THEMES[0];
   });
 
-  const [habits, setHabits] = useState<Habit[]>(() => {
-    const saved = localStorage.getItem('habit_list');
-    return saved ? JSON.parse(saved) : INITIAL_HABITS;
-  });
+  const [habits, setHabits] = useState<Habit[]>([]);
+  const [completions, setCompletions] = useState<HabitCompletion>({});
 
-  const [completions, setCompletions] = useState<HabitCompletion>(() => {
-    const saved = localStorage.getItem('habit_completions');
-    return saved ? JSON.parse(saved) : {};
-  });
+  // Sync Logic
+  const syncGuestToCloud = async (userId: string, localHabits: Habit[], localCompletions: HabitCompletion) => {
+    if (localHabits.length === 0) return;
+    
+    const toastId = toast.loading('Syncing guest data to your account...');
+    try {
+      await supabase.from('habits').delete().eq('user_id', userId);
+      await supabase.from('completions').delete().eq('user_id', userId);
 
-  // Handle click outside settings menu
+      const habitsToInsert = localHabits.map(h => ({
+        name: h.name,
+        type: h.type,
+        color: h.color,
+        goal: h.goal,
+        user_id: userId
+      }));
+
+      const { data: insertedHabits, error: hError } = await supabase
+        .from('habits')
+        .insert(habitsToInsert)
+        .select();
+
+      if (hError) throw hError;
+
+      const idMap: Record<string, string> = {};
+      insertedHabits?.forEach((h, idx) => {
+        idMap[localHabits[idx].id] = h.id;
+      });
+
+      const completionsToInsert: any[] = [];
+      Object.entries(localCompletions).forEach(([oldHabitId, dates]) => {
+        const newHabitId = idMap[oldHabitId];
+        if (!newHabitId) return;
+        Object.keys(dates).forEach(dateKey => {
+          if (dates[dateKey]) {
+            completionsToInsert.push({
+              habit_id: newHabitId,
+              date_key: dateKey,
+              user_id: userId
+            });
+          }
+        });
+      });
+
+      if (completionsToInsert.length > 0) {
+        const { error: cError } = await supabase.from('completions').insert(completionsToInsert);
+        if (cError) throw cError;
+      }
+
+      localStorage.removeItem(LOCAL_HABITS_KEY);
+      localStorage.removeItem(LOCAL_COMPLETIONS_KEY);
+      
+      toast.success('Local data synced successfully!', { id: toastId });
+    } catch (err) {
+      console.error('Sync failed:', err);
+      toast.error('Sync failed, but your account is ready.', { id: toastId });
+    }
+  };
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      setSession(initialSession);
+      if (initialSession) {
+        const localH = JSON.parse(localStorage.getItem(LOCAL_HABITS_KEY) || '[]');
+        const localC = JSON.parse(localStorage.getItem(LOCAL_COMPLETIONS_KEY) || '{}');
+        if (localH.length > 0) {
+          syncGuestToCloud(initialSession.user.id, localH, localC).then(() => fetchUserData(initialSession.user.id));
+        } else {
+          fetchUserData(initialSession.user.id);
+        }
+      } else {
+        setLoading(false);
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session) {
+        setGuestMode(false);
+        const localH = JSON.parse(localStorage.getItem(LOCAL_HABITS_KEY) || '[]');
+        const localC = JSON.parse(localStorage.getItem(LOCAL_COMPLETIONS_KEY) || '{}');
+        if (localH.length > 0) {
+          syncGuestToCloud(session.user.id, localH, localC).then(() => fetchUserData(session.user.id));
+        } else {
+          fetchUserData(session.user.id);
+        }
+      } else {
+        setHabits([]);
+        setCompletions({});
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchUserData = async (userId: string) => {
+    setLoading(true);
+    try {
+      const { data: habitsData, error: habitsError } = await supabase
+        .from('habits')
+        .select('*')
+        .eq('user_id', userId);
+      
+      if (habitsError) throw habitsError;
+
+      let userHabits = habitsData || [];
+      
+      if (userHabits.length === 0) {
+        const initialWithUser = INITIAL_HABITS.map(h => ({ 
+          name: h.name, 
+          type: h.type, 
+          color: h.color, 
+          goal: h.goal, 
+          user_id: userId 
+        }));
+        const { data: inserted, error: insertError } = await supabase
+          .from('habits')
+          .insert(initialWithUser)
+          .select();
+        if (insertError) throw insertError;
+        userHabits = inserted || [];
+      }
+      setHabits(userHabits);
+
+      const { data: completionsData, error: compError } = await supabase
+        .from('completions')
+        .select('habit_id, date_key')
+        .eq('user_id', userId);
+      
+      if (compError) throw compError;
+
+      const compMap: HabitCompletion = {};
+      completionsData?.forEach(c => {
+        if (!compMap[c.habit_id]) compMap[c.habit_id] = {};
+        compMap[c.habit_id][c.date_key] = true;
+      });
+      setCompletions(compMap);
+
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      toast.error('Failed to sync data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleContinueAsGuest = () => {
+    setGuestMode(true);
+    const localH = localStorage.getItem(LOCAL_HABITS_KEY);
+    const localC = localStorage.getItem(LOCAL_COMPLETIONS_KEY);
+
+    if (localH) setHabits(JSON.parse(localH));
+    else setHabits(INITIAL_HABITS);
+
+    if (localC) setCompletions(JSON.parse(localC));
+    else setCompletions({});
+
+    toast('Guest Mode: Updates are local. Create account to sync.', {
+      icon: '🏠',
+      duration: 5000,
+    });
+  };
+
+  useEffect(() => {
+    if (guestMode) {
+      localStorage.setItem(LOCAL_HABITS_KEY, JSON.stringify(habits));
+      localStorage.setItem(LOCAL_COMPLETIONS_KEY, JSON.stringify(completions));
+    }
+  }, [habits, completions, guestMode]);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
@@ -51,28 +321,21 @@ const App: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [settingsOpen]);
 
-  // Focus input when editing starts
   useEffect(() => {
     if (editingHabitId && inputRef.current) {
       inputRef.current.focus();
       inputRef.current.select();
     }
-  }, [editingHabitId]);
-
-  // Persistence
-  useEffect(() => {
-    localStorage.setItem('habit_list', JSON.stringify(habits));
-  }, [habits]);
-
-  useEffect(() => {
-    localStorage.setItem('habit_completions', JSON.stringify(completions));
-  }, [completions]);
+    if (editingGoalId && goalInputRef.current) {
+      goalInputRef.current.focus();
+      goalInputRef.current.select();
+    }
+  }, [editingHabitId, editingGoalId]);
 
   useEffect(() => {
     localStorage.setItem('habit_theme', JSON.stringify(theme));
   }, [theme]);
 
-  // Navigation logic
   const navigateMonth = (direction: 'prev' | 'next') => {
     if (direction === 'prev') {
       if (currentMonthIndex === 0) {
@@ -101,18 +364,38 @@ const App: React.FC = () => {
   const daysInMonth = new Date(currentYear, currentMonthIndex + 1, 0).getDate();
   const monthDates = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
-  const toggleCompletion = (habitId: string, day: number, monthIdx: number = currentMonthIndex, year: number = currentYear) => {
+  const toggleCompletion = async (habitId: string, day: number, monthIdx: number = currentMonthIndex, year: number = currentYear) => {
     const dateKey = `${year}-${String(monthIdx + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const alreadyDone = completions[habitId]?.[dateKey];
+
     setCompletions(prev => {
       const habitCompletions = prev[habitId] || {};
       return {
         ...prev,
         [habitId]: {
           ...habitCompletions,
-          [dateKey]: !habitCompletions[dateKey]
+          [dateKey]: !alreadyDone
         }
       };
     });
+
+    if (session && !guestMode) {
+      try {
+        if (alreadyDone) {
+          await supabase
+            .from('completions')
+            .delete()
+            .match({ user_id: session.user.id, habit_id: habitId, date_key: dateKey });
+        } else {
+          await supabase
+            .from('completions')
+            .insert({ user_id: session.user.id, habit_id: habitId, date_key: dateKey });
+        }
+      } catch (err) {
+        console.error('Sync error:', err);
+        toast.error('Failed to sync completion');
+      }
+    }
   };
 
   const isCompleted = (habitId: string, day: number, monthIdx: number = currentMonthIndex, year: number = currentYear) => {
@@ -120,25 +403,75 @@ const App: React.FC = () => {
     return completions[habitId]?.[dateKey] || false;
   };
 
-  const addHabit = () => {
-    const id = Date.now().toString();
-    const newHabit: Habit = { id, name: '', type: 'daily', color: theme.primary, goal: 80 };
+  const addHabit = async () => {
+    const tempId = Date.now().toString();
+    const newHabit: Habit = { id: tempId, name: '', type: 'daily', color: theme.primary, goal: 80 };
+    
     setHabits(prev => [...prev, newHabit]);
-    setEditingHabitId(id);
+    setEditingHabitId(tempId);
+
+    if (session && !guestMode) {
+      try {
+        const { data, error } = await supabase
+          .from('habits')
+          .insert({ name: '', type: 'daily', color: theme.primary, goal: 80, user_id: session.user.id })
+          .select();
+        
+        if (error) throw error;
+        if (data) {
+          setHabits(prev => prev.map(h => h.id === tempId ? data[0] : h));
+          setEditingHabitId(data[0].id);
+        }
+      } catch (err) {
+        console.error('Error adding habit:', err);
+        toast.error('Failed to add habit');
+      }
+    }
   };
 
-  const updateHabitName = (id: string, name: string) => {
+  const updateHabitNameState = (id: string, name: string) => {
     setHabits(prev => prev.map(h => h.id === id ? { ...h, name } : h));
   };
 
-  const removeHabit = (id: string) => {
+  const updateHabitGoalState = (id: string, goalStr: string) => {
+    const goal = parseInt(goalStr) || 0;
+    setHabits(prev => prev.map(h => h.id === id ? { ...h, goal: Math.min(100, Math.max(0, goal)) } : h));
+  };
+
+  const handleHabitBlur = async (habit: Habit) => {
+    setEditingHabitId(null);
+    setEditingGoalId(null);
+    if (session && !guestMode) {
+      try {
+        await supabase
+          .from('habits')
+          .update({ name: habit.name, goal: habit.goal })
+          .eq('id', habit.id)
+          .eq('user_id', session.user.id);
+      } catch (err) {
+        console.error('Error updating habit:', err);
+        toast.error('Failed to save habit updates');
+      }
+    }
+  };
+
+  const removeHabit = async (id: string) => {
     setHabits(prev => prev.filter(h => h.id !== id));
     setCompletions(prev => {
       const next = { ...prev };
       delete next[id];
       return next;
     });
-    if (editingHabitId === id) setEditingHabitId(null);
+
+    if (session && !guestMode) {
+      try {
+        await supabase.from('habits').delete().eq('id', id).eq('user_id', session.user.id);
+        await supabase.from('completions').delete().eq('habit_id', id).eq('user_id', session.user.id);
+      } catch (err) {
+        console.error('Error removing habit:', err);
+        toast.error('Failed to remove habit');
+      }
+    }
   };
 
   const getHabitMonthStats = (habitId: string, monthIdx: number = currentMonthIndex, year: number = currentYear) => {
@@ -164,7 +497,6 @@ const App: React.FC = () => {
     return { completed, missed, totalDays: dInM };
   };
 
-  // Analytics
   const dailyStats = useMemo(() => {
     return monthDates.map(day => {
       let count = 0;
@@ -200,7 +532,6 @@ const App: React.FC = () => {
     return result;
   }, [monthDates]);
 
-  // Dynamic Top Habits for the current month view
   const topHabitsThisMonth = useMemo(() => {
     return habits
       .map(h => {
@@ -253,7 +584,6 @@ const App: React.FC = () => {
       return { ...m, delta, signal };
     });
 
-    // Trend narrative
     const q1Avg = (monthlySummaries[0].rate + (monthlySummaries[1]?.rate || 0) + (monthlySummaries[2]?.rate || 0)) / 3;
     const q4Avg = ((monthlySummaries[9]?.rate || 0) + (monthlySummaries[10]?.rate || 0) + (monthlySummaries[11]?.rate || 0)) / 3;
     const q3Avg = ((monthlySummaries[6]?.rate || 0) + (monthlySummaries[7]?.rate || 0) + (monthlySummaries[8]?.rate || 0)) / 3;
@@ -264,7 +594,6 @@ const App: React.FC = () => {
     else if (q1Avg > q4Avg + 15) trendNarrative = "Started strong, plateaued in late year.";
     else if (q3Avg < q1Avg && q3Avg < q4Avg && q3Avg > 0) trendNarrative = "Recovered after a dip in Q3.";
 
-    // Streak
     for (let m = 0; m < 12; m++) {
       const dInM = new Date(currentYear, m + 1, 0).getDate();
       for (let d = 1; d <= dInM; d++) {
@@ -318,20 +647,62 @@ const App: React.FC = () => {
     return { totalCompletions, totalPossible, monthlySummaries, topHabits: habitPerformance.slice(0, 6), maxStreak, strongestMonth, consistencyRate, trendNarrative };
   }, [completions, habits, currentYear]);
 
-  // Helper to check if a day is fully completed across all habits
   const isDayFullyCompleted = (day: number) => {
     if (habits.length === 0) return false;
     const dayStats = dailyStats.find(s => s.day === day);
     return dayStats?.count === habits.length;
   };
 
+  const handleLogout = async () => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      // Explicitly clear states for immediate feedback
+      setSession(null);
+      setGuestMode(false);
+      setHabits([]);
+      setCompletions({});
+      toast.success('Logged out successfully');
+    } catch (err: any) {
+      console.error('Logout error:', err);
+      // Fallback: Clear local state anyway so the user can at least "log out" locally
+      setSession(null);
+      setGuestMode(false);
+      setHabits([]);
+      setCompletions({});
+      toast.error('Session cleared locally');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!session && !guestMode) {
+    return (
+      <>
+        <Toaster position="top-center" reverseOrder={false} />
+        <AuthForm onContinueAsGuest={handleContinueAsGuest} />
+      </>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#e5e5e5] flex items-center justify-center">
+        <div className="text-xl font-black uppercase tracking-widest animate-pulse">Synchronizing matrix...</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[#e5e5e5] p-2 sm:p-4 font-sans text-[#444] relative overflow-x-hidden">
-      <div className="max-w-[1400px] mx-auto bg-white border-[2px] sm:border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] p-2 sm:p-4 space-y-4">
+    <div className="min-h-screen bg-[#e5e5e5] p-2 sm:p-4 font-sans text-[#444] relative overflow-x-hidden w-full max-w-full">
+      <Toaster position="top-center" reverseOrder={false} />
+      <div className="max-w-full mx-auto bg-white border-[2px] sm:border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] p-2 sm:p-4 space-y-4 min-h-[calc(100vh-2rem)]">
         
         {/* TOP ROW: Selectors */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-          <div className="md:col-span-3 border border-stone-200 p-3 bg-white flex flex-col gap-2 h-full justify-between relative">
+          <div className="md:col-span-3 border border-stone-200 p-3 bg-white flex flex-col gap-2 h-full justify-between relative min-h-[160px]">
             <div ref={settingsRef}>
               {view === 'monthly' ? (
                 <div className="flex items-center justify-between bg-white border border-stone-300 px-2 py-1">
@@ -347,13 +718,13 @@ const App: React.FC = () => {
                 </div>
               )}
               
-              <div className="mt-2 flex items-center justify-center gap-2 flex-wrap">
+              <div className="mt-2 flex items-center justify-start gap-2 flex-wrap">
                 <button 
                   onClick={() => setView(view === 'monthly' ? 'dashboard' : 'monthly')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 border-[2px] border-black text-[10px] font-black uppercase tracking-widest transition-all ${view === 'dashboard' ? 'bg-black text-white shadow-none translate-y-0.5' : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5'}`}
                 >
                   {view === 'monthly' ? <LayoutDashboard size={12}/> : <Calendar size={12}/>}
-                  {view === 'monthly' ? 'Annual Dashboard' : 'Back to Month'}
+                  {view === 'monthly' ? 'Dashboard' : 'Monthly'}
                 </button>
                 
                 <button 
@@ -371,6 +742,24 @@ const App: React.FC = () => {
                 >
                   <Settings size={14} className={settingsOpen ? 'animate-spin-slow' : ''} />
                 </button>
+
+                {guestMode ? (
+                  <button 
+                    onClick={() => setGuestMode(false)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 border-[2px] border-emerald-600 text-[10px] font-black uppercase tracking-widest bg-emerald-500 text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all"
+                  >
+                    <LogIn size={12} />
+                    Sign In to Sync
+                  </button>
+                ) : (
+                  <button 
+                    onClick={handleLogout}
+                    className="p-1.5 rounded-full border border-stone-200 text-stone-300 hover:text-rose-500 transition-colors"
+                    title="Logout"
+                  >
+                    <LogOut size={14} />
+                  </button>
+                )}
               </div>
 
               {settingsOpen && (
@@ -395,6 +784,7 @@ const App: React.FC = () => {
               <div className="space-y-1 mt-2">
                 <div className="flex justify-between items-center text-[10px] font-bold border-b border-stone-100 py-1"><span className="uppercase text-stone-400">Monthly Done</span><span className="bg-stone-50 px-2">{monthProgress.completed}</span></div>
                 <div className="flex justify-between items-center text-[10px] font-bold border-b border-stone-100 py-1"><span className="uppercase text-stone-400">Goal Rate</span><span className="bg-stone-50 px-2">{monthProgress.percentage.toFixed(0)}%</span></div>
+                {guestMode && <div className="text-[8px] text-emerald-600 font-bold uppercase mt-2 flex items-center gap-1 bg-emerald-50 px-2 py-1 border border-emerald-100"><User size={10}/> Guest Mode</div>}
               </div>
             )}
             {view === 'dashboard' && (
@@ -405,34 +795,23 @@ const App: React.FC = () => {
             )}
           </div>
 
-          <div className="md:col-span-6 border border-stone-200 p-2 bg-[#f9f9f9] h-[160px] sm:h-[160px] relative overflow-hidden">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="md:col-span-6 border border-stone-200 p-2 bg-[#f9f9f9] min-h-[160px] h-[160px] relative overflow-hidden flex flex-col">
+            <ResponsiveContainer width="100%" height="100%" minHeight={140}>
               <LineChart data={view === 'monthly' ? dailyStats : annualStats.monthlySummaries}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ddd" />
                 <XAxis dataKey={view === 'monthly' ? "day" : "month"} hide />
                 <YAxis hide domain={[0, 'auto']} />
                 <Tooltip />
-                <Line type="monotone" dataKey={view === 'monthly' ? "count" : "completed"} stroke={theme.primary} strokeWidth={2} dot={{ r: 2, fill: theme.primary }} animationDuration={400} />
+                <Line type="monotone" dataKey={view === 'monthly' ? "count" : "completed"} stroke={theme.primary} strokeWidth={2} dot={{ r: 2, fill: theme.primary }} animationDuration={400} isAnimationActive={true} />
               </LineChart>
             </ResponsiveContainer>
-            {view === 'dashboard' && (
-              <div className="absolute top-4 right-4 text-right pointer-events-none">
-                 <div className="bg-white/80 backdrop-blur-sm border border-stone-200 p-2 shadow-sm rounded-sm">
-                    <div className="text-[8px] font-black uppercase text-stone-400 leading-none mb-1">Shape of the Year</div>
-                    <div className="text-[10px] font-black text-stone-800 flex items-center gap-1.5">
-                       <TrendingUp size={10} className="text-amber-500" />
-                       {annualStats.trendNarrative}
-                    </div>
-                 </div>
-              </div>
-            )}
           </div>
 
-          <div className="md:col-span-3 border border-stone-200 bg-white relative flex flex-col overflow-hidden">
+          <div className="md:col-span-3 border border-stone-200 bg-white relative flex flex-col overflow-hidden min-h-[160px]">
             <div className="text-white text-[9px] font-bold uppercase py-1 text-center tracking-widest" style={{ backgroundColor: theme.primary }}>{view === 'monthly' ? 'Monthly Success' : 'Annual Performance'}</div>
-            <div className="flex-1 flex flex-col items-center justify-center p-2">
-               <div className="w-full h-24 sm:h-24 relative">
-                 <ResponsiveContainer width="100%" height="100%">
+            <div className="flex-1 flex flex-col items-center justify-center p-2 relative">
+               <div className="w-full h-24 sm:h-24 min-h-[96px] relative">
+                 <ResponsiveContainer width="100%" height="100%" minHeight={96}>
                   <PieChart>
                     <Pie
                       data={view === 'monthly' 
@@ -440,12 +819,13 @@ const App: React.FC = () => {
                         : [{value: annualStats.totalCompletions || 0.1}, {value: Math.max(0, annualStats.totalPossible - annualStats.totalCompletions)}]
                       }
                       innerRadius="65%" outerRadius="85%" paddingAngle={2} dataKey="value" startAngle={90} endAngle={450}
+                      isAnimationActive={true}
                     >
                       <Cell fill={theme.primary} /><Cell fill="#f0f0f0" />
                     </Pie>
                   </PieChart>
                 </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pt-2">
+                <div className="absolute inset-0 flex flex-col items-center justify-center pt-2 pointer-events-none">
                   <span className="text-xl font-bold leading-none">
                     {view === 'monthly' 
                       ? monthProgress.percentage.toFixed(0)
@@ -467,13 +847,13 @@ const App: React.FC = () => {
                   <span className="col-span-2 px-4 hidden md:block">Weekly Overview</span>
                   <div className="col-span-9 md:col-span-7 flex">{weeks.map((_, i) => (<span key={i} className="flex-1 text-center border-l border-stone-200/30">W{i+1}</span>))}</div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-9 h-auto md:h-[180px]">
+                <div className="grid grid-cols-1 md:grid-cols-9 h-auto md:h-[180px] min-h-[180px]">
                   <div className="hidden md:col-span-2 border-r border-stone-100 md:flex flex-col text-[8px] font-bold uppercase text-stone-400">
                     <div className="flex-1 flex items-center px-2 border-b border-stone-50">Global Progress</div>
                     <div className="flex-1 flex items-center px-2 border-b border-stone-50">Score</div>
                     <div className="flex-1 flex items-center px-2">Weekly Activity</div>
                   </div>
-                  <div className="col-span-9 md:col-span-7 flex overflow-x-auto">
+                  <div className="col-span-9 md:col-span-7 flex overflow-x-auto min-h-[180px]">
                     {weeks.map((week, wIndex) => {
                       const weekTotal = week.reduce((acc, day) => {
                         let dc = 0; habits.forEach(h => { if(isCompleted(h.id, day)) dc++; }); return acc + dc;
@@ -501,7 +881,7 @@ const App: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <div className="md:col-span-3 border border-stone-200 bg-white flex flex-col overflow-hidden">
+              <div className="md:col-span-3 border border-stone-200 bg-white flex flex-col overflow-hidden min-h-[180px]">
                 <div className="text-stone-700 text-[9px] font-bold uppercase py-1 text-center tracking-widest" style={{ backgroundColor: theme.primary + '30' }}>Top 10 This Month</div>
                 <div className="p-2 space-y-1.5 flex-1 overflow-y-auto overflow-x-hidden min-h-[150px]">
                   {topHabitsThisMonth.map((h, i) => {
@@ -524,8 +904,8 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            <div className="border border-stone-200 bg-white flex flex-col overflow-hidden relative">
-              <div className="overflow-x-auto">
+            <div className="border border-stone-200 bg-white flex flex-col overflow-hidden relative w-full">
+              <div className="overflow-x-auto w-full">
                 <table className="w-full border-separate border-spacing-0">
                   <thead>
                     <tr className="text-[9px] font-bold uppercase tracking-widest text-stone-600" style={{ backgroundColor: theme.secondary + '40' }}>
@@ -571,18 +951,53 @@ const App: React.FC = () => {
                     {habits.map((habit) => {
                       const habitStats = getHabitMonthStats(habit.id);
                       const perc = (habitStats.completed / habitStats.totalDays) * 100;
-                      const isEditing = editingHabitId === habit.id;
+                      const isEditingName = editingHabitId === habit.id;
+                      const isEditingGoal = editingGoalId === habit.id;
                       return (
                         <tr key={habit.id} className="hover:bg-stone-50 transition-colors group">
                           <td className="p-1.5 px-3 border-r border-stone-200 text-[10px] font-bold text-stone-600 flex items-center justify-between gap-2 sticky left-0 z-20 bg-white group-hover:bg-stone-50">
-                            {isEditing ? (
-                              <div className="flex items-center gap-2 flex-1"><input ref={inputRef} type="text" value={habit.name} onChange={(e) => updateHabitName(habit.id, e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter') setEditingHabitId(null); }} className="bg-transparent border-b-2 outline-none flex-1 text-[10px] font-black py-0.5 w-20" style={{ borderColor: theme.secondary }} /><button onClick={() => setEditingHabitId(null)} style={{ color: theme.secondary }}><Save size={14} /></button></div>
+                            {isEditingName ? (
+                              <div className="flex items-center gap-2 flex-1">
+                                <input 
+                                  ref={inputRef} 
+                                  type="text" 
+                                  value={habit.name} 
+                                  onChange={(e) => updateHabitNameState(habit.id, e.target.value)} 
+                                  onBlur={() => handleHabitBlur(habit)}
+                                  onKeyDown={(e) => { if(e.key === 'Enter') handleHabitBlur(habit); }} 
+                                  className="bg-transparent border-b-2 outline-none flex-1 text-[10px] font-black py-0.5 w-20" 
+                                  style={{ borderColor: theme.secondary }} 
+                                />
+                                <button onClick={() => handleHabitBlur(habit)} style={{ color: theme.secondary }}><Save size={14} /></button>
+                              </div>
                             ) : (
                               <span className="truncate flex-1 cursor-pointer hover:underline" onClick={() => setEditingHabitId(habit.id)} title="Click to rename">{habit.name || 'Untitled Habit'}</span>
                             )}
-                            <div className={`flex items-center gap-1 transition-opacity ${isEditing ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}><button onClick={(e) => { e.stopPropagation(); removeHabit(habit.id); }} className="p-1 text-stone-300 hover:text-red-500 rounded transition-colors"><Trash2 size={12} /></button></div>
+                            <div className={`flex items-center gap-1 transition-opacity ${isEditingName ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}><button onClick={(e) => { e.stopPropagation(); removeHabit(habit.id); }} className="p-1 text-stone-300 hover:text-red-500 rounded transition-colors"><Trash2 size={12} /></button></div>
                           </td>
-                          <td className="p-1 border-r border-stone-200 text-center text-[9px] font-bold text-stone-400 group-hover:bg-stone-100 transition-colors">{habit.goal}%</td>
+                          <td className="p-1 border-r border-stone-200 text-center text-[9px] font-bold text-stone-400 group-hover:bg-stone-100 transition-colors">
+                            {isEditingGoal ? (
+                              <input 
+                                ref={goalInputRef}
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={habit.goal}
+                                onChange={(e) => updateHabitGoalState(habit.id, e.target.value)}
+                                onBlur={() => handleHabitBlur(habit)}
+                                onKeyDown={(e) => { if(e.key === 'Enter') handleHabitBlur(habit); }}
+                                className="w-full text-center bg-transparent border-b-2 outline-none font-black text-[9px]"
+                                style={{ borderColor: theme.secondary }}
+                              />
+                            ) : (
+                              <span 
+                                onClick={() => setEditingGoalId(habit.id)}
+                                className="cursor-pointer hover:underline hover:text-stone-600 transition-colors"
+                              >
+                                {habit.goal}%
+                              </span>
+                            )}
+                          </td>
                           {monthDates.map(day => {
                             const done = isCompleted(habit.id, day);
                             const isToday = day === new Date().getDate() && currentMonthIndex === new Date().getMonth() && currentYear === new Date().getFullYear();
@@ -623,8 +1038,7 @@ const App: React.FC = () => {
           </>
         ) : (
           /* DASHBOARD VIEW CONTENT */
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            {/* ANNUAL SCORECARD BAR */}
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500 w-full">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="p-4 border-[2px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white flex flex-col relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -667,12 +1081,12 @@ const App: React.FC = () => {
                 </div>
               </div>
               
-              <div className="md:col-span-3 p-4 border-[2px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white flex flex-col">
+              <div className="md:col-span-3 p-4 border-[2px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white flex flex-col min-h-[220px]">
                 <div className="flex items-center gap-2 mb-3 border-b border-stone-100 pb-2">
                    <div className="p-1 bg-amber-100 text-amber-600 rounded"><Target size={14}/></div>
                    <span className="text-[10px] font-black uppercase tracking-widest">Yearly Identity: Habit Outcomes</span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-8 overflow-y-auto">
                   {annualStats.topHabits.length > 0 ? annualStats.topHabits.map((h, i) => (
                     <div key={h.id} className="flex flex-col relative group">
                       <div className="flex items-center justify-between mb-1">
@@ -700,10 +1114,6 @@ const App: React.FC = () => {
                           <div key={j} className="h-full flex-1 transition-all duration-500" style={{ backgroundColor: h.rate >= (j+1)*10 ? theme.primary : '#f0f0f0' }} />
                         ))}
                       </div>
-                      <div className="flex justify-between items-center mt-1">
-                        <span className="text-[8px] font-bold text-stone-300 uppercase">{h.completed} annual check-ins</span>
-                        <div className="h-px bg-stone-100 flex-1 mx-2" />
-                      </div>
                     </div>
                   )) : (
                     <div className="col-span-3 text-center text-stone-300 py-4 italic text-sm">No significant habit outcomes for this year yet.</div>
@@ -712,8 +1122,7 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {/* MONTHLY SUMMARY GRID */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
                {MONTHS.map((m, idx) => {
                  const monthSummary = annualStats.monthlySummaries[idx];
                  const rate = monthSummary.rate;
@@ -721,7 +1130,7 @@ const App: React.FC = () => {
                  const delta = monthSummary.delta;
                  
                  return (
-                   <div key={m} className="border-[2px] border-stone-300 p-3 bg-white hover:border-black hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] transition-all group flex flex-col h-[200px]">
+                   <div key={m} className="border-[2px] border-stone-300 p-3 bg-white hover:border-black hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] transition-all group flex flex-col h-[200px] min-h-[200px]">
                       <div className="flex items-center justify-between mb-1">
                          <span className="text-[12px] font-black uppercase tracking-widest">{m}</span>
                          <div className="flex items-center gap-1 bg-stone-100 px-2 py-0.5 rounded">
@@ -735,12 +1144,12 @@ const App: React.FC = () => {
                          </div>
                       </div>
                       
-                      <div className="flex-1 flex flex-col justify-center">
-                         <div className="flex items-center gap-2 mb-1">
+                      <div className="flex-1 flex flex-col justify-center min-h-[80px]">
+                         <div className="flex items-center gap-2 mb-1 h-8">
                             <div className="flex-1 h-8">
-                               <ResponsiveContainer width="100%" height="100%">
+                               <ResponsiveContainer width="100%" height="100%" minHeight={32}>
                                   <BarChart data={[{v: rate}]}>
-                                     <Bar dataKey="v" fill={theme.primary} radius={[2, 2, 0, 0]} fillOpacity={0.4} />
+                                     <Bar dataKey="v" fill={theme.primary} radius={[2, 2, 0, 0]} fillOpacity={0.4} isAnimationActive={true} />
                                   </BarChart>
                                </ResponsiveContainer>
                             </div>
@@ -756,10 +1165,6 @@ const App: React.FC = () => {
                             <span className="text-stone-300 uppercase">Completed</span>
                             <span className="text-stone-700">{monthSummary.completed}</span>
                          </div>
-                         <div className="flex justify-between items-center text-[9px] font-bold">
-                            <span className="text-stone-300 uppercase">Goal Total</span>
-                            <span className="text-stone-700">{monthSummary.total}</span>
-                         </div>
                       </div>
                       <button 
                         onClick={() => { setCurrentMonthIndex(idx); setView('monthly'); }}
@@ -773,15 +1178,6 @@ const App: React.FC = () => {
             </div>
           </div>
         )}
-
-        {/* FOOTER INFO */}
-        <div className="flex flex-col sm:flex-row justify-between items-center pt-2 text-[9px] font-bold text-stone-400 uppercase tracking-widest select-none gap-2">
-           <span>{currentYear} Comprehensive Growth Matrix</span>
-           <div className="flex gap-6">
-             <div className="flex items-center gap-1"><div className="w-2 h-2" style={{ backgroundColor: theme.secondary }}></div><span>Secondary Marker</span></div>
-             <div className="flex items-center gap-1"><div className="w-2 h-2" style={{ backgroundColor: theme.primary }}></div><span>Primary Focus</span></div>
-           </div>
-        </div>
       </div>
 
       <style>{`

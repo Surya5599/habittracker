@@ -15,9 +15,20 @@ export interface HabitCompletion {
   };
 }
 
+export interface DailyNote {
+  [dateKey: string]: string;
+}
+
+export interface Theme {
+  name: string;
+  primary: string;
+  secondary: string;
+}
+
 export interface MonthStats {
   completed: number;
   total: number;
   remaining: number;
   percentage: number;
 }
+

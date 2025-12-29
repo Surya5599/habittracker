@@ -1,13 +1,13 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { 
+import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, BarChart, Bar
 } from 'recharts';
-import { 
-  ChevronLeft, ChevronRight, Check, Plus, Trash2, Save, Settings, 
-  LayoutDashboard, Calendar, Trophy, Zap, Target, Award, 
-  TrendingUp, TrendingDown, ArrowRight, Clock, LogOut, User, LogIn 
+import {
+  ChevronLeft, ChevronRight, Check, Plus, Trash2, Save, Settings,
+  LayoutDashboard, Calendar, Trophy, Zap, Target, Award,
+  TrendingUp, TrendingDown, ArrowRight, Clock, LogOut, User, LogIn
 } from 'lucide-react';
 import { Habit, HabitCompletion } from './types';
 import { INITIAL_HABITS, MONTHS, DAYS_OF_WEEK_SHORT } from './constants';
@@ -131,7 +131,7 @@ const App: React.FC = () => {
   const goalInputRef = useRef<HTMLInputElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
-  
+
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem('habit_theme');
     return saved ? JSON.parse(saved) : THEMES[0];
@@ -143,7 +143,7 @@ const App: React.FC = () => {
   // Sync Logic
   const syncGuestToCloud = async (userId: string, localHabits: Habit[], localCompletions: HabitCompletion) => {
     if (localHabits.length === 0) return;
-    
+
     const toastId = toast.loading('Syncing guest data to your account...');
     try {
       await supabase.from('habits').delete().eq('user_id', userId);
@@ -191,7 +191,7 @@ const App: React.FC = () => {
 
       localStorage.removeItem(LOCAL_HABITS_KEY);
       localStorage.removeItem(LOCAL_COMPLETIONS_KEY);
-      
+
       toast.success('Local data synced successfully!', { id: toastId });
     } catch (err) {
       console.error('Sync failed:', err);
@@ -243,18 +243,18 @@ const App: React.FC = () => {
         .from('habits')
         .select('*')
         .eq('user_id', userId);
-      
+
       if (habitsError) throw habitsError;
 
       let userHabits = habitsData || [];
-      
+
       if (userHabits.length === 0) {
-        const initialWithUser = INITIAL_HABITS.map(h => ({ 
-          name: h.name, 
-          type: h.type, 
-          color: h.color, 
-          goal: h.goal, 
-          user_id: userId 
+        const initialWithUser = INITIAL_HABITS.map(h => ({
+          name: h.name,
+          type: h.type,
+          color: h.color,
+          goal: h.goal,
+          user_id: userId
         }));
         const { data: inserted, error: insertError } = await supabase
           .from('habits')
@@ -269,7 +269,7 @@ const App: React.FC = () => {
         .from('completions')
         .select('habit_id, date_key')
         .eq('user_id', userId);
-      
+
       if (compError) throw compError;
 
       const compMap: HabitCompletion = {};
@@ -406,7 +406,7 @@ const App: React.FC = () => {
   const addHabit = async () => {
     const tempId = Date.now().toString();
     const newHabit: Habit = { id: tempId, name: '', type: 'daily', color: theme.primary, goal: 80 };
-    
+
     setHabits(prev => [...prev, newHabit]);
     setEditingHabitId(tempId);
 
@@ -416,7 +416,7 @@ const App: React.FC = () => {
           .from('habits')
           .insert({ name: '', type: 'daily', color: theme.primary, goal: 80, user_id: session.user.id })
           .select();
-        
+
         if (error) throw error;
         if (data) {
           setHabits(prev => prev.map(h => h.id === tempId ? data[0] : h));
@@ -481,10 +481,10 @@ const App: React.FC = () => {
       const target = new Date(y, m, d);
       return target < today;
     };
-    
+
     let completed = 0;
     let missed = 0;
-    
+
     for (let day = 1; day <= dInM; day++) {
       const isDone = isCompleted(habitId, day, monthIdx, year);
       if (isDone) {
@@ -536,10 +536,10 @@ const App: React.FC = () => {
     return habits
       .map(h => {
         const stats = getHabitMonthStats(h.id);
-        return { 
-          ...h, 
-          stats, 
-          percentage: stats.totalDays > 0 ? (stats.completed / stats.totalDays) * 100 : 0 
+        return {
+          ...h,
+          stats,
+          percentage: stats.totalDays > 0 ? (stats.completed / stats.totalDays) * 100 : 0
         };
       })
       .sort((a, b) => b.stats.completed - a.stats.completed || a.name.localeCompare(b.name))
@@ -551,7 +551,7 @@ const App: React.FC = () => {
     let totalPossible = 0;
     let maxStreak = 0;
     let currentStreak = 0;
-    
+
     const monthlySummariesRaw = MONTHS.map((_, mIdx) => {
       const dInM = new Date(currentYear, mIdx + 1, 0).getDate();
       let mCompleted = 0;
@@ -562,9 +562,9 @@ const App: React.FC = () => {
       });
       totalCompletions += mCompleted;
       totalPossible += habits.length * dInM;
-      return { 
-        month: MONTHS[mIdx], 
-        completed: mCompleted, 
+      return {
+        month: MONTHS[mIdx],
+        completed: mCompleted,
         total: habits.length * dInM,
         rate: habits.length * dInM > 0 ? (mCompleted / (habits.length * dInM)) * 100 : 0
       };
@@ -576,7 +576,7 @@ const App: React.FC = () => {
       const prev = idx > 0 ? monthlySummariesRaw[idx - 1] : null;
       const delta = prev ? m.rate - prev.rate : 0;
       let signal = "";
-      
+
       if (m.rate > 0 && m.rate === maxMonthlyRate) signal = "Best focus month";
       else if (prev && delta < -15) signal = "Burnout dip";
       else if (prev && delta > 15 && prev.rate < 40) signal = "Rebound month";
@@ -584,15 +584,6 @@ const App: React.FC = () => {
       return { ...m, delta, signal };
     });
 
-    const q1Avg = (monthlySummaries[0].rate + (monthlySummaries[1]?.rate || 0) + (monthlySummaries[2]?.rate || 0)) / 3;
-    const q4Avg = ((monthlySummaries[9]?.rate || 0) + (monthlySummaries[10]?.rate || 0) + (monthlySummaries[11]?.rate || 0)) / 3;
-    const q3Avg = ((monthlySummaries[6]?.rate || 0) + (monthlySummaries[7]?.rate || 0) + (monthlySummaries[8]?.rate || 0)) / 3;
-    
-    let trendNarrative = "Steady progress across the board.";
-    if (q4Avg > q1Avg + 15) trendNarrative = "Momentum surged in Q4.";
-    else if (q4Avg > q1Avg + 5) trendNarrative = "Momentum increased after June.";
-    else if (q1Avg > q4Avg + 15) trendNarrative = "Started strong, plateaued in late year.";
-    else if (q3Avg < q1Avg && q3Avg < q4Avg && q3Avg > 0) trendNarrative = "Recovered after a dip in Q3.";
 
     for (let m = 0; m < 12; m++) {
       const dInM = new Date(currentYear, m + 1, 0).getDate();
@@ -611,7 +602,7 @@ const App: React.FC = () => {
       let hCompleted = 0;
       let hPossible = 0;
       const mCompletions: number[] = new Array(12).fill(0);
-      
+
       MONTHS.forEach((_, mIdx) => {
         const dInM = new Date(currentYear, mIdx + 1, 0).getDate();
         for (let d = 1; d <= dInM; d++) {
@@ -634,17 +625,17 @@ const App: React.FC = () => {
         else if (hCompleted > 15) badge = "Most Attempted";
       }
 
-      return { 
+      return {
         id: h.id, name: h.name, completed: hCompleted, total: hPossible, rate: hPossible > 0 ? (hCompleted / hPossible) * 100 : 0, badge,
-        startRate: hPossible > 0 ? (q1 / (hPossible/4)) * 100 : 0,
-        endRate: hPossible > 0 ? (q4 / (hPossible/4)) * 100 : 0
+        startRate: hPossible > 0 ? (q1 / (hPossible / 4)) * 100 : 0,
+        endRate: hPossible > 0 ? (q4 / (hPossible / 4)) * 100 : 0
       };
     }).sort((a, b) => b.rate - a.rate);
 
     const strongestMonth = [...monthlySummaries].sort((a, b) => b.rate - a.rate)[0];
     const consistencyRate = totalPossible > 0 ? (totalCompletions / totalPossible) * 100 : 0;
 
-    return { totalCompletions, totalPossible, monthlySummaries, topHabits: habitPerformance.slice(0, 6), maxStreak, strongestMonth, consistencyRate, trendNarrative };
+    return { totalCompletions, totalPossible, monthlySummaries, topHabits: habitPerformance.slice(0, 6), maxStreak, strongestMonth, consistencyRate };
   }, [completions, habits, currentYear]);
 
   const isDayFullyCompleted = (day: number) => {
@@ -658,7 +649,7 @@ const App: React.FC = () => {
       setLoading(true);
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      
+
       // Explicitly clear states for immediate feedback
       setSession(null);
       setGuestMode(false);
@@ -699,35 +690,35 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-[#e5e5e5] p-2 sm:p-4 font-sans text-[#444] relative overflow-x-hidden w-full max-w-full">
       <Toaster position="top-center" reverseOrder={false} />
       <div className="max-w-full mx-auto bg-white border-[2px] sm:border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] p-2 sm:p-4 space-y-4 min-h-[calc(100vh-2rem)]">
-        
+
         {/* TOP ROW: Selectors */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
           <div className="md:col-span-3 border border-stone-200 p-3 bg-white flex flex-col gap-2 h-full justify-between relative min-h-[160px]">
             <div ref={settingsRef}>
               {view === 'monthly' ? (
                 <div className="flex items-center justify-between bg-white border border-stone-300 px-2 py-1">
-                  <button onClick={() => navigateMonth('prev')} className="hover:text-black active:scale-95 transition-transform"><ChevronLeft size={16}/></button>
+                  <button onClick={() => navigateMonth('prev')} className="hover:text-black active:scale-95 transition-transform"><ChevronLeft size={16} /></button>
                   <span className="font-bold uppercase tracking-widest text-sm select-none">{MONTHS[currentMonthIndex]} {currentYear}</span>
-                  <button onClick={() => navigateMonth('next')} className="hover:text-black active:scale-95 transition-transform"><ChevronRight size={16}/></button>
+                  <button onClick={() => navigateMonth('next')} className="hover:text-black active:scale-95 transition-transform"><ChevronRight size={16} /></button>
                 </div>
               ) : (
                 <div className="flex items-center justify-between bg-white border border-stone-300 px-2 py-1">
-                  <button onClick={() => setCurrentYear(prev => prev - 1)} className="hover:text-black active:scale-95 transition-transform"><ChevronLeft size={16}/></button>
+                  <button onClick={() => setCurrentYear(prev => prev - 1)} className="hover:text-black active:scale-95 transition-transform"><ChevronLeft size={16} /></button>
                   <span className="font-bold uppercase tracking-widest text-sm select-none">{currentYear} Dashboard</span>
-                  <button onClick={() => setCurrentYear(prev => prev + 1)} className="hover:text-black active:scale-95 transition-transform"><ChevronRight size={16}/></button>
+                  <button onClick={() => setCurrentYear(prev => prev + 1)} className="hover:text-black active:scale-95 transition-transform"><ChevronRight size={16} /></button>
                 </div>
               )}
-              
+
               <div className="mt-2 flex items-center justify-start gap-2 flex-wrap">
-                <button 
+                <button
                   onClick={() => setView(view === 'monthly' ? 'dashboard' : 'monthly')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 border-[2px] border-black text-[10px] font-black uppercase tracking-widest transition-all ${view === 'dashboard' ? 'bg-black text-white shadow-none translate-y-0.5' : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5'}`}
                 >
-                  {view === 'monthly' ? <LayoutDashboard size={12}/> : <Calendar size={12}/>}
+                  {view === 'monthly' ? <LayoutDashboard size={12} /> : <Calendar size={12} />}
                   {view === 'monthly' ? 'Dashboard' : 'Monthly'}
                 </button>
-                
-                <button 
+
+                <button
                   onClick={goToToday}
                   className="flex items-center gap-1.5 px-3 py-1.5 border-[2px] border-black text-[10px] font-black uppercase tracking-widest bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all"
                 >
@@ -735,7 +726,7 @@ const App: React.FC = () => {
                   Today
                 </button>
 
-                <button 
+                <button
                   onClick={() => setSettingsOpen(!settingsOpen)}
                   className={`p-1.5 rounded-full border border-stone-200 transition-colors ${settingsOpen ? 'bg-stone-100 text-stone-900' : 'text-stone-300 hover:text-stone-500'}`}
                   title="Theme Settings"
@@ -744,7 +735,7 @@ const App: React.FC = () => {
                 </button>
 
                 {guestMode ? (
-                  <button 
+                  <button
                     onClick={() => setGuestMode(false)}
                     className="flex items-center gap-1.5 px-3 py-1.5 border-[2px] border-emerald-600 text-[10px] font-black uppercase tracking-widest bg-emerald-500 text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all"
                   >
@@ -752,7 +743,7 @@ const App: React.FC = () => {
                     Sign In to Sync
                   </button>
                 ) : (
-                  <button 
+                  <button
                     onClick={handleLogout}
                     className="p-1.5 rounded-full border border-stone-200 text-stone-300 hover:text-rose-500 transition-colors"
                     title="Logout"
@@ -784,7 +775,7 @@ const App: React.FC = () => {
               <div className="space-y-1 mt-2">
                 <div className="flex justify-between items-center text-[10px] font-bold border-b border-stone-100 py-1"><span className="uppercase text-stone-400">Monthly Done</span><span className="bg-stone-50 px-2">{monthProgress.completed}</span></div>
                 <div className="flex justify-between items-center text-[10px] font-bold border-b border-stone-100 py-1"><span className="uppercase text-stone-400">Goal Rate</span><span className="bg-stone-50 px-2">{monthProgress.percentage.toFixed(0)}%</span></div>
-                {guestMode && <div className="text-[8px] text-emerald-600 font-bold uppercase mt-2 flex items-center gap-1 bg-emerald-50 px-2 py-1 border border-emerald-100"><User size={10}/> Guest Mode</div>}
+                {guestMode && <div className="text-[8px] text-emerald-600 font-bold uppercase mt-2 flex items-center gap-1 bg-emerald-50 px-2 py-1 border border-emerald-100"><User size={10} /> Guest Mode</div>}
               </div>
             )}
             {view === 'dashboard' && (
@@ -810,13 +801,13 @@ const App: React.FC = () => {
           <div className="md:col-span-3 border border-stone-200 bg-white relative flex flex-col overflow-hidden min-h-[160px]">
             <div className="text-white text-[9px] font-bold uppercase py-1 text-center tracking-widest" style={{ backgroundColor: theme.primary }}>{view === 'monthly' ? 'Monthly Success' : 'Annual Performance'}</div>
             <div className="flex-1 flex flex-col items-center justify-center p-2 relative">
-               <div className="w-full h-24 sm:h-24 min-h-[96px] relative">
-                 <ResponsiveContainer width="100%" height="100%" minHeight={96}>
+              <div className="w-full h-24 sm:h-24 min-h-[96px] relative">
+                <ResponsiveContainer width="100%" height="100%" minHeight={96}>
                   <PieChart>
                     <Pie
-                      data={view === 'monthly' 
-                        ? [{value: monthProgress.completed || 0.1}, {value: monthProgress.remaining || 0}]
-                        : [{value: annualStats.totalCompletions || 0.1}, {value: Math.max(0, annualStats.totalPossible - annualStats.totalCompletions)}]
+                      data={view === 'monthly'
+                        ? [{ value: monthProgress.completed || 0.1 }, { value: monthProgress.remaining || 0 }]
+                        : [{ value: annualStats.totalCompletions || 0.1 }, { value: Math.max(0, annualStats.totalPossible - annualStats.totalCompletions) }]
                       }
                       innerRadius="65%" outerRadius="85%" paddingAngle={2} dataKey="value" startAngle={90} endAngle={450}
                       isAnimationActive={true}
@@ -827,11 +818,10 @@ const App: React.FC = () => {
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pt-2 pointer-events-none">
                   <span className="text-xl font-bold leading-none">
-                    {view === 'monthly' 
+                    {view === 'monthly'
                       ? monthProgress.percentage.toFixed(0)
                       : (annualStats.totalPossible > 0 ? (annualStats.totalCompletions / annualStats.totalPossible * 100).toFixed(0) : 0)}%
                   </span>
-                  <span className="text-[8px] font-bold text-stone-400 uppercase">Avg</span>
                 </div>
               </div>
             </div>
@@ -845,7 +835,7 @@ const App: React.FC = () => {
               <div className="md:col-span-9 border border-stone-200 bg-white flex flex-col overflow-hidden">
                 <div className="text-stone-700 text-[10px] font-black uppercase py-1 tracking-widest grid grid-cols-5 md:grid-cols-9 transition-colors duration-500" style={{ backgroundColor: theme.secondary + '40' }}>
                   <span className="col-span-2 px-4 hidden md:block">Weekly Overview</span>
-                  <div className="col-span-9 md:col-span-7 flex">{weeks.map((_, i) => (<span key={i} className="flex-1 text-center border-l border-stone-200/30">W{i+1}</span>))}</div>
+                  <div className="col-span-9 md:col-span-7 flex">{weeks.map((_, i) => (<span key={i} className="flex-1 text-center border-l border-stone-200/30">W{i + 1}</span>))}</div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-9 h-auto md:h-[180px] min-h-[180px]">
                   <div className="hidden md:col-span-2 border-r border-stone-100 md:flex flex-col text-[8px] font-bold uppercase text-stone-400">
@@ -856,7 +846,7 @@ const App: React.FC = () => {
                   <div className="col-span-9 md:col-span-7 flex overflow-x-auto min-h-[180px]">
                     {weeks.map((week, wIndex) => {
                       const weekTotal = week.reduce((acc, day) => {
-                        let dc = 0; habits.forEach(h => { if(isCompleted(h.id, day)) dc++; }); return acc + dc;
+                        let dc = 0; habits.forEach(h => { if (isCompleted(h.id, day)) dc++; }); return acc + dc;
                       }, 0);
                       const weekMax = week.length * (habits.length || 1);
                       const weekPerc = weekMax > 0 ? (weekTotal / weekMax) * 100 : 0;
@@ -869,10 +859,10 @@ const App: React.FC = () => {
                           <div className="flex-1 flex items-center justify-center border-b border-stone-50 py-1"><span className="text-[10px] font-bold">{weekTotal}/{weekMax}</span></div>
                           <div className="flex-1 p-2 flex items-end justify-between gap-0.5 h-12 md:h-auto">
                             {week.map(day => {
-                               let dc = 0; habits.forEach(h => { if(isCompleted(h.id, day)) dc++; });
-                               const hRatio = dc / (habits.length || 1);
-                               const isAllDone = habits.length > 0 && dc === habits.length;
-                               return <div key={day} className="flex-1" style={{ height: `${Math.max(2, hRatio * 100)}%`, backgroundColor: isAllDone ? theme.primary : theme.secondary }} />;
+                              let dc = 0; habits.forEach(h => { if (isCompleted(h.id, day)) dc++; });
+                              const hRatio = dc / (habits.length || 1);
+                              const isAllDone = habits.length > 0 && dc === habits.length;
+                              return <div key={day} className="flex-1" style={{ height: `${Math.max(2, hRatio * 100)}%`, backgroundColor: isAllDone ? theme.primary : theme.secondary }} />;
                             })}
                           </div>
                         </div>
@@ -889,7 +879,7 @@ const App: React.FC = () => {
                     const p = h.percentage;
                     return (
                       <div key={h.id} className="flex items-center justify-between text-[9px] font-bold animate-in fade-in slide-in-from-right-1 py-0.5">
-                        <div className="flex gap-2 items-center"><span className="text-stone-300 w-3">{i+1}</span><span className="truncate w-24 sm:w-32 md:w-24">{h.name || 'Untitled'}</span></div>
+                        <div className="flex gap-2 items-center"><span className="text-stone-300 w-3">{i + 1}</span><span className="truncate w-24 sm:w-32 md:w-24">{h.name || 'Untitled'}</span></div>
                         <div className="flex items-center gap-2">
                           <span className="text-stone-400 font-mono">{stats.completed}d</span>
                           <div className="w-8 h-1 bg-stone-100 rounded-full overflow-hidden"><div className="h-full transition-all duration-500" style={{ width: `${p}%`, backgroundColor: theme.primary }} /></div>
@@ -919,7 +909,7 @@ const App: React.FC = () => {
                         </div>
                       </th>
                       <th className="p-1 border-r border-stone-200 w-12 text-center">Goal</th>
-                      {weeks.map((week, i) => (<th key={i} colSpan={week.length} className="p-1 border-r border-stone-200 text-center">Week {i+1}</th>))}
+                      {weeks.map((week, i) => (<th key={i} colSpan={week.length} className="p-1 border-r border-stone-200 text-center">Week {i + 1}</th>))}
                       <th colSpan={3} className="p-1 text-center bg-[#f0f0f0] border-l border-stone-200">Metrics Summary</th>
                     </tr>
                     <tr className="bg-[#f9f2f2] text-[8px] font-bold uppercase text-stone-400">
@@ -928,11 +918,11 @@ const App: React.FC = () => {
                         const isToday = day === new Date().getDate() && currentMonthIndex === new Date().getMonth() && currentYear === new Date().getFullYear();
                         const isFull = isDayFullyCompleted(day);
                         return (
-                          <th key={day} 
+                          <th key={day}
                             className={`p-1 border-r border-stone-100 min-w-[28px] text-center transition-colors duration-300 ${isToday ? 'z-10 font-black' : ''}`}
-                            style={{ 
-                              backgroundColor: isToday ? theme.primary : (isFull ? theme.primary + '30' : undefined), 
-                              color: isToday ? 'white' : undefined 
+                            style={{
+                              backgroundColor: isToday ? theme.primary : (isFull ? theme.primary + '30' : undefined),
+                              color: isToday ? 'white' : undefined
                             }}
                           >
                             <div className="flex flex-col">
@@ -958,15 +948,15 @@ const App: React.FC = () => {
                           <td className="p-1.5 px-3 border-r border-stone-200 text-[10px] font-bold text-stone-600 flex items-center justify-between gap-2 sticky left-0 z-20 bg-white group-hover:bg-stone-50">
                             {isEditingName ? (
                               <div className="flex items-center gap-2 flex-1">
-                                <input 
-                                  ref={inputRef} 
-                                  type="text" 
-                                  value={habit.name} 
-                                  onChange={(e) => updateHabitNameState(habit.id, e.target.value)} 
+                                <input
+                                  ref={inputRef}
+                                  type="text"
+                                  value={habit.name}
+                                  onChange={(e) => updateHabitNameState(habit.id, e.target.value)}
                                   onBlur={() => handleHabitBlur(habit)}
-                                  onKeyDown={(e) => { if(e.key === 'Enter') handleHabitBlur(habit); }} 
-                                  className="bg-transparent border-b-2 outline-none flex-1 text-[10px] font-black py-0.5 w-20" 
-                                  style={{ borderColor: theme.secondary }} 
+                                  onKeyDown={(e) => { if (e.key === 'Enter') handleHabitBlur(habit); }}
+                                  className="bg-transparent border-b-2 outline-none flex-1 text-[10px] font-black py-0.5 w-20"
+                                  style={{ borderColor: theme.secondary }}
                                 />
                                 <button onClick={() => handleHabitBlur(habit)} style={{ color: theme.secondary }}><Save size={14} /></button>
                               </div>
@@ -977,7 +967,7 @@ const App: React.FC = () => {
                           </td>
                           <td className="p-1 border-r border-stone-200 text-center text-[9px] font-bold text-stone-400 group-hover:bg-stone-100 transition-colors">
                             {isEditingGoal ? (
-                              <input 
+                              <input
                                 ref={goalInputRef}
                                 type="number"
                                 min="0"
@@ -985,12 +975,12 @@ const App: React.FC = () => {
                                 value={habit.goal}
                                 onChange={(e) => updateHabitGoalState(habit.id, e.target.value)}
                                 onBlur={() => handleHabitBlur(habit)}
-                                onKeyDown={(e) => { if(e.key === 'Enter') handleHabitBlur(habit); }}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleHabitBlur(habit); }}
                                 className="w-full text-center bg-transparent border-b-2 outline-none font-black text-[9px]"
                                 style={{ borderColor: theme.secondary }}
                               />
                             ) : (
-                              <span 
+                              <span
                                 onClick={() => setEditingGoalId(habit.id)}
                                 className="cursor-pointer hover:underline hover:text-stone-600 transition-colors"
                               >
@@ -1003,7 +993,7 @@ const App: React.FC = () => {
                             const isToday = day === new Date().getDate() && currentMonthIndex === new Date().getMonth() && currentYear === new Date().getFullYear();
                             const isFull = isDayFullyCompleted(day);
                             return (
-                              <td key={day} 
+                              <td key={day}
                                 className={`p-0.5 border-r border-stone-50 transition-colors duration-300`}
                                 style={{ backgroundColor: isToday ? theme.primary + '15' : (isFull ? theme.primary + '20' : undefined) }}
                               >
@@ -1011,13 +1001,13 @@ const App: React.FC = () => {
                               </td>
                             );
                           })}
-                          
+
                           <td className="p-1 px-3 border-l border-stone-200 bg-[#fcfcfc] text-center">
                             <div className="flex items-center justify-center gap-1.5 h-full">
                               <span className="text-[10px] font-black w-6 text-right" style={{ color: theme.secondary }}>{perc.toFixed(0)}%</span>
                               <div className="hidden sm:flex w-12 bg-stone-100 h-2 gap-0.5 rounded-sm overflow-hidden">
-                                {Array.from({length: 5}).map((_, i) => (
-                                  <div key={i} className={`h-full flex-1 transition-all duration-500 ${perc >= (i+1)*20 ? '' : 'bg-transparent'}`} style={{ backgroundColor: perc >= (i+1)*20 ? theme.secondary : undefined }}/>
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                  <div key={i} className={`h-full flex-1 transition-all duration-500 ${perc >= (i + 1) * 20 ? '' : 'bg-transparent'}`} style={{ backgroundColor: perc >= (i + 1) * 20 ? theme.secondary : undefined }} />
                                 ))}
                               </div>
                             </div>
@@ -1042,12 +1032,12 @@ const App: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="p-4 border-[2px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white flex flex-col relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
-                   <Trophy size={48} className="text-black" />
+                  <Trophy size={48} className="text-black" />
                 </div>
                 <span className="text-[11px] font-black uppercase text-stone-400 tracking-[0.2em] mb-3 border-b border-stone-100 pb-1 flex items-center gap-2">
-                   <Zap size={14} className="text-amber-500" /> {currentYear} Scorecard
+                  <Zap size={14} className="text-amber-500" /> {currentYear} Scorecard
                 </span>
-                
+
                 <div className="space-y-4">
                   <div>
                     <div className="flex justify-between items-end mb-1">
@@ -1080,11 +1070,11 @@ const App: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="md:col-span-3 p-4 border-[2px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white flex flex-col min-h-[220px]">
                 <div className="flex items-center gap-2 mb-3 border-b border-stone-100 pb-2">
-                   <div className="p-1 bg-amber-100 text-amber-600 rounded"><Target size={14}/></div>
-                   <span className="text-[10px] font-black uppercase tracking-widest">Yearly Identity: Habit Outcomes</span>
+                  <div className="p-1 bg-amber-100 text-amber-600 rounded"><Target size={14} /></div>
+                  <span className="text-[10px] font-black uppercase tracking-widest">Yearly Identity: Habit Outcomes</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-8 overflow-y-auto">
                   {annualStats.topHabits.length > 0 ? annualStats.topHabits.map((h, i) => (
@@ -1097,21 +1087,20 @@ const App: React.FC = () => {
                           <span className="text-[10px] font-black" style={{ color: theme.primary }}>{h.endRate.toFixed(0)}%</span>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center gap-2 mb-2">
-                         <div className={`px-1.5 py-0.5 rounded-sm border text-[8px] font-black uppercase tracking-tighter flex items-center gap-1 ${
-                            h.badge === "Most Consistent" ? "bg-amber-50 border-amber-200 text-amber-700" :
-                            h.badge === "Highest Growth" ? "bg-emerald-50 border-emerald-200 text-emerald-700" :
+                        <div className={`px-1.5 py-0.5 rounded-sm border text-[8px] font-black uppercase tracking-tighter flex items-center gap-1 ${h.badge === "Most Consistent" ? "bg-amber-50 border-amber-200 text-amber-700" :
+                          h.badge === "Highest Growth" ? "bg-emerald-50 border-emerald-200 text-emerald-700" :
                             "bg-stone-100 border-stone-200 text-stone-500"
-                         }`}>
-                            <Award size={8} className={h.badge === "Most Consistent" ? "text-amber-500" : "text-current"} />
-                            {h.badge}
-                         </div>
+                          }`}>
+                          <Award size={8} className={h.badge === "Most Consistent" ? "text-amber-500" : "text-current"} />
+                          {h.badge}
+                        </div>
                       </div>
 
                       <div className="w-full bg-stone-100 h-2 flex gap-0.5 rounded-sm overflow-hidden">
-                        {Array.from({length: 10}).map((_, j) => (
-                          <div key={j} className="h-full flex-1 transition-all duration-500" style={{ backgroundColor: h.rate >= (j+1)*10 ? theme.primary : '#f0f0f0' }} />
+                        {Array.from({ length: 10 }).map((_, j) => (
+                          <div key={j} className="h-full flex-1 transition-all duration-500" style={{ backgroundColor: h.rate >= (j + 1) * 10 ? theme.primary : '#f0f0f0' }} />
                         ))}
                       </div>
                     </div>
@@ -1123,58 +1112,58 @@ const App: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
-               {MONTHS.map((m, idx) => {
-                 const monthSummary = annualStats.monthlySummaries[idx];
-                 const rate = monthSummary.rate;
-                 const signal = monthSummary.signal;
-                 const delta = monthSummary.delta;
-                 
-                 return (
-                   <div key={m} className="border-[2px] border-stone-300 p-3 bg-white hover:border-black hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] transition-all group flex flex-col h-[200px] min-h-[200px]">
-                      <div className="flex items-center justify-between mb-1">
-                         <span className="text-[12px] font-black uppercase tracking-widest">{m}</span>
-                         <div className="flex items-center gap-1 bg-stone-100 px-2 py-0.5 rounded">
-                            {delta !== 0 && (
-                              <span className={`flex items-center ${delta > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                {delta > 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
-                                <span className="text-[8px] font-black ml-0.5">{Math.abs(delta).toFixed(0)}%</span>
-                              </span>
-                            )}
-                            <span className="text-[10px] font-bold" style={{ color: rate > 50 ? theme.primary : '#ec4899' }}>{rate.toFixed(0)}%</span>
-                         </div>
-                      </div>
-                      
-                      <div className="flex-1 flex flex-col justify-center min-h-[80px]">
-                         <div className="flex items-center gap-2 mb-1 h-8">
-                            <div className="flex-1 h-8">
-                               <ResponsiveContainer width="100%" height="100%" minHeight={32}>
-                                  <BarChart data={[{v: rate}]}>
-                                     <Bar dataKey="v" fill={theme.primary} radius={[2, 2, 0, 0]} fillOpacity={0.4} isAnimationActive={true} />
-                                  </BarChart>
-                               </ResponsiveContainer>
-                            </div>
-                         </div>
-                         
-                         {signal && (
-                            <div className="mb-2 px-1.5 py-0.5 bg-stone-50 border border-stone-100 rounded text-[8px] font-black uppercase text-stone-500 italic text-center tracking-tight">
-                               "{signal}"
-                            </div>
-                         )}
+              {MONTHS.map((m, idx) => {
+                const monthSummary = annualStats.monthlySummaries[idx];
+                const rate = monthSummary.rate;
+                const signal = monthSummary.signal;
+                const delta = monthSummary.delta;
 
-                         <div className="flex justify-between items-center text-[9px] font-bold border-t border-stone-50 pt-2">
-                            <span className="text-stone-300 uppercase">Completed</span>
-                            <span className="text-stone-700">{monthSummary.completed}</span>
-                         </div>
+                return (
+                  <div key={m} className="border-[2px] border-stone-300 p-3 bg-white hover:border-black hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] transition-all group flex flex-col h-[200px] min-h-[200px]">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[12px] font-black uppercase tracking-widest">{m}</span>
+                      <div className="flex items-center gap-1 bg-stone-100 px-2 py-0.5 rounded">
+                        {delta !== 0 && (
+                          <span className={`flex items-center ${delta > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            {delta > 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
+                            <span className="text-[8px] font-black ml-0.5">{Math.abs(delta).toFixed(0)}%</span>
+                          </span>
+                        )}
+                        <span className="text-[10px] font-bold" style={{ color: rate > 50 ? theme.primary : '#ec4899' }}>{rate.toFixed(0)}%</span>
                       </div>
-                      <button 
-                        onClick={() => { setCurrentMonthIndex(idx); setView('monthly'); }}
-                        className="mt-3 w-full py-1.5 bg-stone-50 border border-stone-200 text-[8px] font-black uppercase tracking-widest hover:bg-black hover:text-white hover:border-black transition-all"
-                      >
-                        Inspect Month
-                      </button>
-                   </div>
-                 );
-               })}
+                    </div>
+
+                    <div className="flex-1 flex flex-col justify-center min-h-[80px]">
+                      <div className="flex items-center gap-2 mb-1 h-8">
+                        <div className="flex-1 h-8">
+                          <ResponsiveContainer width="100%" height="100%" minHeight={32}>
+                            <BarChart data={[{ v: rate }]}>
+                              <Bar dataKey="v" fill={theme.primary} radius={[2, 2, 0, 0]} fillOpacity={0.4} isAnimationActive={true} />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+
+                      {signal && (
+                        <div className="mb-2 px-1.5 py-0.5 bg-stone-50 border border-stone-100 rounded text-[8px] font-black uppercase text-stone-500 italic text-center tracking-tight">
+                          "{signal}"
+                        </div>
+                      )}
+
+                      <div className="flex justify-between items-center text-[9px] font-bold border-t border-stone-50 pt-2">
+                        <span className="text-stone-300 uppercase">Completed</span>
+                        <span className="text-stone-700">{monthSummary.completed}</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => { setCurrentMonthIndex(idx); setView('monthly'); }}
+                      className="mt-3 w-full py-1.5 bg-stone-50 border border-stone-200 text-[8px] font-black uppercase tracking-widest hover:bg-black hover:text-white hover:border-black transition-all"
+                    >
+                      Inspect Month
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

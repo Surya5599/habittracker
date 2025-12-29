@@ -177,7 +177,8 @@ const App: React.FC = () => {
       const { data: insertedHabits, error: hError } = await supabase
         .from('habits')
         .insert(habitsToInsert)
-        .select();
+        .select()
+        .order('id', { ascending: true });
 
       if (hError) throw hError;
 
@@ -259,7 +260,8 @@ const App: React.FC = () => {
       const { data: habitsData, error: habitsError } = await supabase
         .from('habits')
         .select('*')
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .order('id', { ascending: true });
 
       if (habitsError) throw habitsError;
 
@@ -276,7 +278,8 @@ const App: React.FC = () => {
         const { data: inserted, error: insertError } = await supabase
           .from('habits')
           .insert(initialWithUser)
-          .select();
+          .select()
+          .order('id', { ascending: true });
         if (insertError) throw insertError;
         userHabits = inserted || [];
       }
@@ -563,7 +566,7 @@ const App: React.FC = () => {
           percentage: stats.totalDays > 0 ? (stats.completed / stats.totalDays) * 100 : 0
         };
       })
-      .sort((a, b) => b.stats.completed - a.stats.completed || a.name.localeCompare(b.name))
+      .sort((a, b) => b.stats.completed - a.stats.completed || a.name.localeCompare(b.name) || a.id.localeCompare(b.id))
       .slice(0, 10);
   }, [habits, completions, currentMonthIndex, currentYear]);
 
@@ -651,7 +654,7 @@ const App: React.FC = () => {
         startRate: hPossible > 0 ? (q1 / (hPossible / 4)) * 100 : 0,
         endRate: hPossible > 0 ? (q4 / (hPossible / 4)) * 100 : 0
       };
-    }).sort((a, b) => b.rate - a.rate);
+    }).sort((a, b) => b.rate - a.rate || a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
 
     const strongestMonth = [...monthlySummaries].sort((a, b) => b.rate - a.rate)[0];
     const consistencyRate = totalPossible > 0 ? (totalCompletions / totalPossible) * 100 : 0;

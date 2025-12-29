@@ -711,7 +711,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#e5e5e5] p-2 sm:p-4 font-sans text-[#444] relative overflow-x-hidden w-full max-w-full">
+    <div className="min-h-screen bg-[#e5e5e5] p-2 sm:p-4 font-sans text-[#444] relative w-full max-w-full">
       <Toaster position="top-center" reverseOrder={false} />
       <div className="max-w-full mx-auto bg-white border-[2px] sm:border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] p-2 sm:p-4 space-y-4 min-h-[calc(100vh-2rem)]">
 
@@ -1200,8 +1200,31 @@ const App: React.FC = () => {
         ::-webkit-scrollbar-thumb { background: #000; border: 2px solid #fff; border-radius: 0; }
         ::-webkit-scrollbar-track { background: #eee; }
         
+        /* Ensure sticky positioning works on mobile browsers */
+        .sticky {
+          position: -webkit-sticky;
+          position: sticky;
+        }
+        
+        /* Improve table sticky headers on mobile */
+        table {
+          border-collapse: separate;
+          border-spacing: 0;
+        }
+        
+        th.sticky, td.sticky {
+          position: -webkit-sticky;
+          position: sticky;
+          background-color: inherit;
+        }
+        
         @media (max-width: 640px) {
           .recharts-responsive-container { min-height: 120px; }
+          
+          /* Improve mobile scrolling for tables */
+          .overflow-x-auto {
+            -webkit-overflow-scrolling: touch;
+          }
         }
       `}</style>
     </div>

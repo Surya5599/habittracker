@@ -146,6 +146,23 @@ const App: React.FC = () => {
 
     const toastId = toast.loading('Syncing guest data to your account...');
     try {
+      // SAFETY CHECK: If user already has habits in the cloud, DON'T OVERWRITE
+      const { data: existingHabits, error: fetchError } = await supabase
+        .from('habits')
+        .select('id')
+        .eq('user_id', userId)
+        .limit(1);
+
+      if (fetchError) throw fetchError;
+
+      if (existingHabits && existingHabits.length > 0) {
+        console.log('User already has data in cloud. Skipping guest sync to prevent data loss.');
+        localStorage.removeItem(LOCAL_HABITS_KEY);
+        localStorage.removeItem(LOCAL_COMPLETIONS_KEY);
+        toast.success('Found your account data! Resuming...', { id: toastId });
+        return;
+      }
+
       await supabase.from('habits').delete().eq('user_id', userId);
       await supabase.from('completions').delete().eq('user_id', userId);
 
@@ -288,6 +305,10 @@ const App: React.FC = () => {
   };
 
   const handleContinueAsGuest = () => {
+    if (session) {
+      toast.error('You are already logged in.');
+      return;
+    }
     setGuestMode(true);
     const localH = localStorage.getItem(LOCAL_HABITS_KEY);
     const localC = localStorage.getItem(LOCAL_COMPLETIONS_KEY);

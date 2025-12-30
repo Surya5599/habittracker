@@ -193,6 +193,10 @@ export const useHabits = (session: any, guestMode: boolean) => {
     };
 
     const addHabit = async (themePrimary: string) => {
+        if (habits.length >= 25) {
+            toast.error('Maximum limit of 25 habits reached');
+            return null;
+        }
         const tempId = Date.now().toString();
         const newHabit: Habit = { id: tempId, name: '', type: 'daily', color: themePrimary, goal: 80 };
 

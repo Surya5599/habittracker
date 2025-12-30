@@ -56,17 +56,28 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
         <>
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                 <div className="md:col-span-9 border border-stone-200 bg-white flex flex-col overflow-hidden">
-                    <div className="text-stone-700 text-[11px] font-black uppercase py-1 tracking-widest grid grid-cols-5 md:grid-cols-9 transition-colors duration-500" style={{ backgroundColor: theme.secondary + '40' }}>
+                    <div className="text-[11px] font-black uppercase py-1 tracking-widest grid grid-cols-5 md:grid-cols-9 transition-colors duration-500" style={{ backgroundColor: theme.secondary + '40', color: theme.secondary }}>
                         <span className="col-span-2 px-4 hidden md:block">Weekly Overview</span>
-                        <div className="col-span-9 md:col-span-7 flex">{weeks.map((_, i) => (<span key={i} className="flex-1 text-center border-l border-stone-200/30 font-black">W{i + 1}</span>))}</div>
+                        <div className="col-span-9 md:col-span-7 flex">{weeks.map((week, i) => {
+                            const startDate = new Date(currentYear, currentMonthIndex, week[0]);
+                            const endDate = new Date(currentYear, currentMonthIndex, week[week.length - 1]);
+                            const monthShort = startDate.toLocaleString('default', { month: 'short' });
+                            return (
+                                <span key={i} className="flex-1 text-center border-l border-stone-200/30 font-black text-[10px] md:text-[11px] flex flex-col items-center justify-center leading-tight">
+                                    <span>W{i + 1}</span>
+                                    <span className="text-[9px] font-normal text-stone-500">{monthShort} {String(startDate.getDate()).padStart(2, '0')}-{String(endDate.getDate()).padStart(2, '0')}</span>
+                                </span>
+                            );
+                        })}</div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-9 h-auto md:h-[220px] min-h-[220px]">
                         <div className="hidden md:col-span-2 border-r border-stone-100 md:flex flex-col text-[9px] font-black uppercase text-stone-500">
-                            <div className="flex-1 flex items-center px-2 border-b border-stone-50" title="Weekly completion percentage - shows how many habits were completed out of total possible">
-                                <span className="cursor-help">Global Progress</span>
+                            <div className="flex-[2] flex items-center px-2 border-b border-stone-50" title="Weekly completion percentage - shows how many habits were completed out of 
+total possible">
+                                <span className="cursor-help">Success Rate</span>
                             </div>
-                            <div className="flex-1 flex items-center px-2 border-b border-stone-50" title="Completed habits / Total possible for the week">
-                                <span className="cursor-help">Score</span>
+                            <div className="flex-none h-10 flex items-center px-2 border-b border-stone-50" title="Completed habits / Total possible for the week">
+                                <span className="cursor-help">Completed</span>
                             </div>
                             <div className="flex-1 flex items-center px-2" title="Daily completion bars - hover to see details">
                                 <span className="cursor-help">Weekly Activity</span>
@@ -81,16 +92,16 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                 const weekPerc = weekMax > 0 ? (weekTotal / weekMax) * 100 : 0;
                                 return (
                                     <div key={wIndex} className="flex-1 min-w-[80px] border-r border-stone-100 flex flex-col">
-                                        <div className="flex-1 flex flex-col items-center justify-center p-1 border-b border-stone-50">
+                                        <div className="flex-[2] flex flex-col items-center justify-center p-1 border-b border-stone-50">
                                             <CircularProgress
                                                 percentage={weekPerc}
-                                                size={32}
-                                                strokeWidth={4}
+                                                size={70}
+                                                strokeWidth={8}
                                                 color={theme.secondary}
                                                 trackColor={theme.secondary + '20'}
                                             />
                                         </div>
-                                        <div className="flex-1 flex items-center justify-center border-b border-stone-50 py-1"><span className="text-[11px] font-black">{weekTotal}/{weekMax}</span></div>
+                                        <div className="flex-none h-10 flex items-center justify-center border-b border-stone-50 py-0.5"><span className="text-xl font-black">{weekTotal}/{weekMax}</span></div>
                                         <div className="flex-1 p-2 flex items-end justify-between gap-0.5 h-20 md:h-auto group/week">
                                             {week.map(day => {
                                                 let dc = 0; habits.forEach(h => { if (checkCompleted(h.id, day, completions, currentMonthIndex, currentYear)) dc++; });

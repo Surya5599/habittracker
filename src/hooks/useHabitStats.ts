@@ -229,13 +229,138 @@ export const useHabitStats = (
         const strongestMonth = [...monthlySummaries].sort((a, b) => b.rate - a.rate)[0];
         const consistencyRate = totalPossible > 0 ? (totalCompletions / totalPossible) * 100 : 0;
 
-        return { totalCompletions, totalPossible, monthlySummaries, topHabits: habitPerformance.slice(0, 6), maxStreak, strongestMonth, consistencyRate };
+        // Calculate All-Time High Month
+        const monthCounts: Record<string, number> = {};
+        const monthPossible: Record<string, number> = {};
+
+        habits.forEach(h => {
+            const hCompletions = completions[h.id] || {};
+            // Count completions per month
+            Object.keys(hCompletions).forEach(dateKey => {
+                if (hCompletions[dateKey]) { // Only count if true
+                    const [y, m] = dateKey.split('-');
+                    const key = `${y}-${m}`;
+                    monthCounts[key] = (monthCounts[key] || 0) + 1;
+                }
+            });
+
+            // We need to calculate possible days for every month that has at least one completion or just generally?
+            // To be accurate for "Best Month", we ideally need to know the possible days for THAT month.
+            // Since we don't have a list of ALL historical months easily without iterating ranges, 
+            // let's infer the months we have data for.
+            // But wait, if we only count months with completions, a month with 0 completions (0%) won't be in the list.
+            // That's fine for "Best Month" calculation since 0% won't be the best.
+        });
+
+        const allTimeBest = Object.entries(monthCounts).map(([key, count]) => {
+            const [yStr, mStr] = key.split('-');
+            const year = parseInt(yStr);
+            const monthIdx = parseInt(mStr) - 1;
+            const daysInMonth = new Date(year, monthIdx + 1, 0).getDate();
+            const totalPossible = daysInMonth * habits.length; // Assuming habit count was constant? Limitation: we don't track historical habit count.
+            // Using current habit count as denominator is the best approximation we have without event sourcing.
+
+            return {
+                key,
+                year,
+                monthIdx,
+                count,
+                rate: totalPossible > 0 ? (count / totalPossible) * 100 : 0
+            };
+        }).sort((a, b) => b.rate - a.rate)[0];
+
+        return { totalCompletions, totalPossible, monthlySummaries, topHabits: habitPerformance.slice(0, 6), maxStreak, strongestMonth, consistencyRate, allTimeBest };
     }, [completions, habits, currentYear]);
+
+    const prevWeekProgress = useMemo(() => {
+        const today = new Date();
+        const day = today.getDay();
+        // Shift to previous week
+        const diff = today.getDate() - day + (day === 0 ? -6 : 1) + ((weekOffset - 1) * 7);
+        const monday = new Date(today.getFullYear(), today.getMonth(), diff);
+
+        let completed = 0;
+        const totalPossible = habits.length * 7;
+
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(monday);
+            date.setDate(monday.getDate() + i);
+            const d = date.getDate();
+            const m = date.getMonth();
+            const y = date.getFullYear();
+
+            habits.forEach(habit => {
+                if (isCompleted(habit.id, d, completions, m, y)) completed++;
+            });
+        }
+
+        return {
+            percentage: totalPossible > 0 ? (completed / totalPossible) * 100 : 0
+        };
+    }, [habits, completions, weekOffset]);
+
+    const allTimeBestWeek = useMemo(() => {
+        const weekCounts: Record<string, number> = {};
+
+        // Iterate all habits and their completions
+        habits.forEach(h => {
+            const hCompletions = completions[h.id] || {};
+            Object.keys(hCompletions).forEach(dateKey => {
+                if (hCompletions[dateKey]) {
+                    const [yStr, mStr, dStr] = dateKey.split('-');
+                    const date = new Date(parseInt(yStr), parseInt(mStr) - 1, parseInt(dStr));
+
+                    // Get ISO Week roughly or just Monday of that week
+                    const day = date.getDay();
+                    const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+                    const monday = new Date(date.getFullYear(), date.getMonth(), diff);
+                    const key = `${monday.getFullYear()}-${(monday.getMonth() + 1).toString().padStart(2, '0')}-${monday.getDate().toString().padStart(2, '0')}`;
+
+                    weekCounts[key] = (weekCounts[key] || 0) + 1;
+                }
+            });
+        });
+
+        const best = Object.entries(weekCounts).map(([key, count]) => {
+            const totalPossible = habits.length * 7;
+            const rate = totalPossible > 0 ? (count / totalPossible) * 100 : 0;
+            const [y, m, d] = key.split('-').map(Number);
+            const monday = new Date(y, m - 1, d);
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+
+            const startYear = monday.getFullYear();
+            const endYear = sunday.getFullYear();
+
+            let dateRangeStr = '';
+
+            if (startYear === endYear) {
+                const fromStr = monday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const toStr = sunday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                dateRangeStr = `${fromStr} - ${toStr}, ${startYear}`;
+            } else {
+                const fromStr = monday.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const toStr = sunday.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                dateRangeStr = `${fromStr} - ${toStr}`;
+            }
+
+            return {
+                key,
+                dateRangeStr,
+                year: y,
+                rate
+            };
+        }).sort((a, b) => b.rate - a.rate)[0];
+
+        return best || { rate: 0, dateRangeStr: '', year: 0 };
+    }, [habits, completions]);
 
     return {
         dailyStats,
         weeklyStats,
         weekProgress,
+        prevWeekProgress,
+        allTimeBestWeek,
         monthProgress,
         topHabitsThisMonth,
         annualStats

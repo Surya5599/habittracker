@@ -1,6 +1,6 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, LayoutDashboard, Calendar, Clock, LogIn, LogOut } from 'lucide-react';
-import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from 'recharts';
+import { ChevronLeft, ChevronRight, LayoutDashboard, Calendar, Clock, LogIn, LogOut, ArrowUp, ArrowDown, Minus, Trophy, BarChart2, Activity } from 'lucide-react';
+import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 import { MONTHS } from '../constants';
 import { Theme, MonthStats, Habit } from '../types';
 import { SettingsMenu } from './SettingsMenu';
@@ -38,6 +38,8 @@ interface HeaderProps {
     addHabit: (themePrimary: string) => Promise<string>;
     updateHabit: (id: string, updates: Partial<Habit>) => Promise<void>;
     removeHabit: (id: string) => Promise<void>;
+    prevWeekProgress?: any;
+    allTimeBestWeek?: any;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -71,8 +73,17 @@ export const Header: React.FC<HeaderProps> = ({
     addHabit,
     updateHabit,
     removeHabit,
+    prevWeekProgress,
+    allTimeBestWeek,
 }) => {
     const [isHabitModalOpen, setIsHabitModalOpen] = React.useState(false);
+    const [chartType, setChartType] = React.useState<'area' | 'bar'>(() => {
+        return (localStorage.getItem('habit_chart_type') as 'area' | 'bar') || 'area';
+    });
+
+    React.useEffect(() => {
+        localStorage.setItem('habit_chart_type', chartType);
+    }, [chartType]);
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
@@ -93,7 +104,7 @@ export const Header: React.FC<HeaderProps> = ({
                     ) : (
                         <div className="flex items-center justify-between bg-white border border-stone-300 px-2 py-1">
                             <button onClick={() => navigateWeek('prev')} className="hover:text-black active:scale-95 transition-transform"><ChevronLeft size={16} /></button>
-                            <span className="font-bold uppercase tracking-widest text-sm select-none">Weekly Progress <span className="text-[10px] text-stone-400 font-medium lowercase tracking-normal">{weekRange}</span></span>
+                            <span className="font-bold uppercase tracking-widest text-sm select-none">{weekRange}</span>
                             <button onClick={() => navigateWeek('next')} className="hover:text-black active:scale-95 transition-transform"><ChevronRight size={16} /></button>
                         </div>
                     )}
@@ -104,7 +115,7 @@ export const Header: React.FC<HeaderProps> = ({
                             className={`flex items-center gap-1.5 px-3 py-1.5 border-[2px] border-black text-[10px] font-black uppercase tracking-widest transition-all ${view === 'weekly' ? 'bg-black text-white shadow-none translate-y-0.5' : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5'}`}
                         >
                             <Clock size={12} />
-                            Daily
+                            My Week
                         </button>
 
                         <button
@@ -112,7 +123,7 @@ export const Header: React.FC<HeaderProps> = ({
                             className={`flex items-center gap-1.5 px-3 py-1.5 border-[2px] border-black text-[10px] font-black uppercase tracking-widest transition-all ${view === 'monthly' ? 'bg-black text-white shadow-none translate-y-0.5' : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5'}`}
                         >
                             <Calendar size={12} />
-                            Monthly
+                            My Month
                         </button>
 
                         <button
@@ -242,66 +253,123 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
 
             <div className="md:col-span-6 border border-stone-200 p-2 bg-[#f9f9f9] min-h-[160px] h-[160px] relative overflow-hidden flex flex-col">
-                <div className="text-[9px] font-black uppercase tracking-widest text-stone-600 mb-1 px-1">
-                    {view === 'monthly' ? 'Daily Progress This Month' : (view === 'weekly' ? 'Daily Progress This Week' : 'Monthly Progress This Year')}
+                <div className="flex items-center justify-between mb-1 px-1">
+                    <div className="text-[9px] font-black uppercase tracking-widest text-stone-600">
+                        {view === 'monthly' ? 'Daily Progress This Month' : (view === 'weekly' ? 'Daily Progress This Week' : 'Monthly Progress This Year')}
+                    </div>
+                    <button
+                        onClick={() => setChartType(prev => prev === 'area' ? 'bar' : 'area')}
+                        className="p-1 hover:bg-stone-200 rounded-sm transition-colors text-stone-400 hover:text-stone-600"
+                        title={chartType === 'area' ? "Switch to Bar Chart" : "Switch to Line Chart"}
+                    >
+                        {chartType === 'area' ? <BarChart2 size={12} /> : <Activity size={12} />}
+                    </button>
                 </div>
                 <ResponsiveContainer width="100%" height="100%" minHeight={120}>
-                    <AreaChart data={view === 'monthly' ? dailyStats : (view === 'weekly' ? weeklyStats : annualStats.monthlySummaries)}>
-                        <defs>
-                            <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor={theme.primary} stopOpacity={0.4} />
-                                <stop offset="65%" stopColor={theme.primary} stopOpacity={0.2} />
-                                <stop offset="95%" stopColor={theme.primary} stopOpacity={0} />
-                            </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ddd" />
-                        <XAxis
-                            dataKey={view === 'monthly' ? "day" : (view === 'weekly' ? "displayDay" : "month")}
-                            tick={{ fontSize: 9, fontWeight: 'bold' }}
-                            stroke="#999"
-                            tickLine={false}
-                            label={{
-                                value: view === 'monthly' ? 'Day of Month' : (view === 'weekly' ? 'Day of Week' : 'Month'),
-                                position: 'insideBottom',
-                                offset: -5,
-                                style: { fontSize: 8, fontWeight: 'bold', fill: '#999', textTransform: 'uppercase' }
-                            }}
-                        />
-                        <YAxis
-                            tick={{ fontSize: 9, fontWeight: 'bold' }}
-                            stroke="#999"
-                            tickLine={false}
-                            width={25}
-                            domain={[0, habits.length || 1]}
-                            ticks={[0, (habits.length || 0) / 2, habits.length || 1]}
-                            allowDecimals={true}
-                        />
-                        <Tooltip
-                            contentStyle={{
-                                backgroundColor: '#fff',
-                                border: '2px solid #000',
-                                borderRadius: '0px',
-                                fontSize: '10px',
-                                fontWeight: '900',
-                                textTransform: 'uppercase',
-                                padding: '6px 8px'
-                            }}
-                            labelStyle={{ fontWeight: 'bold', marginBottom: '2px' }}
-                            formatter={(value: any) => [`${value} completed`, view === 'dashboard' ? 'Total' : 'Habits']}
-                        />
-                        <Area
-                            type="monotone"
-                            dataKey={view === 'dashboard' ? "completed" : "count"}
-                            stroke={theme.primary}
-                            strokeWidth={3}
-                            fillOpacity={1}
-                            fill="url(#colorCount)"
-                            dot={{ r: 3, fill: theme.primary, strokeWidth: 2, stroke: '#fff' }}
-                            activeDot={{ r: 5, strokeWidth: 0 }}
-                            animationDuration={400}
-                            isAnimationActive={true}
-                        />
-                    </AreaChart>
+                    {chartType === 'area' ? (
+                        <AreaChart data={view === 'monthly' ? dailyStats : (view === 'weekly' ? weeklyStats : annualStats.monthlySummaries)}>
+                            <defs>
+                                <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor={theme.primary} stopOpacity={0.4} />
+                                    <stop offset="65%" stopColor={theme.primary} stopOpacity={0.2} />
+                                    <stop offset="95%" stopColor={theme.primary} stopOpacity={0} />
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ddd" />
+                            <XAxis
+                                dataKey={view === 'monthly' ? "day" : (view === 'weekly' ? "displayDay" : "month")}
+                                tick={{ fontSize: 9, fontWeight: 'bold' }}
+                                stroke="#999"
+                                tickLine={false}
+                                label={{
+                                    value: view === 'monthly' ? 'Day of Month' : (view === 'weekly' ? 'Day of Week' : 'Month'),
+                                    position: 'insideBottom',
+                                    offset: -5,
+                                    style: { fontSize: 8, fontWeight: 'bold', fill: '#999', textTransform: 'uppercase' }
+                                }}
+                            />
+                            <YAxis
+                                tick={{ fontSize: 9, fontWeight: 'bold' }}
+                                stroke="#999"
+                                tickLine={false}
+                                width={25}
+                                domain={[0, habits.length || 1]}
+                                ticks={[0, (habits.length || 0) / 2, habits.length || 1]}
+                                allowDecimals={true}
+                            />
+                            <Tooltip
+                                contentStyle={{
+                                    backgroundColor: '#fff',
+                                    border: '2px solid #000',
+                                    borderRadius: '0px',
+                                    fontSize: '10px',
+                                    fontWeight: '900',
+                                    textTransform: 'uppercase',
+                                    padding: '6px 8px'
+                                }}
+                                labelStyle={{ fontWeight: 'bold', marginBottom: '2px' }}
+                                formatter={(value: any) => [`${value} completed`, view === 'dashboard' ? 'Total' : 'Habits']}
+                            />
+                            <Area
+                                type="monotone"
+                                dataKey={view === 'dashboard' ? "completed" : "count"}
+                                stroke={theme.primary}
+                                strokeWidth={3}
+                                fillOpacity={1}
+                                fill="url(#colorCount)"
+                                dot={{ r: 3, fill: theme.primary, strokeWidth: 2, stroke: '#fff' }}
+                                activeDot={{ r: 5, strokeWidth: 0 }}
+                                animationDuration={400}
+                                isAnimationActive={true}
+                            />
+                        </AreaChart>
+                    ) : (
+                        <BarChart data={view === 'monthly' ? dailyStats : (view === 'weekly' ? weeklyStats : annualStats.monthlySummaries)}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ddd" />
+                            <XAxis
+                                dataKey={view === 'monthly' ? "day" : (view === 'weekly' ? "displayDay" : "month")}
+                                tick={{ fontSize: 9, fontWeight: 'bold' }}
+                                stroke="#999"
+                                tickLine={false}
+                                label={{
+                                    value: view === 'monthly' ? 'Day of Month' : (view === 'weekly' ? 'Day of Week' : 'Month'),
+                                    position: 'insideBottom',
+                                    offset: -5,
+                                    style: { fontSize: 8, fontWeight: 'bold', fill: '#999', textTransform: 'uppercase' }
+                                }}
+                            />
+                            <YAxis
+                                tick={{ fontSize: 9, fontWeight: 'bold' }}
+                                stroke="#999"
+                                tickLine={false}
+                                width={25}
+                                domain={[0, habits.length || 1]}
+                                ticks={[0, (habits.length || 0) / 2, habits.length || 1]}
+                                allowDecimals={true}
+                            />
+                            <Tooltip
+                                cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+                                contentStyle={{
+                                    backgroundColor: '#fff',
+                                    border: '2px solid #000',
+                                    borderRadius: '0px',
+                                    fontSize: '10px',
+                                    fontWeight: '900',
+                                    textTransform: 'uppercase',
+                                    padding: '6px 8px'
+                                }}
+                                labelStyle={{ fontWeight: 'bold', marginBottom: '2px' }}
+                                formatter={(value: any) => [`${value} completed`, view === 'dashboard' ? 'Total' : 'Habits']}
+                            />
+                            <Bar
+                                dataKey={view === 'dashboard' ? "completed" : "count"}
+                                fill={theme.primary}
+                                radius={[2, 2, 0, 0]}
+                                animationDuration={400}
+                                isAnimationActive={true}
+                            />
+                        </BarChart>
+                    )}
                 </ResponsiveContainer>
             </div>
 
@@ -310,8 +378,8 @@ export const Header: React.FC<HeaderProps> = ({
                     {view === 'monthly' ? 'Monthly Success' : (view === 'weekly' ? 'Weekly Success' : 'Annual Performance')}
                 </div>
                 <div className="flex-1 flex flex-col items-center justify-center p-2 relative">
-                    <div className="w-full h-20 sm:h-20 min-h-[80px] relative">
-                        <ResponsiveContainer width="100%" height="100%" minHeight={80}>
+                    <div className="w-full h-24 sm:h-24 min-h-[96px] relative">
+                        <ResponsiveContainer width="100%" height="100%" minHeight={96}>
                             <PieChart>
                                 <Pie
                                     data={view === 'monthly'
@@ -321,7 +389,7 @@ export const Header: React.FC<HeaderProps> = ({
                                             : [{ value: annualStats.totalCompletions || 0.1 }, { value: Math.max(0, annualStats.totalPossible - annualStats.totalCompletions) }]
                                         )
                                     }
-                                    innerRadius="65%" outerRadius="85%" paddingAngle={2} dataKey="value" startAngle={90} endAngle={450}
+                                    innerRadius="80%" outerRadius="100%" paddingAngle={2} dataKey="value" startAngle={90} endAngle={450}
                                     isAnimationActive={true}
                                 >
                                     <Cell fill={theme.primary} /><Cell fill="#f0f0f0" />
@@ -345,6 +413,72 @@ export const Header: React.FC<HeaderProps> = ({
                             )
                         }
                     </div>
+
+                    {view === 'monthly' && (
+                        <div className="w-full grid grid-cols-2 gap-2 mt-2 px-2 border-t border-stone-100 pt-2">
+                            <div className="flex flex-col items-center justify-center">
+                                <span className="text-[8px] font-black uppercase text-stone-400 tracking-wider mb-0.5">vs Prev</span>
+                                {(() => {
+                                    const currentMonthData = annualStats.monthlySummaries[currentMonthIndex];
+                                    const delta = currentMonthData?.delta || 0;
+                                    const isPositive = delta > 0;
+                                    const isNeutral = delta === 0;
+                                    return (
+                                        <div className={`flex items-center gap-1 text-[10px] font-black ${isNeutral ? 'text-stone-400' : (isPositive ? 'text-emerald-500' : 'text-rose-500')}`}>
+                                            {isNeutral ? <Minus size={10} strokeWidth={4} /> : (isPositive ? <ArrowUp size={10} strokeWidth={4} /> : <ArrowDown size={10} strokeWidth={4} />)}
+                                            <span>{Math.abs(delta).toFixed(0)}%</span>
+                                        </div>
+                                    );
+                                })()}
+                            </div>
+                            <div className="flex flex-col items-center justify-center border-l border-stone-100">
+                                <span className="text-[8px] font-black uppercase text-stone-400 tracking-wider mb-0.5">Best</span>
+                                <div className="flex items-center gap-1 text-[10px] font-black text-amber-500">
+                                    <Trophy size={10} strokeWidth={4} />
+                                    <span>{annualStats.allTimeBest?.rate?.toFixed(0) || 0}%</span>
+                                </div>
+                                {annualStats.allTimeBest && (
+                                    <span className="text-[7px] font-bold text-stone-400 mt-0.5">
+                                        {MONTHS[annualStats.allTimeBest.monthIdx]} {annualStats.allTimeBest.year}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {view === 'weekly' && (
+                        <div className="w-full grid grid-cols-2 gap-2 mt-2 px-2 border-t border-stone-100 pt-2">
+                            <div className="flex flex-col items-center justify-center">
+                                <span className="text-[8px] font-black uppercase text-stone-400 tracking-wider mb-0.5">vs Prev</span>
+                                {(() => {
+                                    const currentVal = weekProgress.percentage || 0;
+                                    const prevVal = prevWeekProgress?.percentage || 0;
+                                    const delta = currentVal - prevVal;
+
+                                    const isPositive = delta > 0;
+                                    const isNeutral = delta === 0;
+                                    return (
+                                        <div className={`flex items-center gap-1 text-[10px] font-black ${isNeutral ? 'text-stone-400' : (isPositive ? 'text-emerald-500' : 'text-rose-500')}`}>
+                                            {isNeutral ? <Minus size={10} strokeWidth={4} /> : (isPositive ? <ArrowUp size={10} strokeWidth={4} /> : <ArrowDown size={10} strokeWidth={4} />)}
+                                            <span>{Math.abs(delta).toFixed(0)}%</span>
+                                        </div>
+                                    );
+                                })()}
+                            </div>
+                            <div className="flex flex-col items-center justify-center border-l border-stone-100">
+                                <span className="text-[8px] font-black uppercase text-stone-400 tracking-wider mb-0.5">Best</span>
+                                <div className="flex items-center gap-1 text-[10px] font-black text-amber-500">
+                                    <Trophy size={10} strokeWidth={4} />
+                                    <span>{allTimeBestWeek?.rate?.toFixed(0) || 0}%</span>
+                                </div>
+                                {allTimeBestWeek && (
+                                    <span className="text-[7px] font-bold text-stone-400 mt-0.5">
+                                        {allTimeBestWeek.dateRangeStr}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
             <HabitManagerModal

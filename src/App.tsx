@@ -83,6 +83,8 @@ const App: React.FC = () => {
     dailyStats,
     weeklyStats,
     weekProgress,
+    prevWeekProgress,
+    allTimeBestWeek,
     monthProgress,
     topHabitsThisMonth,
     annualStats
@@ -96,8 +98,18 @@ const App: React.FC = () => {
     const sunday = new Date(monday);
     sunday.setDate(monday.getDate() + 6);
 
-    const format = (d: Date) => `${d.getMonth() + 1}/${d.getDate()}`;
-    return `(${format(monday)} - ${format(sunday)})`;
+    const startYear = monday.getFullYear();
+    const endYear = sunday.getFullYear();
+
+    if (startYear === endYear) {
+      const fromStr = monday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const toStr = sunday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      return `${fromStr} - ${toStr}, ${startYear}`;
+    } else {
+      const fromStr = monday.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const toStr = sunday.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      return `${fromStr} - ${toStr}`;
+    }
   }, [weekOffset]);
 
   useEffect(() => {
@@ -374,6 +386,8 @@ const App: React.FC = () => {
           dailyStats={dailyStats}
           weeklyStats={weeklyStats}
           weekProgress={weekProgress}
+          prevWeekProgress={prevWeekProgress}
+          allTimeBestWeek={allTimeBestWeek}
           habits={habits}
           defaultView={defaultView}
           setDefaultView={updateDefaultView}

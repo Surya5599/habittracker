@@ -1,5 +1,6 @@
 import React from 'react';
 import { Plus, Trash2, Save, Check } from 'lucide-react';
+import { CircularProgress } from './CircularProgress';
 import { Habit, HabitCompletion, Theme } from '../types';
 import { DAYS_OF_WEEK_SHORT } from '../constants';
 import { getHabitMonthStats, isCompleted as checkCompleted } from '../utils/stats';
@@ -80,9 +81,14 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                 const weekPerc = weekMax > 0 ? (weekTotal / weekMax) * 100 : 0;
                                 return (
                                     <div key={wIndex} className="flex-1 min-w-[80px] border-r border-stone-100 flex flex-col">
-                                        <div className="flex-1 flex flex-col items-center justify-center p-2 border-b border-stone-50">
-                                            <div className="w-full bg-stone-100 h-1.5 rounded-full overflow-hidden"><div className="h-full transition-all duration-300" style={{ width: `${weekPerc}%`, backgroundColor: theme.secondary }} /></div>
-                                            <span className="text-[10px] font-black mt-1">{weekPerc.toFixed(0)}%</span>
+                                        <div className="flex-1 flex flex-col items-center justify-center p-1 border-b border-stone-50">
+                                            <CircularProgress
+                                                percentage={weekPerc}
+                                                size={32}
+                                                strokeWidth={4}
+                                                color={theme.secondary}
+                                                trackColor={theme.secondary + '20'}
+                                            />
                                         </div>
                                         <div className="flex-1 flex items-center justify-center border-b border-stone-50 py-1"><span className="text-[11px] font-black">{weekTotal}/{weekMax}</span></div>
                                         <div className="flex-1 p-2 flex items-end justify-between gap-0.5 h-20 md:h-auto group/week">

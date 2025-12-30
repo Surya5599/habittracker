@@ -129,21 +129,46 @@ const App: React.FC = () => {
         if (!error && data) {
           const notesObj: DailyNote = {};
           data.forEach(note => {
-            notesObj[note.date_key] = note.content;
+            try {
+              const parsed = JSON.parse(note.content);
+              if (Array.isArray(parsed)) {
+                notesObj[note.date_key] = parsed;
+              } else {
+                // Should not happen if we are strict, but handle just in case it's a JSON string
+                notesObj[note.date_key] = [{ id: crypto.randomUUID(), text: String(parsed), completed: false }];
+              }
+            } catch {
+              // Legacy plain text note
+              if (note.content) {
+                notesObj[note.date_key] = [{ id: crypto.randomUUID(), text: note.content, completed: false }];
+              }
+            }
           });
           setNotes(notesObj);
         }
       } else {
         // Load from localStorage for guest users
         const localNotes = JSON.parse(localStorage.getItem('habit_daily_notes') || '{}');
-        setNotes(localNotes);
+        // Migrate local notes if necessary
+        const migratedNotes: DailyNote = {};
+        Object.entries(localNotes).forEach(([key, val]) => {
+          if (typeof val === 'string') {
+            migratedNotes[key] = [{ id: crypto.randomUUID(), text: val, completed: false }];
+          } else {
+            migratedNotes[key] = val as any;
+          }
+        });
+        setNotes(migratedNotes);
       }
     };
     loadNotes();
   }, [session]);
 
+  // ... (existing code for settingsRef etc) ...
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      // ...
       if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
         setSettingsOpen(false);
       }
@@ -153,6 +178,7 @@ const App: React.FC = () => {
   }, [settingsOpen]);
 
   useEffect(() => {
+    // ...
     if (editingHabitId && inputRef.current) {
       inputRef.current.focus();
       inputRef.current.select();
@@ -163,7 +189,9 @@ const App: React.FC = () => {
     }
   }, [editingHabitId, editingGoalId]);
 
+  // ... (navigation methods) ...
   const navigateMonth = (direction: 'prev' | 'next') => {
+    // ...
     if (direction === 'prev') {
       if (currentMonthIndex === 0) {
         setCurrentMonthIndex(11);
@@ -203,12 +231,15 @@ const App: React.FC = () => {
     }
   }, [notes, session]);
 
-  const updateNote = async (dateKey: string, content: string) => {
-    setNotes(prev => ({ ...prev, [dateKey]: content }));
+  const updateNote = async (dateKey: string, tasks: any[]) => {
+    setNotes(prev => ({ ...prev, [dateKey]: tasks }));
+
+    // Check if empty
+    const isEmpty = tasks.length === 0;
 
     // Sync to database for logged-in users
     if (session?.user?.id) {
-      if (content.trim() === '') {
+      if (isEmpty) {
         // Delete empty notes
         await supabase
           .from('daily_notes')
@@ -222,7 +253,7 @@ const App: React.FC = () => {
           .upsert({
             user_id: session.user.id,
             date_key: dateKey,
-            content: content
+            content: JSON.stringify(tasks)
           }, {
             onConflict: 'user_id,date_key'
           });

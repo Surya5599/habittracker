@@ -1,6 +1,6 @@
 import React from 'react';
-import { Check, Plus, Share2 } from 'lucide-react';
-import { Habit, HabitCompletion, Theme, DailyNote } from '../types';
+import { Check, Plus, Share2, Trash2, GripVertical, Pencil } from 'lucide-react';
+import { Habit, HabitCompletion, Theme, DailyNote, Task } from '../types';
 import { DAYS_OF_WEEK } from '../constants';
 import { isCompleted as checkCompleted } from '../utils/stats';
 import { generateShareCard, shareCard } from '../utils/shareCardGenerator';
@@ -14,7 +14,7 @@ interface WeeklyViewProps {
     theme: Theme;
     toggleCompletion: (habitId: string, dateKey: string) => void;
     notes: DailyNote;
-    updateNote: (dateKey: string, content: string) => void;
+    updateNote: (dateKey: string, tasks: Task[]) => void;
     addHabit: () => void;
 }
 
@@ -30,6 +30,8 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
     addHabit,
 }) => {
     const [shareModalOpen, setShareModalOpen] = React.useState(false);
+    const [editingTaskId, setEditingTaskId] = React.useState<string | null>(null);
+    const taskInputRef = React.useRef<HTMLInputElement>(null);
     const [shareData, setShareData] = React.useState<{
         date: Date;
         dayName: string;
@@ -150,11 +152,11 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                             </div>
 
                             {/* Daily Habits List */}
-                            <div className="flex-1 p-3 bg-stone-50/50">
-                                <div className="flex items-center justify-between mb-2 pb-1 border-b border-black/5">
+                            <div className="flex-1 p-3 bg-stone-50/50 flex flex-col min-h-0">
+                                <div className="flex items-center justify-between mb-2 pb-1 border-b border-black/5 flex-shrink-0">
                                     <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">Daily Habits</span>
                                 </div>
-                                <div className="space-y-1">
+                                <div className="space-y-1 overflow-y-auto max-h-[135px] pr-1">
                                     {habits.map(habit => {
                                         const done = checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
                                         return (
@@ -175,7 +177,7 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                             </div>
 
                             {completedCount === totalCount && totalCount > 0 ? (
-                                <div className="border-t border-black">
+                                <div className="border-t border-black flex-shrink-0">
                                     <button
                                         onClick={() => handleShareClick(date, dayName, dateString, completedCount, totalCount, progress)}
                                         className="w-full p-3 bg-black text-white font-black uppercase tracking-widest text-[11px] hover:bg-stone-800 transition-all flex items-center justify-center gap-2 group"
@@ -185,7 +187,7 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                                     </button>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-2 text-center text-[9px] font-black uppercase tracking-tight border-t border-black">
+                                <div className="grid grid-cols-2 text-center text-[9px] font-black uppercase tracking-tight border-t border-black flex-shrink-0">
                                     <div className="p-1 px-2 border-r border-black" style={{ backgroundColor: (isToday ? theme.secondary : theme.primary) + '20' }}>
                                         <span className="text-stone-500 block">Habits Maintained</span>
                                         <span className="text-lg leading-none">{completedCount}</span>
@@ -197,21 +199,125 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                                 </div>
                             )}
 
-                            {/* Notes */}
-                            <div className="border-t-2 border-black">
-                                <div className="p-2 bg-stone-100 border-b-2 border-black text-[9px] font-black uppercase tracking-widest text-stone-500 flex items-center justify-between">
-                                    <span>Notes</span>
-                                    <span className="text-[8px] font-medium text-stone-400 normal-case tracking-normal">
-                                        {(notes[dateKey] || '').length}/500
-                                    </span>
+                            {/* Tasks */}
+                            <div
+                                className="border-t-2 border-black flex-1 flex flex-col min-h-[90px]"
+                                onDragOver={(e) => e.preventDefault()}
+                                onDrop={(e) => {
+                                    e.preventDefault();
+                                    const data = e.dataTransfer.getData('application/json');
+                                    if (!data) return;
+                                    const { taskId, sourceDateKey } = JSON.parse(data);
+                                    if (sourceDateKey === dateKey) return; // Dropped on same day
+
+                                    const sourceTasks = (notes[sourceDateKey] as Task[]) || [];
+                                    const targetTasks = (notes[dateKey] as Task[]) || [];
+
+                                    const taskToMove = sourceTasks.find(t => t.id === taskId);
+                                    if (!taskToMove) return;
+
+                                    // Remove from source and add to target
+                                    updateNote(sourceDateKey, sourceTasks.filter(t => t.id !== taskId));
+                                    updateNote(dateKey, [...targetTasks, taskToMove]);
+                                }}
+                            >
+                                <div className="p-2 bg-stone-100 border-b-2 border-black text-[9px] font-black uppercase tracking-widest text-stone-500 flex items-center justify-between sticky top-0 z-10 flex-shrink-0">
+                                    <span>Tasks</span>
+                                    <button
+                                        onClick={() => {
+                                            const currentTasks = (notes[dateKey] as Task[]) || [];
+                                            const newTask: Task = { id: crypto.randomUUID(), text: '', completed: false };
+                                            updateNote(dateKey, [...currentTasks, newTask]);
+                                            setEditingTaskId(newTask.id);
+                                        }}
+                                        className="hover:bg-stone-200 p-0.5 rounded transition-colors"
+                                    >
+                                        <Plus size={12} strokeWidth={3} />
+                                    </button>
                                 </div>
-                                <textarea
-                                    value={notes[dateKey] || ''}
-                                    onChange={(e) => updateNote(dateKey, e.target.value.slice(0, 500))}
-                                    placeholder="Add your notes for the day..."
-                                    className="w-full p-2 text-[10px] font-medium bg-white outline-none resize-none leading-tight placeholder:italic placeholder:text-stone-400 border-2 border-transparent focus:border-stone-300 focus:h-24 transition-all duration-200 h-16"
-                                    maxLength={500}
-                                />
+                                <div className="p-2 space-y-2 overflow-y-auto max-h-[100px] pr-1">
+                                    {((notes[dateKey] as Task[]) || []).map((task) => (
+                                        <div
+                                            key={task.id}
+                                            draggable={editingTaskId !== task.id}
+                                            onDragStart={(e) => {
+                                                e.dataTransfer.setData('application/json', JSON.stringify({ taskId: task.id, sourceDateKey: dateKey }));
+                                                e.dataTransfer.effectAllowed = 'move';
+                                            }}
+                                            className={`flex items-start gap-2 group bg-white border border-transparent hover:border-stone-200 p-1 rounded shadow-sm hover:shadow-md transition-all ${editingTaskId === task.id ? 'ring-2 ring-black' : 'cursor-move'}`}
+                                        >
+                                            <button
+                                                onClick={() => {
+                                                    const currentTasks = (notes[dateKey] as Task[]) || [];
+                                                    const newTasks = currentTasks.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t);
+                                                    updateNote(dateKey, newTasks);
+                                                }}
+                                                className={`mt-0.5 w-3 h-3 border border-black flex items-center justify-center transition-all flex-shrink-0 ${task.completed ? 'bg-black text-white' : 'bg-white hover:bg-stone-100'}`}
+                                            >
+                                                {task.completed && <Check size={8} strokeWidth={4} />}
+                                            </button>
+
+                                            {editingTaskId === task.id ? (
+                                                <input
+                                                    ref={taskInputRef}
+                                                    type="text"
+                                                    value={task.text}
+                                                    onChange={(e) => {
+                                                        const currentTasks = (notes[dateKey] as Task[]) || [];
+                                                        const newTasks = currentTasks.map(t => t.id === task.id ? { ...t, text: e.target.value } : t);
+                                                        updateNote(dateKey, newTasks);
+                                                    }}
+                                                    onBlur={() => setEditingTaskId(null)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            setEditingTaskId(null);
+                                                        }
+                                                    }}
+                                                    className="w-full text-[10px] font-medium bg-transparent outline-none leading-tight border-none p-0 focus:ring-0 text-stone-800"
+                                                    autoFocus
+                                                />
+                                            ) : (
+                                                <span
+                                                    className={`flex-1 text-[10px] font-medium leading-tight break-all ${task.completed ? 'text-stone-400 line-through' : 'text-stone-800'}`}
+                                                    onDoubleClick={() => setEditingTaskId(task.id)}
+                                                >
+                                                    {task.text}
+                                                </span>
+                                            )}
+
+                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                    onClick={() => setEditingTaskId(task.id)}
+                                                    className="text-stone-400 hover:text-black transition-colors"
+                                                    title="Edit task"
+                                                >
+                                                    <Pencil size={10} />
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        const currentTasks = (notes[dateKey] as Task[]) || [];
+                                                        const newTasks = currentTasks.filter(t => t.id !== task.id);
+                                                        updateNote(dateKey, newTasks);
+                                                    }}
+                                                    className="text-stone-400 hover:text-red-500 transition-colors"
+                                                    title="Delete task"
+                                                >
+                                                    <Trash2 size={10} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {(!notes[dateKey] || (notes[dateKey] as Task[]).length === 0) && (
+                                        <div className="text-[9px] text-stone-300 text-center py-2 italic cursor-pointer" onClick={() => {
+                                            const currentTasks = (notes[dateKey] as Task[]) || [];
+                                            const newTask: Task = { id: crypto.randomUUID(), text: '', completed: false };
+                                            updateNote(dateKey, [...currentTasks, newTask]);
+                                            setEditingTaskId(newTask.id);
+                                        }}>
+                                            Click + to add a task
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     );

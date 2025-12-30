@@ -72,11 +72,11 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-200">
-                <div className="p-4 border-b border-stone-200 flex items-center justify-between bg-stone-50">
-                    <h2 className="text-sm font-black uppercase tracking-widest text-stone-700">My Habits</h2>
-                    <button onClick={onClose} className="text-stone-400 hover:text-stone-700 transition-colors">
-                        <X size={20} />
+            <div className="bg-white border-[2px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-full max-w-md overflow-hidden flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-200">
+                <div className="p-4 border-b-[2px] border-black flex items-center justify-between bg-white">
+                    <h2 className="text-lg font-black uppercase tracking-tighter text-black">My Habits</h2>
+                    <button onClick={onClose} className="border-2 border-transparent hover:border-black p-1 transition-all hover:bg-stone-100">
+                        <X size={20} className="text-black" />
                     </button>
                 </div>
 
@@ -88,9 +88,9 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                     )}
 
                     {habits.map(habit => (
-                        <div key={habit.id} className="group flex items-center justify-between p-3 bg-white border border-stone-200 rounded-lg hover:border-stone-300 transition-all hover:shadow-sm">
+                        <div key={habit.id} className="group flex items-center justify-between p-3 bg-white border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all mb-3">
                             <div className="flex items-center gap-3 flex-1 min-w-0">
-                                <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: habit.color || themePrimary }}></div>
+                                <div className="w-4 h-4 rounded-full shrink-0 border-2 border-black" style={{ backgroundColor: habit.color || themePrimary }}></div>
 
                                 {editingId === habit.id ? (
                                     <input
@@ -100,13 +100,13 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                                         onChange={(e) => setEditName(e.target.value)}
                                         onBlur={() => saveEdit(habit.id)}
                                         onKeyDown={(e) => e.key === 'Enter' && saveEdit(habit.id)}
-                                        className="flex-1 bg-stone-50 border border-stone-300 rounded px-2 py-1 text-sm font-bold text-stone-800 outline-none focus:ring-2 focus:ring-black/10"
+                                        className="flex-1 bg-white border-2 border-black px-2 py-1 text-sm font-bold text-black outline-none focus:ring-0 focus:bg-stone-50"
                                         placeholder="Habit name"
                                     />
                                 ) : (
                                     <span
                                         onClick={() => startEditing(habit)}
-                                        className="flex-1 text-sm font-bold text-stone-700 truncate cursor-pointer hover:text-black transition-colors"
+                                        className="flex-1 text-sm font-bold text-black truncate cursor-pointer hover:underline decoration-2 underline-offset-2"
                                     >
                                         {habit.name || 'Untitled Habit'}
                                     </span>
@@ -116,32 +116,32 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                             <div className="flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button
                                     onClick={() => editingId === habit.id ? saveEdit(habit.id) : startEditing(habit)}
-                                    className="p-1.5 text-stone-400 hover:text-stone-700 rounded hover:bg-stone-100"
+                                    className="p-1.5 text-black hover:bg-black hover:text-white border-2 border-transparent hover:border-black transition-all"
                                     title="Edit Name"
                                 >
-                                    {editingId === habit.id ? <Check size={14} /> : <Edit2 size={14} />}
+                                    {editingId === habit.id ? <Check size={14} strokeWidth={3} /> : <Edit2 size={14} strokeWidth={3} />}
                                 </button>
                                 <button
                                     onClick={() => handleDelete(habit.id)}
-                                    className="p-1.5 text-stone-300 hover:text-rose-500 rounded hover:bg-rose-50"
+                                    className="p-1.5 text-black hover:bg-red-500 hover:text-white border-2 border-transparent hover:border-black transition-all"
                                     title="Delete Habit"
                                 >
-                                    <Trash2 size={14} />
+                                    <Trash2 size={14} strokeWidth={3} />
                                 </button>
                             </div>
                         </div>
                     ))}
                 </div>
 
-                <div className="p-4 border-t border-stone-200 bg-stone-50">
+                <div className="p-4 border-t-[2px] border-black bg-stone-50">
                     <button
                         onClick={handleAdd}
-                        className="w-full py-3 bg-black text-white text-xs font-black uppercase tracking-widest rounded shadow-lg hover:bg-stone-800 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2"
+                        className="w-full py-3 bg-black text-white text-xs font-black uppercase tracking-widest border-2 border-black shadow-[4px_4px_0px_0px_gray] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[2px_2px_0px_0px_gray] active:translate-y-[4px] active:translate-x-[4px] active:shadow-none transition-all flex items-center justify-center gap-2"
                     >
-                        <Plus size={16} />
+                        <Plus size={16} strokeWidth={3} />
                         Add New Habit
                     </button>
-                    <p className="text-[9px] text-center text-stone-400 mt-2 font-medium">
+                    <p className="text-[10px] text-center text-stone-500 mt-3 font-bold uppercase tracking-wide">
                         Habits will appear in your Weekly, Monthly and Dashboard views.
                     </p>
                 </div>

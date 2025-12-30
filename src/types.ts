@@ -15,9 +15,16 @@ export interface HabitCompletion {
   };
 }
 
-export interface DailyNote {
-  [dateKey: string]: string;
+export interface Task {
+  id: string;
+  text: string;
+  completed: boolean;
 }
+
+export interface DailyNote {
+  [dateKey: string]: Task[] | string; // Helper type to support migration, runtime will strictly usage Task[]
+}
+
 
 export interface Theme {
   name: string;

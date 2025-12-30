@@ -27,7 +27,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
         <div ref={settingsRef} className="relative inline-block">
             <button
                 onClick={() => setSettingsOpen(!settingsOpen)}
-                className={`p-1.5 rounded-full border border-stone-200 transition-colors ${settingsOpen ? 'bg-stone-100 text-stone-900' : 'text-stone-300 hover:text-stone-500'}`}
+                className={`p-1.5 rounded-full border border-stone-200 transition-colors ${settingsOpen ? 'bg-stone-100 text-stone-900' : 'text-stone-800 hover:text-black'}`}
                 title="Settings"
             >
                 <Settings size={14} className={settingsOpen ? 'animate-spin-slow' : ''} />

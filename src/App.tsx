@@ -3,6 +3,7 @@ import { Toaster, toast } from 'react-hot-toast';
 import { supabase } from './supabase';
 import { exportToExcel } from './utils/exportToExcel';
 import { AuthForm } from './components/AuthForm';
+import { UpdatePasswordForm } from './components/UpdatePasswordForm';
 import { Header } from './components/Header';
 import { MonthlyView } from './components/MonthlyView';
 import { DashboardView } from './components/DashboardView';
@@ -15,6 +16,7 @@ import { DailyNote } from './types';
 const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
   const [guestMode, setGuestMode] = useState(false);
+  const [passwordRecoveryMode, setPasswordRecoveryMode] = useState(false);
   const [defaultView, setDefaultView] = useState<'monthly' | 'dashboard' | 'weekly'>(() => {
     return (localStorage.getItem('habit_default_view') as 'monthly' | 'dashboard' | 'weekly') || 'weekly';
   });
@@ -104,8 +106,11 @@ const App: React.FC = () => {
       if (!initialSession) setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
+      if (event === 'PASSWORD_RECOVERY') {
+        setPasswordRecoveryMode(true);
+      }
       if (session) {
         setGuestMode(false);
       } else {
@@ -312,6 +317,15 @@ const App: React.FC = () => {
     });
     return result;
   }, [monthDates]);
+
+  if (passwordRecoveryMode) {
+    return (
+      <>
+        <Toaster position="top-center" reverseOrder={false} />
+        <UpdatePasswordForm onSuccess={() => setPasswordRecoveryMode(false)} />
+      </>
+    );
+  }
 
   if (!session && !guestMode) {
     return (

@@ -31,6 +31,7 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
 }) => {
     const [shareModalOpen, setShareModalOpen] = React.useState(false);
     const [editingTaskId, setEditingTaskId] = React.useState<string | null>(null);
+    const [editingTaskText, setEditingTaskText] = React.useState('');
     const taskInputRef = React.useRef<HTMLInputElement>(null);
     const [shareData, setShareData] = React.useState<{
         date: Date;
@@ -96,6 +97,48 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
         }
     };
 
+    const handleFinishEditing = (taskId: string, dateKey: string) => {
+        const currentTasks = (notes[dateKey] as Task[]) || [];
+        const task = currentTasks.find(t => t.id === taskId);
+        if (!task) {
+            setEditingTaskId(null);
+            return;
+        }
+
+        const trimmedText = editingTaskText.trim();
+
+        // 1. Remove if empty
+        if (!trimmedText) {
+            updateNote(dateKey, currentTasks.filter(t => t.id !== taskId));
+            setEditingTaskId(null);
+            return;
+        }
+
+        // 2. Check for duplicates (exclude self)
+        const isDuplicate = currentTasks.some(t =>
+            t.id !== taskId &&
+            t.text.trim().toLowerCase() === trimmedText.toLowerCase()
+        );
+
+        if (isDuplicate) {
+            // If it was a new item (currently empty in store), remove it
+            if (!task.text) {
+                updateNote(dateKey, currentTasks.filter(t => t.id !== taskId));
+            }
+            // If it was existing, we effectively revert by not updating 'notes'
+            // just clear validation state
+            setEditingTaskId(null);
+            return;
+        }
+
+        // 3. Valid update
+        const newTasks = currentTasks.map(t =>
+            t.id === taskId ? { ...t, text: trimmedText } : t
+        );
+        updateNote(dateKey, newTasks);
+        setEditingTaskId(null);
+    };
+
     return (
         <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
@@ -152,11 +195,11 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                             </div>
 
                             {/* Daily Habits List */}
-                            <div className="flex-1 p-3 bg-stone-50/50 flex flex-col min-h-0">
+                            <div className="p-3 bg-stone-50/50 flex flex-col">
                                 <div className="flex items-center justify-between mb-2 pb-1 border-b border-black/5 flex-shrink-0">
                                     <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">Daily Habits</span>
                                 </div>
-                                <div className="space-y-1 overflow-y-auto max-h-[135px] pr-1">
+                                <div className="space-y-1 overflow-y-auto max-h-[150px] pr-1">
                                     {habits.map(habit => {
                                         const done = checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
                                         return (
@@ -201,7 +244,7 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
 
                             {/* Tasks */}
                             <div
-                                className="border-t-2 border-black flex-1 flex flex-col min-h-[90px]"
+                                className="border-t-2 border-black flex flex-col min-h-[90px]"
                                 onDragOver={(e) => e.preventDefault()}
                                 onDrop={(e) => {
                                     e.preventDefault();
@@ -229,13 +272,14 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                                             const newTask: Task = { id: crypto.randomUUID(), text: '', completed: false };
                                             updateNote(dateKey, [...currentTasks, newTask]);
                                             setEditingTaskId(newTask.id);
+                                            setEditingTaskText('');
                                         }}
                                         className="hover:bg-stone-200 p-0.5 rounded transition-colors"
                                     >
                                         <Plus size={12} strokeWidth={3} />
                                     </button>
                                 </div>
-                                <div className="p-2 space-y-2 overflow-y-auto max-h-[100px] pr-1">
+                                <div className="p-2 space-y-2 overflow-y-auto max-h-[160px] pr-1">
                                     {((notes[dateKey] as Task[]) || []).map((task) => (
                                         <div
                                             key={task.id}
@@ -261,16 +305,12 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                                                 <input
                                                     ref={taskInputRef}
                                                     type="text"
-                                                    value={task.text}
-                                                    onChange={(e) => {
-                                                        const currentTasks = (notes[dateKey] as Task[]) || [];
-                                                        const newTasks = currentTasks.map(t => t.id === task.id ? { ...t, text: e.target.value } : t);
-                                                        updateNote(dateKey, newTasks);
-                                                    }}
-                                                    onBlur={() => setEditingTaskId(null)}
+                                                    value={editingTaskText}
+                                                    onChange={(e) => setEditingTaskText(e.target.value)}
+                                                    onBlur={() => handleFinishEditing(task.id, dateKey)}
                                                     onKeyDown={(e) => {
                                                         if (e.key === 'Enter') {
-                                                            setEditingTaskId(null);
+                                                            handleFinishEditing(task.id, dateKey);
                                                         }
                                                     }}
                                                     className="w-full text-[10px] font-medium bg-transparent outline-none leading-tight border-none p-0 focus:ring-0 text-stone-800"
@@ -279,7 +319,10 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                                             ) : (
                                                 <span
                                                     className={`flex-1 text-[10px] font-medium leading-tight break-all ${task.completed ? 'text-stone-400 line-through' : 'text-stone-800'}`}
-                                                    onDoubleClick={() => setEditingTaskId(task.id)}
+                                                    onDoubleClick={() => {
+                                                        setEditingTaskId(task.id);
+                                                        setEditingTaskText(task.text);
+                                                    }}
                                                 >
                                                     {task.text}
                                                 </span>
@@ -287,7 +330,10 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
 
                                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button
-                                                    onClick={() => setEditingTaskId(task.id)}
+                                                    onClick={() => {
+                                                        setEditingTaskId(task.id);
+                                                        setEditingTaskText(task.text);
+                                                    }}
                                                     className="text-stone-400 hover:text-black transition-colors"
                                                     title="Edit task"
                                                 >
@@ -313,6 +359,7 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                                             const newTask: Task = { id: crypto.randomUUID(), text: '', completed: false };
                                             updateNote(dateKey, [...currentTasks, newTask]);
                                             setEditingTaskId(newTask.id);
+                                            setEditingTaskText('');
                                         }}>
                                             Click + to add a task
                                         </div>

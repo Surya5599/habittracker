@@ -6,7 +6,7 @@ interface CircularProgressProps {
     strokeWidth?: number;
     color: string;
     trackColor?: string;
-    className?: string;
+    textClassName?: string;
 }
 
 export const CircularProgress: React.FC<CircularProgressProps> = ({
@@ -16,6 +16,7 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
     color,
     trackColor = '#e5e7eb', // stone-200 default
     className = '',
+    textClassName = 'text-[10px]',
 }) => {
     const radius = (size - strokeWidth) / 2;
     const circumference = radius * 2 * Math.PI;
@@ -53,7 +54,7 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
                 />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-[10px] font-black">{Math.round(percentage)}%</span>
+                <span className={`${textClassName} font-black`}>{Math.round(percentage)}%</span>
             </div>
         </div>
     );

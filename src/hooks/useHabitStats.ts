@@ -128,6 +128,7 @@ export const useHabitStats = (
             let activeDays = 0;
             let currentMStreak = 0;
             let maxMStreak = 0;
+            let perfectDays = 0;
 
             // Weekly rates
             const weeklyRates: number[] = [];
@@ -146,8 +147,12 @@ export const useHabitStats = (
             const topHabit = mHabitStats[0] || null;
 
             for (let d = 1; d <= dInM; d++) {
-                const anyCompleted = habits.some(h => isCompleted(h.id, d, completions, idx, currentYear));
-                if (anyCompleted) {
+                let dailyCompletedCount = 0;
+                habits.forEach(h => {
+                    if (isCompleted(h.id, d, completions, idx, currentYear)) dailyCompletedCount++;
+                });
+
+                if (dailyCompletedCount > 0) {
                     activeDays++;
                     currentMStreak++;
                     maxMStreak = Math.max(maxMStreak, currentMStreak);
@@ -155,10 +160,12 @@ export const useHabitStats = (
                     currentMStreak = 0;
                 }
 
-                habits.forEach(h => {
-                    if (isCompleted(h.id, d, completions, idx, currentYear)) weekCompleted++;
-                    weekPossible++;
-                });
+                if (habits.length > 0 && dailyCompletedCount === habits.length) {
+                    perfectDays++;
+                }
+
+                weekCompleted += dailyCompletedCount;
+                weekPossible += habits.length;
 
                 // Calculate weekly rate every 7 days or at end of month
                 if (d % 7 === 0 || d === dInM) {
@@ -175,7 +182,8 @@ export const useHabitStats = (
                 topHabit: topHabit && topHabit.rate > 0 ? topHabit : null,
                 consistency: (activeDays / dInM) * 100,
                 maxStreak: maxMStreak,
-                weeklyRates
+                weeklyRates,
+                perfectDays
             };
         });
 

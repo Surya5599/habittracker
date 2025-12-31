@@ -99,6 +99,7 @@ total possible">
                                                 strokeWidth={8}
                                                 color={theme.secondary}
                                                 trackColor={theme.secondary + '20'}
+                                                textClassName="text-xl"
                                             />
                                         </div>
                                         <div className="flex-none h-10 flex items-center justify-center border-b border-stone-50 py-0.5"><span className="text-xl font-black">{weekTotal}/{weekMax}</span></div>

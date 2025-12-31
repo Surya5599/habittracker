@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { X, Share2 } from 'lucide-react';
+import { X, Share2, ChevronDown } from 'lucide-react';
+import { THEMES } from '../constants';
 
 export interface ColorScheme {
     name: string;
@@ -7,14 +8,6 @@ export interface ColorScheme {
     secondary: string;
     gradient?: boolean;
 }
-
-export const COLOR_SCHEMES: ColorScheme[] = [
-    { name: 'Classic', primary: '#000000', secondary: '#000000' },
-    { name: 'Vibrant', primary: '#8B5CF6', secondary: '#EC4899', gradient: true },
-    { name: 'Energy', primary: '#F59E0B', secondary: '#EF4444', gradient: true },
-    { name: 'Ocean', primary: '#3B82F6', secondary: '#06B6D4', gradient: true },
-    { name: 'Forest', primary: '#10B981', secondary: '#059669', gradient: true },
-];
 
 export const MOTIVATIONAL_MESSAGES = [
     '🔥 CRUSHING IT!',
@@ -38,8 +31,15 @@ export const ShareCustomizationModal: React.FC<ShareCustomizationModalProps> = (
     onClose,
     onShare,
 }) => {
-    const [selectedColorScheme, setSelectedColorScheme] = useState<ColorScheme>(COLOR_SCHEMES[0]);
-    const [selectedMessage, setSelectedMessage] = useState<string>(MOTIVATIONAL_MESSAGES[0]);
+    const [selectedColorScheme, setSelectedColorScheme] = useState<ColorScheme>(THEMES[0]);
+
+    // Initialize with a random message
+    const [selectedMessage, setSelectedMessage] = useState<string>(() => {
+        const randomIndex = Math.floor(Math.random() * MOTIVATIONAL_MESSAGES.length);
+        return MOTIVATIONAL_MESSAGES[randomIndex];
+    });
+
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     if (!isOpen) return null;
 
@@ -72,27 +72,48 @@ export const ShareCustomizationModal: React.FC<ShareCustomizationModalProps> = (
                     {/* Color Schemes */}
                     <div>
                         <h3 className="text-xs font-black uppercase tracking-widest text-stone-500 mb-3">Color Scheme</h3>
-                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                            {COLOR_SCHEMES.map((scheme) => (
-                                <button
-                                    key={scheme.name}
-                                    onClick={() => setSelectedColorScheme(scheme)}
-                                    className={`border-[2px] border-black p-3 transition-all ${selectedColorScheme.name === scheme.name
-                                        ? 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] -translate-y-1'
-                                        : 'shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5'
-                                        }`}
-                                >
+                        <div className="relative">
+                            <button
+                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                className="w-full bg-white border-[2px] border-black px-4 py-3 flex items-center justify-between shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+                            >
+                                <div className="flex items-center gap-3">
                                     <div
-                                        className="w-full h-16 mb-2 border-[2px] border-black"
+                                        className="w-5 h-5 border border-black"
                                         style={{
-                                            background: scheme.gradient
-                                                ? `linear-gradient(135deg, ${scheme.primary}, ${scheme.secondary})`
-                                                : scheme.primary
+                                            backgroundColor: selectedColorScheme.primary
                                         }}
                                     />
-                                    <span className="text-[10px] font-black uppercase tracking-tight">{scheme.name}</span>
-                                </button>
-                            ))}
+                                    <span className="text-xs font-black uppercase tracking-widest">{selectedColorScheme.name.split(' & ')[0]}</span>
+                                </div>
+                                <ChevronDown size={16} className={`transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {isDropdownOpen && (
+                                <>
+                                    <div className="fixed inset-0 z-10" onClick={() => setIsDropdownOpen(false)} />
+                                    <div className="absolute top-full left-0 right-0 z-20 bg-white border-[2px] border-black border-t-0 max-h-60 overflow-y-auto shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                                        {THEMES.map((scheme) => (
+                                            <button
+                                                key={scheme.name}
+                                                onClick={() => {
+                                                    setSelectedColorScheme(scheme);
+                                                    setIsDropdownOpen(false);
+                                                }}
+                                                className="w-full px-4 py-3 flex items-center gap-3 hover:bg-stone-50 transition-colors border-b border-stone-100 last:border-0"
+                                            >
+                                                <div
+                                                    className="w-5 h-5 border border-black flex-shrink-0"
+                                                    style={{
+                                                        backgroundColor: scheme.primary
+                                                    }}
+                                                />
+                                                <span className="text-xs font-black uppercase tracking-widest text-left">{scheme.name.split(' & ')[0]}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
 
@@ -118,30 +139,32 @@ export const ShareCustomizationModal: React.FC<ShareCustomizationModalProps> = (
                     {/* Preview */}
                     <div className="border-t-[2px] border-stone-200 pt-6">
                         <h3 className="text-xs font-black uppercase tracking-widest text-stone-500 mb-3">Preview</h3>
-                        <div className="bg-stone-100 p-4 border-[2px] border-black">
-                            {/* Mini share card preview */}
-                            <div className="bg-white border-[2px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-w-xs mx-auto">
+                        <div className="bg-stone-100 p-4 border-[2px] border-black flex justify-center">
+                            {/* Share card preview - Scaled down version of generated card */}
+                            <div className="bg-white border-[2px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-[240px] aspect-[800/1120] relative flex flex-col font-sans">
                                 {/* Header */}
                                 <div
-                                    className="p-4 border-b-[2px] border-black"
+                                    className="h-[40px] border-b-[2px] border-black flex flex-col items-center justify-center -space-y-0.5"
                                     style={{
                                         background: selectedColorScheme.gradient
-                                            ? `linear-gradient(135deg, ${selectedColorScheme.primary}, ${selectedColorScheme.secondary})`
+                                            ? `linear-gradient(90deg, ${selectedColorScheme.primary}, ${selectedColorScheme.secondary})`
                                             : selectedColorScheme.primary
                                     }}
                                 >
-                                    <div className="text-white font-black text-sm uppercase tracking-widest text-center">MONDAY</div>
-                                    <div className="text-white/80 font-bold text-[8px] tracking-widest text-center mt-1">01.01.2025</div>
+                                    {/* Using Arial to match canvas */}
+                                    <div className="text-white font-bold text-[16px] uppercase tracking-wider" style={{ fontFamily: 'Arial' }}>MONDAY</div>
+                                    <div className="text-white/80 font-bold text-[8px] tracking-widest" style={{ fontFamily: 'Arial' }}>01.01.2025</div>
                                 </div>
 
-                                {/* Progress Circle */}
-                                <div className="p-6 flex flex-col items-center bg-stone-50/50">
-                                    <div className="relative w-20 h-20">
+                                {/* Body */}
+                                <div className="flex-1 flex flex-col items-center pt-8">
+                                    {/* Circle */}
+                                    <div className="relative w-[80px] h-[80px] mb-8">
                                         <svg className="w-full h-full transform -rotate-90">
                                             <circle
                                                 cx="40"
                                                 cy="40"
-                                                r="32"
+                                                r="34"
                                                 stroke="#f0f0f0"
                                                 strokeWidth="6"
                                                 fill="transparent"
@@ -149,17 +172,15 @@ export const ShareCustomizationModal: React.FC<ShareCustomizationModalProps> = (
                                             <circle
                                                 cx="40"
                                                 cy="40"
-                                                r="32"
-                                                stroke={selectedColorScheme.gradient ? selectedColorScheme.primary : selectedColorScheme.primary}
+                                                r="34"
+                                                stroke={selectedColorScheme.primary}
                                                 strokeWidth="6"
                                                 fill="transparent"
-                                                strokeDasharray={2 * Math.PI * 32}
-                                                strokeDashoffset={2 * Math.PI * 32 * 0.25}
+                                                strokeDasharray={2 * Math.PI * 34}
+                                                strokeDashoffset={2 * Math.PI * 34 * 0} // 100%
                                                 strokeLinecap="round"
                                                 style={{
-                                                    stroke: selectedColorScheme.gradient
-                                                        ? `url(#previewGradient)`
-                                                        : selectedColorScheme.primary
+                                                    stroke: selectedColorScheme.gradient ? 'url(#previewGradient)' : selectedColorScheme.primary
                                                 }}
                                             />
                                             {selectedColorScheme.gradient && (
@@ -172,37 +193,37 @@ export const ShareCustomizationModal: React.FC<ShareCustomizationModalProps> = (
                                             )}
                                         </svg>
                                         <div className="absolute inset-0 flex items-center justify-center">
-                                            <span className="text-lg font-black">100%</span>
+                                            <span className="text-xl font-bold" style={{ fontFamily: 'Arial' }}>100%</span>
                                         </div>
                                     </div>
-                                </div>
 
-                                {/* Stats */}
-                                <div className="px-4 pb-3 text-center bg-stone-50/50">
-                                    <div className="text-xs font-black uppercase mb-1">5/5 HABITS</div>
-                                    <div
-                                        className="text-sm font-black uppercase"
-                                        style={{
-                                            background: selectedColorScheme.gradient
-                                                ? `linear-gradient(135deg, ${selectedColorScheme.primary}, ${selectedColorScheme.secondary})`
-                                                : selectedColorScheme.primary,
-                                            WebkitBackgroundClip: 'text',
-                                            WebkitTextFillColor: selectedColorScheme.gradient ? 'transparent' : selectedColorScheme.primary,
-                                            backgroundClip: 'text'
-                                        }}
-                                    >
-                                        COMPLETED
+                                    {/* Stats */}
+                                    <div className="text-center font-bold" style={{ fontFamily: 'Arial' }}>
+                                        <div className="text-[10px] mb-1">5/5 HABITS</div>
+                                        <div
+                                            className="text-[12px] uppercase"
+                                            style={{
+                                                background: selectedColorScheme.gradient
+                                                    ? `linear-gradient(90deg, ${selectedColorScheme.primary}, ${selectedColorScheme.secondary})`
+                                                    : selectedColorScheme.primary,
+                                                WebkitBackgroundClip: 'text',
+                                                WebkitTextFillColor: selectedColorScheme.gradient ? 'transparent' : selectedColorScheme.primary,
+                                                backgroundClip: 'text'
+                                            }}
+                                        >
+                                            COMPLETED
+                                        </div>
                                     </div>
-                                </div>
 
-                                {/* Message */}
-                                <div className="px-4 pb-4 text-center bg-stone-50/50">
-                                    <div className="text-xs font-black uppercase text-stone-600">{selectedMessage}</div>
+                                    {/* Message */}
+                                    <div className="mt-6 px-4 text-center">
+                                        <div className="text-[11px] font-bold text-[#444] uppercase leading-tight" style={{ fontFamily: 'Arial' }}>{selectedMessage}</div>
+                                    </div>
                                 </div>
 
                                 {/* Footer */}
-                                <div className="border-t-[2px] border-black p-2 bg-white">
-                                    <div className="text-[8px] font-black uppercase text-stone-400 text-center tracking-widest">HABIT TRACKER</div>
+                                <div className="absolute bottom-4 left-0 right-0 text-center">
+                                    <div className="text-[7px] font-bold uppercase text-[#999999] tracking-widest" style={{ fontFamily: 'Arial' }}>HABICARD</div>
                                 </div>
                             </div>
                         </div>

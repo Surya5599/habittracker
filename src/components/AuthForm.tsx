@@ -46,7 +46,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest }) => {
         <div className="min-h-screen flex items-center justify-center bg-[#e5e5e5] p-4">
             <div className="max-w-md w-full bg-white border-[2px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] p-6 space-y-6">
                 <h2 className="text-2xl font-bold text-center text-[#444] uppercase tracking-widest">
-                    {isResetMode ? 'Reset Password' : 'Habit Tracker'}
+                    {isResetMode ? 'Reset Password' : 'HabiCard'}
                 </h2>
                 <p className="text-center text-sm text-stone-500">
                     {isResetMode

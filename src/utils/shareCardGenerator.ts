@@ -152,7 +152,7 @@ export const generateShareCard = async (data: ShareCardData): Promise<Blob> => {
     const footerY = cardY + cardHeight - 80;
     ctx.font = 'bold 32px Arial';
     ctx.fillStyle = '#999999';
-    ctx.fillText('HABIT TRACKER', cardX + cardWidth / 2, footerY);
+    ctx.fillText('HABICARD', cardX + cardWidth / 2, footerY);
 
     // Convert canvas to blob
     return new Promise((resolve, reject) => {

@@ -6,6 +6,8 @@ import { Theme, MonthStats, Habit } from '../types';
 import { SettingsMenu } from './SettingsMenu';
 import { HabitManagerModal } from './HabitManagerModal';
 import { StatCard } from './StatCard';
+import { DailyQuote } from './DailyQuote';
+import { DailyTips } from './DailyTips';
 
 interface HeaderProps {
     view: 'monthly' | 'dashboard' | 'weekly';
@@ -252,7 +254,7 @@ export const Header: React.FC<HeaderProps> = ({
                 )}
             </div>
 
-            <div className="md:col-span-6 border border-stone-200 p-2 bg-[#f9f9f9] min-h-[160px] h-[160px] relative overflow-hidden flex flex-col">
+            <div className="md:col-span-6 border border-stone-200 p-2 bg-[#f9f9f9] min-h-[160px] h-auto relative overflow-hidden flex flex-col">
                 <div className="flex items-center justify-between mb-1 px-1">
                     <div className="text-[9px] font-black uppercase tracking-widest text-stone-600">
                         {view === 'monthly' ? 'Daily Progress This Month' : (view === 'weekly' ? 'Daily Progress This Week' : 'Monthly Progress This Year')}
@@ -371,6 +373,8 @@ export const Header: React.FC<HeaderProps> = ({
                         </BarChart>
                     )}
                 </ResponsiveContainer>
+                <DailyQuote />
+                <DailyTips />
             </div>
 
             <div className="md:col-span-3 border border-stone-200 bg-white relative flex flex-col overflow-hidden min-h-[160px]">

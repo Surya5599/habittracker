@@ -38,7 +38,6 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest }) => {
         setLoading(true);
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) toast.error(error.message);
-        else toast.success('Check your email to confirm your account.');
         setLoading(false);
     };
 

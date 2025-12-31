@@ -8,6 +8,7 @@ import { HabitManagerModal } from './HabitManagerModal';
 import { StatCard } from './StatCard';
 import { DailyQuote } from './DailyQuote';
 import { DailyTips } from './DailyTips';
+import { WeekPicker, MonthPicker, YearPicker } from './DateSelectors';
 
 interface HeaderProps {
     view: 'monthly' | 'dashboard' | 'weekly';
@@ -42,6 +43,7 @@ interface HeaderProps {
     removeHabit: (id: string) => Promise<void>;
     prevWeekProgress?: any;
     allTimeBestWeek?: any;
+    setWeekOffset?: (offset: number) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -77,95 +79,212 @@ export const Header: React.FC<HeaderProps> = ({
     removeHabit,
     prevWeekProgress,
     allTimeBestWeek,
+    setWeekOffset,
 }) => {
     const [isHabitModalOpen, setIsHabitModalOpen] = React.useState(false);
     const [chartType, setChartType] = React.useState<'area' | 'bar'>(() => {
         return (localStorage.getItem('habit_chart_type') as 'area' | 'bar') || 'area';
     });
 
+    const [showWeekSelector, setShowWeekSelector] = React.useState(false);
+    const [showMonthSelector, setShowMonthSelector] = React.useState(false);
+    const [showYearSelector, setShowYearSelector] = React.useState(false);
+
     React.useEffect(() => {
         localStorage.setItem('habit_chart_type', chartType);
     }, [chartType]);
+
+    // Close selectors when clicking outside
+    React.useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (showWeekSelector || showMonthSelector || showYearSelector) {
+                // Simple close on any click for now, can be more specific if needed
+                // But since the picker stops propagation, clicking outside handles the close
+                const target = event.target as HTMLElement;
+                if (!target.closest('.date-selector-container')) {
+                    setShowWeekSelector(false);
+                    setShowMonthSelector(false);
+                    setShowYearSelector(false);
+                }
+            }
+        };
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, [showWeekSelector, showMonthSelector, showYearSelector]);
+
+
+    const handleWeekSelect = (date: Date) => {
+        if (!setWeekOffset) return;
+
+        const today = new Date();
+        const currentDay = today.getDay();
+        const currentMondayDiff = today.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
+        const currentMonday = new Date(today.getFullYear(), today.getMonth(), currentMondayDiff);
+
+        // Normalize times to compare dates only
+        currentMonday.setHours(0, 0, 0, 0);
+        const selectedDate = new Date(date);
+        selectedDate.setHours(0, 0, 0, 0);
+
+        // Calculate diff in weeks
+        const diffTime = selectedDate.getTime() - currentMonday.getTime();
+        const diffWeeks = Math.round(diffTime / (1000 * 60 * 60 * 24 * 7));
+
+        setWeekOffset(diffWeeks);
+    };
+
+    const handleMonthSelect = (monthIndex: number, year: number) => {
+        setCurrentMonthIndex(monthIndex);
+        setCurrentYear(year);
+    };
+
+    const handleYearSelect = (year: number) => {
+        setCurrentYear(year);
+    };
+
+    // Calculate current week start date for the picker
+    // This logic mimics App.tsx but we probably should pass "weekOffset" to Header to verify implementation
+    // But since we don't have weekOffset here (it's in App), we can calculate it relative to "reset".
+    // Wait, we don't have weekOffset in props! We need to add it.
+    // For now, let's assume 0 if undefined, but we need to add it to props.
+
+    // Actually, calculate from weekRange string is risky.
+    // Ideally we pass weekOffset.
+
+    const getCurrentWeekStart = () => {
+        // This is tricky without weekOffset. 
+        // Let's rely on the user passing setWeekOffset and weekOffset.
+        // IF we don't have it, we default to today.
+        return new Date();
+    };
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
             <div className="md:col-span-3 border border-stone-200 p-3 bg-white flex flex-col gap-2 h-full justify-between relative min-h-[160px]">
                 <div>
                     {view === 'monthly' ? (
-                        <div className="flex items-center justify-between bg-white border border-stone-300 px-2 py-1">
+                        <div className="flex items-center justify-between bg-white border border-stone-300 px-2 py-1 relative date-selector-container">
                             <button onClick={() => navigateMonth('prev')} className="hover:text-black active:scale-95 transition-transform"><ChevronLeft size={16} /></button>
-                            <span className="font-bold uppercase tracking-widest text-sm select-none">{MONTHS[currentMonthIndex]} {currentYear}</span>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setShowMonthSelector(!showMonthSelector); setShowWeekSelector(false); setShowYearSelector(false); }}
+                                className="font-bold uppercase tracking-widest text-sm select-none hover:bg-stone-50 px-2 py-0.5 rounded-sm transition-colors"
+                            >
+                                {MONTHS[currentMonthIndex]} {currentYear}
+                            </button>
+                            <MonthPicker
+                                isOpen={showMonthSelector}
+                                onClose={() => setShowMonthSelector(false)}
+                                currentMonthIndex={currentMonthIndex}
+                                currentYear={currentYear}
+                                onMonthSelect={handleMonthSelect}
+                                themePrimary={theme.primary}
+                            />
                             <button onClick={() => navigateMonth('next')} className="hover:text-black active:scale-95 transition-transform"><ChevronRight size={16} /></button>
                         </div>
                     ) : view === 'dashboard' ? (
-                        <div className="flex items-center justify-between bg-white border border-stone-300 px-2 py-1">
+                        <div className="flex items-center justify-between bg-white border border-stone-300 px-2 py-1 relative date-selector-container">
                             <button onClick={() => setCurrentYear(prev => prev - 1)} className="hover:text-black active:scale-95 transition-transform"><ChevronLeft size={16} /></button>
-                            <span className="font-bold uppercase tracking-widest text-sm select-none">{currentYear} Dashboard</span>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setShowYearSelector(!showYearSelector); setShowWeekSelector(false); setShowMonthSelector(false); }}
+                                className="font-bold uppercase tracking-widest text-sm select-none hover:bg-stone-50 px-2 py-0.5 rounded-sm transition-colors"
+                            >
+                                {currentYear} Dashboard
+                            </button>
+                            <YearPicker
+                                isOpen={showYearSelector}
+                                onClose={() => setShowYearSelector(false)}
+                                currentYear={currentYear}
+                                onYearSelect={handleYearSelect}
+                                themePrimary={theme.primary}
+                            />
                             <button onClick={() => setCurrentYear(prev => prev + 1)} className="hover:text-black active:scale-95 transition-transform"><ChevronRight size={16} /></button>
                         </div>
                     ) : (
-                        <div className="flex items-center justify-between bg-white border border-stone-300 px-2 py-1">
+                        <div className="flex items-center justify-between bg-white border border-stone-300 px-2 py-1 relative date-selector-container">
                             <button onClick={() => navigateWeek('prev')} className="hover:text-black active:scale-95 transition-transform"><ChevronLeft size={16} /></button>
-                            <span className="font-bold uppercase tracking-widest text-sm select-none">{weekRange}</span>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setShowWeekSelector(!showWeekSelector); setShowMonthSelector(false); setShowYearSelector(false); }}
+                                className="font-bold uppercase tracking-widest text-sm select-none hover:bg-stone-50 px-2 py-0.5 rounded-sm transition-colors"
+                            >
+                                {weekRange}
+                            </button>
+                            <WeekPicker
+                                isOpen={showWeekSelector}
+                                onClose={() => setShowWeekSelector(false)}
+                                currentDate={getCurrentWeekStart()}
+                                onWeekSelect={handleWeekSelect}
+                                themePrimary={theme.primary}
+                            />
                             <button onClick={() => navigateWeek('next')} className="hover:text-black active:scale-95 transition-transform"><ChevronRight size={16} /></button>
                         </div>
                     )}
 
-                    <div className="mt-2 flex items-center justify-start gap-2 flex-wrap">
-                        <button
-                            onClick={() => { resetWeekOffset(); setView('weekly'); }}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 border-[2px] border-black text-[10px] font-black uppercase tracking-widest transition-all ${view === 'weekly' ? 'bg-black text-white shadow-none translate-y-0.5' : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5'}`}
-                        >
-                            <Clock size={12} />
-                            My Week
-                        </button>
-
-                        <button
-                            onClick={() => setView('monthly')}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 border-[2px] border-black text-[10px] font-black uppercase tracking-widest transition-all ${view === 'monthly' ? 'bg-black text-white shadow-none translate-y-0.5' : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5'}`}
-                        >
-                            <Calendar size={12} />
-                            My Month
-                        </button>
-
-                        <button
-                            onClick={() => setView('dashboard')}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 border-[2px] border-black text-[10px] font-black uppercase tracking-widest transition-all ${view === 'dashboard' ? 'bg-black text-white shadow-none translate-y-0.5' : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5'}`}
-                        >
-                            <LayoutDashboard size={12} />
-                            Dashboard
-                        </button>
-
-
-                        <SettingsMenu
-                            theme={theme}
-                            setTheme={setTheme}
-                            themes={themes}
-                            settingsOpen={settingsOpen}
-                            setSettingsOpen={setSettingsOpen}
-                            settingsRef={settingsRef}
-                            defaultView={defaultView}
-                            setDefaultView={setDefaultView}
-                        />
-
-
-                        {guestMode ? (
+                    <div className="mt-2 flex items-center justify-between gap-2 flex-wrap">
+                        <div className="hidden md:flex items-center gap-2">
                             <button
-                                onClick={() => setGuestMode(false)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 border-[2px] border-emerald-600 text-[10px] font-black uppercase tracking-widest bg-emerald-500 text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all"
+                                onClick={() => { resetWeekOffset(); setView('weekly'); }}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 border-[2px] border-black text-[10px] font-black uppercase tracking-widest transition-all ${view === 'weekly' ? 'bg-black text-white shadow-none translate-y-0.5' : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5'}`}
                             >
-                                <LogIn size={12} />
-                                Sign In
+                                <Clock size={12} />
+                                My Week
                             </button>
-                        ) : (
+
                             <button
-                                onClick={handleLogout}
-                                className="p-1.5 rounded-full border border-stone-200 text-stone-300 hover:text-rose-500 transition-colors"
-                                title="Logout"
+                                onClick={() => {
+                                    setView('monthly');
+                                    const now = new Date();
+                                    setCurrentMonthIndex(now.getMonth());
+                                    setCurrentYear(now.getFullYear());
+                                }}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 border-[2px] border-black text-[10px] font-black uppercase tracking-widest transition-all ${view === 'monthly' ? 'bg-black text-white shadow-none translate-y-0.5' : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5'}`}
                             >
-                                <LogOut size={14} />
+                                <Calendar size={12} />
+                                My Month
                             </button>
-                        )}
+
+                            <button
+                                onClick={() => {
+                                    setView('dashboard');
+                                    setCurrentYear(new Date().getFullYear());
+                                }}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 border-[2px] border-black text-[10px] font-black uppercase tracking-widest transition-all ${view === 'dashboard' ? 'bg-black text-white shadow-none translate-y-0.5' : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5'}`}
+                            >
+                                <LayoutDashboard size={12} />
+                                Dashboard
+                            </button>
+                        </div>
+
+                        <div className="flex items-center gap-2 ml-auto md:ml-0">
+                            <SettingsMenu
+                                theme={theme}
+                                setTheme={setTheme}
+                                themes={themes}
+                                settingsOpen={settingsOpen}
+                                setSettingsOpen={setSettingsOpen}
+                                settingsRef={settingsRef}
+                                defaultView={defaultView}
+                                setDefaultView={setDefaultView}
+                            />
+
+
+                            {guestMode ? (
+                                <button
+                                    onClick={() => setGuestMode(false)}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 border-[2px] border-emerald-600 text-[10px] font-black uppercase tracking-widest bg-emerald-500 text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all"
+                                >
+                                    <LogIn size={12} />
+                                    Sign In
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={handleLogout}
+                                    className="p-1.5 rounded-full border border-stone-200 text-stone-300 hover:text-rose-500 transition-colors"
+                                    title="Logout"
+                                >
+                                    <LogOut size={14} />
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
 

@@ -12,6 +12,7 @@ import { useHabits } from './hooks/useHabits';
 import { useTheme } from './hooks/useTheme';
 import { useHabitStats } from './hooks/useHabitStats';
 import { DailyNote } from './types';
+import { BottomNav } from './components/BottomNav';
 
 const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
@@ -357,7 +358,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#e5e5e5] p-2 sm:p-4 font-sans text-[#444] relative w-full max-w-full">
+    <div className="min-h-screen bg-[#e5e5e5] p-2 sm:p-4 pb-20 sm:pb-4 font-sans text-[#444] relative w-full max-w-full">
       <Toaster position="top-center" reverseOrder={false} />
       <div className="max-w-full mx-auto bg-white border-[2px] sm:border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] p-2 sm:p-4 space-y-4 min-h-[calc(100vh-2rem)]">
 
@@ -394,6 +395,7 @@ const App: React.FC = () => {
           addHabit={addHabit}
           updateHabit={updateHabit}
           removeHabit={removeHabit}
+          setWeekOffset={setWeekOffset}
         />
 
         {view === 'monthly' ? (
@@ -443,6 +445,13 @@ const App: React.FC = () => {
           />
         )}
       </div>
+
+      <BottomNav
+        view={view}
+        setView={setView}
+        resetWeekOffset={resetWeekOffset}
+        theme={theme}
+      />
 
       <style>{`
         .animate-spin-slow { animation: spin 3s linear infinite; }

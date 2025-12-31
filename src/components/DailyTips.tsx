@@ -19,10 +19,6 @@ export const DailyTips: React.FC = () => {
             icon: 'lightbulb'
         },
         {
-            text: "Enjoying the app? Consider supporting the project with a coffee to help keep it free and ad-free.",
-            icon: 'coffee'
-        },
-        {
             text: "Consistency is key. Even a small step each day adds up to big results over time.",
             icon: 'lightbulb'
         }

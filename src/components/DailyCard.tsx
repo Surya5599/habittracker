@@ -60,7 +60,15 @@ export const DailyCard: React.FC<DailyCardProps> = ({
         return (doneCount / habits.length) * 100;
     };
 
-    const progress = getDayProgress(date);
+    const actualProgress = getDayProgress(date);
+    const [progress, setProgress] = useState(0);
+
+    React.useEffect(() => {
+        const timer = setTimeout(() => {
+            setProgress(actualProgress);
+        }, 0);
+        return () => clearTimeout(timer);
+    }, [actualProgress]);
     const completedCount = habits.reduce((acc, h) =>
         acc + (checkCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear()) ? 1 : 0), 0);
     const totalCount = habits.length;
@@ -108,7 +116,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
     return (
         <div className={`border-[2px] border-black bg-white flex flex-col overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1 ${isToday ? 'ring-2 ring-black ring-offset-2' : ''}`}>
             {/* Header */}
-            <div className="p-3 text-center border-b-[2px] border-black relative" style={{ backgroundColor: isToday ? theme.secondary : theme.primary }}>
+            <div className="p-3 text-center border-b-[2px] border-black relative" style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}>
                 {onPrev && (
                     <button
                         onClick={onPrev}
@@ -154,8 +162,8 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                             strokeDasharray={2 * Math.PI * 40}
                             strokeDashoffset={2 * Math.PI * 40 * (1 - progress / 100)}
                             strokeLinecap="round"
-                            className="transition-all duration-500 ease-out"
-                            style={{ color: isToday ? theme.secondary : theme.primary }}
+                            className="transition-all duration-1000 ease-out"
+                            style={{ color: isToday ? theme.primary : theme.secondary }}
                         />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -192,7 +200,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
             {completedCount === totalCount && totalCount > 0 ? (
                 <div className="border-t border-black flex-shrink-0">
                     <button
-                        onClick={() => onShareClick({ date, dayName, dateString, completedCount, totalCount, progress })}
+                        onClick={() => onShareClick({ date, dayName, dateString, completedCount, totalCount, progress: actualProgress })}
                         className="w-full p-3 bg-black text-white font-black uppercase tracking-widest text-[11px] hover:bg-stone-800 transition-all flex items-center justify-center gap-2 group"
                     >
                         <Share2 size={14} className="group-hover:scale-110 transition-transform" />
@@ -201,7 +209,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                 </div>
             ) : (
                 <div className="grid grid-cols-2 text-center text-[9px] font-black uppercase tracking-tight border-t border-black flex-shrink-0">
-                    <div className="p-1 px-2 border-r border-black" style={{ backgroundColor: (isToday ? theme.secondary : theme.primary) + '20' }}>
+                    <div className="p-1 px-2 border-r border-black" style={{ backgroundColor: (isToday ? theme.primary : theme.secondary) + '20' }}>
                         <span className="text-stone-500 block">Habits Maintained</span>
                         <span className="text-lg leading-none">{completedCount}</span>
                     </div>

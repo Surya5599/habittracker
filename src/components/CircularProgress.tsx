@@ -18,9 +18,18 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
     className = '',
     textClassName = 'text-[10px]',
 }) => {
+    const [animatedPercentage, setAnimatedPercentage] = React.useState(0);
+
+    React.useEffect(() => {
+        const timer = setTimeout(() => {
+            setAnimatedPercentage(percentage);
+        }, 100);
+        return () => clearTimeout(timer);
+    }, [percentage]);
+
     const radius = (size - strokeWidth) / 2;
     const circumference = radius * 2 * Math.PI;
-    const offset = circumference - (percentage / 100) * circumference;
+    const offset = circumference - (animatedPercentage / 100) * circumference;
 
     return (
         <div className={`relative flex items-center justify-center ${className}`} style={{ width: size, height: size }}>
@@ -50,11 +59,11 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
                     strokeDasharray={circumference}
                     strokeDashoffset={offset}
                     strokeLinecap="round"
-                    className="transition-all duration-500 ease-in-out"
+                    className="transition-all duration-1000 ease-out"
                 />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-                <span className={`${textClassName} font-black`}>{Math.round(percentage)}%</span>
+                <span className={`${textClassName} font-black`}>{Math.round(animatedPercentage)}%</span>
             </div>
         </div>
     );

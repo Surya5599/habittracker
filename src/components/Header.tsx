@@ -386,7 +386,7 @@ export const Header: React.FC<HeaderProps> = ({
                         {chartType === 'area' ? <BarChart2 size={12} /> : <Activity size={12} />}
                     </button>
                 </div>
-                <ResponsiveContainer width="100%" height="100%" minHeight={120}>
+                <ResponsiveContainer width="100%" height="100%" minHeight={120} key={view + chartType}>
                     {chartType === 'area' ? (
                         <AreaChart data={view === 'monthly' ? dailyStats : (view === 'weekly' ? weeklyStats : annualStats.monthlySummaries)}>
                             <defs>
@@ -440,7 +440,8 @@ export const Header: React.FC<HeaderProps> = ({
                                 fill="url(#colorCount)"
                                 dot={{ r: 3, fill: theme.primary, strokeWidth: 2, stroke: '#fff' }}
                                 activeDot={{ r: 5, strokeWidth: 0 }}
-                                animationDuration={400}
+                                animationDuration={1000}
+                                animationBegin={0}
                                 isAnimationActive={true}
                             />
                         </AreaChart>
@@ -486,7 +487,8 @@ export const Header: React.FC<HeaderProps> = ({
                                 dataKey={view === 'dashboard' ? "completed" : "count"}
                                 fill={theme.primary}
                                 radius={[2, 2, 0, 0]}
-                                animationDuration={400}
+                                animationDuration={1000}
+                                animationBegin={0}
                                 isAnimationActive={true}
                             />
                         </BarChart>
@@ -502,7 +504,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
                 <div className="flex-1 flex flex-col items-center justify-center p-2 relative">
                     <div className="w-full h-24 sm:h-24 min-h-[96px] relative">
-                        <ResponsiveContainer width="100%" height="100%" minHeight={96}>
+                        <ResponsiveContainer width="100%" height="100%" minHeight={96} key={view}>
                             <PieChart>
                                 <Pie
                                     data={view === 'monthly'
@@ -514,6 +516,8 @@ export const Header: React.FC<HeaderProps> = ({
                                     }
                                     innerRadius="80%" outerRadius="100%" paddingAngle={2} dataKey="value" startAngle={90} endAngle={450}
                                     isAnimationActive={true}
+                                    animationDuration={1000}
+                                    animationBegin={0}
                                 >
                                     <Cell fill={theme.primary} /><Cell fill="#f0f0f0" />
                                 </Pie>

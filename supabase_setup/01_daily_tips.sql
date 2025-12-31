@@ -19,3 +19,11 @@ INSERT INTO daily_tips (text, icon) VALUES
     ('Toggle between Line and Bar charts in the header to visualize your progress differently.', 'lightbulb'),
     ('You can use "Guest Mode" to try out features, but Sign In to sync across devices.', 'lightbulb'),
     ('Setting too many habits at once can be overwhelming. Start with 3 core habits.', 'lightbulb');
+
+-- Enable Row Level Security
+ALTER TABLE daily_tips ENABLE ROW LEVEL SECURITY;
+
+-- Create policy to allow public read access
+CREATE POLICY "Allow public read access" ON daily_tips
+    FOR SELECT
+    USING (true);

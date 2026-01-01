@@ -4,6 +4,7 @@ import { Habit, HabitCompletion, Theme, DailyNote, Task } from '../types';
 import { DAYS_OF_WEEK } from '../constants';
 import { isCompleted as checkCompleted } from '../utils/stats';
 import { ColorScheme } from './ShareCustomizationModal';
+import { generateUUID } from '../utils/uuid';
 
 interface DailyCardProps {
     date: Date;
@@ -181,16 +182,19 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                     {habits.map(habit => {
                         const done = checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
                         return (
-                            <div key={habit.id} className="flex items-center justify-between group">
+                            <div
+                                key={habit.id}
+                                onClick={() => toggleCompletion(habit.id, dateKey)}
+                                className="flex items-center justify-between group cursor-pointer hover:bg-black/5 rounded p-1 -mx-1 transition-colors"
+                            >
                                 <span className={`text-[11px] font-bold truncate flex-1 ${done ? 'text-stone-400 line-through' : 'text-stone-700'}`}>
                                     {habit.name || 'Untitled'}
                                 </span>
-                                <button
-                                    onClick={() => toggleCompletion(habit.id, dateKey)}
-                                    className={`w-4 h-4 border-2 border-black flex items-center justify-center transition-all ${done ? 'bg-black text-white' : 'bg-white hover:bg-stone-100'}`}
+                                <div
+                                    className={`w-4 h-4 border-2 border-black flex items-center justify-center transition-all ${done ? 'bg-black text-white' : 'bg-white'}`}
                                 >
                                     {done && <Check size={10} strokeWidth={4} />}
-                                </button>
+                                </div>
                             </div>
                         );
                     })}
@@ -242,17 +246,17 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                     updateNote(dateKey, [...targetTasks, taskToMove]);
                 }}
             >
-                <div className="p-2 bg-stone-100 border-b-2 border-black text-[9px] font-black uppercase tracking-widest text-stone-500 flex items-center justify-between sticky top-0 z-10 flex-shrink-0">
+                <div className="p-2 bg-stone-100 border-b-2 border-black text-[9px] font-black uppercase tracking-widest text-stone-500 flex items-center justify-center relative flex-shrink-0">
                     <span>Tasks</span>
                     <button
                         onClick={() => {
                             const currentTasks = (notes[dateKey] as Task[]) || [];
-                            const newTask: Task = { id: crypto.randomUUID(), text: '', completed: false };
+                            const newTask: Task = { id: generateUUID(), text: '', completed: false };
                             updateNote(dateKey, [...currentTasks, newTask]);
                             setEditingTaskId(newTask.id);
                             setEditingTaskText('');
                         }}
-                        className="hover:bg-stone-200 p-0.5 rounded transition-colors"
+                        className="absolute right-2 hover:bg-stone-200 p-1.5 rounded transition-colors" // Increased hit area
                     >
                         <Plus size={12} strokeWidth={3} />
                     </button>
@@ -269,14 +273,17 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                             className={`flex items-start gap-2 group bg-white border border-transparent hover:border-stone-200 p-1 rounded shadow-sm hover:shadow-md transition-all ${editingTaskId === task.id ? 'ring-2 ring-black' : 'cursor-move'}`}
                         >
                             <button
-                                onClick={() => {
+                                onClick={(e) => {
+                                    e.stopPropagation(); // Prevent drag/parent clicks
                                     const currentTasks = (notes[dateKey] as Task[]) || [];
                                     const newTasks = currentTasks.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t);
                                     updateNote(dateKey, newTasks);
                                 }}
-                                className={`mt-0.5 w-3 h-3 border border-black flex items-center justify-center transition-all flex-shrink-0 ${task.completed ? 'bg-black text-white' : 'bg-white hover:bg-stone-100'}`}
+                                className="p-2 -m-2 flex-shrink-0 flex items-center justify-center focus:outline-none" // Large hit area wrapper
                             >
-                                {task.completed && <Check size={8} strokeWidth={4} />}
+                                <div className={`w-3 h-3 border border-black flex items-center justify-center transition-all ${task.completed ? 'bg-black text-white' : 'bg-white hover:bg-stone-100'}`}>
+                                    {task.completed && <Check size={8} strokeWidth={4} />}
+                                </div>
                             </button>
 
                             {editingTaskId === task.id ? (
@@ -334,7 +341,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                     {(!notes[dateKey] || (notes[dateKey] as Task[]).length === 0) && (
                         <div className="text-[9px] text-stone-300 text-center py-2 italic cursor-pointer" onClick={() => {
                             const currentTasks = (notes[dateKey] as Task[]) || [];
-                            const newTask: Task = { id: crypto.randomUUID(), text: '', completed: false };
+                            const newTask: Task = { id: generateUUID(), text: '', completed: false };
                             updateNote(dateKey, [...currentTasks, newTask]);
                             setEditingTaskId(newTask.id);
                             setEditingTaskText('');

@@ -13,6 +13,7 @@ import { useTheme } from './hooks/useTheme';
 import { useHabitStats } from './hooks/useHabitStats';
 import { DailyNote } from './types';
 import { BottomNav } from './components/BottomNav';
+import { generateUUID } from './utils/uuid';
 
 const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
@@ -153,12 +154,12 @@ const App: React.FC = () => {
                 notesObj[note.date_key] = parsed;
               } else {
                 // Should not happen if we are strict, but handle just in case it's a JSON string
-                notesObj[note.date_key] = [{ id: crypto.randomUUID(), text: String(parsed), completed: false }];
+                notesObj[note.date_key] = [{ id: generateUUID(), text: String(parsed), completed: false }];
               }
             } catch {
               // Legacy plain text note
               if (note.content) {
-                notesObj[note.date_key] = [{ id: crypto.randomUUID(), text: note.content, completed: false }];
+                notesObj[note.date_key] = [{ id: generateUUID(), text: note.content, completed: false }];
               }
             }
           });
@@ -171,7 +172,7 @@ const App: React.FC = () => {
         const migratedNotes: DailyNote = {};
         Object.entries(localNotes).forEach(([key, val]) => {
           if (typeof val === 'string') {
-            migratedNotes[key] = [{ id: crypto.randomUUID(), text: val, completed: false }];
+            migratedNotes[key] = [{ id: generateUUID(), text: val, completed: false }];
           } else {
             migratedNotes[key] = val as any;
           }

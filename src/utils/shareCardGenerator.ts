@@ -1,5 +1,6 @@
 import { Theme } from '../types';
 import { ColorScheme } from '../components/ShareCustomizationModal';
+import toast from 'react-hot-toast';
 
 interface ShareCardData {
     dayName: string;
@@ -166,6 +167,8 @@ export const generateShareCard = async (data: ShareCardData): Promise<Blob> => {
     });
 };
 
+
+
 export const shareCard = async (blob: Blob, dayName: string) => {
     const fileName = `habit-tracker-${dayName.toLowerCase()}.png`;
 
@@ -183,8 +186,12 @@ export const shareCard = async (blob: Blob, dayName: string) => {
                 return;
             }
         } catch (error) {
-            // If sharing fails, fall through to download
-            console.log('Share failed, downloading instead:', error);
+            // If user cancelled, don't download
+            if ((error as any).name === 'AbortError') {
+                return;
+            }
+            console.log('Share failed, attempting download fallback:', error);
+            // Fall through to download for other errors
         }
     }
 
@@ -197,4 +204,5 @@ export const shareCard = async (blob: Blob, dayName: string) => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    toast.success('Image saved to device');
 };

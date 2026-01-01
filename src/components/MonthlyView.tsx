@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Plus, Trash2, Save, Check } from 'lucide-react';
 import { CircularProgress } from './CircularProgress';
 import { Habit, HabitCompletion, Theme } from '../types';
@@ -52,6 +52,31 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
     removeHabit,
     isDayFullyCompleted,
 }) => {
+    const tableScrollRef = useRef<HTMLDivElement>(null);
+    const todayRef = useRef<HTMLTableHeaderCellElement>(null);
+    const weeksScrollRef = useRef<HTMLDivElement>(null);
+    const currentWeekRef = useRef<HTMLDivElement>(null);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        // Scroll main table to today
+        if (todayRef.current && scrollContainerRef.current) {
+            const container = scrollContainerRef.current;
+            const element = todayRef.current;
+
+            // Add a small timeout to ensure layout is fully rendered
+            setTimeout(() => {
+                const scrollLeft = element.offsetLeft - (container.clientWidth / 2) + (element.clientWidth / 2) - 50; // -50 to account for sticky column on mobile
+                container.scrollTo({ left: scrollLeft, behavior: 'auto' });
+            }, 100);
+        }
+
+        // Scroll top chart to current week
+        if (currentWeekRef.current) {
+            currentWeekRef.current.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
+        }
+    }, [currentMonthIndex, currentYear]);
+
     return (
         <>
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
@@ -83,15 +108,16 @@ total possible">
                                 <span className="cursor-help">Weekly Activity</span>
                             </div>
                         </div>
-                        <div className="col-span-9 md:col-span-7 flex overflow-x-auto min-h-[220px]">
+                        <div ref={weeksScrollRef} className="col-span-9 md:col-span-7 flex overflow-x-auto min-h-[220px] snap-x snap-mandatory">
                             {weeks.map((week, wIndex) => {
                                 const weekTotal = week.reduce((acc, day) => {
                                     let dc = 0; habits.forEach(h => { if (checkCompleted(h.id, day, completions, currentMonthIndex, currentYear)) dc++; }); return acc + dc;
                                 }, 0);
                                 const weekMax = week.length * (habits.length || 1);
                                 const weekPerc = weekMax > 0 ? (weekTotal / weekMax) * 100 : 0;
+                                const isCurrentWeek = week.includes(new Date().getDate()) && currentMonthIndex === new Date().getMonth() && currentYear === new Date().getFullYear();
                                 return (
-                                    <div key={wIndex} className="flex-1 min-w-[80px] border-r border-stone-100 flex flex-col">
+                                    <div key={wIndex} ref={isCurrentWeek ? currentWeekRef : null} className="flex-1 min-w-[80px] border-r border-stone-100 flex flex-col snap-center">
                                         <div className="flex-[2] flex flex-col items-center justify-center p-1 border-b border-stone-50">
                                             <CircularProgress
                                                 percentage={weekPerc}
@@ -147,11 +173,11 @@ total possible">
             </div>
 
             <div className="border border-stone-200 bg-white flex flex-col overflow-hidden relative w-full">
-                <div className="overflow-x-auto w-full">
+                <div ref={scrollContainerRef} className="overflow-x-auto w-full">
                     <table className="w-full border-separate border-spacing-0">
                         <thead>
                             <tr className="text-[10px] font-black uppercase tracking-widest text-stone-700" style={{ backgroundColor: theme.secondary + '40' }}>
-                                <th className="p-2 border-r border-stone-200 text-left min-w-[150px] sm:min-w-[180px] sticky left-0 z-40" style={{ backgroundColor: theme.secondary + '40' }}>
+                                <th className="p-2 border-r border-stone-200 text-left min-w-[100px] sm:min-w-[180px] sticky left-0 z-50" style={{ backgroundColor: 'white', backgroundImage: `linear-gradient(${theme.secondary}40, ${theme.secondary}40)` }}>
                                     <div className="flex items-center gap-2">
                                         <button onClick={(e) => { e.preventDefault(); addHabit(); }} className="p-0.5 px-1 bg-white hover:bg-stone-100 rounded shadow-sm border border-stone-200 font-black flex items-center transition-all active:scale-95" style={{ color: theme.secondary }} title="Add new habit">
                                             <Plus size={10} strokeWidth={4} />
@@ -170,6 +196,7 @@ total possible">
                                     const isFull = isDayFullyCompleted(day);
                                     return (
                                         <th key={day}
+                                            ref={isToday ? todayRef : null}
                                             className={`p-1 border-r border-stone-100 min-w-[28px] text-center transition-colors duration-300 ${isToday ? 'z-10 font-black' : ''}`}
                                             style={{
                                                 backgroundColor: isToday ? theme.primary : (isFull ? theme.primary + '30' : undefined),
@@ -195,25 +222,27 @@ total possible">
                                 const isEditingGoal = editingGoalId === habit.id;
                                 return (
                                     <tr key={habit.id} className="hover:bg-stone-50 transition-colors group">
-                                        <td className="p-1.5 px-3 border-r border-stone-200 text-[11px] font-black text-stone-700 flex items-center justify-between gap-2 sticky left-0 z-20 bg-white group-hover:bg-stone-50">
-                                            {isEditingName ? (
-                                                <div className="flex items-center gap-2 flex-1">
-                                                    <input
-                                                        ref={inputRef}
-                                                        type="text"
-                                                        value={habit.name}
-                                                        onChange={(e) => updateHabitNameState(habit.id, e.target.value)}
-                                                        onBlur={() => handleHabitBlur(habit)}
-                                                        onKeyDown={(e) => { if (e.key === 'Enter') handleHabitBlur(habit); }}
-                                                        className="bg-transparent border-b-2 outline-none flex-1 text-[11px] font-black py-0.5 w-20"
-                                                        style={{ borderColor: theme.secondary }}
-                                                    />
-                                                    <button onClick={() => handleHabitBlur(habit)} style={{ color: theme.secondary }}><Save size={14} /></button>
-                                                </div>
-                                            ) : (
-                                                <span className="truncate flex-1 cursor-pointer hover:underline" onClick={() => setEditingHabitId(habit.id)} title="Click to rename">{habit.name || 'Untitled Habit'}</span>
-                                            )}
-                                            <div className={`flex items-center gap-1 transition-opacity ${isEditingName ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}><button onClick={(e) => { e.stopPropagation(); removeHabit(habit.id); }} className="p-1 text-stone-300 hover:text-red-500 rounded transition-colors"><Trash2 size={12} /></button></div>
+                                        <td className="p-0 border-r border-stone-200 text-[11px] font-black text-stone-700 sticky left-0 z-30 !bg-white group-hover:!bg-stone-50 transition-colors">
+                                            <div className="flex items-center justify-between gap-2 p-1.5 px-3 h-full transition-colors">
+                                                {isEditingName ? (
+                                                    <div className="flex items-center gap-2 flex-1">
+                                                        <input
+                                                            ref={inputRef}
+                                                            type="text"
+                                                            value={habit.name}
+                                                            onChange={(e) => updateHabitNameState(habit.id, e.target.value)}
+                                                            onBlur={() => handleHabitBlur(habit)}
+                                                            onKeyDown={(e) => { if (e.key === 'Enter') handleHabitBlur(habit); }}
+                                                            className="bg-transparent border-b-2 outline-none flex-1 text-[11px] font-black py-0.5 w-20"
+                                                            style={{ borderColor: theme.secondary }}
+                                                        />
+                                                        <button onClick={() => handleHabitBlur(habit)} style={{ color: theme.secondary }}><Save size={14} /></button>
+                                                    </div>
+                                                ) : (
+                                                    <span className="truncate flex-1 cursor-pointer hover:underline" onClick={() => setEditingHabitId(habit.id)} title="Click to rename">{habit.name || 'Untitled Habit'}</span>
+                                                )}
+                                                <div className={`flex items-center gap-1 transition-opacity ${isEditingName ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}><button onClick={(e) => { e.stopPropagation(); removeHabit(habit.id); }} className="p-1 text-stone-300 hover:text-red-500 rounded transition-colors"><Trash2 size={12} /></button></div>
+                                            </div>
                                         </td>
                                         <td className="p-1 border-r border-stone-200 text-center text-[10px] font-black text-stone-600 group-hover:bg-stone-100 transition-colors">
                                             {isEditingGoal ? (

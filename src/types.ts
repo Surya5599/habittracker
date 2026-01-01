@@ -39,3 +39,14 @@ export interface MonthStats {
   percentage: number;
 }
 
+export interface MonthlyGoal {
+  id: string;
+  text: string;
+  completed: boolean;
+  locked?: boolean;
+}
+
+export interface MonthlyGoals {
+  [monthKey: string]: MonthlyGoal[]; // monthKey format: YYYY-M
+}
+

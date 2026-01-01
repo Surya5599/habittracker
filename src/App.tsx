@@ -11,18 +11,48 @@ import { WeeklyView } from './components/WeeklyView';
 import { useHabits } from './hooks/useHabits';
 import { useTheme } from './hooks/useTheme';
 import { useHabitStats } from './hooks/useHabitStats';
-import { DailyNote } from './types';
+import { DailyNote, MonthlyGoals, MonthlyGoal } from './types';
 import { BottomNav } from './components/BottomNav';
 import { generateUUID } from './utils/uuid';
+import { OnboardingModal } from './components/OnboardingModal';
+import { FeatureAnnouncementModal } from './components/FeatureAnnouncementModal';
 
 const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
-  const [guestMode, setGuestMode] = useState(false);
+  const [guestMode, setGuestMode] = useState(() => {
+    return localStorage.getItem('habit_guest_mode') === 'true';
+  });
   const [passwordRecoveryMode, setPasswordRecoveryMode] = useState(false);
   const [defaultView, setDefaultView] = useState<'monthly' | 'dashboard' | 'weekly'>(() => {
     return (localStorage.getItem('habit_default_view') as 'monthly' | 'dashboard' | 'weekly') || 'weekly';
   });
   const [view, setView] = useState<'monthly' | 'dashboard' | 'weekly'>(defaultView);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+
+  useEffect(() => {
+    // Check for specific feature announcements
+    const seenResolutionsUpdate = localStorage.getItem('seen_resolutions_update_2026');
+
+    // Determine if onboarding is completed based on current mode
+    const isGuestOnboardingDone = localStorage.getItem('habit_onboarding_completed') === 'true';
+    const isUserOnboardingDone = session?.user?.user_metadata?.onboarding_completed;
+    const hasCompletedOnboarding = !!((guestMode && isGuestOnboardingDone) || (session?.user && isUserOnboardingDone));
+
+    if (!seenResolutionsUpdate && !showOnboarding && hasCompletedOnboarding) {
+      setShowUpdateModal(true);
+    }
+  }, [showOnboarding, guestMode, session]);
+
+  const handleUpdateModalClose = () => {
+    setShowUpdateModal(false);
+    localStorage.setItem('seen_resolutions_update_2026', 'true');
+  };
+
+  const handleUpdateModalAction = () => {
+    setView('dashboard');
+    handleUpdateModalClose();
+  };
 
   const updateDefaultView = async (newView: 'monthly' | 'dashboard' | 'weekly') => {
     setDefaultView(newView);
@@ -44,17 +74,10 @@ const App: React.FC = () => {
       const remoteView = session.user.user_metadata.default_view;
       if (['monthly', 'dashboard', 'weekly'].includes(remoteView)) {
         setDefaultView(remoteView);
-        // Only update view if we are just loading and haven't navigated yet? 
-        // Actually, if I login, I probably want to match my saved preference immediately if I was on the default.
-        // But if I already navigated, maybe not. 
-        // For simplicity and "sync" behavior, let's update local default. 
-        // We won't force-change the *current* view unless it's the initial load, 
-        // but `view` state is initialized from `defaultView`. 
-        // If the user logs in *after* load, we might want to respect their setting.
-        // Let's just update the default preference for now.
       }
     }
   }, [session]);
+
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [currentMonthIndex, setCurrentMonthIndex] = useState(new Date().getMonth());
   const [editingHabitId, setEditingHabitId] = useState<string | null>(null);
@@ -65,6 +88,46 @@ const App: React.FC = () => {
   const goalInputRef = useRef<HTMLInputElement>(null);
   const [notes, setNotes] = useState<DailyNote>({});
   const settingsRef = useRef<HTMLDivElement>(null);
+  const [monthlyGoals, setMonthlyGoals] = useState<MonthlyGoals>(() => {
+    const stored = JSON.parse(localStorage.getItem('habit_monthly_goals') || '{}');
+    // Migration: Convert string[] to MonthlyGoal[]
+    const migrated: MonthlyGoals = {};
+    Object.entries(stored).forEach(([key, val]) => {
+      if (Array.isArray(val)) {
+        migrated[key] = val.map((item: any) => {
+          if (typeof item === 'string') {
+            return { id: generateUUID(), text: item, completed: false };
+          }
+          return item as MonthlyGoal;
+        });
+      }
+    });
+    return migrated;
+  });
+
+  const updateMonthlyGoals = async (monthKey: string, goals: MonthlyGoal[]) => {
+    setMonthlyGoals(prev => {
+      const updated = { ...prev, [monthKey]: goals };
+      localStorage.setItem('habit_monthly_goals', JSON.stringify(updated));
+      return updated;
+    });
+
+    if (session?.user?.id) {
+      try {
+        await supabase
+          .from('monthly_goals')
+          .upsert({
+            user_id: session.user.id,
+            month_key: monthKey,
+            goals: goals // jsonb
+          }, {
+            onConflict: 'user_id,month_key'
+          });
+      } catch (err) {
+        console.error('Failed to sync monthly goals:', err);
+      }
+    }
+  };
 
   const { theme, setTheme, THEMES } = useTheme();
   const {
@@ -135,29 +198,27 @@ const App: React.FC = () => {
     return () => subscription.unsubscribe();
   }, [setLoading]);
 
-  // Load notes from database or localStorage
+  // Load notes and monthly goals from database or localStorage
   useEffect(() => {
-    const loadNotes = async () => {
+    const loadData = async () => {
       if (session?.user?.id) {
-        // Load from database for logged-in users
-        const { data, error } = await supabase
+        // 1. Load Daily Notes
+        const { data: notesData, error: notesError } = await supabase
           .from('daily_notes')
           .select('date_key, content')
           .eq('user_id', session.user.id);
 
-        if (!error && data) {
+        if (!notesError && notesData) {
           const notesObj: DailyNote = {};
-          data.forEach(note => {
+          notesData.forEach(note => {
             try {
               const parsed = JSON.parse(note.content);
               if (Array.isArray(parsed)) {
                 notesObj[note.date_key] = parsed;
               } else {
-                // Should not happen if we are strict, but handle just in case it's a JSON string
                 notesObj[note.date_key] = [{ id: generateUUID(), text: String(parsed), completed: false }];
               }
             } catch {
-              // Legacy plain text note
               if (note.content) {
                 notesObj[note.date_key] = [{ id: generateUUID(), text: note.content, completed: false }];
               }
@@ -165,10 +226,46 @@ const App: React.FC = () => {
           });
           setNotes(notesObj);
         }
+
+        // 2. Load Monthly Goals
+        const { data: goalsData, error: goalsError } = await supabase
+          .from('monthly_goals')
+          .select('month_key, goals')
+          .eq('user_id', session.user.id);
+
+        if (!goalsError && goalsData) {
+          const goalsObj: MonthlyGoals = {};
+          goalsData.forEach(row => {
+            if (row.goals && Array.isArray(row.goals)) {
+              goalsObj[row.month_key] = row.goals;
+            }
+          });
+
+          // If DB is empty but we have local goals, sync them up (migration)
+          if (goalsData.length === 0) {
+            const localGoals = JSON.parse(localStorage.getItem('habit_monthly_goals') || '{}');
+            if (Object.keys(localGoals).length > 0) {
+              // We have local data but no DB data. Let's start with local and sync it up?
+              // For now, let's just use local data in state, and next update will save it.
+              // Better: Use local data, but don't overwrite if DB had *some* data (handled by length check above).
+              setMonthlyGoals(prev => {
+                return prev;
+              });
+            } else {
+              setMonthlyGoals(goalsObj);
+            }
+          } else {
+            setMonthlyGoals(goalsObj);
+          }
+        }
+
+
+
+
       } else {
         // Load from localStorage for guest users
+        // Notes
         const localNotes = JSON.parse(localStorage.getItem('habit_daily_notes') || '{}');
-        // Migrate local notes if necessary
         const migratedNotes: DailyNote = {};
         Object.entries(localNotes).forEach(([key, val]) => {
           if (typeof val === 'string') {
@@ -178,12 +275,57 @@ const App: React.FC = () => {
           }
         });
         setNotes(migratedNotes);
+
+        // Goals
+        const localGoals = JSON.parse(localStorage.getItem('habit_monthly_goals') || '{}');
+        const migratedGoals: MonthlyGoals = {};
+        Object.entries(localGoals).forEach(([key, val]) => {
+          if (Array.isArray(val)) {
+            migratedGoals[key] = val.map((item: any) => {
+              if (typeof item === 'string') return { id: generateUUID(), text: item, completed: false };
+              return item;
+            });
+          }
+        });
+        setMonthlyGoals(migratedGoals);
       }
     };
-    loadNotes();
+    loadData();
   }, [session]);
 
-  // ... (existing code for settingsRef etc) ...
+  useEffect(() => {
+    if (session?.user) {
+      if (!session.user.user_metadata?.onboarding_completed) {
+        setShowOnboarding(true);
+      }
+    } else if (guestMode) {
+      const localCompleted = localStorage.getItem('habit_onboarding_completed');
+      if (localCompleted !== 'true') {
+        setShowOnboarding(true);
+      }
+    }
+  }, [session, guestMode]);
+
+  const handleOnboardingComplete = async () => {
+    setShowOnboarding(false);
+
+    // Show update modal immediately after onboarding if relevant
+    if (!localStorage.getItem('seen_resolutions_update_2026')) {
+      setShowUpdateModal(true);
+    }
+
+    if (session?.user) {
+      try {
+        await supabase.auth.updateUser({
+          data: { onboarding_completed: true }
+        });
+      } catch (err) {
+        console.error('Failed to update onboarding status', err);
+      }
+    } else {
+      localStorage.setItem('habit_onboarding_completed', 'true');
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -210,7 +352,6 @@ const App: React.FC = () => {
 
   // ... (navigation methods) ...
   const navigateMonth = (direction: 'prev' | 'next') => {
-    // ...
     if (direction === 'prev') {
       if (currentMonthIndex === 0) {
         setCurrentMonthIndex(11);
@@ -296,6 +437,7 @@ const App: React.FC = () => {
       console.error('Logout error:', err);
       setSession(null);
       setGuestMode(false);
+      localStorage.removeItem('habit_guest_mode');
     } finally {
       setLoading(false);
     }
@@ -345,7 +487,10 @@ const App: React.FC = () => {
     return (
       <>
         <Toaster position="top-center" reverseOrder={false} />
-        <AuthForm onContinueAsGuest={() => setGuestMode(true)} />
+        <AuthForm onContinueAsGuest={() => {
+          setGuestMode(true);
+          localStorage.setItem('habit_guest_mode', 'true');
+        }} />
       </>
     );
   }
@@ -361,6 +506,26 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#e5e5e5] p-2 sm:p-4 pb-20 sm:pb-4 font-sans text-[#444] relative w-full max-w-full">
       <Toaster position="top-center" reverseOrder={false} />
+
+      <OnboardingModal
+        isOpen={showOnboarding}
+        onClose={handleOnboardingComplete}
+        initialTheme={theme}
+        onThemeChange={setTheme}
+        initialView={defaultView}
+        onViewChange={updateDefaultView}
+        username={session?.user?.email}
+      />
+
+      <FeatureAnnouncementModal
+        isOpen={showUpdateModal}
+        onClose={handleUpdateModalClose}
+        title="New Feature: Year Resolutions"
+        description="The 'This Year Resolutions' box is now available on your Dashboard! Define your 5 core pillars for the year and lock them in as a promise to yourself."
+        actionLabel="Go to Dashboard"
+        onAction={handleUpdateModalAction}
+      />
+
       <div className="max-w-full mx-auto bg-white border-[2px] sm:border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] p-2 sm:p-4 space-y-4 min-h-[calc(100vh-2rem)]">
 
         <Header
@@ -397,6 +562,8 @@ const App: React.FC = () => {
           updateHabit={updateHabit}
           removeHabit={removeHabit}
           setWeekOffset={setWeekOffset}
+          monthlyGoals={monthlyGoals}
+          updateMonthlyGoals={updateMonthlyGoals}
         />
 
         {view === 'monthly' ? (
@@ -431,6 +598,8 @@ const App: React.FC = () => {
             currentYear={currentYear}
             setCurrentMonthIndex={setCurrentMonthIndex}
             setView={setView}
+            monthlyGoals={monthlyGoals}
+            updateMonthlyGoals={updateMonthlyGoals}
           />
         ) : (
           <WeeklyView

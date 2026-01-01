@@ -1,10 +1,11 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, LayoutDashboard, Calendar, Clock, LogIn, LogOut, ArrowUp, ArrowDown, Minus, Trophy, BarChart2, Activity } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LayoutDashboard, Calendar, Clock, LogIn, LogOut, ArrowUp, ArrowDown, Minus, Trophy, BarChart2, Activity, Sparkles } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 import { MONTHS } from '../constants';
-import { Theme, MonthStats, Habit } from '../types';
+import { Theme, MonthStats, Habit, MonthlyGoal, MonthlyGoals } from '../types';
 import { SettingsMenu } from './SettingsMenu';
 import { HabitManagerModal } from './HabitManagerModal';
+import { ResolutionsModal } from './ResolutionsModal';
 import { StatCard } from './StatCard';
 import { DailyQuote } from './DailyQuote';
 import { DailyTips } from './DailyTips';
@@ -44,6 +45,8 @@ interface HeaderProps {
     prevWeekProgress?: any;
     allTimeBestWeek?: any;
     setWeekOffset?: (offset: number) => void;
+    monthlyGoals: MonthlyGoals;
+    updateMonthlyGoals: (key: string, goals: MonthlyGoal[]) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -80,8 +83,11 @@ export const Header: React.FC<HeaderProps> = ({
     prevWeekProgress,
     allTimeBestWeek,
     setWeekOffset,
+    monthlyGoals,
+    updateMonthlyGoals,
 }) => {
     const [isHabitModalOpen, setIsHabitModalOpen] = React.useState(false);
+    const [isResolutionsModalOpen, setIsResolutionsModalOpen] = React.useState(false);
     const [chartType, setChartType] = React.useState<'area' | 'bar'>(() => {
         return (localStorage.getItem('habit_chart_type') as 'area' | 'bar') || 'area';
     });
@@ -315,12 +321,13 @@ export const Header: React.FC<HeaderProps> = ({
                             className="w-full flex-1 flex flex-row items-center justify-between px-4 text-white rounded-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] hover:translate-y-0.5 hover:shadow-none transition-all border border-black group min-h-[40px]"
                             style={{ backgroundColor: theme.secondary }}
                         >
-                            <span className="text-[10px] font-black uppercase tracking-widest group-hover:scale-105 transition-transform">My Habits</span>
+                            <span className="text-[20px] font-black uppercase tracking-widest group-hover:scale-105 transition-transform">My Habits</span>
                             <div className="flex flex-col items-end justify-center">
                                 <span className="text-xl font-black leading-none">{habits.length}</span>
                                 <span className="text-[8px] font-bold text-stone-500 uppercase tracking-wider">Active</span>
                             </div>
                         </button>
+
                     </div>
                 ) : view === 'weekly' ? (
                     <div className="space-y-2 mt-2 flex flex-col h-full">
@@ -349,7 +356,7 @@ export const Header: React.FC<HeaderProps> = ({
                             className="w-full flex-1 flex flex-row items-center justify-between px-4 text-white rounded-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] hover:translate-y-0.5 hover:shadow-none transition-all border border-black group min-h-[40px]"
                             style={{ backgroundColor: theme.secondary }}
                         >
-                            <span className="text-[10px] font-black uppercase tracking-widest group-hover:scale-105 transition-transform">My Habits</span>
+                            <span className="text-[20px] font-black uppercase tracking-widest group-hover:scale-105 transition-transform">My Habits</span>
                             <div className="flex flex-col items-end justify-center">
                                 <span className="text-xl font-black leading-none">{habits.length}</span>
                                 <span className="text-[8px] font-bold text-stone-500 uppercase tracking-wider">Active</span>
@@ -357,15 +364,53 @@ export const Header: React.FC<HeaderProps> = ({
                         </button>
                     </div>
                 ) : (
-                    <div className="space-y-1 mt-2 h-full">
+                    <div className="space-y-2 mt-2 flex flex-col h-full">
+                        {/* Resolutions Section - Occupies same space as Stats Grid in other views */}
+                        <div className="relative">
+                            {/* Invisible spacer to match other views' layout */}
+                            <div className="grid grid-cols-2 gap-2 invisible">
+                                <div className="bg-stone-50 border border-stone-200 p-2 rounded-sm">
+                                    <div className="flex flex-col items-center justify-center mb-1">
+                                        <span className="text-[8px] font-black uppercase text-stone-500 tracking-wider">Done</span>
+                                        <span className="text-lg font-black leading-none">0</span>
+                                    </div>
+                                    <div className="w-full bg-stone-200 h-1 rounded-full overflow-hidden">
+                                        <div className="h-full" />
+                                    </div>
+                                </div>
+                                <div className="bg-stone-50 border border-stone-200 p-2 rounded-sm">
+                                    <div className="flex flex-col items-center justify-center mb-1">
+                                        <span className="text-[8px] font-black uppercase text-stone-500 tracking-wider">Rate</span>
+                                        <span className="text-lg font-black leading-none">0%</span>
+                                    </div>
+                                    <div className="w-full bg-stone-200 h-1 rounded-full overflow-hidden">
+                                        <div className="h-full" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Resolutions Button Overlay */}
+                            {currentYear === new Date().getFullYear() && (
+                                <div className="absolute inset-0">
+                                    <button
+                                        onClick={() => setIsResolutionsModalOpen(true)}
+                                        className="w-full h-full flex items-center justify-center gap-1.5 text-[9px] font-black uppercase tracking-wider bg-black text-white px-2 py-2 rounded hover:bg-stone-800 transition-colors shadow-sm"
+                                    >
+                                        <Sparkles size={10} />
+                                        This Year Resolutions
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
                         <button
                             onClick={() => setIsHabitModalOpen(true)}
-                            className="w-full h-full max-h-[100px] flex flex-row items-center justify-between px-4 text-white rounded-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] hover:translate-y-0.5 hover:shadow-none transition-all border border-black group"
+                            className="w-full flex-1 flex flex-row items-center justify-between px-4 text-white rounded-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] hover:translate-y-0.5 hover:shadow-none transition-all border border-black group min-h-[40px]"
                             style={{ backgroundColor: theme.secondary }}
                         >
-                            <span className="text-[10px] font-black uppercase tracking-widest group-hover:scale-105 transition-transform">My Habits</span>
+                            <span className="text-[20px] font-black uppercase tracking-widest group-hover:scale-105 transition-transform">My Habits</span>
                             <div className="flex flex-col items-end justify-center">
-                                <span className="text-3xl font-black leading-none">{habits.length}</span>
+                                <span className="text-xl font-black leading-none">{habits.length}</span>
                                 <span className="text-[8px] font-bold text-stone-500 uppercase tracking-wider">Active</span>
                             </div>
                         </button>
@@ -616,6 +661,13 @@ export const Header: React.FC<HeaderProps> = ({
                 updateHabit={updateHabit}
                 removeHabit={removeHabit}
                 themePrimary={theme.primary}
+            />
+            <ResolutionsModal
+                isOpen={isResolutionsModalOpen}
+                onClose={() => setIsResolutionsModalOpen(false)}
+                year={currentYear}
+                currentResolutions={monthlyGoals[`resolutions-${currentYear}`] || []}
+                onSave={(resolutions) => updateMonthlyGoals(`resolutions-${currentYear}`, resolutions)}
             />
         </div >
     );

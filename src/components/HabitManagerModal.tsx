@@ -74,7 +74,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white border-[2px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-full max-w-md overflow-hidden flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-200">
                 <div className="p-4 border-b-[2px] border-black flex items-center justify-between bg-white">
-                    <h2 className="text-lg font-black uppercase tracking-tighter text-black">My Habits</h2>
+                    <h2 className="text-3xl font-black uppercase tracking-tighter text-black">My Habits</h2>
                     <button onClick={onClose} className="border-2 border-transparent hover:border-black p-1 transition-all hover:bg-stone-100">
                         <X size={20} className="text-black" />
                     </button>

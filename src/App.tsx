@@ -42,6 +42,13 @@ const App: React.FC = () => {
     if (!seenResolutionsUpdate && !showOnboarding && hasCompletedOnboarding) {
       setShowUpdateModal(true);
     }
+
+    // Handle Extension Login
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('source') === 'extension' && session) {
+      // Send session to extension
+      window.postMessage({ type: 'HABIT_EXTENSION_LOGIN', session }, '*');
+    }
   }, [showOnboarding, guestMode, session]);
 
   const handleUpdateModalClose = () => {
@@ -492,6 +499,34 @@ const App: React.FC = () => {
           localStorage.setItem('habit_guest_mode', 'true');
         }} />
       </>
+    );
+  }
+
+  // If this was opened by the extension and we are logged in, show a success message
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('source') === 'extension' && session) {
+    return (
+      <div className="min-h-screen bg-[#e5e5e5] flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white border-[2px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-8 text-center space-y-4">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto border-2 border-green-500">
+            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
+            </svg>
+          </div>
+          <h2 className="text-xl font-black uppercase tracking-widest text-[#444]">
+            Signed in!
+          </h2>
+          <p className="text-stone-500">
+            You are now signed in to HabiCard. You can close this tab and return to the extension.
+          </p>
+          <button
+            onClick={() => window.close()}
+            className="mt-4 px-6 py-2 bg-black text-white text-sm font-bold uppercase tracking-widest hover:opacity-80 transition-opacity"
+          >
+            Close Tab
+          </button>
+        </div>
+      </div>
     );
   }
 

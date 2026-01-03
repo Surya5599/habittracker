@@ -78,6 +78,8 @@ export const useHabits = (session: any, guestMode: boolean) => {
             if (existingHabits && existingHabits.length > 0) {
                 localStorage.removeItem(LOCAL_HABITS_KEY);
                 localStorage.removeItem(LOCAL_COMPLETIONS_KEY);
+                // toast.success('Found your account data! Resuming...', { id: toastId });
+                // toast.dismiss(toastId);
                 return;
             }
 

@@ -62,6 +62,15 @@ export const DailyCard: React.FC<DailyCardProps> = ({
     const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     const isToday = date.toDateString() === new Date().toDateString();
 
+    const getDayData = () => {
+        const data = notes[dateKey];
+        if (!data) return { tasks: [] };
+        if (Array.isArray(data)) return { tasks: data };
+        if ('tasks' in data) return data;
+        return { tasks: [] };
+    };
+    const dayData = getDayData();
+
     const getDayProgress = (d: Date) => {
         if (habits.length === 0) return 0;
         const monthIdx = d.getMonth();
@@ -90,7 +99,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
     const totalCount = habits.length;
 
     const handleFinishEditing = (taskId: string) => {
-        const currentTasks = (notes[dateKey] as Task[]) || [];
+        const currentTasks = dayData.tasks || [];
         const task = currentTasks.find(t => t.id === taskId);
         if (!task) {
             setEditingTaskId(null);
@@ -325,8 +334,16 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                     const { taskId, sourceDateKey } = JSON.parse(data);
                     if (sourceDateKey === dateKey) return; // Dropped on same day
 
-                    const sourceTasks = (notes[sourceDateKey] as Task[]) || [];
-                    const targetTasks = (notes[dateKey] as Task[]) || [];
+                    // Need to access source data safely too
+                    const getSourceData = () => {
+                        const d = notes[sourceDateKey];
+                        if (Array.isArray(d)) return { tasks: d };
+                        if (d && 'tasks' in d) return d;
+                        return { tasks: [] };
+                    };
+                    const sourceData = getSourceData();
+                    const sourceTasks = sourceData.tasks || [];
+                    const targetTasks = dayData.tasks || [];
 
                     const taskToMove = sourceTasks.find(t => t.id === taskId);
                     if (!taskToMove) return;

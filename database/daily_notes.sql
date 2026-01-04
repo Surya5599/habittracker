@@ -16,6 +16,7 @@ CREATE INDEX IF NOT EXISTS idx_daily_notes_user_date ON daily_notes(user_id, dat
 ALTER TABLE daily_notes ENABLE ROW LEVEL SECURITY;
 
 -- Create policy for users to manage their own notes
+DROP POLICY IF EXISTS "Users can manage their own notes" ON daily_notes;
 CREATE POLICY "Users can manage their own notes"
   ON daily_notes
   FOR ALL
@@ -31,6 +32,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS update_daily_notes_updated_at ON daily_notes;
 CREATE TRIGGER update_daily_notes_updated_at
   BEFORE UPDATE ON daily_notes
   FOR EACH ROW

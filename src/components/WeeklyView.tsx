@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Habit, HabitCompletion, Theme, DailyNote, Task } from '../types';
+import { Habit, HabitCompletion, Theme, DailyNote, Task, DayData } from '../types';
 import { DAYS_OF_WEEK } from '../constants';
 import { generateShareCard, shareCard } from '../utils/shareCardGenerator';
 import { ShareCustomizationModal, ColorScheme } from './ShareCustomizationModal';
@@ -14,7 +14,7 @@ interface WeeklyViewProps {
     theme: Theme;
     toggleCompletion: (habitId: string, dateKey: string) => void;
     notes: DailyNote;
-    updateNote: (dateKey: string, tasks: Task[]) => void;
+    updateNote: (dateKey: string, data: Partial<DayData>) => void;
     addHabit: () => void;
 }
 

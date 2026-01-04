@@ -1,9 +1,10 @@
 import React, { useEffect, useRef } from 'react';
-import { Plus, Trash2, Save, Check } from 'lucide-react';
+import { Plus, Trash2, Save, Check, Laugh, Smile, Meh, Frown, Angry, BookOpen, X } from 'lucide-react';
 import { CircularProgress } from './CircularProgress';
-import { Habit, HabitCompletion, Theme } from '../types';
+import { Habit, HabitCompletion, Theme, DailyNote, DayData } from '../types';
 import { DAYS_OF_WEEK_SHORT } from '../constants';
 import { getHabitMonthStats, isCompleted as checkCompleted } from '../utils/stats';
+import { DailyCard } from './DailyCard';
 
 interface MonthlyViewProps {
     habits: Habit[];
@@ -28,6 +29,8 @@ interface MonthlyViewProps {
     removeHabit: (id: string) => void;
     isDayFullyCompleted: (day: number) => boolean;
     isModalOpen?: boolean;
+    notes: DailyNote;
+    updateNote: (dateKey: string, data: Partial<DayData>) => void;
 }
 
 export const MonthlyView: React.FC<MonthlyViewProps> = ({
@@ -53,7 +56,10 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
     removeHabit,
     isDayFullyCompleted,
     isModalOpen,
+    notes,
+    updateNote,
 }) => {
+    const [selectedDayForPopup, setSelectedDayForPopup] = React.useState<number | null>(null);
     const tableScrollRef = useRef<HTMLDivElement>(null);
     const todayRef = useRef<HTMLTableHeaderCellElement>(null);
     const weeksScrollRef = useRef<HTMLDivElement>(null);
@@ -242,6 +248,60 @@ total possible">
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-stone-100">
+                            {/* Daily Mood Row */}
+                            <tr className="group hover:bg-stone-50 transition-colors" style={{ height: '32px' }}>
+                                <td className="p-0 pl-3 sticky left-0 z-10 bg-white border-r border-[#e5e5e5] group-hover:bg-stone-50 transition-colors h-[32px]">
+                                    <div className="flex items-center h-full">
+                                        <span className="text-[10px] font-bold text-stone-900 truncate pl-2">Mood</span>
+                                    </div>
+                                </td>
+                                <td className="p-0 border-r border-stone-200"></td>
+                                {monthDates.map(day => {
+                                    const dateKey = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                                    const dayNote = notes ? notes[dateKey] : undefined;
+                                    const moodValue = dayNote ? (Array.isArray(dayNote) ? undefined : dayNote.mood) : undefined;
+                                    const hasJournal = dayNote && !Array.isArray(dayNote) && dayNote.journal && dayNote.journal.trim().length > 0;
+
+                                    const MOOD_CONFIG = {
+                                        1: { icon: Angry, color: '#ef4444' },
+                                        2: { icon: Frown, color: '#f97316' },
+                                        3: { icon: Meh, color: '#eab308' },
+                                        4: { icon: Smile, color: '#3b82f6' },
+                                        5: { icon: Laugh, color: '#10b981' },
+                                    };
+
+                                    // @ts-ignore
+                                    const activeConfig = moodValue ? MOOD_CONFIG[moodValue] : null;
+                                    const Icon = activeConfig?.icon;
+
+                                    return (
+                                        <td
+                                            key={day}
+                                            onClick={() => setSelectedDayForPopup(day)}
+                                            className="p-0 border-r border-stone-100 bg-white hover:bg-stone-50 transition-colors cursor-pointer group/cell relative"
+                                            style={{ height: '32px' }}
+                                        >
+                                            <div className="w-full h-full flex items-center justify-center">
+                                                {Icon ? (
+                                                    <div className="transition-all hover:scale-110 filter drop-shadow-sm">
+                                                        <Icon size={14} style={{ fill: activeConfig.color, color: '#44403c', strokeWidth: 2 }} />
+                                                    </div>
+                                                ) : hasJournal ? (
+                                                    <div className="text-black transition-colors" title="Read Journal">
+                                                        <BookOpen size={12} />
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-stone-300 hover:text-stone-400 transition-colors" title="Log Mood/Journal">
+                                                        <BookOpen size={12} />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </td>
+                                    );
+                                })}
+                                <td className="p-0 border-l border-stone-200 bg-[#fcfcfc]"></td>
+                                <td className="p-0 border-l border-stone-100 bg-[#fcfcfc]"></td>
+                            </tr>
                             {habits.map((habit) => {
                                 const habitStats = getHabitMonthStats(habit.id, completions, currentMonthIndex, currentYear, habit.frequency);
                                 const perc = (habitStats.completed / habitStats.totalDays) * 100;
@@ -360,7 +420,31 @@ total possible">
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </div >
+            {/* Daily Card Modal */}
+            {selectedDayForPopup !== null && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setSelectedDayForPopup(null)}>
+                    <div className="w-full max-w-sm h-auto relative animate-in zoom-in-95 slide-in-from-bottom-4 duration-300" onClick={e => e.stopPropagation()}>
+                        <button
+                            onClick={() => setSelectedDayForPopup(null)}
+                            className="absolute -top-12 right-0 text-white hover:text-stone-300 p-2 transition-colors"
+                        >
+                            <X size={24} />
+                        </button>
+                        <DailyCard
+                            date={new Date(currentYear, currentMonthIndex, selectedDayForPopup)}
+                            habits={habits}
+                            completions={completions}
+                            theme={theme}
+                            toggleCompletion={toggleCompletion}
+                            notes={notes}
+                            updateNote={updateNote}
+                            onShareClick={() => { }}
+                            defaultFlipped={true}
+                        />
+                    </div>
+                </div>
+            )}
         </>
     );
 };

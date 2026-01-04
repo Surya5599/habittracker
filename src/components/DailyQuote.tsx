@@ -58,6 +58,7 @@ export const DailyQuote: React.FC = () => {
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
+            e.preventDefault();
             inputRef.current?.blur();
         }
     };

@@ -102,7 +102,12 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                                             type="text"
                                             value={editName}
                                             onChange={(e) => setEditName(e.target.value)}
-                                            onKeyDown={(e) => e.key === 'Enter' && saveEdit(habit.id)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    saveEdit(habit.id);
+                                                }
+                                            }}
                                             className="w-full bg-white border-2 border-black px-2 py-1 text-sm font-bold text-black outline-none focus:ring-0 focus:bg-stone-50"
                                             placeholder="Habit name"
                                         />

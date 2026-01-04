@@ -11,7 +11,7 @@ import { WeeklyView } from './components/WeeklyView';
 import { useHabits } from './hooks/useHabits';
 import { useTheme } from './hooks/useTheme';
 import { useHabitStats } from './hooks/useHabitStats';
-import { Habit, DailyNote, MonthlyGoals, MonthlyGoal } from './types';
+import { Habit, DailyNote, MonthlyGoals, MonthlyGoal, DayData } from './types';
 import { BottomNav } from './components/BottomNav';
 import { generateUUID } from './utils/uuid';
 import { OnboardingModal } from './components/OnboardingModal';
@@ -131,6 +131,7 @@ const App: React.FC = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const goalInputRef = useRef<HTMLInputElement>(null);
   const [notes, setNotes] = useState<DailyNote>({});
+  const [notesLoaded, setNotesLoaded] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
   const [monthlyGoals, setMonthlyGoals] = useState<MonthlyGoals>(() => {
     const stored = JSON.parse(localStorage.getItem('habit_monthly_goals') || '{}');
@@ -260,13 +261,25 @@ const App: React.FC = () => {
             try {
               const parsed = JSON.parse(note.content);
               if (Array.isArray(parsed)) {
-                notesObj[note.date_key] = parsed;
+                // Migration: Handle old Task[] format
+                notesObj[note.date_key] = { tasks: parsed, mood: undefined, journal: undefined };
+              } else if (parsed && typeof parsed === 'object') {
+                // Handle new DayData format or other object format?
+                // Check if it has 'tasks' property
+                if ('tasks' in parsed) {
+                  notesObj[note.date_key] = parsed as DayData;
+                } else {
+                  // Fallback or other legacy object? 
+                  // Assuming if object but not array, it might be the new format or something else.
+                  // Be safe:
+                  notesObj[note.date_key] = { tasks: [], ...parsed };
+                }
               } else {
-                notesObj[note.date_key] = [{ id: generateUUID(), text: String(parsed), completed: false }];
+                notesObj[note.date_key] = { tasks: [{ id: generateUUID(), text: String(parsed), completed: false }] };
               }
             } catch {
               if (note.content) {
-                notesObj[note.date_key] = [{ id: generateUUID(), text: note.content, completed: false }];
+                notesObj[note.date_key] = { tasks: [{ id: generateUUID(), text: note.content, completed: false }] };
               }
             }
           });
@@ -312,15 +325,18 @@ const App: React.FC = () => {
         // Load from localStorage for guest users
         // Notes
         const localNotes = JSON.parse(localStorage.getItem('habit_daily_notes') || '{}');
-        const migratedNotes: DailyNote = {};
+        const migrationsNotes: DailyNote = {};
         Object.entries(localNotes).forEach(([key, val]) => {
-          if (typeof val === 'string') {
-            migratedNotes[key] = [{ id: generateUUID(), text: val, completed: false }];
+          if (Array.isArray(val)) {
+            migrationsNotes[key] = { tasks: val as any[] };
+          } else if (typeof val === 'string') {
+            migrationsNotes[key] = { tasks: [{ id: generateUUID(), text: val, completed: false }] };
           } else {
-            migratedNotes[key] = val as any;
+            // Assume it fits DayData or is close enough
+            migrationsNotes[key] = { tasks: [], ...(val as any) };
           }
         });
-        setNotes(migratedNotes);
+        setNotes(migrationsNotes);
 
         // Goals
         const localGoals = JSON.parse(localStorage.getItem('habit_monthly_goals') || '{}');
@@ -335,6 +351,7 @@ const App: React.FC = () => {
         });
         setMonthlyGoals(migratedGoals);
       }
+      setNotesLoaded(true);
     };
     loadData();
   }, [session]);
@@ -432,16 +449,33 @@ const App: React.FC = () => {
 
   useEffect(() => {
     // Save to localStorage for guest users
-    if (!session?.user?.id) {
+    if (!session?.user?.id && notesLoaded) {
       localStorage.setItem('habit_daily_notes', JSON.stringify(notes));
     }
-  }, [notes, session]);
+  }, [notes, session, notesLoaded]);
 
-  const updateNote = async (dateKey: string, tasks: any[]) => {
-    setNotes(prev => ({ ...prev, [dateKey]: tasks }));
+  const updateNote = async (dateKey: string, data: Partial<DayData>) => {
+    setNotes(prev => {
+      const current = prev[dateKey] || { tasks: [] };
+      const updated = { ...current, ...data };
+      return { ...prev, [dateKey]: updated };
+    });
 
-    // Check if empty
-    const isEmpty = tasks.length === 0;
+    // Check if empty (no tasks, no mood, no journal)
+    // We can't easily check 'updated' inside setState callback for the sync part without duplicating logic.
+    // So let's calculate updated state first.
+    let updatedNote: DayData | undefined;
+
+    // We need to access previous state to calculate new state for DB sync
+    // React batching means 'notes' might be stale here if called rapidly? 
+    // But usually fine for this app scale.
+    // Better: use Functional Update for state, but for DB we need the value.
+    // Let's rely on the passed 'data' merged with 'notes[dateKey]'.
+
+    const currentNote = notes[dateKey] || { tasks: [] };
+    updatedNote = { ...currentNote, ...data };
+
+    const isEmpty = (!updatedNote.tasks || updatedNote.tasks.length === 0) && !updatedNote.mood && !updatedNote.journal;
 
     // Sync to database for logged-in users
     if (session?.user?.id) {
@@ -459,7 +493,7 @@ const App: React.FC = () => {
           .upsert({
             user_id: session.user.id,
             date_key: dateKey,
-            content: JSON.stringify(tasks)
+            content: JSON.stringify(updatedNote)
           }, {
             onConflict: 'user_id,date_key'
           });
@@ -714,6 +748,8 @@ const App: React.FC = () => {
             removeHabit={removeHabit}
             isDayFullyCompleted={isDayFullyCompleted}
             isModalOpen={isHabitModalOpen || isResolutionsModalOpen}
+            notes={notes}
+            updateNote={updateNote}
           />
         ) : view === 'dashboard' ? (
           <DashboardView

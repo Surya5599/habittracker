@@ -218,11 +218,11 @@ export const useHabits = (session: any, guestMode: boolean) => {
     }, [session, guestMode, fetchUserData, syncGuestToCloud]);
 
     useEffect(() => {
-        if (guestMode) {
+        if (guestMode && !loading) {
             localStorage.setItem(LOCAL_HABITS_KEY, JSON.stringify(habits));
             localStorage.setItem(LOCAL_COMPLETIONS_KEY, JSON.stringify(completions));
         }
-    }, [habits, completions, guestMode]);
+    }, [habits, completions, guestMode, loading]);
 
     const toggleCompletion = async (habitId: string, dateKey: string) => {
         const alreadyDone = completions[habitId]?.[dateKey];

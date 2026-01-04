@@ -79,13 +79,20 @@ const App: React.FC = () => {
             try {
               const parsed = JSON.parse(note.content);
               if (Array.isArray(parsed)) {
-                notesObj[note.date_key] = parsed;
+                notesObj[note.date_key] = { tasks: parsed };
+              } else if (parsed && typeof parsed === 'object') {
+                if ('tasks' in parsed) {
+                  notesObj[note.date_key] = parsed as any;
+                  // Casting to any or DayData because types.ts in extension assumes DayData now if I updated it.
+                } else {
+                  notesObj[note.date_key] = { tasks: [], ...parsed } as any;
+                }
               } else {
-                notesObj[note.date_key] = [{ id: generateUUID(), text: String(parsed), completed: false }];
+                notesObj[note.date_key] = { tasks: [{ id: generateUUID(), text: String(parsed), completed: false }] };
               }
             } catch {
               if (note.content) {
-                notesObj[note.date_key] = [{ id: generateUUID(), text: note.content, completed: false }];
+                notesObj[note.date_key] = { tasks: [{ id: generateUUID(), text: note.content, completed: false }] };
               }
             }
           });
@@ -98,10 +105,36 @@ const App: React.FC = () => {
   }, [session]);
 
   const updateNote = async (dateKey: string, tasks: Task[]) => {
-    setNotes(prev => ({ ...prev, [dateKey]: tasks }));
+    // We only receive tasks here from DailyCard usually?
+    // If we want to preserve mood, we need to merge with existing.
+
+    setNotes(prev => {
+      const current = prev[dateKey] || { tasks: [] };
+      // We are only updating tasks from extension for now
+      const updated = { ...current, tasks };
+      return { ...prev, [dateKey]: updated };
+    });
 
     if (session?.user?.id) {
-      if (tasks.length === 0) {
+      if (tasks.length === 0) { // AND mood empty?
+        // For safety in extension, if we just clear tasks, we might not want to delete the whole row if mood exists.
+        // But checking state here is hard due to closure staleness if not careful.
+        // Let's grab the latest state via functional update or just assume we upsert.
+        // To be safe against overwriting mood:
+        // We should fetch latest before saving? No that's slow.
+        // We rely on 'notes' state being up to date.
+
+        // Let's just UPSERT with merged data. 
+        // But wait, updateNote is async.
+        // usage: await updateNote(...)
+      }
+
+      // We need the latest note object to save.
+      // Since setNotes is async, we construct the object here.
+      const currentNote = notes[dateKey] || { tasks: [] };
+      const updatedNote = { ...currentNote, tasks };
+
+      if (tasks.length === 0 && !updatedNote.mood && !updatedNote.journal) {
         await supabase
           .from('daily_notes')
           .delete()
@@ -113,7 +146,7 @@ const App: React.FC = () => {
           .upsert({
             user_id: session.user.id,
             date_key: dateKey,
-            content: JSON.stringify(tasks)
+            content: JSON.stringify(updatedNote)
           }, {
             onConflict: 'user_id,date_key'
           });

@@ -64,10 +64,12 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
     };
 
     const dummyNotes: DailyNote = {
-        [dateKey]: [
-            { id: 't1', text: 'Review annual goals', completed: true },
-            { id: 't2', text: 'Grocery shopping', completed: false },
-        ]
+        [dateKey]: {
+            tasks: [
+                { id: 't1', text: 'Review annual goals', completed: true },
+                { id: 't2', text: 'Grocery shopping', completed: false },
+            ]
+        }
     };
 
 

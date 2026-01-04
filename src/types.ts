@@ -22,8 +22,14 @@ export interface Task {
   completed: boolean;
 }
 
+export interface DayData {
+  tasks: Task[];
+  mood?: number; // 1-5
+  journal?: string;
+}
+
 export interface DailyNote {
-  [dateKey: string]: Task[] | string; // Helper type to support migration, runtime will strictly usage Task[]
+  [dateKey: string]: DayData;
 }
 
 

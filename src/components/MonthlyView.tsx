@@ -266,7 +266,7 @@ total possible">
                                         1: { icon: Angry, color: '#ef4444' },
                                         2: { icon: Frown, color: '#f97316' },
                                         3: { icon: Meh, color: '#eab308' },
-                                        4: { icon: Smile, color: '#3b82f6' },
+                                        4: { icon: Smile, color: '#84cc16' },
                                         5: { icon: Laugh, color: '#10b981' },
                                     };
 

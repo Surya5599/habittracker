@@ -141,7 +141,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
         { value: 1, icon: Angry, label: 'Very Bad', color: '#ef4444', tooltip: 'Very Bad' },
         { value: 2, icon: Frown, label: 'Bad', color: '#f97316', tooltip: 'Bad' },
         { value: 3, icon: Meh, label: 'Neutral', color: '#eab308', tooltip: 'Neutral' },
-        { value: 4, icon: Smile, label: 'Good', color: '#3b82f6', tooltip: 'Good' },
+        { value: 4, icon: Smile, label: 'Good', color: '#84cc16', tooltip: 'Good' },
         { value: 5, icon: Laugh, label: 'Very Good', color: '#10b981', tooltip: 'Very Good' },
     ];
 

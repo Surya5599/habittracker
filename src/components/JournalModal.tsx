@@ -39,7 +39,7 @@ export const JournalModal: React.FC<JournalModalProps> = ({
     const MOODS = [
         { value: 1, icon: Frown, label: 'Rough', color: '#ef4444' },     // Red
         { value: 2, icon: Meh, label: 'Okay', color: '#f59e0b' },       // Amber
-        { value: 3, icon: Smile, label: 'Good', color: '#3b82f6' },     // Blue
+        { value: 3, icon: Smile, label: 'Good', color: '#84cc16' },     // Lime
         { value: 4, icon: Laugh, label: 'Great', color: '#10b981' },    // Green
         { value: 5, icon: Star, label: 'Amazing', color: '#8b5cf6' },   // Purple
     ];

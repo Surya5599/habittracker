@@ -23,6 +23,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
 }) => {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editName, setEditName] = useState('');
+    const [editFrequency, setEditFrequency] = useState<number[] | undefined>(undefined);
     const listRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -42,6 +43,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
         const newId = await addHabit(themePrimary);
         setEditingId(newId);
         setEditName('');
+        setEditFrequency(undefined);
         // scroll to bottom
         setTimeout(() => {
             if (listRef.current) {
@@ -53,11 +55,12 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
     const startEditing = (habit: Habit) => {
         setEditingId(habit.id);
         setEditName(habit.name);
+        setEditFrequency(habit.frequency);
     };
 
     const saveEdit = (id: string) => {
         if (editName.trim()) {
-            updateHabit(id, { name: editName });
+            updateHabit(id, { name: editName, frequency: editFrequency });
         }
         setEditingId(null);
     };
@@ -93,16 +96,54 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                                 <div className="w-4 h-4 rounded-full shrink-0 border-2 border-black" style={{ backgroundColor: habit.color || themePrimary }}></div>
 
                                 {editingId === habit.id ? (
-                                    <input
-                                        ref={inputRef}
-                                        type="text"
-                                        value={editName}
-                                        onChange={(e) => setEditName(e.target.value)}
-                                        onBlur={() => saveEdit(habit.id)}
-                                        onKeyDown={(e) => e.key === 'Enter' && saveEdit(habit.id)}
-                                        className="flex-1 bg-white border-2 border-black px-2 py-1 text-sm font-bold text-black outline-none focus:ring-0 focus:bg-stone-50"
-                                        placeholder="Habit name"
-                                    />
+                                    <div className="flex-1 flex flex-col gap-2">
+                                        <input
+                                            ref={inputRef}
+                                            type="text"
+                                            value={editName}
+                                            onChange={(e) => setEditName(e.target.value)}
+                                            onKeyDown={(e) => e.key === 'Enter' && saveEdit(habit.id)}
+                                            className="w-full bg-white border-2 border-black px-2 py-1 text-sm font-bold text-black outline-none focus:ring-0 focus:bg-stone-50"
+                                            placeholder="Habit name"
+                                        />
+                                        <div className="flex gap-1">
+                                            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => {
+                                                const isSelected = !editFrequency || editFrequency.includes(i);
+                                                return (
+                                                    <button
+                                                        key={i}
+                                                        onClick={() => {
+                                                            if (!editFrequency) {
+                                                                // If was 'all' (undefined), switching to specific:
+                                                                // If I click one, do I mean "only this one"? Or "all except this" if I'm deselecting?
+                                                                // UX: If undefined, it means ALL are selected.
+                                                                // Clicking one should probably TOGGLE it.
+                                                                // So new state = [0,1,2,3,4,5,6] without i.
+                                                                const all = [0, 1, 2, 3, 4, 5, 6];
+                                                                setEditFrequency(all.filter(d => d !== i));
+                                                            } else {
+                                                                if (editFrequency.includes(i)) {
+                                                                    const next = editFrequency.filter(d => d !== i);
+                                                                    // If none selected, maybe reset to undefined (all)? Or warn?
+                                                                    // Let's allow empty for now (habit paused).
+                                                                    setEditFrequency(next.length === 7 ? undefined : next);
+                                                                } else {
+                                                                    const next = [...editFrequency, i].sort();
+                                                                    setEditFrequency(next.length === 7 ? undefined : next);
+                                                                }
+                                                            }
+                                                        }}
+                                                        className={`w-6 h-6 flex items-center justify-center text-[10px] font-black border-2 transition-all ${isSelected
+                                                            ? 'bg-black text-white border-black'
+                                                            : 'bg-white text-stone-300 border-stone-200 hover:border-stone-400'
+                                                            }`}
+                                                    >
+                                                        {day}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
                                 ) : (
                                     <span
                                         onClick={() => startEditing(habit)}

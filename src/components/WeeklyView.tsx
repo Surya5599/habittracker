@@ -124,7 +124,7 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                     <DailyCard
                         key={date.toISOString()}
                         date={date}
-                        habits={habits}
+                        habits={habits.filter(h => !h.frequency || h.frequency.includes(date.getDay()))}
                         completions={completions}
                         theme={theme}
                         toggleCompletion={toggleCompletion}
@@ -141,7 +141,7 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                     <DailyCard
                         key={weekDates[mobileDayIndex].toISOString()}
                         date={weekDates[mobileDayIndex]}
-                        habits={habits}
+                        habits={habits.filter(h => !h.frequency || h.frequency.includes(weekDates[mobileDayIndex].getDay()))}
                         completions={completions}
                         theme={theme}
                         toggleCompletion={toggleCompletion}

@@ -113,9 +113,23 @@ total possible">
                         <div ref={weeksScrollRef} className="col-span-9 md:col-span-7 flex overflow-x-auto min-h-[220px] snap-x snap-mandatory">
                             {weeks.map((week, wIndex) => {
                                 const weekTotal = week.reduce((acc, day) => {
-                                    let dc = 0; habits.forEach(h => { if (checkCompleted(h.id, day, completions, currentMonthIndex, currentYear)) dc++; }); return acc + dc;
+                                    let dc = 0;
+                                    const dayDate = new Date(currentYear, currentMonthIndex, day);
+                                    const dayIndex = dayDate.getDay();
+                                    habits.forEach(h => {
+                                        if (h.frequency && !h.frequency.includes(dayIndex)) return;
+                                        if (checkCompleted(h.id, day, completions, currentMonthIndex, currentYear)) dc++;
+                                    });
+                                    return acc + dc;
                                 }, 0);
-                                const weekMax = week.length * (habits.length || 1);
+
+                                const weekMax = week.reduce((acc, day) => {
+                                    const dayDate = new Date(currentYear, currentMonthIndex, day);
+                                    const dayIndex = dayDate.getDay();
+                                    const possible = habits.filter(h => !h.frequency || h.frequency.includes(dayIndex)).length;
+                                    return acc + possible;
+                                }, 0);
+
                                 const weekPerc = weekMax > 0 ? (weekTotal / weekMax) * 100 : 0;
                                 const isCurrentWeek = week.includes(new Date().getDate()) && currentMonthIndex === new Date().getMonth() && currentYear === new Date().getFullYear();
                                 return (
@@ -133,12 +147,18 @@ total possible">
                                         <div className="flex-none h-10 flex items-center justify-center border-b border-stone-50 py-0.5"><span className="text-xl font-black">{weekTotal}/{weekMax}</span></div>
                                         <div className="flex-1 p-2 flex items-end justify-between gap-0.5 h-20 md:h-auto group/week">
                                             {week.map(day => {
-                                                let dc = 0; habits.forEach(h => { if (checkCompleted(h.id, day, completions, currentMonthIndex, currentYear)) dc++; });
-                                                const hRatio = dc / (habits.length || 1);
-                                                const isAllDone = habits.length > 0 && dc === habits.length;
-                                                return <div key={day} className="flex-1 relative group/bar" style={{ height: `${Math.max(2, hRatio * 100)}%`, backgroundColor: isAllDone ? theme.primary : theme.secondary }} title={`Day ${day}: ${dc}/${habits.length} habits completed`}>
+                                                const dayDate = new Date(currentYear, currentMonthIndex, day);
+                                                const dayIndex = dayDate.getDay();
+                                                const dueHabits = habits.filter(h => !h.frequency || h.frequency.includes(dayIndex));
+                                                let dc = 0;
+                                                dueHabits.forEach(h => { if (checkCompleted(h.id, day, completions, currentMonthIndex, currentYear)) dc++; });
+
+                                                const hRatio = dueHabits.length > 0 ? dc / dueHabits.length : 0;
+                                                const isAllDone = dueHabits.length > 0 && dc === dueHabits.length;
+
+                                                return <div key={day} className="flex-1 relative group/bar" style={{ height: `${Math.max(2, hRatio * 100)}%`, backgroundColor: isAllDone ? theme.primary : theme.secondary }} title={`Day ${day}: ${dc}/${dueHabits.length} habits completed`}>
                                                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-1.5 py-0.5 bg-black text-white text-[7px] font-black rounded opacity-0 invisible group-hover/bar:opacity-100 group-hover/bar:visible transition-all whitespace-nowrap z-10">
-                                                        {dc}/{habits.length}
+                                                        {dc}/{dueHabits.length}
                                                     </div>
                                                 </div>;
                                             })}
@@ -223,7 +243,7 @@ total possible">
                         </thead>
                         <tbody className="divide-y divide-stone-100">
                             {habits.map((habit) => {
-                                const habitStats = getHabitMonthStats(habit.id, completions, currentMonthIndex, currentYear);
+                                const habitStats = getHabitMonthStats(habit.id, completions, currentMonthIndex, currentYear, habit.frequency);
                                 const perc = (habitStats.completed / habitStats.totalDays) * 100;
                                 const isEditingName = editingHabitId === habit.id;
                                 const isEditingGoal = editingGoalId === habit.id;
@@ -291,6 +311,17 @@ total possible">
                                             const done = checkCompleted(habit.id, day, completions, currentMonthIndex, currentYear);
                                             const isToday = day === new Date().getDate() && currentMonthIndex === new Date().getMonth() && currentYear === new Date().getFullYear();
                                             const isFull = isDayFullyCompleted(day);
+
+                                            // Check frequency
+                                            const dayDate = new Date(currentYear, currentMonthIndex, day);
+                                            const isDue = !habit.frequency || habit.frequency.includes(dayDate.getDay());
+
+                                            if (!isDue) {
+                                                return (
+                                                    <td key={day} className="p-0.5 border-r border-stone-50 bg-[#e5e5e5]/30"></td>
+                                                );
+                                            }
+
                                             return (
                                                 <td key={day}
                                                     className={`p-0.5 border-r border-stone-50 transition-colors duration-300`}

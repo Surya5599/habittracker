@@ -67,14 +67,14 @@ const App: React.FC = () => {
 
   useEffect(() => {
     // Check for specific feature announcements
-    const seenResolutionsUpdate = localStorage.getItem('seen_resolutions_update_2026');
+    const seenFrequencyUpdate = localStorage.getItem('seen_frequency_update_2026');
 
     // Determine if onboarding is completed based on current mode
     const isGuestOnboardingDone = localStorage.getItem('habit_onboarding_completed') === 'true';
     const isUserOnboardingDone = session?.user?.user_metadata?.onboarding_completed;
     const hasCompletedOnboarding = !!((guestMode && isGuestOnboardingDone) || (session?.user && isUserOnboardingDone));
 
-    if (!seenResolutionsUpdate && !showOnboarding && hasCompletedOnboarding) {
+    if (!seenFrequencyUpdate && !showOnboarding && hasCompletedOnboarding) {
       setShowUpdateModal(true);
     }
 
@@ -88,11 +88,11 @@ const App: React.FC = () => {
 
   const handleUpdateModalClose = () => {
     setShowUpdateModal(false);
-    localStorage.setItem('seen_resolutions_update_2026', 'true');
+    localStorage.setItem('seen_frequency_update_2026', 'true');
   };
 
   const handleUpdateModalAction = () => {
-    setView('dashboard');
+    setIsHabitModalOpen(true);
     handleUpdateModalClose();
   };
 
@@ -470,7 +470,8 @@ const App: React.FC = () => {
   const isDayFullyCompleted = (day: number) => {
     if (habits.length === 0) return false;
     const dayStatsItem = dailyStats.find(s => s.day === day);
-    return dayStatsItem?.count === habits.length;
+    // @ts-ignore - totalDue is added in hook
+    return dayStatsItem && dayStatsItem.totalDue > 0 && dayStatsItem.count === dayStatsItem.totalDue;
   };
 
   const handleLogout = async () => {
@@ -635,9 +636,9 @@ const App: React.FC = () => {
       <FeatureAnnouncementModal
         isOpen={showUpdateModal}
         onClose={handleUpdateModalClose}
-        title="New Feature: Year Resolutions"
-        description="The 'This Year Resolutions' box is now available on your Dashboard! Define your 5 core pillars for the year and lock them in as a promise to yourself."
-        actionLabel="Go to Dashboard"
+        title="New Feature: Specific Days"
+        description="You can now select exactly which days of the week a habit is active. Unchecked days won't count against your stats!"
+        actionLabel="Manage Habits"
         onAction={handleUpdateModalAction}
       />
 

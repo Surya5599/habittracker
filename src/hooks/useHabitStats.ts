@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Habit, HabitCompletion } from '../types';
 import { MONTHS } from '../constants';
-import { isCompleted } from '../utils/stats';
+import { isCompleted, getHabitMonthStats } from '../utils/stats';
 
 export const useHabitStats = (
     habits: Habit[],
@@ -39,7 +39,19 @@ export const useHabitStats = (
     }, [habits, completions, weekOffset]);
 
     const weekProgress = useMemo(() => {
-        const totalPossible = habits.length * 7;
+        const today = new Date();
+        const day = today.getDay();
+        const diff = today.getDate() - day + (day === 0 ? -6 : 1) + (weekOffset * 7);
+        const monday = new Date(today.getFullYear(), today.getMonth(), diff);
+
+        let totalPossible = 0;
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(monday);
+            d.setDate(monday.getDate() + i);
+            const dayIdx = d.getDay();
+            totalPossible += habits.filter(h => !h.frequency || h.frequency.includes(dayIdx)).length;
+        }
+
         const completed = weeklyStats.reduce((acc, curr) => acc + curr.count, 0);
 
         // Per-habit performance for the week
@@ -71,15 +83,30 @@ export const useHabitStats = (
     const dailyStats = useMemo(() => {
         return monthDates.map(day => {
             let count = 0;
+            let totalDue = 0;
             habits.forEach(habit => {
-                if (isCompleted(habit.id, day, completions, currentMonthIndex, currentYear)) count++;
+                const date = new Date(currentYear, currentMonthIndex, day);
+                const isDue = !habit.frequency || habit.frequency.includes(date.getDay());
+
+                if (isDue) {
+                    totalDue++;
+                    if (isCompleted(habit.id, day, completions, currentMonthIndex, currentYear)) count++;
+                }
             });
-            return { day, count };
+            return { day, count, totalDue };
         });
     }, [completions, currentMonthIndex, currentYear, habits, monthDates]);
 
     const monthProgress = useMemo(() => {
-        const totalPossible = habits.length * daysInMonth;
+        let totalPossible = 0;
+        habits.forEach(habit => {
+            monthDates.forEach(day => {
+                const date = new Date(currentYear, currentMonthIndex, day);
+                if (!habit.frequency || habit.frequency.includes(date.getDay())) {
+                    totalPossible++;
+                }
+            });
+        });
         let completed = 0;
         habits.forEach(habit => {
             monthDates.forEach(day => {
@@ -97,7 +124,7 @@ export const useHabitStats = (
     const topHabitsThisMonth = useMemo(() => {
         return habits
             .map(h => {
-                const stats = getHabitMonthStats(h.id, completions, currentMonthIndex, currentYear);
+                const stats = getHabitMonthStats(h.id, completions, currentMonthIndex, currentYear, h.frequency);
                 return {
                     ...h,
                     stats,
@@ -117,18 +144,26 @@ export const useHabitStats = (
         const monthlySummariesRaw = MONTHS.map((_, mIdx) => {
             const dInM = new Date(currentYear, mIdx + 1, 0).getDate();
             let mCompleted = 0;
+            let mPossible = 0;
+
             habits.forEach(h => {
                 for (let d = 1; d <= dInM; d++) {
-                    if (isCompleted(h.id, d, completions, mIdx, currentYear)) mCompleted++;
+                    const date = new Date(currentYear, mIdx, d);
+                    const isDue = !h.frequency || h.frequency.includes(date.getDay());
+
+                    if (isDue) {
+                        mPossible++;
+                        if (isCompleted(h.id, d, completions, mIdx, currentYear)) mCompleted++;
+                    }
                 }
             });
             totalCompletions += mCompleted;
-            totalPossible += habits.length * dInM;
+            totalPossible += mPossible;
             return {
                 month: MONTHS[mIdx],
                 completed: mCompleted,
-                total: habits.length * dInM,
-                rate: habits.length * dInM > 0 ? (mCompleted / (habits.length * dInM)) * 100 : 0
+                total: mPossible,
+                rate: mPossible > 0 ? (mCompleted / mPossible) * 100 : 0
             };
         });
 
@@ -476,26 +511,4 @@ export const useHabitStats = (
 };
 
 // Helper function needed because utility might not have been imported correctly in the hook context if not careful
-function getHabitMonthStats(habitId: string, completions: HabitCompletion, monthIdx: number, year: number) {
-    const today = new Date();
-    const dInM = new Date(year, monthIdx + 1, 0).getDate();
-    const isPastDate = (y: number, m: number, d: number) => {
-        const target = new Date(y, m, d);
-        return target < today;
-    };
 
-    let completed = 0;
-    let missed = 0;
-
-    for (let day = 1; day <= dInM; day++) {
-        const dateKey = `${year}-${String(monthIdx + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const isDone = completions[habitId]?.[dateKey] || false;
-        if (isDone) {
-            completed++;
-        } else if (isPastDate(year, monthIdx, day)) {
-            missed++;
-        }
-    }
-
-    return { completed, missed, totalDays: dInM };
-}

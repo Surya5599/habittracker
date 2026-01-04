@@ -89,6 +89,7 @@ export const useHabits = (session: any, guestMode: boolean) => {
                 type: h.type,
                 color: h.color,
                 goal: h.goal,
+                frequency: h.frequency,
                 user_id: userId
             }));
 
@@ -262,7 +263,7 @@ export const useHabits = (session: any, guestMode: boolean) => {
             return null;
         }
         const tempId = Date.now().toString();
-        const newHabit: Habit = { id: tempId, name: '', type: 'daily', color: themePrimary, goal: 80 };
+        const newHabit: Habit = { id: tempId, name: '', type: 'daily', color: themePrimary, goal: 80, frequency: undefined };
 
         setHabits(prev => [...prev, newHabit]);
 
@@ -270,7 +271,7 @@ export const useHabits = (session: any, guestMode: boolean) => {
             try {
                 const { data, error } = await supabase
                     .from('habits')
-                    .insert({ name: '', type: 'daily', color: themePrimary, goal: 80, user_id: session.user.id })
+                    .insert({ name: '', type: 'daily', color: themePrimary, goal: 80, frequency: null, user_id: session.user.id })
                     .select();
 
                 if (error) throw error;

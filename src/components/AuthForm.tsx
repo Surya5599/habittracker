@@ -107,7 +107,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest }) => {
                                 Habi<span className="text-[#C19A9A]">Card</span>
                             </h1>
                             <p className="text-sm md:text-base font-medium opacity-60 max-w-[240px] mx-auto leading-tight">
-                                The only tracker that treats your progress like a work of art.
+                                A calming analytical tracker to build your habits
                             </p>
                         </div>
 
@@ -172,7 +172,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest }) => {
                                             className="w-full px-6 py-3.5 bg-black text-white neo-border neo-shadow-sm font-black uppercase tracking-widest text-xs hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all disabled:opacity-50"
                                             disabled={loading}
                                         >
-                                            {loading ? 'Verifying...' : 'Access Identity'}
+                                            {loading ? 'Verifying...' : 'Sign In/Sign up'}
                                         </button>
 
                                         <div className="flex justify-center">

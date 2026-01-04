@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { User } from 'lucide-react';
+import { User, Check } from 'lucide-react';
 import { supabase } from '../supabase';
 import toast from 'react-hot-toast';
+import { motion } from 'framer-motion';
 
 interface AuthFormProps {
     onContinueAsGuest: () => void;
@@ -17,129 +18,194 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest }) => {
         e.preventDefault();
         setLoading(true);
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: 'https://HabiCard.com',
+            redirectTo: window.location.origin,
         });
         if (error) toast.error(error.message);
         else toast.success('Password reset email sent! Check your inbox.');
         setLoading(false);
     };
 
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
+
+
+    const handleSubmit = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
         setLoading(true);
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) toast.error(error.message);
-        else toast.success('Logged in successfully!');
+
+        if (isResetMode) {
+            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: window.location.origin,
+            });
+            if (error) toast.error(error.message);
+            else toast.success('Password reset email sent! Check your inbox.');
+            setLoading(false);
+            return;
+        }
+
+        // 1. Try Login first
+        const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+
+        if (!loginError) {
+            toast.success('Logged in successfully!');
+            setLoading(false);
+            return;
+        }
+
+        // 2. If login fails, try Sign Up (user might not exist)
+        const { error: signUpError, data: signUpData } = await supabase.auth.signUp({ email, password });
+
+        if (!signUpError) {
+            if (!signUpData?.session) {
+                const { error: retryError } = await supabase.auth.signInWithPassword({ email, password });
+                if (retryError) {
+                    if (retryError.message.toLowerCase().includes('email not confirmed')) {
+                        toast.success('Check your email to confirm your account!');
+                    } else {
+                        toast.error(loginError.message);
+                    }
+                } else {
+                    toast.success('Account created and logged in!');
+                }
+            } else {
+                toast.success('Account created and logged in!');
+            }
+            setLoading(false);
+            return;
+        }
+
+        if (signUpError.message.toLowerCase().includes('already registered')) {
+            toast.error(loginError.message);
+        } else {
+            toast.error(signUpError.message);
+        }
+
         setLoading(false);
     };
 
-    const handleSignUp = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        const { error } = await supabase.auth.signUp({ email, password });
-        if (error) toast.error(error.message);
-        setLoading(false);
-    };
+    const handleLogin = (e: React.FormEvent) => handleSubmit(e);
+    const handleSignUp = (e: React.FormEvent) => handleSubmit(e);
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-[#e5e5e5] p-4">
-            <div className="max-w-md w-full bg-white border-[2px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] p-6 space-y-6">
-                <h2 className="text-2xl font-bold text-center text-[#444] uppercase tracking-widest">
-                    {isResetMode ? 'Reset Password' : 'HabiCard'}
-                </h2>
-                <p className="text-center text-sm text-stone-500">
-                    {isResetMode
-                        ? 'Enter your email to receive a password reset link.'
-                        : 'Sign in to sync your progress across devices.'}
-                </p>
-                <form className="space-y-4">
-                    <div>
-                        <label htmlFor="email" className="block text-xs font-bold uppercase text-stone-500 mb-1">Email</label>
-                        <input
-                            id="email"
-                            type="email"
-                            placeholder="your@email.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="w-full p-2 border-[2px] border-black focus:outline-none focus:ring-2 focus:ring-stone-300 text-sm"
-                            disabled={loading}
-                        />
-                    </div>
-
-                    {!isResetMode && (
-                        <div>
-                            <label htmlFor="password" className="block text-xs font-bold uppercase text-stone-500 mb-1">Password</label>
-                            <input
-                                id="password"
-                                type="password"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="w-full p-2 border-[2px] border-black focus:outline-none focus:ring-2 focus:ring-stone-300 text-sm"
-                                disabled={loading}
-                            />
+        <div className="flex items-center justify-center p-4 overflow-hidden relative">
+            <div className="relative z-10 flex flex-col items-center gap-8 w-full max-w-md">
+                <motion.div
+                    animate={{
+                        rotateX: [0, 5, 0],
+                        rotateY: [0, -5, 0]
+                    }}
+                    transition={{
+                        duration: 6,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                    }}
+                    className="w-full max-w-[340px] md:max-w-[360px] bg-white/60 backdrop-blur-xl neo-border neo-shadow rounded-2xl p-6 md:p-8 relative perspective-1000 transform-gpu"
+                    style={{ transformStyle: 'preserve-3d' }}
+                >
+                    <div className="h-full flex flex-col space-y-6">
+                        {/* Styled Header Branding inside the card */}
+                        <div className="text-center">
+                            <h1 className="text-5xl md:text-6xl font-black uppercase tracking-tighter leading-none mb-3">
+                                Habi<span className="text-[#C19A9A]">Card</span>
+                            </h1>
+                            <p className="text-sm md:text-base font-medium opacity-60 max-w-[240px] mx-auto leading-tight">
+                                The only tracker that treats your progress like a work of art.
+                            </p>
                         </div>
-                    )}
-                    {isResetMode && (
-                        <button
-                            onClick={handleResetPassword}
-                            className="w-full px-4 py-2 border-[2px] border-black text-sm font-black uppercase tracking-widest bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all"
-                            disabled={loading}
-                        >
-                            {loading ? 'Sending...' : 'Send Reset Link'}
-                        </button>
-                    )}
-                    <div className="flex flex-col gap-3">
-                        {!isResetMode && (
-                            <>
-                                <div className="flex flex-col sm:flex-row gap-3">
-                                    <button
-                                        onClick={handleLogin}
-                                        className="flex-1 px-4 py-2 border-[2px] border-black text-sm font-black uppercase tracking-widest bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all"
-                                        disabled={loading}
-                                    >
-                                        {loading ? 'Loading...' : 'Sign In'}
-                                    </button>
-                                    <button
-                                        onClick={handleSignUp}
-                                        className="flex-1 px-4 py-2 border-[2px] border-black text-sm font-black uppercase tracking-widest bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all"
-                                        disabled={loading}
-                                    >
-                                        {loading ? 'Loading...' : 'Sign Up'}
-                                    </button>
-                                </div>
-                                <button
-                                    onClick={(e) => { e.preventDefault(); setIsResetMode(true); }}
-                                    className="text-xs text-stone-500 hover:text-black hover:underline text-center"
-                                >
-                                    Forgot your password?
-                                </button>
-                                <div className="relative flex items-center py-2">
-                                    <div className="flex-grow border-t border-stone-200"></div>
-                                    <span className="flex-shrink mx-4 text-stone-400 text-[10px] font-bold uppercase">or</span>
-                                    <div className="flex-grow border-t border-stone-200"></div>
-                                </div>
-                                <button
-                                    onClick={(e) => { e.preventDefault(); onContinueAsGuest(); }}
-                                    className="w-full px-4 py-2 border-[2px] border-dashed border-stone-400 text-xs font-bold uppercase tracking-widest text-stone-500 hover:bg-stone-50 hover:border-black hover:text-black transition-all flex items-center justify-center gap-2"
-                                >
-                                    <User size={14} />
-                                    Continue as Guest
-                                </button>
-                            </>
-                        )}
-                        {isResetMode && (
-                            <button
-                                onClick={(e) => { e.preventDefault(); setIsResetMode(false); }}
-                                className="w-full px-4 py-2 text-xs font-bold uppercase tracking-widest text-stone-500 hover:text-black transition-all"
-                                disabled={loading}
+
+                        <div className="space-y-4">
+                            <form
+                                className="space-y-4"
+                                onSubmit={handleSubmit}
                             >
-                                Back to Sign In
-                            </button>
-                        )}
+                                <div className="space-y-4">
+                                    <div>
+                                        <label htmlFor="email" className="block text-[9px] font-black uppercase tracking-widest text-stone-400 mb-1">Email</label>
+                                        <input
+                                            id="email"
+                                            type="email"
+                                            placeholder="USER@DOMAIN.COM"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            className="w-full p-2.5 bg-stone-50/50 neo-border focus:ring-2 focus:ring-[#C19A9A]/20 focus:outline-none transition-all text-sm font-black uppercase placeholder:text-stone-300"
+                                            disabled={loading}
+                                        />
+                                    </div>
+
+                                    {!isResetMode && (
+                                        <div>
+                                            <div className="flex justify-between items-center mb-1">
+                                                <label htmlFor="password" className="block text-[9px] font-black uppercase tracking-widest text-stone-400">Pass</label>
+                                            </div>
+                                            <input
+                                                id="password"
+                                                type="password"
+                                                placeholder="••••••••"
+                                                value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
+                                                className="w-full p-2.5 bg-stone-50/50 neo-border focus:ring-2 focus:ring-[#C19A9A]/20 focus:outline-none transition-all text-sm font-black uppercase"
+                                                disabled={loading}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {isResetMode ? (
+                                    <div className="space-y-3 pt-2">
+                                        <button
+                                            type="submit"
+                                            className="w-full px-6 py-3 bg-black text-white neo-border neo-shadow-sm font-black uppercase tracking-widest text-xs hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all disabled:opacity-50"
+                                            disabled={loading}
+                                        >
+                                            {loading ? 'Sending Protocol...' : 'Request Pin Reset'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.preventDefault(); setIsResetMode(false); }}
+                                            className="w-full py-2 text-[9px] font-black uppercase tracking-widest text-stone-400 hover:text-black transition-colors"
+                                        >
+                                            Return to Login
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4 pt-2">
+                                        <button
+                                            type="submit"
+                                            className="w-full px-6 py-3.5 bg-black text-white neo-border neo-shadow-sm font-black uppercase tracking-widest text-xs hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all disabled:opacity-50"
+                                            disabled={loading}
+                                        >
+                                            {loading ? 'Verifying...' : 'Access Identity'}
+                                        </button>
+
+                                        <div className="flex justify-center">
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.preventDefault(); setIsResetMode(true); }}
+                                                className="text-[9px] font-black uppercase tracking-widest text-stone-400 hover:text-black transition-colors"
+                                            >
+                                                Forgot your password?
+                                            </button>
+                                        </div>
+
+                                        <div className="relative flex items-center py-1">
+                                            <div className="flex-grow border-t border-stone-100/50"></div>
+                                            <span className="flex-shrink mx-3 text-stone-300 text-[8px] font-black uppercase tracking-[0.2em]">or</span>
+                                            <div className="flex-grow border-t border-stone-100/50"></div>
+                                        </div>
+
+                                        <button
+                                            onClick={(e) => { e.preventDefault(); onContinueAsGuest(); }}
+                                            className="w-full px-6 py-2.5 bg-white/50 text-black border-[2px] border-dashed border-stone-200 font-black uppercase tracking-widest text-[10px] hover:border-black hover:text-black transition-all flex items-center justify-center gap-2"
+                                        >
+                                            <User size={12} />
+                                            Guest Entry
+                                        </button>
+                                    </div>
+                                )}
+                            </form>
+                        </div>
+
                     </div>
-                </form>
-            </div >
-        </div >
+                </motion.div>
+            </div>
+        </div>
     );
 };

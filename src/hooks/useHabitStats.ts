@@ -41,13 +41,33 @@ export const useHabitStats = (
     const weekProgress = useMemo(() => {
         const totalPossible = habits.length * 7;
         const completed = weeklyStats.reduce((acc, curr) => acc + curr.count, 0);
+
+        // Per-habit performance for the week
+        const habitPerformance = habits.map(h => {
+            let hCompleted = 0;
+            const today = new Date();
+            const day = today.getDay();
+            const diff = today.getDate() - day + (day === 0 ? -6 : 1) + (weekOffset * 7);
+            const monday = new Date(today.getFullYear(), today.getMonth(), diff);
+
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(monday);
+                date.setDate(monday.getDate() + i);
+                if (isCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear())) {
+                    hCompleted++;
+                }
+            }
+            return { name: h.name, completed: hCompleted };
+        }).sort((a, b) => b.completed - a.completed);
+
         return {
             total: totalPossible,
             completed,
             remaining: Math.max(0, totalPossible - completed),
-            percentage: totalPossible > 0 ? (completed / totalPossible) * 100 : 0
+            percentage: totalPossible > 0 ? (completed / totalPossible) * 100 : 0,
+            habitPerformance
         };
-    }, [habits.length, weeklyStats]);
+    }, [habits, completions, weeklyStats, weekOffset]);
     const dailyStats = useMemo(() => {
         return monthDates.map(day => {
             let count = 0;
@@ -187,9 +207,15 @@ export const useHabitStats = (
             };
         });
 
+        const today = new Date();
+        const currentM = today.getMonth();
+        const currentD = today.getDate();
+
         for (let m = 0; m < 12; m++) {
+            if (m > currentM && currentYear === today.getFullYear()) break;
             const dInM = new Date(currentYear, m + 1, 0).getDate();
             for (let d = 1; d <= dInM; d++) {
+                if (m === currentM && d > currentD && currentYear === today.getFullYear()) break;
                 const anyCompleted = habits.some(h => isCompleted(h.id, d, completions, m, currentYear));
                 if (anyCompleted) {
                     currentStreak++;
@@ -200,24 +226,51 @@ export const useHabitStats = (
             }
         }
 
+        let weekendCompletions = 0;
+        let weekendPossible = 0;
+        let weekdayCompletions = 0;
+        let weekdayPossible = 0;
+
         const habitPerformance = habits.map(h => {
             let hCompleted = 0;
             let hPossible = 0;
             const mCompletions: number[] = new Array(12).fill(0);
+            let hMaxStreak = 0;
+            let hCurrentStreak = 0;
 
             MONTHS.forEach((_, mIdx) => {
                 const dInM = new Date(currentYear, mIdx + 1, 0).getDate();
                 for (let d = 1; d <= dInM; d++) {
-                    if (isCompleted(h.id, d, completions, mIdx, currentYear)) {
+                    const date = new Date(currentYear, mIdx, d);
+                    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                    const done = isCompleted(h.id, d, completions, mIdx, currentYear);
+
+                    if (done) {
                         hCompleted++;
                         mCompletions[mIdx]++;
+                        hCurrentStreak++;
+                        hMaxStreak = Math.max(hMaxStreak, hCurrentStreak);
+                        if (isWeekend) weekendCompletions++;
+                        else weekdayCompletions++;
+                    } else {
+                        hCurrentStreak = 0;
                     }
+
+                    hPossible++;
+                    if (isWeekend) weekendPossible++;
+                    else weekdayPossible++;
                 }
-                hPossible += dInM;
             });
 
             const q1 = mCompletions.slice(0, 3).reduce((a, b) => a + b, 0);
+            const q2 = mCompletions.slice(3, 6).reduce((a, b) => a + b, 0);
+            const q3 = mCompletions.slice(6, 9).reduce((a, b) => a + b, 0);
             const q4 = mCompletions.slice(9, 12).reduce((a, b) => a + b, 0);
+
+            // Fading detection: High early (Q1+Q2), low late (Q4)
+            const earlyRate = (q1 + q2) / (hPossible / 2);
+            const lateRate = q4 / (hPossible / 4);
+            const isFading = (q1 + q2) > 10 && lateRate < earlyRate * 0.3;
 
             let badge = "Active Habit";
             if (hCompleted > 0) {
@@ -227,37 +280,49 @@ export const useHabitStats = (
                 else if (hCompleted > 15) badge = "Most Attempted";
             }
 
+            let lastCompletedDate: string | null = null;
+            const habitComps = completions[h.id] || {};
+            const dates = Object.keys(habitComps).filter(d => habitComps[d]).sort();
+            if (dates.length > 0) lastCompletedDate = dates[dates.length - 1];
+
             return {
                 id: h.id, name: h.name, completed: hCompleted, total: hPossible, rate: hPossible > 0 ? (hCompleted / hPossible) * 100 : 0, badge,
                 startRate: hPossible > 0 ? (q1 / (hPossible / 4)) * 100 : 0,
-                endRate: hPossible > 0 ? (q4 / (hPossible / 4)) * 100 : 0
+                endRate: hPossible > 0 ? (q4 / (hPossible / 4)) * 100 : 0,
+                lastCompletedDate,
+                isFading,
+                maxStreak: hMaxStreak
             };
         }).sort((a, b) => b.rate - a.rate || a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
 
         const strongestMonth = [...monthlySummaries].sort((a, b) => b.rate - a.rate)[0];
         const consistencyRate = totalPossible > 0 ? (totalCompletions / totalPossible) * 100 : 0;
+        const activeDays = monthlySummaries.reduce((sum, m) => sum + (m.consistency * (new Date(currentYear, MONTHS.indexOf(m.month) + 1, 0).getDate()) / 100), 0);
+        const activeHabitsCount = habitPerformance.filter(h => h.completed >= 5).length;
+
+        // Momentum: Compare last 2 active months to yearly average
+        const activeMonths = monthlySummaries.filter(m => m.rate > 0);
+        const recentRate = activeMonths.length >= 2
+            ? (activeMonths[activeMonths.length - 1].rate + activeMonths[activeMonths.length - 2].rate) / 2
+            : activeMonths.length === 1 ? activeMonths[0].rate : 0;
+
+        const momentum = recentRate > consistencyRate * 1.1 ? "ascending" : recentRate < consistencyRate * 0.8 ? "descending" : "stable";
+
+        // Story Variant for rotation (re-seed every day)
+        const dayOfYear = Math.floor((new Date().getTime() - new Date(new Date().getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
+        const storyVariant = (dayOfYear % 3 === 0) ? "identity" : (dayOfYear % 3 === 1) ? "momentum" : "reflection";
 
         // Calculate All-Time High Month
         const monthCounts: Record<string, number> = {};
-        const monthPossible: Record<string, number> = {};
-
         habits.forEach(h => {
             const hCompletions = completions[h.id] || {};
-            // Count completions per month
             Object.keys(hCompletions).forEach(dateKey => {
-                if (hCompletions[dateKey]) { // Only count if true
+                if (hCompletions[dateKey]) {
                     const [y, m] = dateKey.split('-');
                     const key = `${y}-${m}`;
                     monthCounts[key] = (monthCounts[key] || 0) + 1;
                 }
             });
-
-            // We need to calculate possible days for every month that has at least one completion or just generally?
-            // To be accurate for "Best Month", we ideally need to know the possible days for THAT month.
-            // Since we don't have a list of ALL historical months easily without iterating ranges, 
-            // let's infer the months we have data for.
-            // But wait, if we only count months with completions, a month with 0 completions (0%) won't be in the list.
-            // That's fine for "Best Month" calculation since 0% won't be the best.
         });
 
         const allTimeBest = Object.entries(monthCounts).map(([key, count]) => {
@@ -265,19 +330,32 @@ export const useHabitStats = (
             const year = parseInt(yStr);
             const monthIdx = parseInt(mStr) - 1;
             const daysInMonth = new Date(year, monthIdx + 1, 0).getDate();
-            const totalPossible = daysInMonth * habits.length; // Assuming habit count was constant? Limitation: we don't track historical habit count.
-            // Using current habit count as denominator is the best approximation we have without event sourcing.
-
+            const totalPossible = daysInMonth * habits.length;
             return {
-                key,
-                year,
-                monthIdx,
-                count,
+                key, year, monthIdx, count,
                 rate: totalPossible > 0 ? (count / totalPossible) * 100 : 0
             };
         }).sort((a, b) => b.rate - a.rate)[0];
 
-        return { totalCompletions, totalPossible, monthlySummaries, topHabits: habitPerformance.slice(0, 6), maxStreak, strongestMonth, consistencyRate, allTimeBest };
+        return {
+            totalCompletions,
+            totalPossible,
+            monthlySummaries,
+            topHabits: habitPerformance.slice(0, 6),
+            maxStreak,
+            currentStreak,
+            strongestMonth,
+            consistencyRate,
+            allTimeBest,
+            weekendRate: weekendPossible > 0 ? (weekendCompletions / weekendPossible) * 100 : 0,
+            weekdayRate: weekdayPossible > 0 ? (weekdayCompletions / weekdayPossible) * 100 : 0,
+            momentum,
+            fadingHabit: habitPerformance.find(h => h.isFading) || null,
+            longestHabitStreak: [...habitPerformance].sort((a, b) => b.maxStreak - a.maxStreak)[0] || null,
+            activeDays: Math.round(activeDays),
+            activeHabitsCount,
+            storyVariant
+        };
     }, [completions, habits, currentYear]);
 
     const prevWeekProgress = useMemo(() => {
@@ -363,13 +441,35 @@ export const useHabitStats = (
         return best || { rate: 0, dateRangeStr: '', year: 0 };
     }, [habits, completions]);
 
+    const weekDelta = weekProgress.percentage - prevWeekProgress.percentage;
+
+    const prevMonthProgress = useMemo(() => {
+        const prevMonthIdx = currentMonthIndex === 0 ? 11 : currentMonthIndex - 1;
+        const prevYear = currentMonthIndex === 0 ? currentYear - 1 : currentYear;
+        const dInPrevM = new Date(prevYear, prevMonthIdx + 1, 0).getDate();
+        const totalPossible = habits.length * dInPrevM;
+        let completed = 0;
+        habits.forEach(habit => {
+            for (let d = 1; d <= dInPrevM; d++) {
+                if (isCompleted(habit.id, d, completions, prevMonthIdx, prevYear)) completed++;
+            }
+        });
+        return {
+            percentage: totalPossible > 0 ? (completed / totalPossible) * 100 : 0
+        };
+    }, [habits, completions, currentMonthIndex, currentYear]);
+
+    const monthDelta = monthProgress.percentage - prevMonthProgress.percentage;
+
     return {
         dailyStats,
         weeklyStats,
         weekProgress,
         prevWeekProgress,
+        weekDelta,
         allTimeBestWeek,
         monthProgress,
+        monthDelta,
         topHabitsThisMonth,
         annualStats
     };

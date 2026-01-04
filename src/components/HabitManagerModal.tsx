@@ -63,7 +63,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
     };
 
     const handleDelete = async (id: string) => {
-        if (confirm('Are you sure you want to delete this habit? All history will be lost.')) {
+        if (confirm('Are you sure you want to delete this habit? You will lose all its historical data.')) {
             await removeHabit(id);
         }
     };

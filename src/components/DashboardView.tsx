@@ -1,11 +1,13 @@
 import React, { useState, useRef } from 'react';
-import { Trophy, Zap, Target, Award, ArrowRight, TrendingUp, TrendingDown, Pencil, Sparkles } from 'lucide-react';
+import { Trophy, Zap, Target, Award, ArrowRight, TrendingUp, TrendingDown, Pencil, Sparkles, RefreshCw } from 'lucide-react';
+import YearView from './YearView';
 import { ResolutionsModal } from './ResolutionsModal';
 import { CircularProgress } from './CircularProgress';
-import { ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
+import { FormattedText } from './FormattedText';
 import { Habit, Theme, MonthStats, MonthlyGoal } from '../types';
 import { MONTHS } from '../constants';
 import { generateUUID } from '../utils/uuid';
+import { buildAnnualStory } from '../utils/storyGenerator';
 
 interface DashboardViewProps {
     annualStats: {
@@ -16,6 +18,12 @@ interface DashboardViewProps {
         maxStreak: number;
         strongestMonth: any;
         consistencyRate: number;
+        activeDays?: number;
+        activeHabitsCount?: number;
+        momentum?: string;
+        storyVariant?: string;
+        fadingHabit?: any;
+        longestHabitStreak?: any;
     };
     habits: Habit[];
     theme: Theme;
@@ -68,7 +76,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500 w-full">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="p-4 border-[2px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white flex flex-col relative overflow-hidden group">
+                <div className="p-4 bg-white neo-border neo-shadow rounded-2xl flex flex-col relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
                         <Trophy size={48} className="text-black" />
                     </div>
@@ -123,49 +131,110 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     </div>
                 </div>
 
-                <div className="md:col-span-3 p-4 border-[2px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white flex flex-col min-h-[220px]">
+                <div className="md:col-span-1 h-full">
+                    <YearView theme={theme} currentYear={currentYear} annualStats={annualStats} />
+                </div>
+
+                <div className="md:col-span-2 p-4 bg-white neo-border neo-shadow rounded-2xl flex flex-col min-h-[220px]">
                     <div className="flex items-center gap-2 mb-3 border-b border-stone-100 pb-2">
-                        <div className="p-1 bg-amber-100 text-amber-600 rounded"><Target size={14} /></div>
-                        <span className="text-[10px] font-black uppercase tracking-widest">Yearly Identity: Habit Outcomes</span>
+                        <div className="p-1 bg-amber-100 text-amber-600 rounded"><Sparkles size={14} /></div>
+                        <span className="text-[10px] font-black uppercase tracking-widest">Your Story This Year</span>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-8 overflow-y-auto">
-                        {annualStats.topHabits.length > 0 ? annualStats.topHabits.map((h, i) => (
-                            <div key={h.id} className="flex flex-col relative group">
-                                <div className="flex items-center justify-between mb-1">
-                                    <span className="text-[11px] font-black truncate max-w-[120px] uppercase">{h.name || 'Untitled'}</span>
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="text-[9px] font-bold text-stone-400">{h.startRate.toFixed(0)}%</span>
-                                        {h.endRate > h.startRate ? (
-                                            <TrendingUp size={10} className="text-emerald-500" />
-                                        ) : h.endRate < h.startRate ? (
-                                            <TrendingDown size={10} className="text-rose-500" />
-                                        ) : (
-                                            <ArrowRight size={8} className="text-stone-300" />
+
+                    {(() => {
+                        const today = new Date();
+                        const monthsElapsed = currentYear === today.getFullYear() ? today.getMonth() + 1 : 12;
+                        const story = buildAnnualStory(annualStats, monthsElapsed);
+                        if (!story.focused) {
+                            return <div className="flex-1 flex items-center justify-center text-stone-300 italic text-sm">No significant habit outcomes for this year yet.</div>;
+                        }
+
+                        return (
+                            <div className="flex-1 flex flex-col justify-between py-2 overflow-y-auto pr-1 custom-scrollbar">
+                                <div className="space-y-5">
+                                    {story.sections.map((section, idx) => {
+                                        const content = (
+                                            <FormattedText
+                                                text={section.text}
+                                                highlightColor={theme.secondary}
+                                                className={section.type === 'consistency' ? 'italic' : section.type === 'experimental' ? 'text-indigo-800' : section.type === 'fading' ? 'text-amber-800' : section.type === 'neglected' ? 'text-rose-800' : ''}
+                                            />
+                                        );
+
+                                        if (section.type === 'momentum' || section.type === 'rhythm') {
+                                            return (
+                                                <p key={idx} className="text-sm leading-relaxed">
+                                                    {content}
+                                                </p>
+                                            );
+                                        }
+
+                                        if (section.type === 'experimental') {
+                                            return (
+                                                <div key={idx} className="p-3 bg-indigo-50 border-l-4 border-indigo-400 text-xs rounded-r-lg">
+                                                    <span className="font-black uppercase block mb-1 text-indigo-800">Curiosity & Growth</span>
+                                                    {content}
+                                                </div>
+                                            );
+                                        }
+
+                                        if (section.type === 'fading') {
+                                            return (
+                                                <div key={idx} className="p-3 bg-amber-50 border-l-4 border-amber-400 text-xs rounded-r-lg">
+                                                    <span className="font-black uppercase block mb-1 text-amber-800">Fading Habit Alert</span>
+                                                    {content}
+                                                </div>
+                                            );
+                                        }
+
+                                        if (section.type === 'consistency') {
+                                            return (
+                                                <div key={idx} className="p-3 bg-stone-50 border-l-4 border-black italic text-xs leading-relaxed">
+                                                    {content}
+                                                </div>
+                                            );
+                                        }
+
+                                        if (section.type === 'neglected') {
+                                            return (
+                                                <div key={idx} className="flex items-start gap-3 p-3 bg-rose-50/50 border border-rose-100 rounded-xl">
+                                                    <div className="p-1.5 bg-rose-100 text-rose-600 rounded-lg"><RefreshCw size={14} /></div>
+                                                    <div className="space-y-1">
+                                                        <span className="text-[10px] font-black uppercase tracking-widest text-rose-500">Reflections</span>
+                                                        <p className="text-xs leading-tight">
+                                                            {content}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+
+                                        return null;
+                                    })}
+                                </div>
+
+                                <div className="mt-6 pt-4 border-t border-stone-100 flex flex-wrap items-center justify-between gap-4">
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className="p-1 px-2 bg-emerald-50 border border-emerald-200 rounded text-[9px] font-black text-emerald-700 uppercase">Growth</div>
+                                            <span className="text-[11px] font-black uppercase text-stone-700">{story.highlights.promise?.name}</span>
+                                        </div>
+                                        {story.highlights.streak && (
+                                            <div className="flex items-center gap-2">
+                                                <div className="p-1 px-2 bg-amber-50 border border-amber-200 rounded text-[9px] font-black text-amber-700 uppercase">Top Streak</div>
+                                                <span className="text-[11px] font-black uppercase text-stone-700">{story.highlights.streak.maxStreak} Days</span>
+                                            </div>
                                         )}
-                                        <span className="text-[11px] font-black" style={{ color: h.endRate > h.startRate ? '#10b981' : (h.endRate < h.startRate ? '#f43f5e' : theme.primary) }}>{h.endRate.toFixed(0)}%</span>
                                     </div>
-                                </div>
-
-                                <div className="flex items-center gap-2 mb-2">
-                                    <div className={`px-1.5 py-0.5 rounded-sm border text-[8px] font-black uppercase tracking-tighter flex items-center gap-1 ${h.badge === "Most Consistent" ? "bg-amber-50 border-amber-200 text-amber-700" :
-                                        h.badge === "Highest Growth" ? "bg-emerald-50 border-emerald-200 text-emerald-700" :
-                                            "bg-stone-100 border-stone-200 text-stone-500"
-                                        }`}>
-                                        <Award size={8} className={h.badge === "Most Consistent" ? "text-amber-500" : "text-current"} />
-                                        {h.badge}
+                                    <div className="flex items-center gap-3">
+                                        <div className="text-[10px] font-bold text-stone-400">
+                                            Consistency: <span className="text-black font-black">{annualStats.consistencyRate.toFixed(0)}%</span>
+                                        </div>
                                     </div>
-                                </div>
-
-                                <div className="w-full bg-stone-100 h-2 flex gap-0.5 rounded-sm overflow-hidden">
-                                    {Array.from({ length: 10 }).map((_, j) => (
-                                        <div key={j} className="h-full flex-1 transition-all duration-500" style={{ backgroundColor: h.rate >= (j + 1) * 10 ? theme.primary : '#f0f0f0' }} />
-                                    ))}
                                 </div>
                             </div>
-                        )) : (
-                            <div className="col-span-3 text-center text-stone-300 py-4 italic text-sm">No significant habit outcomes for this year yet.</div>
-                        )}
-                    </div>
+                        );
+                    })()}
                 </div>
             </div>
 
@@ -181,13 +250,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     const headerColor = isCurrentMonth ? theme.primary : theme.secondary;
 
                     return (
-                        <div key={m} className={`border-[2px] border-black p-0 bg-white hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all group flex flex-col h-[450px] relative overflow-hidden ${isPastMonth ? 'opacity-75' : ''}`}>
+                        <div key={m} className={`bg-white neo-border hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all group rounded-2xl flex flex-col h-[450px] relative overflow-hidden ${isPastMonth ? 'opacity-75' : ''} neo-shadow`}>
                             <div className="flex items-center justify-center py-2 border-b border-black" style={{ backgroundColor: headerColor }}>
                                 <span className="text-sm font-black uppercase tracking-widest text-white">{m} {currentYear}</span>
                             </div>
 
                             <div className="flex-1 flex flex-col items-center justify-start pt-4 px-4 space-y-6">
-                                <div className="relative">
+                                <div className="relative flex flex-col items-center">
                                     <CircularProgress
                                         percentage={rate}
                                         size={140}
@@ -197,8 +266,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                         textClassName="text-3xl"
                                     />
                                     {signal && (
-                                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-12 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                            <span className="text-[10px] font-black uppercase bg-black text-white px-1.5 py-0.5 rounded">{signal}</span>
+                                        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center whitespace-nowrap">
+                                            <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded shadow-sm neo-border ${delta >= 0 ? 'bg-green-500 text-white' : 'bg-rose-500 text-white'
+                                                }`}>
+                                                {signal}
+                                            </span>
                                         </div>
                                     )}
                                 </div>

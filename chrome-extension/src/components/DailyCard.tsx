@@ -58,7 +58,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
 
     const dayName = DAYS_OF_WEEK[date.getDay()];
     // Format: "January 3, 2026"
-    const dateString = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    const dateString = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     const isToday = date.toDateString() === new Date().toDateString();
 
@@ -130,7 +130,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
     };
 
     return (
-        <div className={`border-[2px] border-black bg-white flex flex-col overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1 ${isToday ? 'ring-2 ring-black ring-offset-2' : ''}`}>
+        <div className={`bg-white neo-border neo-shadow rounded-2xl p-6 relative overflow-hidden transition-transform hover:-translate-y-1 flex flex-col h-full font-sans ${isToday ? 'ring-2 ring-black ring-offset-2' : ''}`}>
             {/* Header */}
             <div className="p-3 text-center border-b-[2px] border-black relative" style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}>
                 {onPrev && (
@@ -266,7 +266,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            if (confirm('Delete this habit?')) removeHabit(habit.id);
+                                                            if (confirm('Are you sure you want to delete this habit? You will lose all its historical data.')) removeHabit(habit.id);
                                                         }}
                                                         className="text-stone-400 hover:text-red-500 p-0.5"
                                                     >
@@ -289,28 +289,30 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                 </div>
             </div>
 
-            {completedCount === totalCount && totalCount > 0 ? (
-                <div className="border-t border-black flex-shrink-0">
-                    <button
-                        onClick={() => onShareClick({ date, dayName, dateString, completedCount, totalCount, progress: actualProgress })}
-                        className="w-full p-3 bg-black text-white font-black uppercase tracking-widest text-[11px] hover:bg-stone-800 transition-all flex items-center justify-center gap-2 group"
-                    >
-                        <Share2 size={14} className="group-hover:scale-110 transition-transform" />
-                        Share Achievement
-                    </button>
-                </div>
-            ) : (
-                <div className="grid grid-cols-2 text-center text-[9px] font-black uppercase tracking-tight border-t border-black flex-shrink-0">
-                    <div className="p-1 px-2 border-r border-black" style={{ backgroundColor: (isToday ? theme.primary : theme.secondary) + '20' }}>
-                        <span className="text-stone-500 block">Habits Maintained</span>
-                        <span className="text-lg leading-none">{completedCount}</span>
+            {
+                completedCount === totalCount && totalCount > 0 ? (
+                    <div className="border-t border-black flex-shrink-0">
+                        <button
+                            onClick={() => onShareClick({ date, dayName, dateString, completedCount, totalCount, progress: actualProgress })}
+                            className="w-full p-3 bg-black text-white font-black uppercase tracking-widest text-[11px] hover:bg-stone-800 transition-all flex items-center justify-center gap-2 group"
+                        >
+                            <Share2 size={14} className="group-hover:scale-110 transition-transform" />
+                            Share Achievement
+                        </button>
                     </div>
-                    <div className="p-1 px-2" style={{ backgroundColor: '#f0f0f0' }}>
-                        <span className="text-stone-500 block">To Build</span>
-                        <span className="text-lg leading-none">{totalCount - completedCount}</span>
+                ) : (
+                    <div className="grid grid-cols-2 text-center text-[9px] font-black uppercase tracking-tight border-t border-black flex-shrink-0">
+                        <div className="p-1 px-2 border-r border-black" style={{ backgroundColor: (isToday ? theme.primary : theme.secondary) + '20' }}>
+                            <span className="text-stone-500 block">Habits Maintained</span>
+                            <span className="text-lg leading-none">{completedCount}</span>
+                        </div>
+                        <div className="p-1 px-2" style={{ backgroundColor: '#f0f0f0' }}>
+                            <span className="text-stone-500 block">To Build</span>
+                            <span className="text-lg leading-none">{totalCount - completedCount}</span>
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Tasks */}
             <div
@@ -439,6 +441,6 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 };

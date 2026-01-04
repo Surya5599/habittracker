@@ -39,8 +39,6 @@ export const ShareCustomizationModal: React.FC<ShareCustomizationModalProps> = (
         return MOTIVATIONAL_MESSAGES[randomIndex];
     });
 
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
     if (!isOpen) return null;
 
     const handleShare = () => {
@@ -72,48 +70,18 @@ export const ShareCustomizationModal: React.FC<ShareCustomizationModalProps> = (
                     {/* Color Schemes */}
                     <div>
                         <h3 className="text-xs font-black uppercase tracking-widest text-stone-500 mb-3">Color Scheme</h3>
-                        <div className="relative">
-                            <button
-                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                className="w-full bg-white border-[2px] border-black px-4 py-3 flex items-center justify-between shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div
-                                        className="w-5 h-5 border border-black"
-                                        style={{
-                                            backgroundColor: selectedColorScheme.primary
-                                        }}
-                                    />
-                                    <span className="text-xs font-black uppercase tracking-widest">{selectedColorScheme.name.split(' & ')[0]}</span>
-                                </div>
-                                <ChevronDown size={16} className={`transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-                            </button>
-
-                            {isDropdownOpen && (
-                                <>
-                                    <div className="fixed inset-0 z-10" onClick={() => setIsDropdownOpen(false)} />
-                                    <div className="absolute top-full left-0 right-0 z-20 bg-white border-[2px] border-black border-t-0 max-h-60 overflow-y-auto shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                                        {THEMES.map((scheme) => (
-                                            <button
-                                                key={scheme.name}
-                                                onClick={() => {
-                                                    setSelectedColorScheme(scheme);
-                                                    setIsDropdownOpen(false);
-                                                }}
-                                                className="w-full px-4 py-3 flex items-center gap-3 hover:bg-stone-50 transition-colors border-b border-stone-100 last:border-0"
-                                            >
-                                                <div
-                                                    className="w-5 h-5 border border-black flex-shrink-0"
-                                                    style={{
-                                                        backgroundColor: scheme.primary
-                                                    }}
-                                                />
-                                                <span className="text-xs font-black uppercase tracking-widest text-left">{scheme.name.split(' & ')[0]}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </>
-                            )}
+                        <div className="flex flex-wrap gap-2">
+                            {THEMES.map((scheme) => (
+                                <button
+                                    key={scheme.name}
+                                    onClick={() => setSelectedColorScheme(scheme)}
+                                    className={`w-10 h-10 border-2 transition-all hover:scale-105 active:scale-95 ${selectedColorScheme.name === scheme.name ? 'border-black ring-2 ring-black ring-offset-2 scale-110' : 'border-stone-200'}`}
+                                    title={scheme.name}
+                                    style={{
+                                        backgroundColor: scheme.primary
+                                    }}
+                                />
+                            ))}
                         </div>
                     </div>
 
@@ -139,12 +107,12 @@ export const ShareCustomizationModal: React.FC<ShareCustomizationModalProps> = (
                     {/* Preview */}
                     <div className="border-t-[2px] border-stone-200 pt-6">
                         <h3 className="text-xs font-black uppercase tracking-widest text-stone-500 mb-3">Preview</h3>
-                        <div className="bg-stone-100 p-4 border-[2px] border-black flex justify-center">
+                        <div className="bg-stone-100 p-8 border-[2px] border-black flex justify-center">
                             {/* Share card preview - Scaled down version of generated card */}
-                            <div className="bg-white border-[2px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-[240px] aspect-[800/1120] relative flex flex-col font-sans">
+                            <div className="bg-white border-[2.5px] border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] w-[240px] aspect-[800/1120] relative flex flex-col font-sans rounded-[12px] overflow-hidden">
                                 {/* Header */}
                                 <div
-                                    className="h-[40px] border-b-[2px] border-black flex flex-col items-center justify-center -space-y-0.5"
+                                    className="h-[54px] border-b-[2.5px] border-black flex flex-col items-center justify-center -space-y-0.5"
                                     style={{
                                         background: selectedColorScheme.gradient
                                             ? `linear-gradient(90deg, ${selectedColorScheme.primary}, ${selectedColorScheme.secondary})`
@@ -152,8 +120,8 @@ export const ShareCustomizationModal: React.FC<ShareCustomizationModalProps> = (
                                     }}
                                 >
                                     {/* Using Arial to match canvas */}
-                                    <div className="text-white font-bold text-[16px] uppercase tracking-wider" style={{ fontFamily: 'Arial' }}>MONDAY</div>
-                                    <div className="text-white/80 font-bold text-[8px] tracking-widest" style={{ fontFamily: 'Arial' }}>01.01.2025</div>
+                                    <div className="text-white font-bold text-[24px] uppercase tracking-wider" style={{ fontFamily: 'Arial' }}>MONDAY</div>
+                                    <div className="text-white/80 font-bold text-[10px] tracking-widest" style={{ fontFamily: 'Arial' }}>01.01.2025</div>
                                 </div>
 
                                 {/* Body */}

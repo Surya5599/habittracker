@@ -43,7 +43,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
     const taskInputRef = useRef<HTMLInputElement>(null);
 
     const dayName = DAYS_OF_WEEK[date.getDay()];
-    const dateString = date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '.');
+    const dateString = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     const isToday = date.toDateString() === new Date().toDateString();
 
@@ -115,7 +115,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
     };
 
     return (
-        <div className={`border-[2px] border-black bg-white flex flex-col overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-1 ${isToday ? 'ring-2 ring-black ring-offset-2' : ''}`}>
+        <div className={`bg-white neo-border neo-shadow rounded-2xl relative overflow-hidden transition-transform hover:-translate-y-1 flex flex-col h-full font-sans ${isToday ? 'ring-2 ring-black ring-offset-2' : ''}`}>
             {/* Header */}
             <div className="p-3 text-center border-b-[2px] border-black relative" style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}>
                 {onPrev && (

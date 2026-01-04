@@ -23,6 +23,7 @@
         {
             "matches": [
                 "*://habicard.com/*",
+                "*://*.habicard.com/*",
                 "*://localhost/*"
             ],
             "js": [

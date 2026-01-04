@@ -168,7 +168,7 @@ const App: React.FC = () => {
       <div className="p-4 bg-[#e5e5e5] min-h-screen flex items-center justify-center">
         <Toaster position="top-center" />
         <div className="max-w-md w-full bg-white border-[2px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-6 space-y-6 text-center">
-          <img src="/logo.png" alt="HabiCard" className="w-12 h-12 mx-auto mb-4" />
+          <img src="/habicard_logo.png" alt="HabiCard" className="w-12 h-12 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-[#444] uppercase tracking-widest">
             Welcome to HabiCard
           </h2>

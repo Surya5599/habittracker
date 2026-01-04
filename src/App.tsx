@@ -11,11 +11,44 @@ import { WeeklyView } from './components/WeeklyView';
 import { useHabits } from './hooks/useHabits';
 import { useTheme } from './hooks/useTheme';
 import { useHabitStats } from './hooks/useHabitStats';
-import { DailyNote, MonthlyGoals, MonthlyGoal } from './types';
+import { Habit, DailyNote, MonthlyGoals, MonthlyGoal } from './types';
 import { BottomNav } from './components/BottomNav';
 import { generateUUID } from './utils/uuid';
 import { OnboardingModal } from './components/OnboardingModal';
 import { FeatureAnnouncementModal } from './components/FeatureAnnouncementModal';
+import { LoadingScreen } from './components/LoadingScreen';
+
+const DEMO_HABITS: Habit[] = [
+  { id: '1', name: 'Morning Meditation', type: 'daily', goal: 7, color: '#C19A9A' },
+  { id: '2', name: 'Deep Work', type: 'daily', goal: 5, color: '#9AC1A0' },
+  { id: '3', name: 'Daily Reading', type: 'daily', goal: 7, color: '#9AB4C1' },
+  { id: '4', name: 'Physical Identity', type: 'daily', goal: 4, color: '#B09AC1' },
+];
+
+const DEMO_ANNUAL_STATS = {
+  totalCompletions: 842,
+  totalPossible: 1460,
+  consistencyRate: 57.6,
+  maxStreak: 42,
+  activeDays: 215,
+  activeHabitsCount: 4,
+  momentum: 'ascending',
+  storyVariant: 'momentum',
+  topHabits: [
+    { name: 'Deep Work', completed: 180, percentage: 85, badge: 'Identity Driver' },
+    { name: 'Morning Meditation', completed: 150, percentage: 70, badge: 'Highest Growth' }
+  ],
+  strongestMonth: { month: 'October', rate: 82 },
+  monthlySummaries: Array.from({ length: 12 }, (_, i) => ({
+    month: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i],
+    rate: [45, 52, 48, 60, 65, 58, 72, 75, 78, 82, 79, 74][i],
+    signal: i === 9 ? 'Best focus month' : (i === 6 ? 'Rebound month' : ''),
+    delta: [0, 7, -4, 12, 5, -7, 14, 3, 3, 4, -3, -5][i],
+    maxStreak: [12, 14, 10, 18, 22, 15, 25, 28, 30, 42, 35, 28][i],
+    completed: [80, 95, 85, 110, 120, 105, 130, 140, 145, 160, 155, 140][i],
+    topHabit: { name: 'Deep Work' }
+  }))
+};
 
 const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
@@ -29,6 +62,8 @@ const App: React.FC = () => {
   const [view, setView] = useState<'monthly' | 'dashboard' | 'weekly'>(defaultView);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
+
+
 
   useEffect(() => {
     // Check for specific feature announcements
@@ -90,6 +125,8 @@ const App: React.FC = () => {
   const [editingHabitId, setEditingHabitId] = useState<string | null>(null);
   const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
   const [weekOffset, setWeekOffset] = useState(0);
+  const [isHabitModalOpen, setIsHabitModalOpen] = useState(false);
+  const [isResolutionsModalOpen, setIsResolutionsModalOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const goalInputRef = useRef<HTMLInputElement>(null);
@@ -156,6 +193,8 @@ const App: React.FC = () => {
     weeklyStats,
     weekProgress,
     prevWeekProgress,
+    weekDelta,
+    monthDelta,
     allTimeBestWeek,
     monthProgress,
     topHabitsThisMonth,
@@ -492,13 +531,50 @@ const App: React.FC = () => {
 
   if (!session && !guestMode) {
     return (
-      <>
+      <div className="min-h-screen relative overflow-hidden bg-[#e5e5e5]">
         <Toaster position="top-center" reverseOrder={false} />
-        <AuthForm onContinueAsGuest={() => {
-          setGuestMode(true);
-          localStorage.setItem('habit_guest_mode', 'true');
-        }} />
-      </>
+
+        {/* Showcase Background */}
+        <div className="absolute inset-0 z-0 opacity-75 blur-[4px] pointer-events-none scale-105">
+          <div className="max-w-7xl mx-auto p-4 space-y-4">
+            <Header
+              view="dashboard" setView={() => { }}
+              currentYear={currentYear} setCurrentYear={() => { }}
+              currentMonthIndex={currentMonthIndex} setCurrentMonthIndex={() => { }}
+              navigateMonth={() => { }} navigateWeek={() => { }} resetWeekOffset={() => { }}
+              theme={theme} setTheme={() => { }} themes={THEMES}
+              settingsOpen={false} setSettingsOpen={() => { }} settingsRef={{ current: null } as any}
+              guestMode={true} setGuestMode={() => { }} handleLogout={() => { }}
+              monthProgress={{ completed: 140, total: 200, percentage: 70, remaining: 60 }}
+              annualStats={DEMO_ANNUAL_STATS}
+              dailyStats={[]} weeklyStats={[]} weekProgress={{ completed: 25, total: 28, percentage: 89 }}
+              habits={DEMO_HABITS} defaultView="dashboard" setDefaultView={() => { }}
+              addHabit={async () => ''} updateHabit={async () => { }} removeHabit={async () => { }}
+              weekDelta={12} monthDelta={5} monthlyGoals={{}} updateMonthlyGoals={() => { }}
+              topHabitsThisMonth={[]} weekOffset={0}
+            />
+            <DashboardView
+              annualStats={DEMO_ANNUAL_STATS}
+              habits={DEMO_HABITS}
+              theme={theme}
+              currentYear={currentYear}
+              setCurrentMonthIndex={() => { }}
+              setView={() => { }}
+              monthlyGoals={{}}
+              updateMonthlyGoals={() => { }}
+            />
+          </div>
+        </div>
+
+        {/* Login Form Overlay */}
+        <div className="relative z-10 w-full min-h-screen flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-transparent"></div>
+          <AuthForm onContinueAsGuest={() => {
+            setGuestMode(true);
+            localStorage.setItem('habit_guest_mode', 'true');
+          }} />
+        </div>
+      </div>
     );
   }
 
@@ -519,23 +595,27 @@ const App: React.FC = () => {
           <p className="text-stone-500">
             You are now signed in to HabiCard. You can close this tab and return to the extension.
           </p>
-          <button
-            onClick={() => window.close()}
-            className="mt-4 px-6 py-2 bg-black text-white text-sm font-bold uppercase tracking-widest hover:opacity-80 transition-opacity"
-          >
-            Close Tab
-          </button>
+          <div className="flex flex-col gap-2 mt-4">
+            <button
+              onClick={() => window.close()}
+              className="px-6 py-2 bg-black text-white text-sm font-bold uppercase tracking-widest hover:opacity-80 transition-opacity"
+            >
+              Close Tab
+            </button>
+            <button
+              onClick={() => window.location.href = window.location.origin}
+              className="px-6 py-2 bg-white text-black border-2 border-black text-sm font-bold uppercase tracking-widest hover:bg-stone-50 transition-colors"
+            >
+              See Web App
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[#e5e5e5] flex items-center justify-center">
-        <div className="text-xl font-black uppercase tracking-widest animate-pulse">Synchronizing matrix...</div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (
@@ -589,6 +669,8 @@ const App: React.FC = () => {
           weeklyStats={weeklyStats}
           weekProgress={weekProgress}
           prevWeekProgress={prevWeekProgress}
+          weekDelta={weekDelta}
+          monthDelta={monthDelta}
           allTimeBestWeek={allTimeBestWeek}
           habits={habits}
           defaultView={defaultView}
@@ -599,6 +681,12 @@ const App: React.FC = () => {
           setWeekOffset={setWeekOffset}
           monthlyGoals={monthlyGoals}
           updateMonthlyGoals={updateMonthlyGoals}
+          topHabitsThisMonth={topHabitsThisMonth}
+          weekOffset={weekOffset}
+          isHabitModalOpen={isHabitModalOpen}
+          setIsHabitModalOpen={setIsHabitModalOpen}
+          isResolutionsModalOpen={isResolutionsModalOpen}
+          setIsResolutionsModalOpen={setIsResolutionsModalOpen}
         />
 
         {view === 'monthly' ? (
@@ -624,6 +712,7 @@ const App: React.FC = () => {
             setEditingGoalId={setEditingGoalId}
             removeHabit={removeHabit}
             isDayFullyCompleted={isDayFullyCompleted}
+            isModalOpen={isHabitModalOpen || isResolutionsModalOpen}
           />
         ) : view === 'dashboard' ? (
           <DashboardView

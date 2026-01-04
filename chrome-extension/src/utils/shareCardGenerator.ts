@@ -35,27 +35,59 @@ export const generateShareCard = async (data: ShareCardData): Promise<Blob> => {
     ctx.fillStyle = '#e5e5e5';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    // Draw rounded rectangle helper
+    const roundRect = (ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) => {
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        ctx.lineTo(x + radius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+    };
+
     // Main card
     const cardX = 140;
     const cardY = 400;
     const cardWidth = 800;
     const cardHeight = 1120;
+    const borderRadius = 40;
 
     // Card shadow
     ctx.fillStyle = '#000000';
-    ctx.fillRect(cardX + 12, cardY + 12, cardWidth, cardHeight);
+    roundRect(ctx, cardX + 16, cardY + 16, cardWidth, cardHeight, borderRadius);
+    ctx.fill();
 
     // Card background
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(cardX, cardY, cardWidth, cardHeight);
+    roundRect(ctx, cardX, cardY, cardWidth, cardHeight, borderRadius);
+    ctx.fill();
 
     // Card border
     ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(cardX, cardY, cardWidth, cardHeight);
+    ctx.lineWidth = 6;
+    roundRect(ctx, cardX, cardY, cardWidth, cardHeight, borderRadius);
+    ctx.stroke();
 
     // Header background
     const headerHeight = 180;
+    ctx.save();
+    // Clip to the top part of the rounded card
+    ctx.beginPath();
+    ctx.moveTo(cardX + borderRadius, cardY);
+    ctx.lineTo(cardX + cardWidth - borderRadius, cardY);
+    ctx.quadraticCurveTo(cardX + cardWidth, cardY, cardX + cardWidth, cardY + borderRadius);
+    ctx.lineTo(cardX + cardWidth, cardY + headerHeight);
+    ctx.lineTo(cardX, cardY + headerHeight);
+    ctx.lineTo(cardX, cardY + borderRadius);
+    ctx.quadraticCurveTo(cardX, cardY, cardX + borderRadius, cardY);
+    ctx.closePath();
+    ctx.clip();
+
     if (useGradient && colorScheme) {
         const gradient = ctx.createLinearGradient(cardX, cardY, cardX + cardWidth, cardY + headerHeight);
         gradient.addColorStop(0, colorScheme.primary);
@@ -65,10 +97,11 @@ export const generateShareCard = async (data: ShareCardData): Promise<Blob> => {
         ctx.fillStyle = headerColor;
     }
     ctx.fillRect(cardX, cardY, cardWidth, headerHeight);
+    ctx.restore();
 
-    // Header border
+    // Header bottom border
     ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 6;
     ctx.beginPath();
     ctx.moveTo(cardX, cardY + headerHeight);
     ctx.lineTo(cardX + cardWidth, cardY + headerHeight);
@@ -151,9 +184,30 @@ export const generateShareCard = async (data: ShareCardData): Promise<Blob> => {
 
     // Footer
     const footerY = cardY + cardHeight - 80;
-    ctx.font = 'bold 32px Arial';
-    ctx.fillStyle = '#999999';
-    ctx.fillText('HABICARD', cardX + cardWidth / 2, footerY);
+
+    // Load and draw logo
+    await new Promise((resolve) => {
+        const logo = new Image();
+        logo.src = '/habicard_logo.png';
+        logo.onload = () => {
+            const logoHeight = 40;
+            const logoWidth = (logo.width / logo.height) * logoHeight;
+            ctx.save();
+            ctx.globalAlpha = 0.4;
+            // Grayscale/Black effect (simple approach for canvas)
+            // Just use globalAlpha for now to match the text opacity
+            ctx.drawImage(logo, cardX + cardWidth / 2 - logoWidth / 2, footerY - logoHeight / 2, logoWidth, logoHeight);
+            ctx.restore();
+            resolve(null);
+        };
+        logo.onerror = () => {
+            // Fallback to text if logo fails
+            ctx.font = 'bold 32px Arial';
+            ctx.fillStyle = '#999999';
+            ctx.fillText('HABICARD', cardX + cardWidth / 2, footerY);
+            resolve(null);
+        };
+    });
 
     // Convert canvas to blob
     return new Promise((resolve, reject) => {

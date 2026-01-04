@@ -27,6 +27,7 @@ interface MonthlyViewProps {
     setEditingGoalId: (id: string | null) => void;
     removeHabit: (id: string) => void;
     isDayFullyCompleted: (day: number) => boolean;
+    isModalOpen?: boolean;
 }
 
 export const MonthlyView: React.FC<MonthlyViewProps> = ({
@@ -51,6 +52,7 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
     setEditingGoalId,
     removeHabit,
     isDayFullyCompleted,
+    isModalOpen,
 }) => {
     const tableScrollRef = useRef<HTMLDivElement>(null);
     const todayRef = useRef<HTMLTableHeaderCellElement>(null);
@@ -147,20 +149,25 @@ total possible">
                         </div>
                     </div>
                 </div>
-                <div className="md:col-span-3 border border-stone-200 bg-white flex flex-col overflow-hidden min-h-[220px]">
-                    <div className="text-stone-700 text-[11px] font-black uppercase py-1 text-center tracking-widest" style={{ backgroundColor: theme.primary + '30' }} title="Top performing habits ranked by completion days this month">
-                        Top 10 This Month
+                <div className="md:col-span-3 bg-white neo-border neo-shadow rounded-2xl flex flex-col overflow-hidden h-[260px]">
+                    <div className="p-3 border-b-2 border-black text-center" style={{ backgroundColor: theme.primary + '15' }} title="Top performing habits ranked by completion days this month">
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-700">Top 10 This Month</span>
                     </div>
-                    <div className="p-2 space-y-1.5 flex-1 overflow-y-auto overflow-x-hidden min-h-[190px]">
+                    <div className="p-3 space-y-2 flex-1 overflow-y-auto overflow-x-hidden min-h-[200px]">
                         {topHabitsThisMonth.map((h, i) => {
                             const stats = h.stats;
                             const p = h.percentage;
                             return (
-                                <div key={h.id} className="flex items-center justify-between text-[10px] font-black animate-in fade-in slide-in-from-right-1 py-0.5">
-                                    <div className="flex gap-2 items-center"><span className="text-stone-300 w-3">{i + 1}</span><span className="truncate w-32 sm:w-40 md:w-36">{h.name || 'Untitled'}</span></div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-stone-400 font-mono" title={`Completed ${stats.completed} days this month`}>{stats.completed} {stats.completed === 1 ? 'day' : 'days'}</span>
-                                        <div className="w-8 h-1 bg-stone-100 rounded-full overflow-hidden"><div className="h-full transition-all duration-500" style={{ width: `${p}%`, backgroundColor: theme.primary }} /></div>
+                                <div key={h.id} className="flex items-center justify-between text-[11px] font-bold animate-in fade-in slide-in-from-right-1 py-1">
+                                    <div className="flex gap-2 items-center">
+                                        <span className="text-stone-300 w-3 font-black">{i + 1}</span>
+                                        <span className="truncate w-32 sm:w-40 md:w-36 uppercase tracking-tight">{h.name || 'Untitled'}</span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-stone-500 font-black" title={`Completed ${stats.completed} days this month`}>{stats.completed} <span className="text-[8px] opacity-50">DAYS</span></span>
+                                        <div className="w-12 h-2 bg-stone-100 rounded-sm overflow-hidden border border-black/5">
+                                            <div className="h-full transition-all duration-500" style={{ width: `${p}%`, backgroundColor: theme.primary }} />
+                                        </div>
                                     </div>
                                 </div>
                             );
@@ -172,12 +179,12 @@ total possible">
                 </div>
             </div>
 
-            <div className="border border-stone-200 bg-white flex flex-col overflow-hidden relative w-full">
+            <div className={`border border-stone-200 bg-white flex flex-col overflow-hidden relative w-full transition-opacity duration-300 ${isModalOpen ? 'opacity-30 pointer-events-none grayscale-[0.5]' : 'opacity-100'}`}>
                 <div ref={scrollContainerRef} className="overflow-x-auto w-full">
                     <table className="w-full border-separate border-spacing-0">
                         <thead>
                             <tr className="text-[10px] font-black uppercase tracking-widest text-stone-700" style={{ backgroundColor: theme.secondary + '40' }}>
-                                <th className="p-2 border-r border-stone-200 text-left min-w-[100px] sm:min-w-[180px] sticky left-0 z-50" style={{ backgroundColor: 'white', backgroundImage: `linear-gradient(${theme.secondary}40, ${theme.secondary}40)` }}>
+                                <th className="p-2 border-r border-stone-200 text-left min-w-[100px] sm:min-w-[180px] sticky left-0 z-50" style={{ backgroundColor: 'white', backgroundImage: isModalOpen ? 'none' : `linear-gradient(${theme.secondary}40, ${theme.secondary}40)` }}>
                                     <div className="flex items-center gap-2">
                                         <button onClick={(e) => { e.preventDefault(); addHabit(); }} className="p-0.5 px-1 bg-white hover:bg-stone-100 rounded shadow-sm border border-stone-200 font-black flex items-center transition-all active:scale-95" style={{ color: theme.secondary }} title="Add new habit">
                                             <Plus size={10} strokeWidth={4} />
@@ -222,7 +229,7 @@ total possible">
                                 const isEditingGoal = editingGoalId === habit.id;
                                 return (
                                     <tr key={habit.id} className="hover:bg-stone-50 transition-colors group">
-                                        <td className="p-0 border-r border-stone-200 text-[11px] font-black text-stone-700 sticky left-0 z-30 !bg-white group-hover:!bg-stone-50 transition-colors">
+                                        <td className="p-0 border-r border-stone-200 text-[11px] font-bold text-stone-700 sticky left-0 z-30 !bg-white group-hover:!bg-stone-50 transition-colors">
                                             <div className="flex items-center justify-between gap-2 p-1.5 px-3 h-full transition-colors">
                                                 {isEditingName ? (
                                                     <div className="flex items-center gap-2 flex-1">
@@ -241,7 +248,19 @@ total possible">
                                                 ) : (
                                                     <span className="truncate flex-1 cursor-pointer hover:underline" onClick={() => setEditingHabitId(habit.id)} title="Click to rename">{habit.name || 'Untitled Habit'}</span>
                                                 )}
-                                                <div className={`flex items-center gap-1 transition-opacity ${isEditingName ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}><button onClick={(e) => { e.stopPropagation(); removeHabit(habit.id); }} className="p-1 text-stone-300 hover:text-red-500 rounded transition-colors"><Trash2 size={12} /></button></div>
+                                                <div className={`flex items-center gap-1 transition-opacity ${isEditingName ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (window.confirm('Are you sure you want to delete this habit? You will lose all its historical data.')) {
+                                                                removeHabit(habit.id);
+                                                            }
+                                                        }}
+                                                        className="p-1 text-stone-300 hover:text-red-500 rounded transition-colors"
+                                                    >
+                                                        <Trash2 size={12} />
+                                                    </button>
+                                                </div>
                                             </div>
                                         </td>
                                         <td className="p-1 border-r border-stone-200 text-center text-[10px] font-black text-stone-600 group-hover:bg-stone-100 transition-colors">

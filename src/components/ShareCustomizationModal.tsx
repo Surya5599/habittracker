@@ -39,8 +39,6 @@ export const ShareCustomizationModal: React.FC<ShareCustomizationModalProps> = (
         return MOTIVATIONAL_MESSAGES[randomIndex];
     });
 
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
     if (!isOpen) return null;
 
     const handleShare = () => {
@@ -68,116 +66,88 @@ export const ShareCustomizationModal: React.FC<ShareCustomizationModalProps> = (
                     </button>
                 </div>
 
-                <div className="p-6 space-y-6">
-                    {/* Color Schemes */}
-                    <div>
-                        <h3 className="text-xs font-black uppercase tracking-widest text-stone-500 mb-3">Color Scheme</h3>
-                        <div className="relative">
-                            <button
-                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                className="w-full bg-white border-[2px] border-black px-4 py-3 flex items-center justify-between shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div
-                                        className="w-5 h-5 border border-black"
+                <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                    {/* Left Column: Controls */}
+                    <div className="space-y-6">
+                        {/* Color Schemes */}
+                        <div>
+                            <h3 className="text-xs font-black uppercase tracking-widest text-stone-500 mb-3">Color Scheme</h3>
+                            <div className="flex flex-wrap gap-2">
+                                {THEMES.map((scheme) => (
+                                    <button
+                                        key={scheme.name}
+                                        onClick={() => setSelectedColorScheme(scheme)}
+                                        className={`w-10 h-10 border-2 transition-all hover:scale-105 active:scale-95 ${selectedColorScheme.name === scheme.name ? 'border-black ring-2 ring-black ring-offset-2 scale-110' : 'border-stone-200'}`}
+                                        title={scheme.name}
                                         style={{
-                                            backgroundColor: selectedColorScheme.primary
+                                            backgroundColor: scheme.primary
                                         }}
                                     />
-                                    <span className="text-xs font-black uppercase tracking-widest">{selectedColorScheme.name.split(' & ')[0]}</span>
-                                </div>
-                                <ChevronDown size={16} className={`transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-                            </button>
+                                ))}
+                            </div>
+                        </div>
 
-                            {isDropdownOpen && (
-                                <>
-                                    <div className="fixed inset-0 z-10" onClick={() => setIsDropdownOpen(false)} />
-                                    <div className="absolute top-full left-0 right-0 z-20 bg-white border-[2px] border-black border-t-0 max-h-60 overflow-y-auto shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                                        {THEMES.map((scheme) => (
-                                            <button
-                                                key={scheme.name}
-                                                onClick={() => {
-                                                    setSelectedColorScheme(scheme);
-                                                    setIsDropdownOpen(false);
-                                                }}
-                                                className="w-full px-4 py-3 flex items-center gap-3 hover:bg-stone-50 transition-colors border-b border-stone-100 last:border-0"
-                                            >
-                                                <div
-                                                    className="w-5 h-5 border border-black flex-shrink-0"
-                                                    style={{
-                                                        backgroundColor: scheme.primary
-                                                    }}
-                                                />
-                                                <span className="text-xs font-black uppercase tracking-widest text-left">{scheme.name.split(' & ')[0]}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </>
-                            )}
+                        {/* Motivational Messages */}
+                        <div>
+                            <h3 className="text-xs font-black uppercase tracking-widest text-stone-500 mb-3">Motivational Message</h3>
+                            <div className="grid grid-cols-2 gap-2">
+                                {MOTIVATIONAL_MESSAGES.map((message) => (
+                                    <button
+                                        key={message}
+                                        onClick={() => setSelectedMessage(message)}
+                                        className={`border-[2px] border-black px-3 py-2 text-[11px] font-black uppercase tracking-tight transition-all ${selectedMessage === message
+                                            ? 'bg-black text-white shadow-none translate-y-0.5'
+                                            : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5'
+                                            }`}
+                                    >
+                                        {message}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
 
-                    {/* Motivational Messages */}
-                    <div>
-                        <h3 className="text-xs font-black uppercase tracking-widest text-stone-500 mb-3">Motivational Message</h3>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                            {MOTIVATIONAL_MESSAGES.map((message) => (
-                                <button
-                                    key={message}
-                                    onClick={() => setSelectedMessage(message)}
-                                    className={`border-[2px] border-black px-3 py-2 text-[11px] font-black uppercase tracking-tight transition-all ${selectedMessage === message
-                                        ? 'bg-black text-white shadow-none translate-y-0.5'
-                                        : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5'
-                                        }`}
-                                >
-                                    {message}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Preview */}
-                    <div className="border-t-[2px] border-stone-200 pt-6">
-                        <h3 className="text-xs font-black uppercase tracking-widest text-stone-500 mb-3">Preview</h3>
-                        <div className="bg-stone-100 p-4 border-[2px] border-black flex justify-center">
+                    {/* Right Column: Preview */}
+                    <div className="flex flex-col items-center">
+                        <h3 className="text-xs font-black uppercase tracking-widest text-stone-500 mb-3 self-start">Live Preview</h3>
+                        <div className="bg-stone-100 p-6 border-[2px] border-black w-full flex justify-center rounded-xl">
                             {/* Share card preview - Scaled down version of generated card */}
-                            <div className="bg-white border-[2px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-[240px] aspect-[800/1120] relative flex flex-col font-sans">
+                            <div className="bg-white border-[2.5px] border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] w-[200px] aspect-[800/1120] relative flex flex-col font-sans rounded-[12px] overflow-hidden">
                                 {/* Header */}
                                 <div
-                                    className="h-[40px] border-b-[2px] border-black flex flex-col items-center justify-center -space-y-0.5"
+                                    className="h-[44px] border-b-[2.5px] border-black flex flex-col items-center justify-center -space-y-0.5"
                                     style={{
                                         background: selectedColorScheme.gradient
                                             ? `linear-gradient(90deg, ${selectedColorScheme.primary}, ${selectedColorScheme.secondary})`
                                             : selectedColorScheme.primary
                                     }}
                                 >
-                                    {/* Using Arial to match canvas */}
-                                    <div className="text-white font-bold text-[16px] uppercase tracking-wider" style={{ fontFamily: 'Arial' }}>MONDAY</div>
-                                    <div className="text-white/80 font-bold text-[8px] tracking-widest" style={{ fontFamily: 'Arial' }}>01.01.2025</div>
+                                    <div className="text-white font-bold text-[18px] uppercase tracking-wider" style={{ fontFamily: 'Arial' }}>MONDAY</div>
+                                    <div className="text-white/80 font-bold text-[8px] tracking-widest" style={{ fontFamily: 'Arial' }}>JAN 2, 2026</div>
                                 </div>
 
                                 {/* Body */}
-                                <div className="flex-1 flex flex-col items-center pt-8">
+                                <div className="flex-1 flex flex-col items-center pt-6">
                                     {/* Circle */}
-                                    <div className="relative w-[80px] h-[80px] mb-8">
+                                    <div className="relative w-[60px] h-[60px] mb-6">
                                         <svg className="w-full h-full transform -rotate-90">
                                             <circle
-                                                cx="40"
-                                                cy="40"
-                                                r="34"
+                                                cx="30"
+                                                cy="30"
+                                                r="26"
                                                 stroke="#f0f0f0"
-                                                strokeWidth="6"
+                                                strokeWidth="5"
                                                 fill="transparent"
                                             />
                                             <circle
-                                                cx="40"
-                                                cy="40"
-                                                r="34"
+                                                cx="30"
+                                                cy="30"
+                                                r="26"
                                                 stroke={selectedColorScheme.primary}
-                                                strokeWidth="6"
+                                                strokeWidth="5"
                                                 fill="transparent"
-                                                strokeDasharray={2 * Math.PI * 34}
-                                                strokeDashoffset={2 * Math.PI * 34 * 0} // 100%
+                                                strokeDasharray={2 * Math.PI * 26}
+                                                strokeDashoffset={2 * Math.PI * 26 * 0}
                                                 strokeLinecap="round"
                                                 style={{
                                                     stroke: selectedColorScheme.gradient ? 'url(#previewGradient)' : selectedColorScheme.primary
@@ -193,15 +163,15 @@ export const ShareCustomizationModal: React.FC<ShareCustomizationModalProps> = (
                                             )}
                                         </svg>
                                         <div className="absolute inset-0 flex items-center justify-center">
-                                            <span className="text-xl font-bold" style={{ fontFamily: 'Arial' }}>100%</span>
+                                            <span className="text-sm font-bold" style={{ fontFamily: 'Arial' }}>100%</span>
                                         </div>
                                     </div>
 
                                     {/* Stats */}
                                     <div className="text-center font-bold" style={{ fontFamily: 'Arial' }}>
-                                        <div className="text-[10px] mb-1">5/5 HABITS</div>
+                                        <div className="text-[9px] mb-0.5">5/5 HABITS</div>
                                         <div
-                                            className="text-[12px] uppercase"
+                                            className="text-[10px] uppercase"
                                             style={{
                                                 background: selectedColorScheme.gradient
                                                     ? `linear-gradient(90deg, ${selectedColorScheme.primary}, ${selectedColorScheme.secondary})`
@@ -216,14 +186,14 @@ export const ShareCustomizationModal: React.FC<ShareCustomizationModalProps> = (
                                     </div>
 
                                     {/* Message */}
-                                    <div className="mt-6 px-4 text-center">
-                                        <div className="text-[11px] font-bold text-[#444] uppercase leading-tight" style={{ fontFamily: 'Arial' }}>{selectedMessage}</div>
+                                    <div className="mt-4 px-3 text-center">
+                                        <div className="text-[9px] font-bold text-[#444] uppercase leading-tight" style={{ fontFamily: 'Arial' }}>{selectedMessage}</div>
                                     </div>
                                 </div>
 
                                 {/* Footer */}
-                                <div className="absolute bottom-4 left-0 right-0 text-center">
-                                    <div className="text-[7px] font-bold uppercase text-[#999999] tracking-widest" style={{ fontFamily: 'Arial' }}>HABICARD</div>
+                                <div className="absolute bottom-3 left-0 right-0 flex justify-center">
+                                    <img src="/habicard_logo.png" alt="Habicard" className="h-[10px] opacity-40 grayscale brightness-0" />
                                 </div>
                             </div>
                         </div>

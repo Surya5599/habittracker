@@ -265,7 +265,7 @@ export const Header: React.FC<HeaderProps> = ({
 
                             {guestMode ? (
                                 <button
-                                    onClick={() => setGuestMode(false)}
+                                    onClick={() => window.location.href = '/signin'}
                                     className="flex items-center gap-1.5 px-2 py-1 border-[2px] border-emerald-600 text-[10px] font-black uppercase tracking-widest bg-emerald-500 text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all"
                                 >
                                     <LogIn size={12} />

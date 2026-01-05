@@ -3,6 +3,7 @@ import { User, Check } from 'lucide-react';
 import { supabase } from '../supabase';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 interface AuthFormProps {
     onContinueAsGuest: () => void;
@@ -13,6 +14,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest }) => {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [isResetMode, setIsResetMode] = useState(false);
+    const navigate = useNavigate();
 
     const handleResetPassword = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -47,6 +49,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest }) => {
         if (!loginError) {
             toast.success('Logged in successfully!');
             setLoading(false);
+            navigate('/');
             return;
         }
 
@@ -64,9 +67,11 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest }) => {
                     }
                 } else {
                     toast.success('Account created and logged in!');
+                    navigate('/');
                 }
             } else {
                 toast.success('Account created and logged in!');
+                navigate('/');
             }
             setLoading(false);
             return;

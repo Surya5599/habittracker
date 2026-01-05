@@ -292,9 +292,16 @@ export const useHabits = (session: any, guestMode: boolean) => {
 
         if (session && !guestMode) {
             try {
+                // Convert undefined frequency to null for database
+                // In the app, undefined means "every day", which is stored as NULL in the database
+                const dbUpdates = { ...updates };
+                if ('frequency' in dbUpdates && dbUpdates.frequency === undefined) {
+                    dbUpdates.frequency = null as any;
+                }
+
                 await supabase
                     .from('habits')
-                    .update(updates)
+                    .update(dbUpdates)
                     .eq('id', id)
                     .eq('user_id', session.user.id);
             } catch (err) {

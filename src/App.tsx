@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from './supabase';
 import { exportToExcel } from './utils/exportToExcel';
 import { AuthForm } from './components/AuthForm';
@@ -50,7 +51,8 @@ const DEMO_ANNUAL_STATS = {
   }))
 };
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
+  const navigate = useNavigate();
   const [session, setSession] = useState<any>(null);
   const [guestMode, setGuestMode] = useState(() => {
     return localStorage.getItem('habit_guest_mode') === 'true';
@@ -514,11 +516,14 @@ const App: React.FC = () => {
       await supabase.auth.signOut();
       setSession(null);
       setGuestMode(false);
+      localStorage.removeItem('habit_guest_mode');
+      navigate('/signin');
     } catch (err) {
       console.error('Logout error:', err);
       setSession(null);
       setGuestMode(false);
       localStorage.removeItem('habit_guest_mode');
+      navigate('/signin');
     } finally {
       setLoading(false);
     }
@@ -561,55 +566,6 @@ const App: React.FC = () => {
         <Toaster position="top-center" reverseOrder={false} />
         <UpdatePasswordForm onSuccess={() => setPasswordRecoveryMode(false)} />
       </>
-    );
-  }
-
-  if (!session && !guestMode) {
-    return (
-      <div className="min-h-screen relative overflow-hidden bg-[#e5e5e5]">
-        <Toaster position="top-center" reverseOrder={false} />
-
-        {/* Showcase Background */}
-        <div className="absolute inset-0 z-0 opacity-75 blur-[4px] pointer-events-none scale-105">
-          <div className="max-w-7xl mx-auto p-4 space-y-4">
-            <Header
-              view="dashboard" setView={() => { }}
-              currentYear={currentYear} setCurrentYear={() => { }}
-              currentMonthIndex={currentMonthIndex} setCurrentMonthIndex={() => { }}
-              navigateMonth={() => { }} navigateWeek={() => { }} resetWeekOffset={() => { }}
-              theme={theme} setTheme={() => { }} themes={THEMES}
-              settingsOpen={false} setSettingsOpen={() => { }} settingsRef={{ current: null } as any}
-              guestMode={true} setGuestMode={() => { }} handleLogout={() => { }}
-              monthProgress={{ completed: 140, total: 200, percentage: 70, remaining: 60 }}
-              annualStats={DEMO_ANNUAL_STATS}
-              dailyStats={[]} weeklyStats={[]} weekProgress={{ completed: 25, total: 28, percentage: 89 }}
-              habits={DEMO_HABITS} defaultView="dashboard" setDefaultView={() => { }}
-              addHabit={async () => ''} updateHabit={async () => { }} removeHabit={async () => { }}
-              weekDelta={12} monthDelta={5} monthlyGoals={{}} updateMonthlyGoals={() => { }}
-              topHabitsThisMonth={[]} weekOffset={0}
-            />
-            <DashboardView
-              annualStats={DEMO_ANNUAL_STATS}
-              habits={DEMO_HABITS}
-              theme={theme}
-              currentYear={currentYear}
-              setCurrentMonthIndex={() => { }}
-              setView={() => { }}
-              monthlyGoals={{}}
-              updateMonthlyGoals={() => { }}
-            />
-          </div>
-        </div>
-
-        {/* Login Form Overlay */}
-        <div className="relative z-10 w-full min-h-screen flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-transparent"></div>
-          <AuthForm onContinueAsGuest={() => {
-            setGuestMode(true);
-            localStorage.setItem('habit_guest_mode', 'true');
-          }} />
-        </div>
-      </div>
     );
   }
 
@@ -799,6 +755,129 @@ const App: React.FC = () => {
         }
       `}</style>
     </div>
+  );
+};
+
+// Sign In Page Component
+const SignInPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { theme, THEMES } = useTheme();
+  const [currentYear] = useState(new Date().getFullYear());
+  const [currentMonthIndex] = useState(new Date().getMonth());
+
+  const handleContinueAsGuest = () => {
+    localStorage.setItem('habit_guest_mode', 'true');
+    navigate('/');
+  };
+
+  return (
+    <div className="min-h-screen relative overflow-hidden bg-[#e5e5e5]">
+      <Toaster position="top-center" reverseOrder={false} />
+
+      {/* Showcase Background */}
+      <div className="absolute inset-0 z-0 opacity-75 blur-[4px] pointer-events-none scale-105">
+        <div className="max-w-7xl mx-auto p-4 space-y-4">
+          <Header
+            view="dashboard" setView={() => { }}
+            currentYear={currentYear} setCurrentYear={() => { }}
+            currentMonthIndex={currentMonthIndex} setCurrentMonthIndex={() => { }}
+            navigateMonth={() => { }} navigateWeek={() => { }} resetWeekOffset={() => { }}
+            theme={theme} setTheme={() => { }} themes={THEMES}
+            settingsOpen={false} setSettingsOpen={() => { }} settingsRef={{ current: null } as any}
+            guestMode={true} setGuestMode={() => { }} handleLogout={() => { }}
+            monthProgress={{ completed: 140, total: 200, percentage: 70, remaining: 60 }}
+            annualStats={DEMO_ANNUAL_STATS}
+            dailyStats={[]} weeklyStats={[]} weekProgress={{ completed: 25, total: 28, percentage: 89 }}
+            habits={DEMO_HABITS} defaultView="dashboard" setDefaultView={() => { }}
+            addHabit={async () => ''} updateHabit={async () => { }} removeHabit={async () => { }}
+            weekDelta={12} monthDelta={5} monthlyGoals={{}} updateMonthlyGoals={() => { }}
+            topHabitsThisMonth={[]} weekOffset={0}
+          />
+          <DashboardView
+            annualStats={DEMO_ANNUAL_STATS}
+            habits={DEMO_HABITS}
+            theme={theme}
+            currentYear={currentYear}
+            setCurrentMonthIndex={() => { }}
+            setView={() => { }}
+            monthlyGoals={{}}
+            updateMonthlyGoals={() => { }}
+          />
+        </div>
+      </div>
+
+      {/* Login Form Overlay */}
+      <div className="relative z-10 w-full min-h-screen flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-transparent"></div>
+        <AuthForm onContinueAsGuest={handleContinueAsGuest} />
+      </div>
+    </div>
+  );
+};
+
+// Protected Route Component
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [session, setSession] = useState<any>(null);
+  const [guestMode, setGuestMode] = useState(() => {
+    return localStorage.getItem('habit_guest_mode') === 'true';
+  });
+  const [loading, setLoading] = useState(true);
+  const location = useLocation();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      setSession(initialSession);
+      setLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+      if (session) {
+        setGuestMode(false);
+        localStorage.removeItem('habit_guest_mode');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Check for extension login
+  const urlParams = new URLSearchParams(location.search);
+  const isExtensionLogin = urlParams.get('source') === 'extension';
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
+  // If extension login and has session, allow through (AppContent will handle the special view)
+  if (isExtensionLogin && session) {
+    return <>{children}</>;
+  }
+
+  // If not authenticated and not in guest mode, redirect to signin
+  if (!session && !guestMode) {
+    return <Navigate to="/signin" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+// Main App Component with Routing
+const App: React.FC = () => {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/signin" element={<SignInPage />} />
+        <Route
+          path="/*"
+          element={
+            <ProtectedRoute>
+              <AppContent />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
   );
 };
 

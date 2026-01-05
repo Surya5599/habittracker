@@ -218,7 +218,10 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                         <div className="flex items-center justify-between mb-2 pb-1 border-b border-black/5 flex-shrink-0">
                             <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">Daily Habits</span>
                         </div>
-                        <div className="space-y-1 overflow-y-auto max-h-[150px] pr-1">
+                        <div
+                            className="space-y-1 overflow-y-auto max-h-[150px] pr-1"
+                            onWheel={(e) => e.stopPropagation()}
+                        >
                             {habits.map(habit => {
                                 const done = checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
                                 return (
@@ -322,7 +325,10 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                                 <Plus size={12} strokeWidth={3} />
                             </button>
                         </div>
-                        <div className="p-2 space-y-2 overflow-y-auto max-h-[160px] pr-1">
+                        <div
+                            className="p-2 space-y-2 overflow-y-auto max-h-[160px] pr-1"
+                            onWheel={(e) => e.stopPropagation()}
+                        >
                             {(dayData.tasks || []).map((task) => (
                                 <div
                                     key={task.id}
@@ -433,7 +439,10 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                         <p className="text-white/80 font-bold text-[10px] tracking-widest">{dateString}</p>
                     </div>
 
-                    <div className="p-4 flex-1 flex flex-col gap-4 overflow-y-auto">
+                    <div
+                        className="p-4 flex-1 flex flex-col gap-4 overflow-y-auto"
+                        onWheel={(e) => e.stopPropagation()}
+                    >
                         {/* Mood Selector */}
                         <div className="space-y-2">
                             <label className="text-[10px] font-black uppercase tracking-widest text-stone-400 block text-center">Mood</label>

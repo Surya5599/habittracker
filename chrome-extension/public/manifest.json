@@ -1,20 +1,20 @@
 {
     "manifest_version": 3,
-    "name": "Annual Habit Tracker",
+    "name": "HabiCard - Habit Tracker",
     "version": "1.0.0",
-    "description": "A comprehensive habit tracker dashboard to keep your year on track.",
+    "description": "Track your daily habits and build consistency with HabiCard.",
     "action": {
         "default_popup": "index.html",
         "default_icon": {
-            "16": "logo.png",
-            "48": "logo.png",
-            "128": "logo.png"
+            "16": "habicard_logo.png",
+            "48": "habicard_logo.png",
+            "128": "habicard_logo.png"
         }
     },
     "icons": {
-        "16": "logo.png",
-        "48": "logo.png",
-        "128": "logo.png"
+        "16": "habicard_logo.png",
+        "48": "habicard_logo.png",
+        "128": "habicard_logo.png"
     },
     "permissions": [
         "storage"

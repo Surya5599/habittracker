@@ -1,34 +1,17 @@
-import { Habit } from '../types';
 
-export interface StorySection {
-    type: 'momentum' | 'rhythm' | 'fading' | 'neglected' | 'consistency' | 'experimental';
-    text: string;
-    priority: number;
-}
-
-export interface StoryResult {
-    focused: any;
-    sections: StorySection[];
-    highlights: {
-        promise?: any;
-        streak?: any;
-    };
-}
-
-const daysSince = (dateString: string): number => {
+const daysSince = (dateString) => {
     const lastDate = new Date(dateString);
     const today = new Date();
     return Math.floor((today.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
 };
 
-export const buildAnnualStory = (annualStats: any, monthsElapsed: number = 12): StoryResult => {
-    const sections: StorySection[] = [];
+export const buildAnnualStory = (annualStats, monthsElapsed = 12) => {
+    const sections = [];
     const focused = annualStats.topHabits?.[0];
 
     if (!focused) return { focused: null, sections: [], highlights: {} };
 
-    // Use the consistency rate directly since annualStats.totalPossible is now pro-rated in the hook
-    const adjustedRate = annualStats.consistencyRate || (annualStats.totalCompletions / annualStats.totalPossible) * 100;
+    const adjustedRate = (annualStats.totalCompletions / (annualStats.totalPossible * (monthsElapsed / 12))) * 100;
 
     // 1. Momentum Section
     const momentumMsg = annualStats.momentum === "ascending"
@@ -70,7 +53,6 @@ export const buildAnnualStory = (annualStats: any, monthsElapsed: number = 12): 
         priority: annualStats.storyVariant === 'reflection' ? 1 : 4
     });
 
-    // ... rest (experimental, fading, neglected) remain largely the same but could use adjustedRate if needed
     // 4. Experimental / Low Focus State
     if (annualStats.activeHabitsCount > 7 && consistencyRate < 45) {
         sections.push({
@@ -95,7 +77,7 @@ export const buildAnnualStory = (annualStats: any, monthsElapsed: number = 12): 
             h.id !== focused.id &&
             daysSince(h.lastCompletedDate) >= 14
         )
-        .sort((a, b) => new Date(a.lastCompletedDate!).getTime() - new Date(b.lastCompletedDate!).getTime())[0];
+        .sort((a, b) => new Date(a.lastCompletedDate).getTime() - new Date(b.lastCompletedDate).getTime())[0];
 
     if (neglected) {
         sections.push({
@@ -105,21 +87,22 @@ export const buildAnnualStory = (annualStats: any, monthsElapsed: number = 12): 
         });
     }
 
-    const growth = annualStats.topHabits.find((h: any) => h.badge === "Highest Growth");
-    const promise = growth || annualStats.topHabits.find((h: any) => h.badge === "Identity Driver") || annualStats.topHabits[1];
+    const growth = annualStats.topHabits.find((h) => h.badge === "Highest Growth");
+    const promise = growth || annualStats.topHabits.find((h) => h.badge === "Identity Driver") || annualStats.topHabits[1];
 
     return {
         focused,
         sections: sections.sort((a, b) => a.priority - b.priority),
         highlights: {
-            promise,
+            best: focused,
+            neglected: neglected,
             streak: annualStats.longestHabitStreak
         }
     };
 };
 
-export const buildWeeklyStory = (weekProgress: any, weeklyStats: any[], habits: Habit[], daysElapsed: number = 7): StoryResult => {
-    const sections: StorySection[] = [];
+export const buildWeeklyStory = (weekProgress, weeklyStats, habits, daysElapsed = 7) => {
+    const sections = [];
     const completedCount = weekProgress.completed;
     const habitsCount = habits.length;
 
@@ -128,8 +111,9 @@ export const buildWeeklyStory = (weekProgress: any, weeklyStats: any[], habits: 
     const rate = totalPossibleSoFar > 0 ? (completedCount / totalPossibleSoFar) * 100 : 0;
 
     // 0. Identity Driver
-    const topHabit = weekProgress.habitPerformance?.[0];
-    const lowHabit = [...(weekProgress.habitPerformance || [])].reverse().find(h => h.completed === 0);
+    const performance = weekProgress.habitPerformance || [];
+    const topHabit = performance[0];
+    const lowHabit = performance.length > 0 ? performance[performance.length - 1] : null;
 
     // 1. Initial Reflection
     let intro = "";
@@ -153,10 +137,10 @@ export const buildWeeklyStory = (weekProgress: any, weeklyStats: any[], habits: 
         });
     }
 
-    if (lowHabit && daysElapsed >= 3) {
+    if (lowHabit && daysElapsed >= 3 && lowHabit.completed < daysElapsed * 0.3) {
         sections.push({
             type: 'neglected',
-            text: `You haven't logged [[${lowHabit.name.toUpperCase()}]] yet this week. A small 2-minute version of it tomorrow could restart the rhythm.`,
+            text: `You haven't logged [[${lowHabit.name.toUpperCase()}]] much yet this week. A small 2-minute version of it tomorrow could restart the rhythm.`,
             priority: 4
         });
     }
@@ -184,12 +168,16 @@ export const buildWeeklyStory = (weekProgress: any, weeklyStats: any[], habits: 
     return {
         focused: topHabit,
         sections: sections.sort((a, b) => a.priority - b.priority),
-        highlights: {}
+        highlights: {
+            best: topHabit,
+            neglected: lowHabit // Will be null if filtered out above? No, logical pass. 
+            // In buildWeeklyStory lowHabit is the last element of sorted performance.
+        }
     };
 };
 
-export const buildMonthlyStory = (monthProgress: any, topHabits: any[], monthDelta: number, daysElapsed: number = 30): StoryResult => {
-    const sections: StorySection[] = [];
+export const buildMonthlyStory = (monthProgress, topHabits, monthDelta, daysElapsed = 30) => {
+    const sections = [];
     const completedCount = monthProgress.completed;
     const habitsCount = topHabits.length || 1; // Fallback to avoid div by zero
 
@@ -225,6 +213,8 @@ export const buildMonthlyStory = (monthProgress: any, topHabits: any[], monthDel
 
     // 3. Top Habit Highlight
     const topHabit = topHabits?.[0];
+    const lowHabit = topHabits?.length > 0 ? topHabits[topHabits.length - 1] : null;
+
     if (topHabit && topHabit.percentage > 50) {
         sections.push({
             type: 'rhythm',
@@ -236,6 +226,9 @@ export const buildMonthlyStory = (monthProgress: any, topHabits: any[], monthDel
     return {
         focused: topHabit,
         sections: sections.sort((a, b) => a.priority - b.priority),
-        highlights: {}
+        highlights: {
+            best: topHabit,
+            neglected: lowHabit
+        }
     };
 };

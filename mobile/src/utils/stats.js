@@ -1,0 +1,53 @@
+export const getHabitMonthStats = (
+    habitId,
+    completions,
+    monthIdx,
+    year,
+    frequency
+) => {
+    const today = new Date();
+    const dInM = new Date(year, monthIdx + 1, 0).getDate();
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+    const isPastDate = (y, m, d) => {
+        const target = new Date(y, m, d);
+        return target < todayStart;
+    };
+
+    let totalDueDays = 0;
+    let completed = 0;
+    let missed = 0;
+
+    for (let day = 1; day <= dInM; day++) {
+        if (frequency) {
+            const date = new Date(year, monthIdx, day);
+            if (!frequency.includes(date.getDay())) {
+                continue;
+            }
+        }
+
+        totalDueDays++;
+
+        const dateKey = `${year}-${String(monthIdx + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const isDone = completions[habitId]?.[dateKey] || false;
+
+        if (isDone) {
+            completed++;
+        } else if (isPastDate(year, monthIdx, day)) {
+            missed++;
+        }
+    }
+
+    return { completed, missed, totalDays: totalDueDays };
+};
+
+export const isCompleted = (
+    habitId,
+    day,
+    completions,
+    monthIdx,
+    year
+) => {
+    const dateKey = `${year}-${String(monthIdx + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return completions[habitId]?.[dateKey] || false;
+};

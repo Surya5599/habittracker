@@ -4,13 +4,14 @@ import { supabase } from './supabase';
 // import { AuthForm } from './components/AuthForm';
 import { useHabits } from './hooks/useHabits';
 import { useTheme } from './hooks/useTheme';
-import { DailyNote, Task } from './types';
+import { DailyNote, Task, DayData } from './types';
 import { generateUUID } from './utils/uuid';
 import { DailyCard } from './components/DailyCard';
 import { ShareCustomizationModal, ColorScheme } from './components/ShareCustomizationModal';
 import { SettingsModal } from './components/SettingsModal';
+import { HabitManagerModal } from './components/HabitManagerModal';
 import { generateShareCard, shareCard } from './utils/shareCardGenerator';
-import { ExternalLink, LogOut, Settings } from 'lucide-react';
+import { ExternalLink, LogOut, Settings, List, BarChart3 } from 'lucide-react';
 
 const WEB_APP_URL = import.meta.env.PROD ? 'https://habicard.com' : 'http://localhost:3000';
 
@@ -24,6 +25,7 @@ const App: React.FC = () => {
   // Share state
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
+  const [habitManagerModalOpen, setHabitManagerModalOpen] = useState(false);
   const [shareData, setShareData] = useState<{
     date: Date;
     dayName: string;
@@ -104,37 +106,24 @@ const App: React.FC = () => {
     if (session) loadData();
   }, [session]);
 
-  const updateNote = async (dateKey: string, tasks: Task[]) => {
-    // We only receive tasks here from DailyCard usually?
-    // If we want to preserve mood, we need to merge with existing.
-
+  const updateNote = async (dateKey: string, data: Partial<DayData>) => {
     setNotes(prev => {
       const current = prev[dateKey] || { tasks: [] };
-      // We are only updating tasks from extension for now
-      const updated = { ...current, tasks };
+      // Merge the partial data with existing data
+      const updated = { ...current, ...data };
       return { ...prev, [dateKey]: updated };
     });
 
     if (session?.user?.id) {
-      if (tasks.length === 0) { // AND mood empty?
-        // For safety in extension, if we just clear tasks, we might not want to delete the whole row if mood exists.
-        // But checking state here is hard due to closure staleness if not careful.
-        // Let's grab the latest state via functional update or just assume we upsert.
-        // To be safe against overwriting mood:
-        // We should fetch latest before saving? No that's slow.
-        // We rely on 'notes' state being up to date.
-
-        // Let's just UPSERT with merged data. 
-        // But wait, updateNote is async.
-        // usage: await updateNote(...)
-      }
-
       // We need the latest note object to save.
       // Since setNotes is async, we construct the object here.
       const currentNote = notes[dateKey] || { tasks: [] };
-      const updatedNote = { ...currentNote, tasks };
+      const updatedNote = { ...currentNote, ...data };
 
-      if (tasks.length === 0 && !updatedNote.mood && !updatedNote.journal) {
+      // Check if the note is completely empty
+      const isEmpty = (!updatedNote.tasks || updatedNote.tasks.length === 0) && !updatedNote.mood && !updatedNote.journal;
+
+      if (isEmpty) {
         await supabase
           .from('daily_notes')
           .delete()
@@ -232,19 +221,27 @@ const App: React.FC = () => {
         <h1 className="text-xs font-black uppercase tracking-widest text-stone-500">Today's Focus</h1>
         <div className="flex gap-2">
           <button
+            onClick={openFullSite}
+            className="px-3 py-1.5 bg-black text-white text-[10px] font-black uppercase tracking-widest hover:bg-stone-800 transition-all flex items-center gap-1.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)]"
+            title="View Analytics"
+          >
+            <BarChart3 size={12} strokeWidth={3} />
+            Analytics
+          </button>
+          <button
+            onClick={() => setHabitManagerModalOpen(true)}
+            className="p-1 hover:bg-stone-200 rounded text-stone-500"
+            title="Manage Habits"
+          >
+            <List size={14} />
+          </button>
+          <button
             onClick={() => setSettingsModalOpen(true)}
             className="p-1 hover:bg-stone-200 rounded text-stone-500"
             title="Settings"
           >
             <Settings size={14} />
           </button>
-          {/*           <button
-            onClick={handleLogout}
-            className="p-1 hover:bg-stone-200 rounded text-stone-500"
-            title="Sign Out"
-          >
-            <LogOut size={14} />
-          </button> */}
         </div>
       </div>
 
@@ -279,13 +276,7 @@ const App: React.FC = () => {
         setEditingHabitId={setEditingHabitId}
       />
 
-      <button
-        onClick={openFullSite}
-        className="w-full mt-3 py-2 bg-white border border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest hover:bg-stone-50 transition-all"
-      >
-        <span>Open Full Experience</span>
-        <ExternalLink size={12} />
-      </button>
+
 
       <ShareCustomizationModal
         isOpen={shareModalOpen}
@@ -298,6 +289,16 @@ const App: React.FC = () => {
         onClose={() => setSettingsModalOpen(false)}
         currentTheme={theme}
         onSelectTheme={setTheme}
+      />
+
+      <HabitManagerModal
+        isOpen={habitManagerModalOpen}
+        onClose={() => setHabitManagerModalOpen(false)}
+        habits={habits}
+        addHabit={addHabit}
+        updateHabit={updateHabit}
+        removeHabit={removeHabit}
+        themePrimary={theme.primary}
       />
     </div>
   );

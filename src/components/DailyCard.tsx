@@ -24,6 +24,7 @@ interface DailyCardProps {
     onPrev?: () => void;
     onNext?: () => void;
     defaultFlipped?: boolean;
+    onJournalClick?: () => void;
 }
 
 export const DailyCard: React.FC<DailyCardProps> = ({
@@ -38,6 +39,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
     onPrev,
     onNext,
     defaultFlipped = false,
+    onJournalClick,
 }) => {
     const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
     const [editingTaskText, setEditingTaskText] = useState('');
@@ -68,9 +70,18 @@ export const DailyCard: React.FC<DailyCardProps> = ({
         setJournal(dayData.journal || '');
     }, [dateKey, dayData.mood, dayData.journal]);
 
+    // Sync flip state with defaultFlipped prop
+    useEffect(() => {
+        setIsFlipped(defaultFlipped);
+    }, [defaultFlipped]);
+
     const handleSaveJournal = () => {
         updateNote(dateKey, { mood, journal });
-        setIsFlipped(false);
+        if (onJournalClick) {
+            onJournalClick();
+        } else {
+            setIsFlipped(false);
+        }
     };
 
     const getDayProgress = (d: Date) => {
@@ -303,7 +314,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                                 const activeMood = MOODS.find(m => m.value === dayData.mood);
                                 return (
                                     <button
-                                        onClick={() => setIsFlipped(true)}
+                                        onClick={() => onJournalClick ? onJournalClick() : setIsFlipped(true)}
                                         className={`absolute left-2 p-1.5 rounded transition-colors ${activeMood ? '' : (dayData.journal ? 'text-black bg-stone-200' : 'text-stone-400 hover:text-black hover:bg-stone-200')}`}
                                         title={activeMood ? activeMood.tooltip : "Daily Journal & Mood"}
                                     >

@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { chromeStorageAdapter } from './utils/customStorage';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -13,5 +14,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     detectSessionInUrl: false,
     storageKey: 'habit-tracker-session',
+    storage: chromeStorageAdapter,
   },
 });

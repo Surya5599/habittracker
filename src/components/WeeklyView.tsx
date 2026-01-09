@@ -42,6 +42,9 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
     // Mobile navigation state
     const [mobileDayIndex, setMobileDayIndex] = useState(0);
 
+    // Journal view toggle state
+    const [showJournalView, setShowJournalView] = useState(false);
+
     // To detect mobile view and set initial day
     useEffect(() => {
         // Set to current day of week (0-6) initially
@@ -116,6 +119,10 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
         // setMobileDayIndex(prev => (prev + 1) % 7);
     };
 
+    const handleJournalClick = () => {
+        setShowJournalView(!showJournalView);
+    };
+
     return (
         <>
             {/* Desktop View (Grid) */}
@@ -131,6 +138,8 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                         notes={notes}
                         updateNote={updateNote}
                         onShareClick={handleShareClick}
+                        defaultFlipped={showJournalView}
+                        onJournalClick={handleJournalClick}
                     />
                 ))}
             </div>
@@ -150,6 +159,8 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                         onShareClick={handleShareClick}
                         onPrev={handlePrevDay}
                         onNext={handleNextDay}
+                        defaultFlipped={showJournalView}
+                        onJournalClick={handleJournalClick}
                     />
                 </div>
             </div>

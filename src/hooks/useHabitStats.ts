@@ -547,6 +547,7 @@ export const useHabitStats = (
             totalPossible,
             monthlySummaries,
             topHabits: habitPerformance.slice(0, 6),
+            allTopHabits: habitPerformance,
             maxStreak,
             currentStreak,
             strongestMonth,

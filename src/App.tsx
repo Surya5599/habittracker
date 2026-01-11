@@ -801,7 +801,7 @@ const AppContent: React.FC = () => {
         isOpen={isStreakModalOpen}
         onClose={() => setIsStreakModalOpen(false)}
         habits={habits}
-        topHabits={annualStats.topHabits}
+        topHabits={annualStats.allTopHabits}
         theme={theme}
         globalCurrentStreak={annualStats.currentStreak}
         globalMaxStreak={annualStats.maxStreak}

@@ -12,33 +12,72 @@ export const useHabits = (session: any, guestMode: boolean) => {
     const fetchUserData = useCallback(async (userId: string) => {
         setLoading(true);
         try {
-            const { data: habitsData, error: habitsError } = await supabase
+            let habitsResult = await supabase
                 .from('habits')
                 .select('*')
                 .eq('user_id', userId)
-                .order('id', { ascending: true });
+                .order('sort_order', { ascending: true });
 
-            if (habitsError) throw habitsError;
+            // Fallback if sort_order doesn't exist (e.g. migration not run)
+            if (habitsResult.error && habitsResult.error.code === '42703') {
+                habitsResult = await supabase
+                    .from('habits')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .order('id', { ascending: true });
+            }
 
-            let userHabits = habitsData || [];
+            if (habitsResult.error) throw habitsResult.error;
+
+            let userHabits = habitsResult.data || [];
 
             if (userHabits.length === 0) {
-                const initialWithUser = INITIAL_HABITS.map(h => ({
+                const initialWithUser = INITIAL_HABITS.map((h, idx) => ({
                     name: h.name,
                     type: h.type,
                     color: h.color,
                     goal: h.goal,
-                    user_id: userId
+                    user_id: userId,
+                    sort_order: idx
                 }));
-                const { data: inserted, error: insertError } = await supabase
+
+                let insertResult = await supabase
                     .from('habits')
                     .insert(initialWithUser)
                     .select()
-                    .order('id', { ascending: true });
-                if (insertError) throw insertError;
-                userHabits = inserted || [];
+                    .order('sort_order', { ascending: true });
+
+                if (insertResult.error && insertResult.error.code === '42703') {
+                    // Re-insert without sort_order if column missing
+                    const initialWithoutOrder = INITIAL_HABITS.map((h) => ({
+                        name: h.name,
+                        type: h.type,
+                        color: h.color,
+                        goal: h.goal,
+                        user_id: userId
+                    }));
+                    insertResult = await supabase
+                        .from('habits')
+                        .insert(initialWithoutOrder)
+                        .select()
+                        .order('id', { ascending: true });
+                }
+
+                if (insertResult.error) throw insertResult.error;
+                userHabits = insertResult.data || [];
             }
-            setHabits(userHabits);
+
+            setHabits(userHabits.map((h: any) => ({
+                id: h.id,
+                name: h.name,
+                type: h.type,
+                color: h.color,
+                goal: h.goal,
+                frequency: h.frequency,
+                weeklyTarget: h.weekly_target,
+                sortOrder: h.sort_order,
+                user_id: h.user_id
+            })));
 
             const { data: completionsData, error: compError } = await supabase
                 .from('completions')
@@ -84,20 +123,22 @@ export const useHabits = (session: any, guestMode: boolean) => {
             await supabase.from('habits').delete().eq('user_id', userId);
             await supabase.from('completions').delete().eq('user_id', userId);
 
-            const habitsToInsert = localHabits.map(h => ({
+            const habitsToInsert = localHabits.map((h, idx) => ({
                 name: h.name,
                 type: h.type,
                 color: h.color,
                 goal: h.goal,
                 frequency: h.frequency,
-                user_id: userId
+                weekly_target: h.weeklyTarget,
+                user_id: userId,
+                sort_order: idx
             }));
 
             const { data: insertedHabits, error: hError } = await supabase
                 .from('habits')
                 .insert(habitsToInsert)
                 .select()
-                .order('id', { ascending: true });
+                .order('sort_order', { ascending: true });
 
             if (hError) throw hError;
 
@@ -263,7 +304,19 @@ export const useHabits = (session: any, guestMode: boolean) => {
             return null;
         }
         const tempId = Date.now().toString();
-        const newHabit: Habit = { id: tempId, name: '', type: 'daily', color: themePrimary, goal: 80, frequency: undefined };
+        const nextSortOrder = habits.length > 0
+            ? Math.max(...habits.map(h => h.sortOrder || 0)) + 1
+            : 0;
+        const newHabit: Habit = {
+            id: tempId,
+            name: '',
+            type: 'daily',
+            color: themePrimary,
+            goal: 80,
+            frequency: undefined,
+            weeklyTarget: undefined,
+            sortOrder: nextSortOrder
+        };
 
         setHabits(prev => [...prev, newHabit]);
 
@@ -271,12 +324,32 @@ export const useHabits = (session: any, guestMode: boolean) => {
             try {
                 const { data, error } = await supabase
                     .from('habits')
-                    .insert({ name: '', type: 'daily', color: themePrimary, goal: 80, frequency: null, user_id: session.user.id })
+                    .insert({
+                        name: '',
+                        type: 'daily',
+                        color: themePrimary,
+                        goal: 80,
+                        frequency: null,
+                        weekly_target: null,
+                        user_id: session.user.id,
+                        sort_order: nextSortOrder
+                    })
                     .select();
 
                 if (error) throw error;
                 if (data) {
-                    setHabits(prev => prev.map(h => h.id === tempId ? data[0] : h));
+                    const mapped = {
+                        id: data[0].id,
+                        name: data[0].name,
+                        type: data[0].type,
+                        color: data[0].color,
+                        goal: data[0].goal,
+                        frequency: data[0].frequency,
+                        weeklyTarget: data[0].weekly_target,
+                        sortOrder: data[0].sort_order,
+                        user_id: data[0].user_id
+                    };
+                    setHabits(prev => prev.map(h => h.id === tempId ? mapped : h));
                     return data[0].id;
                 }
             } catch (err) {
@@ -294,9 +367,13 @@ export const useHabits = (session: any, guestMode: boolean) => {
             try {
                 // Convert undefined frequency to null for database
                 // In the app, undefined means "every day", which is stored as NULL in the database
-                const dbUpdates = { ...updates };
+                const dbUpdates: any = { ...updates };
                 if ('frequency' in dbUpdates && dbUpdates.frequency === undefined) {
-                    dbUpdates.frequency = null as any;
+                    dbUpdates.frequency = null;
+                }
+                if ('weeklyTarget' in dbUpdates) {
+                    dbUpdates.weekly_target = dbUpdates.weeklyTarget === undefined ? null : dbUpdates.weeklyTarget;
+                    delete dbUpdates.weeklyTarget;
                 }
 
                 await supabase
@@ -330,6 +407,42 @@ export const useHabits = (session: any, guestMode: boolean) => {
         }
     };
 
+    const reorderHabits = async (newHabits: Habit[]) => {
+        setHabits(newHabits);
+
+        if (session && !guestMode) {
+            try {
+                // Update each habit's sort_order in Supabase
+                // We can do this in a single query by using upsert if we include the ID
+                const updates = newHabits.map((h, idx) => ({
+                    id: h.id,
+                    user_id: session.user.id,
+                    sort_order: idx,
+                    // Include other fields to satisfy row constraints if any, 
+                    // though for upsert with id on Supabase it usually just updates the specified fields.
+                    // To be safe we should only update what's needed but Supabase upsert requires full rows or specific config.
+                    // Alternatively, we can use a stored procedure or multiple updates.
+                    // Given the constraint of not having a stored procedure handy, multiple updates or a single upsert (if possible)
+                }));
+
+                // Performing individual updates for simplicity and reliability in this context
+                // In a production app, a single RPC call would be better.
+                const updatePromises = newHabits.map((h, idx) =>
+                    supabase
+                        .from('habits')
+                        .update({ sort_order: idx })
+                        .eq('id', h.id)
+                        .eq('user_id', session.user.id)
+                );
+
+                await Promise.all(updatePromises);
+            } catch (err) {
+                console.error('Error reordering habits:', err);
+                toast.error('Failed to save habit order');
+            }
+        }
+    };
+
     return {
         habits,
         setHabits,
@@ -340,6 +453,7 @@ export const useHabits = (session: any, guestMode: boolean) => {
         addHabit,
         updateHabit,
         removeHabit,
+        reorderHabits,
         setLoading
     };
 };

@@ -8,6 +8,8 @@ export interface Habit {
   color: string;
   goal: number; // Percentage goal
   frequency?: number[]; // Array of day indices (0-6) where the habit is active. undefined means everyday.
+  weeklyTarget?: number; // Number of times per week (1-7) for flexible habits
+  sortOrder?: number;
 }
 
 export interface HabitCompletion {

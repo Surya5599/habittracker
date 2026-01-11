@@ -16,6 +16,7 @@ interface WeeklyViewProps {
     notes: DailyNote;
     updateNote: (dateKey: string, data: Partial<DayData>) => void;
     addHabit: () => void;
+    setSelectedDateForCard: (date: Date | null, flipped?: boolean) => void;
 }
 
 export const WeeklyView: React.FC<WeeklyViewProps> = ({
@@ -131,7 +132,7 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                     <DailyCard
                         key={date.toISOString()}
                         date={date}
-                        habits={habits.filter(h => !h.frequency || h.frequency.includes(date.getDay()))}
+                        habits={habits.filter(h => h.weeklyTarget || !h.frequency || h.frequency.includes(date.getDay()))}
                         completions={completions}
                         theme={theme}
                         toggleCompletion={toggleCompletion}

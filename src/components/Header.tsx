@@ -57,6 +57,10 @@ interface HeaderProps {
     setIsHabitModalOpen: (open: boolean) => void;
     isResolutionsModalOpen: boolean;
     setIsResolutionsModalOpen: (open: boolean) => void;
+    isStreakModalOpen: boolean;
+    setIsStreakModalOpen: (open: boolean) => void;
+    reorderHabits: (newHabits: Habit[]) => Promise<void>;
+    onReportBug: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -102,7 +106,11 @@ export const Header: React.FC<HeaderProps> = ({
     isHabitModalOpen,
     setIsHabitModalOpen,
     isResolutionsModalOpen,
-    setIsResolutionsModalOpen
+    setIsResolutionsModalOpen,
+    isStreakModalOpen,
+    setIsStreakModalOpen,
+    reorderHabits,
+    onReportBug
 }) => {
     const today = new Date();
     const currentDayOfWeek = today.getDay() === 0 ? 7 : today.getDay();
@@ -261,6 +269,7 @@ export const Header: React.FC<HeaderProps> = ({
                                 settingsRef={settingsRef}
                                 defaultView={defaultView}
                                 setDefaultView={setDefaultView}
+                                onReportBug={onReportBug}
                             />
 
                             {guestMode ? (
@@ -351,9 +360,12 @@ export const Header: React.FC<HeaderProps> = ({
                                 <span className="text-xl font-black mt-1 leading-none">{habits.length}</span>
                                 <span className="text-[8px] text-white uppercase tracking-tighter mt-1 leading-none">Manage habits</span>
                             </button>
-                            <div className="bg-white neo-border neo-shadow p-2 text-center rounded-2xl flex flex-col items-center justify-center min-h-[60px]">
-                                <p className="text-[8px] font-black opacity-50 uppercase tracking-widest leading-none">Current Streak</p>
-                                <p className="text-2xl font-black mt-1 leading-none">{annualStats.currentStreak} <span className="text-[10px]">DAYS</span></p>
+                            <div
+                                onClick={() => setIsStreakModalOpen(true)}
+                                className="bg-white neo-border neo-shadow p-2 text-center rounded-2xl flex flex-col items-center justify-center min-h-[60px] cursor-pointer hover:bg-orange-50 transition-colors group/streak"
+                            >
+                                <p className="text-[8px] font-black opacity-50 uppercase tracking-widest leading-none group-hover/streak:text-orange-500 transition-colors">Current Streak</p>
+                                <p className="text-2xl font-black mt-1 leading-none group-hover/streak:scale-110 transition-transform">{annualStats.currentStreak} <span className="text-[10px]">DAYS</span></p>
                             </div>
                         </div>
                     </div>
@@ -390,9 +402,12 @@ export const Header: React.FC<HeaderProps> = ({
                                 <span className="text-xl font-black mt-1 leading-none">{habits.length}</span>
                                 <span className="text-[8px] text-white uppercase tracking-tighter mt-1 leading-none">Manage habits</span>
                             </button>
-                            <div className="bg-white neo-border neo-shadow p-2 text-center rounded-2xl flex flex-col items-center justify-center min-h-[60px]">
-                                <p className="text-[8px] font-black opacity-50 uppercase tracking-widest leading-none">Current Streak</p>
-                                <p className="text-2xl font-black mt-1 leading-none">{annualStats.currentStreak} <span className="text-[10px]">DAYS</span></p>
+                            <div
+                                onClick={() => setIsStreakModalOpen(true)}
+                                className="bg-white neo-border neo-shadow p-2 text-center rounded-2xl flex flex-col items-center justify-center min-h-[60px] cursor-pointer hover:bg-orange-50 transition-colors group/streak"
+                            >
+                                <p className="text-[8px] font-black opacity-50 uppercase tracking-widest leading-none group-hover/streak:text-orange-500 transition-colors">Current Streak</p>
+                                <p className="text-2xl font-black mt-1 leading-none group-hover/streak:scale-110 transition-transform">{annualStats.currentStreak} <span className="text-[10px]">DAYS</span></p>
                             </div>
                         </div>
                     </div>
@@ -425,9 +440,9 @@ export const Header: React.FC<HeaderProps> = ({
                                 <div className="absolute inset-0">
                                     <button
                                         onClick={() => setIsResolutionsModalOpen(true)}
-                                        className="w-full h-full flex items-center justify-center gap-1.5 text-[9px] font-black uppercase tracking-wider bg-black text-white px-2 py-2 rounded-xl hover:bg-stone-800 transition-colors shadow-sm"
+                                        className="w-full h-full flex items-center justify-center gap-1.5 text-[12px] font-black uppercase tracking-wider bg-black text-white px-2 py-2 rounded-xl hover:bg-stone-800 transition-colors shadow-sm"
                                     >
-                                        <Sparkles size={10} />
+                                        <Sparkles size={14} />
                                         This Year Resolutions
                                     </button>
                                 </div>
@@ -444,9 +459,12 @@ export const Header: React.FC<HeaderProps> = ({
                                 <span className="text-xl font-black mt-1 leading-none">{habits.length}</span>
                                 <span className="text-[8px] text-white uppercase tracking-tighter mt-1 leading-none">Manage habits</span>
                             </button>
-                            <div className="bg-white neo-border neo-shadow p-2 text-center rounded-2xl flex flex-col items-center justify-center min-h-[60px]">
-                                <p className="text-[8px] font-black opacity-50 uppercase tracking-widest leading-none">Current Streak</p>
-                                <p className="text-2xl font-black mt-1 leading-none">{annualStats.currentStreak} <span className="text-[10px]">DAYS</span></p>
+                            <div
+                                onClick={() => setIsStreakModalOpen(true)}
+                                className="bg-white neo-border neo-shadow p-2 text-center rounded-2xl flex flex-col items-center justify-center min-h-[60px] cursor-pointer hover:bg-orange-50 transition-colors group/streak"
+                            >
+                                <p className="text-[8px] font-black opacity-50 uppercase tracking-widest leading-none group-hover/streak:text-orange-500 transition-colors">Current Streak</p>
+                                <p className="text-2xl font-black mt-1 leading-none group-hover/streak:scale-110 transition-transform">{annualStats.currentStreak} <span className="text-[10px]">DAYS</span></p>
                             </div>
                         </div>
                     </div>
@@ -756,6 +774,7 @@ export const Header: React.FC<HeaderProps> = ({
                 addHabit={addHabit}
                 updateHabit={updateHabit}
                 removeHabit={removeHabit}
+                reorderHabits={reorderHabits}
                 themePrimary={theme.primary}
             />
             <ResolutionsModal

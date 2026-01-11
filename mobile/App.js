@@ -11,6 +11,7 @@ import { MainScreen } from './src/screens/MainScreen';
 import { useHabits } from './src/hooks/useHabits';
 import { useHabitStats } from './src/hooks/useHabitStats';
 import { useDailyNotes } from './src/hooks/useDailyNotes';
+import { useAIAnalysis } from './src/hooks/useAIAnalysis';
 import { THEMES } from './src/constants';
 
 const Stack = createStackNavigator();
@@ -72,7 +73,8 @@ export default function App() {
     toggleCompletion,
     addHabit,
     updateHabit,
-    removeHabit
+    removeHabit,
+    reorderHabits
   } = useHabits(session, guestMode);
 
   const {
@@ -88,6 +90,8 @@ export default function App() {
     weekProgress,
     monthProgress
   } = useHabitStats(habits, completions, currentMonthIndex, currentYear, daysInMonth, monthDates, weekOffset, weekStart);
+
+  const aiAnalysis = useAIAnalysis(session, guestMode);
 
   const handleGuestLogin = async () => {
     await AsyncStorage.setItem('habit_guest_mode', 'true');
@@ -125,11 +129,13 @@ export default function App() {
                   addHabit={addHabit}
                   updateHabit={updateHabit}
                   removeHabit={removeHabit}
+                  reorderHabits={reorderHabits}
                   weeklyStats={weeklyStats}
                   isGuest={guestMode}
                   onOpenSignIn={handleOpenSignIn}
                   weekStart={weekStart}
                   setWeekStart={handleWeekStartChange}
+                  aiAnalysis={aiAnalysis}
                 />
               )}
             </Stack.Screen>

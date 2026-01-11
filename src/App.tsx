@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
+import { X } from 'lucide-react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from './supabase';
 import { exportToExcel } from './utils/exportToExcel';
@@ -14,10 +15,13 @@ import { useTheme } from './hooks/useTheme';
 import { useHabitStats } from './hooks/useHabitStats';
 import { Habit, DailyNote, MonthlyGoals, MonthlyGoal, DayData } from './types';
 import { BottomNav } from './components/BottomNav';
+import { DailyCard } from './components/DailyCard';
 import { generateUUID } from './utils/uuid';
 import { OnboardingModal } from './components/OnboardingModal';
 import { FeatureAnnouncementModal } from './components/FeatureAnnouncementModal';
 import { LoadingScreen } from './components/LoadingScreen';
+import { FeedbackModal } from './components/FeedbackModal';
+import { StreakModal } from './components/StreakModal';
 
 const DEMO_HABITS: Habit[] = [
   { id: '1', name: 'Morning Meditation', type: 'daily', goal: 7, color: '#C19A9A' },
@@ -129,6 +133,10 @@ const AppContent: React.FC = () => {
   const [weekOffset, setWeekOffset] = useState(0);
   const [isHabitModalOpen, setIsHabitModalOpen] = useState(false);
   const [isResolutionsModalOpen, setIsResolutionsModalOpen] = useState(false);
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+  const [isStreakModalOpen, setIsStreakModalOpen] = useState(false);
+  const [selectedDateForCard, setSelectedDateForCard] = useState<Date | null>(null);
+  const [cardOpenFlipped, setCardOpenFlipped] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const goalInputRef = useRef<HTMLInputElement>(null);
@@ -185,6 +193,7 @@ const AppContent: React.FC = () => {
     addHabit,
     updateHabit,
     removeHabit,
+    reorderHabits,
     setLoading
   } = useHabits(session, guestMode);
 
@@ -202,7 +211,7 @@ const AppContent: React.FC = () => {
     monthProgress,
     topHabitsThisMonth,
     annualStats
-  } = useHabitStats(habits, completions, currentMonthIndex, currentYear, daysInMonth, monthDates, weekOffset);
+  } = useHabitStats(habits, completions, notes, currentMonthIndex, currentYear, daysInMonth, monthDates, weekOffset);
 
   const weekRange = useMemo(() => {
     const today = new Date();
@@ -669,6 +678,7 @@ const AppContent: React.FC = () => {
           addHabit={addHabit}
           updateHabit={updateHabit}
           removeHabit={removeHabit}
+          reorderHabits={reorderHabits}
           setWeekOffset={setWeekOffset}
           monthlyGoals={monthlyGoals}
           updateMonthlyGoals={updateMonthlyGoals}
@@ -678,7 +688,34 @@ const AppContent: React.FC = () => {
           setIsHabitModalOpen={setIsHabitModalOpen}
           isResolutionsModalOpen={isResolutionsModalOpen}
           setIsResolutionsModalOpen={setIsResolutionsModalOpen}
+          isStreakModalOpen={isStreakModalOpen}
+          setIsStreakModalOpen={setIsStreakModalOpen}
+          onReportBug={() => setIsFeedbackModalOpen(true)}
         />
+
+        {selectedDateForCard && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setSelectedDateForCard(null)}>
+            <div className="w-full max-w-sm h-auto relative animate-in zoom-in-95 slide-in-from-bottom-4 duration-300" onClick={e => e.stopPropagation()}>
+              <button
+                onClick={() => setSelectedDateForCard(null)}
+                className="absolute -top-12 right-0 text-white hover:text-stone-300 p-2 transition-colors"
+              >
+                <X size={24} />
+              </button>
+              <DailyCard
+                date={selectedDateForCard}
+                habits={habits}
+                completions={completions}
+                theme={theme}
+                toggleCompletion={toggleCompletion}
+                notes={notes}
+                updateNote={updateNote}
+                onShareClick={() => { }}
+                defaultFlipped={cardOpenFlipped}
+              />
+            </div>
+          </div>
+        )}
 
         {view === 'monthly' ? (
           <MonthlyView
@@ -706,6 +743,10 @@ const AppContent: React.FC = () => {
             isModalOpen={isHabitModalOpen || isResolutionsModalOpen}
             notes={notes}
             updateNote={updateNote}
+            setSelectedDateForCard={(date, flipped = false) => {
+              setSelectedDateForCard(date);
+              setCardOpenFlipped(flipped);
+            }}
           />
         ) : view === 'dashboard' ? (
           <DashboardView
@@ -717,6 +758,11 @@ const AppContent: React.FC = () => {
             setView={setView}
             monthlyGoals={monthlyGoals}
             updateMonthlyGoals={updateMonthlyGoals}
+            reorderHabits={reorderHabits}
+            setSelectedDateForCard={(date, flipped = false) => {
+              setSelectedDateForCard(date);
+              setCardOpenFlipped(flipped);
+            }}
           />
         ) : (
           <WeeklyView
@@ -729,6 +775,10 @@ const AppContent: React.FC = () => {
             notes={notes}
             updateNote={updateNote}
             addHabit={() => addHabit(theme.primary).then(id => setEditingHabitId(id))}
+            setSelectedDateForCard={(date, flipped = false) => {
+              setSelectedDateForCard(date);
+              setCardOpenFlipped(flipped);
+            }}
           />
         )}
       </div>
@@ -738,6 +788,23 @@ const AppContent: React.FC = () => {
         setView={setView}
         resetWeekOffset={resetWeekOffset}
         theme={theme}
+      />
+
+      <FeedbackModal
+        isOpen={isFeedbackModalOpen}
+        onClose={() => setIsFeedbackModalOpen(false)}
+        theme={theme}
+        userId={session?.user?.id}
+      />
+
+      <StreakModal
+        isOpen={isStreakModalOpen}
+        onClose={() => setIsStreakModalOpen(false)}
+        habits={habits}
+        topHabits={annualStats.topHabits}
+        theme={theme}
+        globalCurrentStreak={annualStats.currentStreak}
+        globalMaxStreak={annualStats.maxStreak}
       />
 
       <style>{`
@@ -792,6 +859,11 @@ const SignInPage: React.FC = () => {
             addHabit={async () => ''} updateHabit={async () => { }} removeHabit={async () => { }}
             weekDelta={12} monthDelta={5} monthlyGoals={{}} updateMonthlyGoals={() => { }}
             topHabitsThisMonth={[]} weekOffset={0}
+            isHabitModalOpen={false} setIsHabitModalOpen={() => { }}
+            isResolutionsModalOpen={false} setIsResolutionsModalOpen={() => { }}
+            isStreakModalOpen={false} setIsStreakModalOpen={() => { }}
+            reorderHabits={async () => { }}
+            onReportBug={() => { }}
           />
           <DashboardView
             annualStats={DEMO_ANNUAL_STATS}

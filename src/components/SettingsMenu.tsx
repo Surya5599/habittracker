@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { Settings, LayoutDashboard, Calendar, Clock } from 'lucide-react';
+import { Settings, LayoutDashboard, Calendar, Clock, MessageSquare } from 'lucide-react';
 import { Theme } from '../types';
 
 interface SettingsMenuProps {
@@ -11,6 +11,7 @@ interface SettingsMenuProps {
     settingsRef: React.RefObject<HTMLDivElement>;
     defaultView: 'daily' | 'monthly' | 'dashboard';
     setDefaultView: (view: 'daily' | 'monthly' | 'dashboard') => void;
+    onReportBug: () => void;
 }
 
 export const SettingsMenu: React.FC<SettingsMenuProps> = ({
@@ -22,6 +23,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     settingsRef,
     defaultView,
     setDefaultView,
+    onReportBug,
 }) => {
     return (
         <div ref={settingsRef} className="relative inline-block">
@@ -85,6 +87,19 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                                 </button>
                             ))}
                         </div>
+                    </div>
+                    <div className="mt-4">
+                        <div className="text-[9px] font-bold uppercase text-stone-400 mb-2 border-b border-stone-100 pb-1">Support</div>
+                        <button
+                            onClick={() => {
+                                onReportBug();
+                                setSettingsOpen(false);
+                            }}
+                            className="w-full flex items-center gap-2 p-1.5 hover:bg-stone-50 rounded transition-colors text-left"
+                        >
+                            <MessageSquare size={12} className="text-stone-400" />
+                            <span className="text-[10px] font-bold">Report Bug or Suggestion</span>
+                        </button>
                     </div>
                 </div>
             )}

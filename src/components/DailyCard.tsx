@@ -84,21 +84,24 @@ export const DailyCard: React.FC<DailyCardProps> = ({
         }
     };
 
-    const getDayProgress = (d: Date) => {
-        if (habits.length === 0) return 0;
-        const monthIdx = d.getMonth();
-        const day = d.getDate();
-        const year = d.getFullYear();
+    const dailyHabits = habits.filter(h => !h.weeklyTarget);
+    const flexibleHabits = habits.filter(h => !!h.weeklyTarget);
+
+    const getDayProgress = () => {
+        if (dailyHabits.length === 0) return 0;
+        const monthIdx = date.getMonth();
+        const day = date.getDate();
+        const year = date.getFullYear();
         let doneCount = 0;
-        habits.forEach(h => {
+        dailyHabits.forEach(h => {
             if (checkCompleted(h.id, day, completions, monthIdx, year)) {
                 doneCount++;
             }
         });
-        return (doneCount / habits.length) * 100;
+        return (doneCount / dailyHabits.length) * 100;
     };
 
-    const actualProgress = getDayProgress(date);
+    const actualProgress = getDayProgress();
     const [progress, setProgress] = useState(0);
 
     useEffect(() => {
@@ -108,9 +111,12 @@ export const DailyCard: React.FC<DailyCardProps> = ({
         return () => clearTimeout(timer);
     }, [actualProgress]);
 
-    const completedCount = habits.reduce((acc, h) =>
-        acc + (checkCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear()) ? 1 : 0), 0);
-    const totalCount = habits.length;
+    const dailyCompletedCount = dailyHabits.reduce((acc, h) => {
+        const doneToday = checkCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
+        return doneToday ? acc + 1 : acc;
+    }, 0);
+
+    const totalDailyCount = dailyHabits.length;
 
     const handleFinishEditing = (taskId: string) => {
         const currentTasks = dayData.tasks || [];
@@ -192,7 +198,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                     </div>
 
                     {/* Progress Circle */}
-                    <div className="p-4 flex flex-col items-center justify-center border-b border-stone-100">
+                    <div className="py-1.5 px-4 flex flex-col items-center justify-center border-b border-stone-100">
                         <div className="relative w-24 h-24">
                             <svg className="w-full h-full transform -rotate-90">
                                 <circle
@@ -225,15 +231,16 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                     </div>
 
                     {/* Daily Habits List */}
-                    <div className="p-3 bg-stone-50/50 flex flex-col">
-                        <div className="flex items-center justify-between mb-2 pb-1 border-b border-black/5 flex-shrink-0">
+                    <div className="py-1 px-3 bg-stone-50/50 flex flex-col border-b border-stone-100">
+                        <div className="flex items-center justify-between mb-1 pb-1 border-b border-black/5 flex-shrink-0">
                             <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">Daily Habits</span>
+                            <span className="text-[10px] font-black text-stone-400">{dailyHabits.length}</span>
                         </div>
                         <div
-                            className="space-y-1 overflow-y-auto max-h-[150px] pr-1"
+                            className="space-y-1 overflow-y-auto max-h-[120px] pr-1"
                             onWheel={(e) => e.stopPropagation()}
                         >
-                            {habits.map(habit => {
+                            {dailyHabits.length > 0 ? dailyHabits.map(habit => {
                                 const done = checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
                                 return (
                                     <div
@@ -241,9 +248,11 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                                         onClick={() => toggleCompletion(habit.id, dateKey)}
                                         className="flex items-center justify-between group cursor-pointer hover:bg-black/5 rounded p-1 -mx-1 transition-colors"
                                     >
-                                        <span className={`text-[11px] font-bold truncate flex-1 ${done ? 'text-stone-400 line-through' : 'text-stone-700'}`}>
-                                            {habit.name || 'Untitled'}
-                                        </span>
+                                        <div className="flex items-center flex-1 min-w-0">
+                                            <span className={`text-[11px] font-bold truncate ${done ? 'text-stone-400 line-through' : 'text-stone-700'}`}>
+                                                {habit.name || 'Untitled'}
+                                            </span>
+                                        </div>
                                         <div
                                             className={`w-4 h-4 border-2 border-black flex items-center justify-center transition-all ${done ? 'bg-black text-white' : 'bg-white'}`}
                                         >
@@ -251,14 +260,73 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                                         </div>
                                     </div>
                                 );
-                            })}
+                            }) : (
+                                <div className="text-[9px] text-stone-300 italic py-1">No daily habits due today</div>
+                            )}
                         </div>
                     </div>
 
-                    {completedCount === totalCount && totalCount > 0 ? (
+                    {/* Flexible Habits List */}
+                    {flexibleHabits.length > 0 && (
+                        <div className="py-1 px-3 bg-white flex flex-col">
+                            <div className="flex items-center justify-between mb-1 pb-1 border-b border-black/5 flex-shrink-0">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">Flexible Habits</span>
+                                <span className="text-[10px] font-black text-stone-400">{flexibleHabits.length}</span>
+                            </div>
+                            <div
+                                className="space-y-1 overflow-y-auto max-h-[100px] pr-1"
+                                onWheel={(e) => e.stopPropagation()}
+                            >
+                                {flexibleHabits.map(habit => {
+                                    const done = checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
+
+                                    // Calculate weekly progress
+                                    const today = date;
+                                    const day = today.getDay();
+                                    const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+                                    const monday = new Date(today.getFullYear(), today.getMonth(), diff);
+
+                                    let weekCompletions = 0;
+                                    for (let i = 0; i < 7; i++) {
+                                        const d = new Date(monday);
+                                        d.setDate(monday.getDate() + i);
+                                        if (checkCompleted(habit.id, d.getDate(), completions, d.getMonth(), d.getFullYear())) {
+                                            weekCompletions++;
+                                        }
+                                    }
+
+                                    const goalMet = habit.weeklyTarget ? weekCompletions >= habit.weeklyTarget : false;
+
+                                    return (
+                                        <div
+                                            key={habit.id}
+                                            onClick={() => toggleCompletion(habit.id, dateKey)}
+                                            className="flex items-center justify-between group cursor-pointer hover:bg-black/5 rounded p-1 -mx-1 transition-colors"
+                                        >
+                                            <div className="flex items-center flex-1 min-w-0">
+                                                <span className={`text-[11px] font-bold truncate ${done ? 'text-stone-400 line-through' : 'text-stone-700'}`}>
+                                                    {habit.name || 'Untitled'}
+                                                </span>
+                                                <span className={`ml-1 text-[9px] px-1 py-0 border-[1px] font-black uppercase tracking-tighter ${goalMet ? 'bg-black text-white border-black' : 'bg-stone-50 text-stone-400 border-stone-200'}`}>
+                                                    {weekCompletions}/{habit.weeklyTarget}
+                                                </span>
+                                            </div>
+                                            <div
+                                                className={`w-4 h-4 border-2 border-black flex items-center justify-center transition-all ${done ? 'bg-black text-white' : 'bg-white'}`}
+                                            >
+                                                {done && <Check size={10} strokeWidth={4} />}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {dailyCompletedCount === totalDailyCount && totalDailyCount > 0 ? (
                         <div className="border-t border-black flex-shrink-0">
                             <button
-                                onClick={() => onShareClick({ date, dayName, dateString, completedCount, totalCount, progress: actualProgress })}
+                                onClick={() => onShareClick({ date, dayName, dateString, completedCount: dailyCompletedCount, totalCount: totalDailyCount, progress: actualProgress })}
                                 className="w-full p-3 bg-black text-white font-black uppercase tracking-widest text-[11px] hover:bg-stone-800 transition-all flex items-center justify-center gap-2 group"
                             >
                                 <Share2 size={14} className="group-hover:scale-110 transition-transform" />
@@ -268,12 +336,12 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                     ) : (
                         <div className="grid grid-cols-2 text-center text-[9px] font-black uppercase tracking-tight border-t border-black flex-shrink-0">
                             <div className="p-1 px-2 border-r border-black" style={{ backgroundColor: (isToday ? theme.primary : theme.secondary) + '20' }}>
-                                <span className="text-stone-500 block">Habits Maintained</span>
-                                <span className="text-lg leading-none">{completedCount}</span>
+                                <span className="text-stone-500 block">Daily Done</span>
+                                <span className="text-lg leading-none">{dailyCompletedCount}</span>
                             </div>
                             <div className="p-1 px-2" style={{ backgroundColor: '#f0f0f0' }}>
-                                <span className="text-stone-500 block">To Build</span>
-                                <span className="text-lg leading-none">{totalCount - completedCount}</span>
+                                <span className="text-stone-500 block">Remaining</span>
+                                <span className="text-lg leading-none">{totalDailyCount - dailyCompletedCount}</span>
                             </div>
                         </div>
                     )}
@@ -456,7 +524,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                     >
                         {/* Mood Selector */}
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-stone-400 block text-center">Mood</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-stone-600 block text-center">Mood</label>
                             <div className="grid grid-cols-5 gap-1 px-2">
                                 {MOODS.map((m) => {
                                     const isSelected = mood === m.value;
@@ -481,12 +549,12 @@ export const DailyCard: React.FC<DailyCardProps> = ({
 
                         {/* Journal Textarea */}
                         <div className="flex-1 flex flex-col gap-2 min-h-0">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-stone-400 block text-center">Notes</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-stone-600 block text-center">Notes</label>
                             <textarea
                                 value={journal}
                                 onChange={(e) => setJournal(e.target.value)}
                                 placeholder="Write regarding today..."
-                                className="w-full flex-1 p-3 bg-stone-50 border-2 border-transparent focus:border-black rounded-xl resize-none text-xs leading-relaxed placeholder:text-stone-300 outline-none transition-all font-medium"
+                                className="w-full flex-1 p-3 bg-stone-50 border-2 border-transparent focus:border-black rounded-xl resize-none text-xs leading-relaxed text-stone-900 placeholder:text-stone-300 outline-none transition-all font-medium"
                             />
                         </div>
 

@@ -31,6 +31,7 @@ interface MonthlyViewProps {
     isModalOpen?: boolean;
     notes: DailyNote;
     updateNote: (dateKey: string, data: Partial<DayData>) => void;
+    setSelectedDateForCard: (date: Date | null, flipped?: boolean) => void;
 }
 
 export const MonthlyView: React.FC<MonthlyViewProps> = ({
@@ -58,8 +59,8 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
     isModalOpen,
     notes,
     updateNote,
+    setSelectedDateForCard,
 }) => {
-    const [selectedDayForPopup, setSelectedDayForPopup] = React.useState<number | null>(null);
     const tableScrollRef = useRef<HTMLDivElement>(null);
     const todayRef = useRef<HTMLTableHeaderCellElement>(null);
     const weeksScrollRef = useRef<HTMLDivElement>(null);
@@ -118,22 +119,23 @@ total possible">
                         </div>
                         <div ref={weeksScrollRef} className="col-span-9 md:col-span-7 flex overflow-x-auto min-h-[220px] snap-x snap-mandatory">
                             {weeks.map((week, wIndex) => {
-                                const weekTotal = week.reduce((acc, day) => {
-                                    let dc = 0;
-                                    const dayDate = new Date(currentYear, currentMonthIndex, day);
-                                    const dayIndex = dayDate.getDay();
-                                    habits.forEach(h => {
-                                        if (h.frequency && !h.frequency.includes(dayIndex)) return;
-                                        if (checkCompleted(h.id, day, completions, currentMonthIndex, currentYear)) dc++;
+                                const weekTotal = habits.reduce((acc, h) => {
+                                    let hWeekDone = 0;
+                                    week.forEach(day => {
+                                        if (checkCompleted(h.id, day, completions, currentMonthIndex, currentYear)) hWeekDone++;
                                     });
-                                    return acc + dc;
+                                    if (h.weeklyTarget) return acc + Math.min(hWeekDone, h.weeklyTarget);
+                                    return acc + hWeekDone;
                                 }, 0);
 
-                                const weekMax = week.reduce((acc, day) => {
-                                    const dayDate = new Date(currentYear, currentMonthIndex, day);
-                                    const dayIndex = dayDate.getDay();
-                                    const possible = habits.filter(h => !h.frequency || h.frequency.includes(dayIndex)).length;
-                                    return acc + possible;
+                                const weekMax = habits.reduce((acc, h) => {
+                                    if (h.weeklyTarget) return acc + h.weeklyTarget;
+                                    let hPossible = 0;
+                                    week.forEach(day => {
+                                        const dayDate = new Date(currentYear, currentMonthIndex, day);
+                                        if (!h.frequency || h.frequency.includes(dayDate.getDay())) hPossible++;
+                                    });
+                                    return acc + hPossible;
                                 }, 0);
 
                                 const weekPerc = weekMax > 0 ? (weekTotal / weekMax) * 100 : 0;
@@ -155,7 +157,9 @@ total possible">
                                             {week.map(day => {
                                                 const dayDate = new Date(currentYear, currentMonthIndex, day);
                                                 const dayIndex = dayDate.getDay();
-                                                const dueHabits = habits.filter(h => !h.frequency || h.frequency.includes(dayIndex));
+
+                                                // Only use fixed-frequency habits for the daily activity bars and "all done" state
+                                                const dueHabits = habits.filter(h => !h.weeklyTarget && (!h.frequency || h.frequency.includes(dayIndex)));
                                                 let dc = 0;
                                                 dueHabits.forEach(h => { if (checkCompleted(h.id, day, completions, currentMonthIndex, currentYear)) dc++; });
 
@@ -277,7 +281,7 @@ total possible">
                                     return (
                                         <td
                                             key={day}
-                                            onClick={() => setSelectedDayForPopup(day)}
+                                            onClick={() => setSelectedDateForCard(new Date(currentYear, currentMonthIndex, day), true)}
                                             className="p-0 border-r border-stone-100 bg-white hover:bg-stone-50 transition-colors cursor-pointer group/cell relative"
                                             style={{ height: '32px' }}
                                         >
@@ -328,19 +332,6 @@ total possible">
                                                 ) : (
                                                     <span className="truncate flex-1 cursor-pointer hover:underline" onClick={() => setEditingHabitId(habit.id)} title="Click to rename">{habit.name || 'Untitled Habit'}</span>
                                                 )}
-                                                <div className={`flex items-center gap-1 transition-opacity ${isEditingName ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            if (window.confirm('Are you sure you want to delete this habit? You will lose all its historical data.')) {
-                                                                removeHabit(habit.id);
-                                                            }
-                                                        }}
-                                                        className="p-1 text-stone-300 hover:text-red-500 rounded transition-colors"
-                                                    >
-                                                        <Trash2 size={12} />
-                                                    </button>
-                                                </div>
                                             </div>
                                         </td>
                                         <td className="p-1 border-r border-stone-200 text-center text-[10px] font-black text-stone-600 group-hover:bg-stone-100 transition-colors">
@@ -421,30 +412,6 @@ total possible">
                     </table>
                 </div>
             </div >
-            {/* Daily Card Modal */}
-            {selectedDayForPopup !== null && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setSelectedDayForPopup(null)}>
-                    <div className="w-full max-w-sm h-auto relative animate-in zoom-in-95 slide-in-from-bottom-4 duration-300" onClick={e => e.stopPropagation()}>
-                        <button
-                            onClick={() => setSelectedDayForPopup(null)}
-                            className="absolute -top-12 right-0 text-white hover:text-stone-300 p-2 transition-colors"
-                        >
-                            <X size={24} />
-                        </button>
-                        <DailyCard
-                            date={new Date(currentYear, currentMonthIndex, selectedDayForPopup)}
-                            habits={habits}
-                            completions={completions}
-                            theme={theme}
-                            toggleCompletion={toggleCompletion}
-                            notes={notes}
-                            updateNote={updateNote}
-                            onShareClick={() => { }}
-                            defaultFlipped={true}
-                        />
-                    </div>
-                </div>
-            )}
         </>
     );
 };

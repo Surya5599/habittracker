@@ -3,11 +3,16 @@ export const getHabitMonthStats = (
     completions,
     monthIdx,
     year,
-    frequency
+    frequency,
+    createdAt
 ) => {
     const today = new Date();
     const dInM = new Date(year, monthIdx + 1, 0).getDate();
     const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+    // Normalize createdAt to start of day for comparison
+    const createdDate = createdAt ? new Date(createdAt) : null;
+    if (createdDate) createdDate.setHours(0, 0, 0, 0);
 
     const isPastDate = (y, m, d) => {
         const target = new Date(y, m, d);
@@ -19,8 +24,14 @@ export const getHabitMonthStats = (
     let missed = 0;
 
     for (let day = 1; day <= dInM; day++) {
+        const date = new Date(year, monthIdx, day);
+
+        // Skip if date is before creation
+        if (createdDate && date < createdDate) {
+            continue;
+        }
+
         if (frequency) {
-            const date = new Date(year, monthIdx, day);
             if (!frequency.includes(date.getDay())) {
                 continue;
             }

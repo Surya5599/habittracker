@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Animated, TextInput, Easing, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Animated, TextInput, Easing, Modal, useWindowDimensions, KeyboardAvoidingView, Platform } from 'react-native';
 import { Check, ChevronLeft, ChevronRight, BookOpen, Save, Plus, X, Share, Meh, Frown, Smile, Laugh, Angry } from 'lucide-react-native';
 import tw from 'twrnc';
 import { isCompleted as checkCompleted } from '../utils/stats';
@@ -143,26 +143,43 @@ export const DailyCard = ({
     const dateString = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     const isToday = date.toDateString() === new Date().toDateString();
 
+    const dailyHabits = habits.filter(h => !h.weeklyTarget && (!h.frequency || h.frequency.includes(date.getDay())));
+    const flexibleHabits = habits.filter(h => h.weeklyTarget);
+
     const getDayProgress = (d) => {
-        if (habits.length === 0) return 0;
+        if (dailyHabits.length === 0) return 100; // If no daily habits, it's "complete" or 100%? Web used 100 if totalDue is 0.
         const monthIdx = d.getMonth();
         const day = d.getDate();
         const year = d.getFullYear();
         let doneCount = 0;
-        const dueHabits = habits.filter(h => !h.frequency || h.frequency.includes(d.getDay()));
-        dueHabits.forEach(h => {
+        dailyHabits.forEach(h => {
             if (checkCompleted(h.id, day, completions, monthIdx, year)) {
                 doneCount++;
             }
         });
-        return dueHabits.length > 0 ? (doneCount / dueHabits.length) * 100 : 0;
+        return (doneCount / dailyHabits.length) * 100;
     };
 
     const actualProgress = getDayProgress(date);
-    const dueHabits = habits.filter(h => !h.frequency || h.frequency.includes(date.getDay()));
-    const completedCount = dueHabits.reduce((acc, h) =>
+    const completedCount = dailyHabits.reduce((acc, h) =>
         acc + (checkCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear()) ? 1 : 0), 0);
-    const totalCount = dueHabits.length;
+    const totalCount = dailyHabits.length;
+
+    const getFlexibleProgress = (habitId) => {
+        const dayOfWeek = date.getDay();
+        const diff = date.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1);
+        const monday = new Date(date.getFullYear(), date.getMonth(), diff);
+
+        let count = 0;
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(monday);
+            d.setDate(monday.getDate() + i);
+            if (checkCompleted(habitId, d.getDate(), completions, d.getMonth(), d.getFullYear())) {
+                count++;
+            }
+        }
+        return count;
+    };
 
     const size = 120; // Matches visually larger circle in image
     const strokeWidth = 12;
@@ -188,8 +205,11 @@ export const DailyCard = ({
     const frontAnimatedStyle = { transform: [{ rotateY: frontInterpolate }] };
     const backAnimatedStyle = { transform: [{ rotateY: backInterpolate }] };
 
+    const { height: screenHeight } = useWindowDimensions();
+    const cardHeight = screenHeight - 220; // Corrected height to stay above bottom nav
+
     return (
-        <View style={{ height: 640, paddingBottom: 20, paddingRight: 10 }}>
+        <View style={[tw`pb-0 pr-0`, { height: cardHeight }]}>
             <DatePickerModal
                 isVisible={showDatePicker}
                 onClose={() => setShowDatePicker(false)}
@@ -205,7 +225,10 @@ export const DailyCard = ({
                 visible={isTaskModalOpen}
                 onRequestClose={() => setIsTaskModalOpen(false)}
             >
-                <View style={tw`flex-1 justify-center items-center bg-black/60 px-6`}>
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    style={tw`flex-1 justify-start items-center bg-black/60 px-6 pt-24`}
+                >
                     <View style={tw`w-full`}>
                         <View style={[tw`absolute bg-black rounded-3xl`, { top: 8, left: 8, right: -8, bottom: -8, zIndex: -1 }]} />
                         <View style={tw`bg-white rounded-3xl w-full border-[3px] border-black overflow-hidden`}>
@@ -241,106 +264,146 @@ export const DailyCard = ({
                             </View>
                         </View>
                     </View>
-                </View>
+                </KeyboardAvoidingView>
             </Modal>
 
             {/* Front Face */}
             <Animated.View style={[tw`absolute inset-0 w-full h-full`, frontAnimatedStyle, { backfaceVisibility: 'hidden', zIndex: isFlipped ? 0 : 1 }]}>
                 <HardShadowCard style={tw`h-full`}>
                     {/* Header */}
-                    <View style={[tw`p-5 flex-row items-center justify-between border-b-[3px] border-black`, { backgroundColor: theme.secondary }]}>
+                    <View style={[tw`p-4 flex-row items-center justify-between border-b-[3px] border-black`, { backgroundColor: theme.secondary }]}>
                         <TouchableOpacity onPress={onPrev}>
-                            <ChevronLeft size={28} color="white" />
+                            <ChevronLeft size={24} color="white" />
                         </TouchableOpacity>
 
-                        <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+                        <TouchableOpacity onPress={() => setShowDatePicker(true)} style={tw`flex-row items-center gap-3`}>
                             <View style={tw`items-center`}>
-                                <Text style={tw`text-white font-black uppercase text-2xl tracking-tighter`}>{dayName}</Text>
-                                <Text style={tw`text-white/90 font-bold text-sm tracking-widest mt-1`}>{dateString}</Text>
+                                <Text style={tw`text-white font-black uppercase text-xl tracking-tighter`}>{dayName}</Text>
+                                <Text style={tw`text-white/80 font-bold text-[10px] tracking-widest`}>{dateString}</Text>
+                            </View>
+
+                            {/* Header Progress (No Background) */}
+                            <View style={tw`flex-row items-center gap-2`}>
+                                <View style={{ width: 64, height: 64, alignItems: 'center', justifyContent: 'center' }}>
+                                    <Svg width={64} height={64} style={{ transform: [{ rotate: '-90deg' }] }}>
+                                        <Circle
+                                            stroke="rgba(255,255,255,0.2)"
+                                            cx={32}
+                                            cy={32}
+                                            r={29}
+                                            strokeWidth={6}
+                                            fill="transparent"
+                                        />
+                                        <AnimatedCircle
+                                            stroke="white"
+                                            cx={32}
+                                            cy={32}
+                                            r={29}
+                                            strokeWidth={6}
+                                            fill="transparent"
+                                            strokeDasharray={29 * 2 * Math.PI}
+                                            strokeDashoffset={progressAnim.interpolate({
+                                                inputRange: [0, 100],
+                                                outputRange: [29 * 2 * Math.PI, 0],
+                                            })}
+                                            strokeLinecap="round"
+                                        />
+                                    </Svg>
+                                    <View style={tw`absolute inset-0 items-center justify-center`}>
+                                        <Text style={tw`text-sm font-black text-white`}>{Math.round(actualProgress)}%</Text>
+                                    </View>
+                                </View>
                             </View>
                         </TouchableOpacity>
 
                         <TouchableOpacity onPress={onNext}>
-                            <ChevronRight size={28} color="white" />
+                            <ChevronRight size={24} color="white" />
                         </TouchableOpacity>
                     </View>
 
                     <ScrollView style={tw`flex-1 bg-white`} showsVerticalScrollIndicator={false}>
-                        {/* ... Chart ... */}
-                        <View style={tw`py-8 items-center justify-center`}>
-                            <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-                                <Svg width={size} height={size} style={{ transform: [{ rotate: '-90deg' }] }}>
-                                    <Circle
-                                        stroke="#f3f4f6"
-                                        cx={size / 2}
-                                        cy={size / 2}
-                                        r={radius}
-                                        strokeWidth={strokeWidth}
-                                        fill="transparent"
-                                    />
-                                    <AnimatedCircle
-                                        stroke={theme.secondary}
-                                        cx={size / 2}
-                                        cy={size / 2}
-                                        r={radius}
-                                        strokeWidth={strokeWidth}
-                                        fill="transparent"
-                                        strokeDasharray={circumference}
-                                        strokeDashoffset={strokeDashoffset}
-                                        strokeLinecap="round"
-                                    />
-                                </Svg>
-                                <View style={tw`absolute inset-0 items-center justify-center`}>
-                                    <Text style={tw`text-3xl font-black text-gray-800`}>{Math.round(actualProgress)}%</Text>
-                                </View>
-                            </View>
-                        </View>
+
 
                         {/* ... Habits List ... */}
-                        <View style={tw`px-5 pb-6`}>
-                            <View style={tw`border-b border-gray-100 mb-4 pb-2`}>
+                        <View style={tw`px-5 pb-6 pt-4`}>
+                            <View style={tw`border-b border-gray-100 mb-2 pb-2 flex-row justify-between items-center`}>
                                 <Text style={tw`text-xs font-black uppercase text-gray-400 tracking-widest`}>Daily Habits</Text>
+                                <Text style={tw`text-xs font-black text-gray-400 mr-2`}>{dailyHabits.length}</Text>
                             </View>
 
-                            {dueHabits.length === 0 ? (
-                                <Text style={tw`text-center text-gray-400 italic py-4`}>No habits for today</Text>
+                            {dailyHabits.length === 0 ? (
+                                <Text style={tw`text-center text-gray-300 italic py-2 text-xs`}>No fixed habits today</Text>
                             ) : (
-                                <ScrollView
-                                    style={{ maxHeight: 150 }}
-                                    nestedScrollEnabled={true}
-                                    showsVerticalScrollIndicator={false}
-                                >
-                                    {dueHabits
-                                        .map(habit => ({
-                                            ...habit,
-                                            done: checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear())
-                                        }))
-                                        .sort((a, b) => {
-                                            if (a.done === b.done) return 0;
-                                            return a.done ? 1 : -1;
-                                        })
-                                        .map(habit => (
-                                            <TouchableOpacity
-                                                key={habit.id}
-                                                onPress={() => toggleCompletion(habit.id, dateKey)}
-                                                style={tw`flex-row items-center justify-between mb-4 mr-2`}
-                                                activeOpacity={0.7}
-                                            >
-                                                <Text style={[tw`text-base font-bold`, habit.done ? tw`text-gray-300 line-through` : tw`text-gray-800`]}>
-                                                    {habit.name || 'Untitled'}
-                                                </Text>
+                                <View style={[tw`mb-4`, { maxHeight: 160 }]}>
+                                    <ScrollView nestedScrollEnabled={true} showsVerticalScrollIndicator={false}>
+                                        {dailyHabits
+                                            .map(habit => ({
+                                                ...habit,
+                                                done: checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear())
+                                            }))
+                                            .map(habit => (
+                                                <TouchableOpacity
+                                                    key={habit.id}
+                                                    onPress={() => toggleCompletion(habit.id, dateKey)}
+                                                    style={tw`flex-row items-center justify-between mb-2 mr-2`}
+                                                    activeOpacity={0.7}
+                                                >
+                                                    <Text style={[tw`text-base font-bold`, habit.done ? tw`text-gray-300 line-through` : tw`text-gray-800`]}>
+                                                        {habit.name || 'Untitled'}
+                                                    </Text>
 
-                                                {/* Custom Checkbox */}
-                                                <View style={[
-                                                    tw`w-6 h-6 border-[2.5px] border-black items-center justify-center rounded-sm`,
-                                                    habit.done ? tw`bg-black` : tw`bg-white`
-                                                ]}>
-                                                    {habit.done && <Check size={16} color="white" strokeWidth={4} />}
-                                                </View>
-                                            </TouchableOpacity>
-                                        ))
-                                    }
-                                </ScrollView>
+                                                    <View style={[
+                                                        tw`w-6 h-6 border-[2.5px] border-black items-center justify-center rounded-sm`,
+                                                        habit.done ? tw`bg-black` : tw`bg-white`
+                                                    ]}>
+                                                        {habit.done && <Check size={16} color="white" strokeWidth={4} />}
+                                                    </View>
+                                                </TouchableOpacity>
+                                            ))
+                                        }
+                                    </ScrollView>
+                                </View>
+                            )}
+
+                            {flexibleHabits.length > 0 && (
+                                <>
+                                    <View style={tw`border-b border-gray-100 mb-2 pb-2 mt-0 flex-row justify-between items-center`}>
+                                        <Text style={tw`text-xs font-black uppercase text-gray-400 tracking-widest`}>Flexible Habits</Text>
+                                        <Text style={tw`text-xs font-black text-gray-400 mr-2`}>{flexibleHabits.length}</Text>
+                                    </View>
+                                    <View style={[tw`mb-2`, { maxHeight: 160 }]}>
+                                        <ScrollView nestedScrollEnabled={true} showsVerticalScrollIndicator={false}>
+                                            {flexibleHabits.map(habit => {
+                                                const flexDone = checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
+                                                const current = getFlexibleProgress(habit.id);
+                                                return (
+                                                    <TouchableOpacity
+                                                        key={habit.id}
+                                                        onPress={() => toggleCompletion(habit.id, dateKey)}
+                                                        style={tw`flex-row items-center justify-between mb-2 mr-2`}
+                                                        activeOpacity={0.7}
+                                                    >
+                                                        <View>
+                                                            <Text style={[tw`text-base font-bold`, flexDone ? tw`text-gray-300 line-through` : tw`text-gray-800`]}>
+                                                                {habit.name || 'Untitled'}
+                                                            </Text>
+                                                            <Text style={tw`text-[10px] font-black text-gray-400 uppercase`}>
+                                                                Goal: {current}/{habit.weeklyTarget} this week
+                                                            </Text>
+                                                        </View>
+
+                                                        <View style={[
+                                                            tw`w-6 h-6 border-[2.5px] border-black items-center justify-center rounded-sm`,
+                                                            flexDone ? tw`bg-black` : tw`bg-white`
+                                                        ]}>
+                                                            {flexDone && <Check size={16} color="white" strokeWidth={4} />}
+                                                        </View>
+                                                    </TouchableOpacity>
+                                                );
+                                            })}
+                                        </ScrollView>
+                                    </View>
+                                </>
                             )}
                         </View>
 
@@ -358,7 +421,14 @@ export const DailyCard = ({
 
                         <View style={tw`flex-row items-center justify-between bg-gray-50 px-4 py-3 border-b-[3px] border-black`}>
                             <TouchableOpacity onPress={flipToBack}>
-                                <BookOpen size={20} color="#a8a29e" />
+                                {(() => {
+                                    const selectedMood = MOODS.find(m => m.value === localMood);
+                                    if (selectedMood) {
+                                        const MoodIcon = selectedMood.icon;
+                                        return <MoodIcon size={24} color={selectedMood.color} strokeWidth={2.5} />;
+                                    }
+                                    return <BookOpen size={20} color="#a8a29e" />;
+                                })()}
                             </TouchableOpacity>
                             <Text style={tw`text-xs font-black uppercase text-gray-500 tracking-widest`}>Tasks</Text>
                             <TouchableOpacity
@@ -400,8 +470,8 @@ export const DailyCard = ({
                                     </View>
                                 ))
                             ) : (
-                                <View style={tw`items-center justify-center w-full py-4`}>
-                                    <Text style={tw`text-gray-300 italic text-sm`}>No tasks yet. Click + to add one!</Text>
+                                <View style={tw`items-center justify-center w-full py-2`}>
+                                    <Text style={tw`text-gray-300 italic text-[10px]`}>No tasks yet. Click + to add one!</Text>
                                 </View>
                             )}
                         </View>

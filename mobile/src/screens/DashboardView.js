@@ -9,6 +9,8 @@ import { AnalyticsDashboard, HardShadowCardLocal } from '../components/Analytics
 import { getHabitMonthStats } from '../utils/stats';
 import { DatePickerModal } from '../components/DatePickerModal';
 import { MonthYearPickerModal } from '../components/MonthYearPickerModal';
+import { WeeklyCard } from '../components/WeeklyCard';
+
 
 export const DashboardView = ({
     habits,
@@ -19,6 +21,7 @@ export const DashboardView = ({
     theme,
     completions,
     notes,
+    toggleCompletion,
     weekStart = 'MON'
 }) => {
     const [analyticsView, setAnalyticsView] = React.useState('WEEK'); // WEEK, MONTH, YEAR
@@ -114,7 +117,7 @@ export const DashboardView = ({
             let mCompleted = 0;
 
             habits.forEach(habit => {
-                const stats = getHabitMonthStats(habit.id, completions, index, currentYear, habit.frequency);
+                const stats = getHabitMonthStats(habit.id, completions, index, currentYear, habit.frequency, habit.createdAt);
                 mTotal += stats.totalDays;
                 mCompleted += stats.completed;
             });
@@ -143,7 +146,7 @@ export const DashboardView = ({
 
         // Calculate stats per habit
         const habitStats = habits.map(habit => {
-            const stats = getHabitMonthStats(habit.id, completions, currentMonth, currentYear, habit.frequency);
+            const stats = getHabitMonthStats(habit.id, completions, currentMonth, currentYear, habit.frequency, habit.createdAt);
             const percentage = stats.totalDays > 0 ? Math.round((stats.completed / stats.totalDays) * 100) : 0;
             return {
                 ...habit,
@@ -231,7 +234,7 @@ export const DashboardView = ({
             let mCompleted = 0;
 
             habits.forEach(habit => {
-                const stats = getHabitMonthStats(habit.id, completions, index, targetYear, habit.frequency);
+                const stats = getHabitMonthStats(habit.id, completions, index, targetYear, habit.frequency, habit.createdAt);
                 mTotal += stats.totalDays;
                 mCompleted += stats.completed;
             });
@@ -253,7 +256,7 @@ export const DashboardView = ({
             topHabits: habits.map(h => {
                 let hTotal = 0;
                 for (let m = 0; m <= 11; m++) {
-                    const s = getHabitMonthStats(h.id, completions, m, targetYear, h.frequency);
+                    const s = getHabitMonthStats(h.id, completions, m, targetYear, h.frequency, h.createdAt);
                     hTotal += s.completed;
                 }
                 return { ...h, completed: hTotal };
@@ -271,7 +274,7 @@ export const DashboardView = ({
         const habitAnnualStats = habits.map(h => {
             let total = 0;
             for (let m = 0; m <= 11; m++) {
-                const s = getHabitMonthStats(h.id, completions, m, targetYear, h.frequency);
+                const s = getHabitMonthStats(h.id, completions, m, targetYear, h.frequency, h.createdAt);
                 total += s.completed;
             }
             return { name: h.name, value: total };
@@ -590,13 +593,22 @@ export const DashboardView = ({
 
                 {analyticsView === 'WEEK' && (
                     <View style={tw`px-3`}>
+                        <WeeklyCard
+                            habits={habits}
+                            completions={completions}
+                            theme={theme}
+                            toggleCompletion={toggleCompletion}
+                            date={today}
+                            weekOffset={weekOffset}
+                            weekStart={weekStart}
+                        />
                         <AnalyticsDashboard
                             periodLabel="Week"
                             story={story}
                             chartData={weeklyStats.map(d => ({ label: d.displayDay, value: d.count }))}
                             stats={{
                                 best: { name: story.highlights.best?.name, value: story.highlights.best?.completed },
-                                worst: { name: story.highlights.neglected?.name, value: 0 } // Neglected implies 0 or low
+                                worst: { name: story.highlights.neglected?.name, value: 0 }
                             }}
                             theme={theme}
                             completionStats={{
@@ -615,3 +627,4 @@ export const DashboardView = ({
         </View>
     );
 };
+

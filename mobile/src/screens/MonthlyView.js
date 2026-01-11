@@ -96,28 +96,32 @@ export const MonthlyView = ({ habits, completions, notes, theme, toggleCompletio
                                     </View>
                                 ) : (
                                     <View style={tw`flex-row flex-wrap gap-1.5`}>
-                                        {habits.filter(h => !h.frequency || h.frequency.includes(date.getDay())).length > 0 ? (
-                                            habits
-                                                .filter(h => !h.frequency || h.frequency.includes(date.getDay()))
-                                                .map(h => {
-                                                    const done = checkCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
-                                                    return (
-                                                        <View
-                                                            key={h.id}
-                                                            style={[
-                                                                tw`w-3 h-3 rounded-full shadow-sm`,
-                                                                {
-                                                                    backgroundColor: done ? h.color : '#f3f4f6',
-                                                                    borderWidth: done ? 0 : 1.5,
-                                                                    borderColor: '#e5e7eb'
-                                                                }
-                                                            ]}
-                                                        />
-                                                    );
-                                                })
-                                        ) : (
-                                            <Text style={tw`text-xs font-bold text-gray-300 italic`}>No habits scheduled</Text>
-                                        )}
+                                        {(() => {
+                                            const dailyDue = habits.filter(h => !h.weeklyTarget && (!h.frequency || h.frequency.includes(date.getDay())));
+                                            const flexibleDone = habits.filter(h => h.weeklyTarget && checkCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear()));
+                                            const allToShow = [...dailyDue, ...flexibleDone];
+
+                                            if (allToShow.length === 0) {
+                                                return <Text style={tw`text-xs font-bold text-gray-300 italic`}>No activity today</Text>;
+                                            }
+
+                                            return allToShow.map(h => {
+                                                const done = checkCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
+                                                return (
+                                                    <View
+                                                        key={h.id}
+                                                        style={[
+                                                            tw`w-3 h-3 rounded-full shadow-sm`,
+                                                            {
+                                                                backgroundColor: done ? h.color : '#f3f4f6',
+                                                                borderWidth: done ? 0 : 1.5,
+                                                                borderColor: '#e5e7eb'
+                                                            }
+                                                        ]}
+                                                    />
+                                                );
+                                            });
+                                        })()}
                                     </View>
                                 )}
                             </View>

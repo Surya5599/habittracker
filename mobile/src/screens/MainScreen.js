@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { WeeklyScreen } from './WeeklyView';
 import { MonthlyView } from './MonthlyView';
 import { DashboardView } from './DashboardView';
+import { AIAnalysisView } from './AIAnalysisView';
 import { BottomNav } from '../components/BottomNav';
 import { Settings, X, Check, Plus } from 'lucide-react-native';
 import tw from 'twrnc';
@@ -27,11 +28,13 @@ export const MainScreen = ({
     addHabit,
     updateHabit,
     removeHabit,
+    reorderHabits,
     weeklyStats,
     isGuest,
     onOpenSignIn,
     weekStart,
-    setWeekStart
+    setWeekStart,
+    aiAnalysis
 }) => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isHabitManagerOpen, setIsHabitManagerOpen] = useState(false);
@@ -230,6 +233,7 @@ export const MainScreen = ({
                     addHabit={addHabit}
                     updateHabit={updateHabit}
                     removeHabit={removeHabit}
+                    reorderHabits={reorderHabits}
                     theme={theme}
                 />
 
@@ -269,6 +273,13 @@ export const MainScreen = ({
                         theme={theme}
                         notes={notes}
                         weekStart={weekStart}
+                        toggleCompletion={toggleCompletion}
+                    />
+                )}
+                {view === 'analysis' && (
+                    <AIAnalysisView
+                        theme={theme}
+                        {...aiAnalysis}
                     />
                 )}
             </SafeAreaView>

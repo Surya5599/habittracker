@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { Home, BarChart2, Cookie, User } from 'lucide-react-native'; // Cookie as placeholder for "Habits" icon
+import { Home, BarChart2, Cookie, Sparkles } from 'lucide-react-native';
 import tw from 'twrnc';
 
 export const BottomNav = ({ view, setView, resetWeekOffset, theme }) => {
@@ -57,9 +57,9 @@ export const BottomNav = ({ view, setView, resetWeekOffset, theme }) => {
             />
 
             <NavItem
-                label="Profile"
-                icon={User}
-                targetView="profile"
+                label="Analysis"
+                icon={Sparkles}
+                targetView="analysis"
             />
 
         </View>

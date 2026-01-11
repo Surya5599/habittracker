@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, SafeAreaView, TouchableOpacity } from 'react-native';
 import tw from 'twrnc';
 import { DailyCard } from '../components/DailyCard';
+import { WeeklyCard } from '../components/WeeklyCard';
+
 import { THEMES } from '../constants';
 import Svg, { Circle } from 'react-native-svg';
 
@@ -111,12 +113,8 @@ export const WeeklyScreen = ({
     const progressOffset = circumference - (weekProgress.percentage / 100) * circumference;
 
     return (
-        <ScrollView
-            style={tw`flex-1 bg-gray-100`}
-            contentContainerStyle={tw`pb-24`}
-            showsVerticalScrollIndicator={false}
-        >
-            {/* Daily Card */}
+        <View style={tw`flex-1 bg-gray-100`}>
+            {/* Daily Card and Weekly Card container */}
             <View style={tw`px-4 flex-1 pt-2`}>
                 <DailyCard
                     date={currentDate}
@@ -131,7 +129,21 @@ export const WeeklyScreen = ({
                     dateKey={dateKey}
                     updateNote={updateNote}
                 />
+                {/* 
+                  Note: If WeeklyCard is also present, it will follow the DailyCard. 
+                  Since DailyCard height is screen-relative, WeeklyCard might be off-screen.
+                  However, the user wants the card fixed, so we follow that lead.
+                */}
+                <WeeklyCard
+                    habits={habits}
+                    completions={completions}
+                    theme={theme}
+                    toggleCompletion={toggleCompletion}
+                    date={currentDate}
+                    weekOffset={weekOffset}
+                    weekStart={weekStart}
+                />
             </View>
-        </ScrollView>
+        </View>
     );
 };

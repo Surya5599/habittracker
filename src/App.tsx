@@ -73,14 +73,14 @@ const AppContent: React.FC = () => {
 
   useEffect(() => {
     // Check for specific feature announcements
-    const seenFrequencyUpdate = localStorage.getItem('seen_frequency_update_2026');
+    const seenDashboardUpdate = localStorage.getItem('seen_dashboard_update_2026');
 
     // Determine if onboarding is completed based on current mode
     const isGuestOnboardingDone = localStorage.getItem('habit_onboarding_completed') === 'true';
     const isUserOnboardingDone = session?.user?.user_metadata?.onboarding_completed;
     const hasCompletedOnboarding = !!((guestMode && isGuestOnboardingDone) || (session?.user && isUserOnboardingDone));
 
-    if (!seenFrequencyUpdate && !showOnboarding && hasCompletedOnboarding) {
+    if (!seenDashboardUpdate && !showOnboarding && hasCompletedOnboarding) {
       setShowUpdateModal(true);
     }
 
@@ -94,11 +94,11 @@ const AppContent: React.FC = () => {
 
   const handleUpdateModalClose = () => {
     setShowUpdateModal(false);
-    localStorage.setItem('seen_frequency_update_2026', 'true');
+    localStorage.setItem('seen_dashboard_update_2026', 'true');
   };
 
   const handleUpdateModalAction = () => {
-    setIsHabitModalOpen(true);
+    setView('dashboard');
     handleUpdateModalClose();
   };
 
@@ -635,9 +635,9 @@ const AppContent: React.FC = () => {
       <FeatureAnnouncementModal
         isOpen={showUpdateModal}
         onClose={handleUpdateModalClose}
-        title="New Feature: Specific Days"
-        description="You can now select exactly which days of the week a habit is active. Unchecked days won't count against your stats!"
-        actionLabel="Manage Habits"
+        title="Retro Dashboard & Streaks"
+        description="Experience the new Retro Grids for visual habit history, and master your routines with the all-new Streak Master analysis modal!"
+        actionLabel="View Dashboard"
         onAction={handleUpdateModalAction}
       />
 

@@ -252,8 +252,9 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                             <span className="text-[10px] font-black text-stone-400">{dailyHabits.length}</span>
                         </div>
                         <div
-                            className="space-y-1 overflow-y-auto max-h-[120px] pr-1 overscroll-y-contain"
-                            style={{ overscrollBehavior: 'contain', transform: 'translateZ(0)' }}
+                            className="space-y-1 overflow-y-auto max-h-[120px] pr-1 overscroll-y-contain relative z-10"
+                            style={{ overscrollBehavior: 'contain', transform: 'translateZ(1px)' }}
+                            onWheel={(e) => e.stopPropagation()}
                         >
                             {dailyHabits.length > 0 ? dailyHabits.map(habit => {
                                 const done = checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
@@ -289,8 +290,9 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                                 <span className="text-[10px] font-black text-stone-400">{flexibleHabits.length}</span>
                             </div>
                             <div
-                                className="space-y-1 overflow-y-auto max-h-[100px] pr-1 overscroll-y-contain"
-                                style={{ overscrollBehavior: 'contain', transform: 'translateZ(0)' }}
+                                className="space-y-1 overflow-y-auto max-h-[100px] pr-1 overscroll-y-contain relative z-10"
+                                style={{ overscrollBehavior: 'contain', transform: 'translateZ(1px)' }}
+                                onWheel={(e) => e.stopPropagation()}
                             >
                                 {flexibleHabits.map(habit => {
                                     const done = checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
@@ -420,8 +422,9 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                             </button>
                         </div>
                         <div
-                            className="p-2 space-y-2 overflow-y-auto max-h-[160px] pr-1 overscroll-y-contain"
-                            style={{ overscrollBehavior: 'contain', transform: 'translateZ(0)' }}
+                            className="p-2 space-y-2 overflow-y-auto max-h-[160px] pr-1 overscroll-y-contain relative z-10"
+                            style={{ overscrollBehavior: 'contain', transform: 'translateZ(1px)' }}
+                            onWheel={(e) => e.stopPropagation()}
                         >
                             {(dayData.tasks || []).map((task) => (
                                 <div
@@ -534,8 +537,9 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                     </div>
 
                     <div
-                        className="p-4 flex-1 flex flex-col gap-4 overflow-y-auto overscroll-y-contain"
-                        style={{ overscrollBehavior: 'contain', transform: 'translateZ(0)' }}
+                        className="p-4 flex-1 flex flex-col gap-4 overflow-y-auto overscroll-y-contain relative z-10"
+                        style={{ overscrollBehavior: 'contain', transform: 'translateZ(1px)' }}
+                        onWheel={(e) => e.stopPropagation()}
                     >
                         {/* Mood Selector */}
                         <div className="space-y-2">

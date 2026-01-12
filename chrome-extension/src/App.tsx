@@ -43,6 +43,7 @@ const App: React.FC = () => {
     addHabit,
     updateHabit,
     removeHabit,
+    reorderHabits,
     setLoading: setHabitsLoading
   } = useHabits(session, false);
 
@@ -85,7 +86,6 @@ const App: React.FC = () => {
               } else if (parsed && typeof parsed === 'object') {
                 if ('tasks' in parsed) {
                   notesObj[note.date_key] = parsed as any;
-                  // Casting to any or DayData because types.ts in extension assumes DayData now if I updated it.
                 } else {
                   notesObj[note.date_key] = { tasks: [], ...parsed } as any;
                 }
@@ -109,18 +109,14 @@ const App: React.FC = () => {
   const updateNote = async (dateKey: string, data: Partial<DayData>) => {
     setNotes(prev => {
       const current = prev[dateKey] || { tasks: [] };
-      // Merge the partial data with existing data
       const updated = { ...current, ...data };
       return { ...prev, [dateKey]: updated };
     });
 
     if (session?.user?.id) {
-      // We need the latest note object to save.
-      // Since setNotes is async, we construct the object here.
       const currentNote = notes[dateKey] || { tasks: [] };
       const updatedNote = { ...currentNote, ...data };
 
-      // Check if the note is completely empty
       const isEmpty = (!updatedNote.tasks || updatedNote.tasks.length === 0) && !updatedNote.mood && !updatedNote.journal;
 
       if (isEmpty) {
@@ -211,8 +207,6 @@ const App: React.FC = () => {
     );
   }
 
-
-
   return (
     <div className="bg-[#e5e5e5] min-h-screen p-2 font-sans text-[#444]">
       <Toaster position="top-center" />
@@ -270,13 +264,10 @@ const App: React.FC = () => {
           if (id) setEditingHabitId(id);
           return id;
         }}
-        updateHabitName={(id, name) => updateHabit(id, { name })}
         removeHabit={removeHabit}
         editingHabitId={editingHabitId}
         setEditingHabitId={setEditingHabitId}
       />
-
-
 
       <ShareCustomizationModal
         isOpen={shareModalOpen}
@@ -298,6 +289,7 @@ const App: React.FC = () => {
         addHabit={addHabit}
         updateHabit={updateHabit}
         removeHabit={removeHabit}
+        reorderHabits={reorderHabits}
         themePrimary={theme.primary}
       />
     </div>

@@ -6,15 +6,15 @@
     "action": {
         "default_popup": "index.html",
         "default_icon": {
-            "16": "habicard_logo.png",
-            "48": "habicard_logo.png",
-            "128": "habicard_logo.png"
+            "16": "habicard_favicon.png",
+            "48": "habicard_favicon.png",
+            "128": "habicard_favicon.png"
         }
     },
     "icons": {
-        "16": "habicard_logo.png",
-        "48": "habicard_logo.png",
-        "128": "habicard_logo.png"
+        "16": "habicard_favicon.png",
+        "48": "habicard_favicon.png",
+        "128": "habicard_favicon.png"
     },
     "permissions": [
         "storage"

@@ -3,7 +3,6 @@ import { Check, Plus, Share2, Trash2, Pencil, ChevronLeft, ChevronRight, BookOpe
 import { Habit, HabitCompletion, Theme, DailyNote, Task, DayData } from '../types';
 import { DAYS_OF_WEEK } from '../constants';
 import { isCompleted as checkCompleted } from '../utils/stats';
-import { ColorScheme } from './ShareCustomizationModal';
 import { generateUUID } from '../utils/uuid';
 import { WeekPicker } from './DateSelectors';
 
@@ -26,11 +25,10 @@ interface DailyCardProps {
     onPrev?: () => void;
     onNext?: () => void;
     onDateSelect?: (date: Date) => void;
-    addHabit?: () => Promise<string | null>;
-    updateHabitName?: (id: string, name: string) => void;
     removeHabit?: (id: string) => void;
     editingHabitId?: string | null;
     setEditingHabitId?: (id: string | null) => void;
+    addHabit?: () => Promise<string | null>;
 }
 
 export const DailyCard: React.FC<DailyCardProps> = ({
@@ -45,11 +43,10 @@ export const DailyCard: React.FC<DailyCardProps> = ({
     onPrev,
     onNext,
     onDateSelect,
-    addHabit,
-    updateHabitName,
     removeHabit,
     editingHabitId,
     setEditingHabitId,
+    addHabit,
 }) => {
     const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
     const [editingTaskText, setEditingTaskText] = useState('');
@@ -86,21 +83,24 @@ export const DailyCard: React.FC<DailyCardProps> = ({
         setIsFlipped(false);
     };
 
-    const getDayProgress = (d: Date) => {
-        if (habits.length === 0) return 0;
-        const monthIdx = d.getMonth();
-        const day = d.getDate();
-        const year = d.getFullYear();
+    const dailyHabits = habits.filter(h => !h.weeklyTarget);
+    const flexibleHabits = habits.filter(h => !!h.weeklyTarget);
+
+    const getDayProgress = () => {
+        if (dailyHabits.length === 0) return 0;
+        const monthIdx = date.getMonth();
+        const day = date.getDate();
+        const year = date.getFullYear();
         let doneCount = 0;
-        habits.forEach(h => {
+        dailyHabits.forEach(h => {
             if (checkCompleted(h.id, day, completions, monthIdx, year)) {
                 doneCount++;
             }
         });
-        return (doneCount / habits.length) * 100;
+        return (doneCount / dailyHabits.length) * 100;
     };
 
-    const actualProgress = getDayProgress(date);
+    const actualProgress = getDayProgress();
     const [progress, setProgress] = useState(0);
 
     useEffect(() => {
@@ -110,9 +110,12 @@ export const DailyCard: React.FC<DailyCardProps> = ({
         return () => clearTimeout(timer);
     }, [actualProgress]);
 
-    const completedCount = habits.reduce((acc, h) =>
-        acc + (checkCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear()) ? 1 : 0), 0);
-    const totalCount = habits.length;
+    const dailyCompletedCount = dailyHabits.reduce((acc, h) => {
+        const doneToday = checkCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
+        return doneToday ? acc + 1 : acc;
+    }, 0);
+
+    const totalDailyCount = dailyHabits.length;
 
     const handleFinishEditing = (taskId: string) => {
         const currentTasks = dayData.tasks || [];
@@ -210,7 +213,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                     </div>
 
                     {/* Progress Circle */}
-                    <div className="p-4 flex flex-col items-center justify-center border-b border-stone-100">
+                    <div className="py-1.5 px-4 flex flex-col items-center justify-center border-b border-stone-100">
                         <div className="relative w-24 h-24">
                             <svg className="w-full h-full transform -rotate-90">
                                 <circle
@@ -243,90 +246,118 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                     </div>
 
                     {/* Daily Habits List */}
-                    <div className="p-3 bg-stone-50/50 flex flex-col">
-                        <div className="flex items-center justify-between mb-2 pb-1 border-b border-black/5 flex-shrink-0">
+                    <div className="py-1 px-3 bg-stone-50/50 flex flex-col border-b border-stone-100">
+                        <div className="flex items-center justify-between mb-1 pb-1 border-b border-black/5 flex-shrink-0">
                             <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">Daily Habits</span>
-                            {addHabit && (
-                                <button
-                                    onClick={addHabit}
-                                    className="p-1 hover:bg-black/5 rounded text-stone-400 hover:text-black transition-colors"
-                                    title="Add Habit"
-                                >
-                                    <Plus size={12} strokeWidth={3} />
-                                </button>
-                            )}
+                            <span className="text-[10px] font-black text-stone-400">{dailyHabits.length}</span>
                         </div>
-                        <div className="space-y-1 overflow-y-auto max-h-[150px] pr-1">
-                            {habits.map(habit => {
+                        <div
+                            className="space-y-1 overflow-y-auto max-h-[120px] pr-1 overscroll-y-contain"
+                        >
+                            {dailyHabits.length > 0 ? dailyHabits.map(habit => {
                                 const done = checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
                                 return (
                                     <div
                                         key={habit.id}
+                                        onClick={() => toggleCompletion(habit.id, dateKey)}
                                         className="flex items-center justify-between group cursor-pointer hover:bg-black/5 rounded p-1 -mx-1 transition-colors"
                                     >
-                                        {editingHabitId === habit.id && setEditingHabitId && updateHabitName ? (
-                                            <input
-                                                type="text"
-                                                autoFocus
-                                                className="text-[11px] font-bold bg-transparent border-none outline-none p-0 w-full text-stone-800"
-                                                defaultValue={habit.name}
-                                                onBlur={(e) => {
-                                                    updateHabitName(habit.id, e.target.value);
-                                                    setEditingHabitId(null);
-                                                }}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                        updateHabitName(habit.id, e.currentTarget.value);
-                                                        setEditingHabitId(null);
-                                                    }
-                                                }}
-                                                onClick={(e) => e.stopPropagation()}
-                                            />
-                                        ) : (
-                                            <>
-                                                <div className="flex-1 flex items-center mr-2" onClick={() => toggleCompletion(habit.id, dateKey)}>
-                                                    <span className={`text-[11px] font-bold truncate ${done ? 'text-stone-400 line-through' : 'text-stone-700'}`}>
-                                                        {habit.name || 'Untitled'}
-                                                    </span>
-                                                </div>
-                                                <div
-                                                    onClick={() => toggleCompletion(habit.id, dateKey)}
-                                                    className={`w-4 h-4 border-2 border-black flex items-center justify-center transition-all flex-shrink-0 ${done ? 'bg-black text-white' : 'bg-white'}`}
-                                                >
-                                                    {done && <Check size={10} strokeWidth={4} />}
-                                                </div>
-                                            </>
-                                        )}
+                                        <div className="flex items-center flex-1 min-w-0">
+                                            <span className={`text-[11px] font-bold truncate ${done ? 'text-stone-400 line-through' : 'text-stone-700'}`}>
+                                                {habit.name || 'Untitled'}
+                                            </span>
+                                        </div>
+                                        <div
+                                            className={`w-4 h-4 border-2 border-black flex items-center justify-center transition-all ${done ? 'bg-black text-white' : 'bg-white'}`}
+                                        >
+                                            {done && <Check size={10} strokeWidth={4} />}
+                                        </div>
                                     </div>
                                 );
-                            })}
+                            }) : (
+                                <div className="text-[9px] text-stone-300 italic py-1">No daily habits due today</div>
+                            )}
                         </div>
                     </div>
 
-                    {
-                        completedCount === totalCount && totalCount > 0 ? (
-                            <div className="border-t border-black flex-shrink-0">
-                                <button
-                                    onClick={() => onShareClick({ date, dayName, dateString, completedCount, totalCount, progress: actualProgress })}
-                                    className="w-full p-3 bg-black text-white font-black uppercase tracking-widest text-[11px] hover:bg-stone-800 transition-all flex items-center justify-center gap-2 group"
-                                >
-                                    <Share2 size={14} className="group-hover:scale-110 transition-transform" />
-                                    Share Achievement
-                                </button>
+                    {/* Flexible Habits List */}
+                    {flexibleHabits.length > 0 && (
+                        <div className="py-1 px-3 bg-white flex flex-col">
+                            <div className="flex items-center justify-between mb-1 pb-1 border-b border-black/5 flex-shrink-0">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">Flexible Habits</span>
+                                <span className="text-[10px] font-black text-stone-400">{flexibleHabits.length}</span>
                             </div>
-                        ) : (
-                            <div className="grid grid-cols-2 text-center text-[9px] font-black uppercase tracking-tight border-t border-black flex-shrink-0">
-                                <div className="p-1 px-2 border-r border-black" style={{ backgroundColor: (isToday ? theme.primary : theme.secondary) + '20' }}>
-                                    <span className="text-stone-500 block">Habits Maintained</span>
-                                    <span className="text-lg leading-none">{completedCount}</span>
-                                </div>
-                                <div className="p-1 px-2" style={{ backgroundColor: '#f0f0f0' }}>
-                                    <span className="text-stone-500 block">To Build</span>
-                                    <span className="text-lg leading-none">{totalCount - completedCount}</span>
-                                </div>
+                            <div
+                                className="space-y-1 overflow-y-auto max-h-[100px] pr-1 overscroll-y-contain"
+                            >
+                                {flexibleHabits.map(habit => {
+                                    const done = checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
+
+                                    // Calculate weekly progress
+                                    const today = date;
+                                    const day = today.getDay();
+                                    const diff = today.getDate() - (day === 0 ? 6 : day - 1); // Monday-based week
+                                    const monday = new Date(today.getFullYear(), today.getMonth(), diff);
+
+                                    let weekCompletions = 0;
+                                    for (let i = 0; i < 7; i++) {
+                                        const d = new Date(monday);
+                                        d.setDate(monday.getDate() + i);
+                                        if (checkCompleted(habit.id, d.getDate(), completions, d.getMonth(), d.getFullYear())) {
+                                            weekCompletions++;
+                                        }
+                                    }
+
+                                    const goalMet = habit.weeklyTarget ? weekCompletions >= habit.weeklyTarget : false;
+
+                                    return (
+                                        <div
+                                            key={habit.id}
+                                            onClick={() => toggleCompletion(habit.id, dateKey)}
+                                            className="flex items-center justify-between group cursor-pointer hover:bg-black/5 rounded p-1 -mx-1 transition-colors"
+                                        >
+                                            <div className="flex items-center flex-1 min-w-0">
+                                                <span className={`text-[11px] font-bold truncate ${done ? 'text-stone-400 line-through' : 'text-stone-700'}`}>
+                                                    {habit.name || 'Untitled'}
+                                                </span>
+                                                <span className={`ml-1 text-[9px] px-1 py-0 border-[1px] font-black uppercase tracking-tighter ${goalMet ? 'bg-black text-white border-black' : 'bg-stone-50 text-stone-400 border-stone-200'}`}>
+                                                    {weekCompletions}/{habit.weeklyTarget}
+                                                </span>
+                                            </div>
+                                            <div
+                                                className={`w-4 h-4 border-2 border-black flex items-center justify-center transition-all ${done ? 'bg-black text-white' : 'bg-white'}`}
+                                            >
+                                                {done && <Check size={10} strokeWidth={4} />}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
-                        )
-                    }
+                        </div>
+                    )}
+
+                    {dailyCompletedCount === totalDailyCount && totalDailyCount > 0 ? (
+                        <div className="border-t border-black flex-shrink-0">
+                            <button
+                                onClick={() => onShareClick({ date, dayName, dateString, completedCount: dailyCompletedCount, totalCount: totalDailyCount, progress: actualProgress })}
+                                className="w-full p-3 bg-black text-white font-black uppercase tracking-widest text-[11px] hover:bg-stone-800 transition-all flex items-center justify-center gap-2 group"
+                            >
+                                <Share2 size={14} className="group-hover:scale-110 transition-transform" />
+                                Share Achievement
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-2 text-center text-[9px] font-black uppercase tracking-tight border-t border-black flex-shrink-0">
+                            <div className="p-1 px-2 border-r border-black" style={{ backgroundColor: (isToday ? theme.primary : theme.secondary) + '20' }}>
+                                <span className="text-stone-500 block">Daily Done</span>
+                                <span className="text-lg leading-none">{dailyCompletedCount}</span>
+                            </div>
+                            <div className="p-1 px-2" style={{ backgroundColor: '#f0f0f0' }}>
+                                <span className="text-stone-500 block">Remaining</span>
+                                <span className="text-lg leading-none">{totalDailyCount - dailyCompletedCount}</span>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Tasks */}
                     <div
@@ -386,7 +417,9 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                                 <Plus size={12} strokeWidth={3} />
                             </button>
                         </div>
-                        <div className="p-2 space-y-2 overflow-y-auto max-h-[160px] pr-1">
+                        <div
+                            className="p-2 space-y-2 overflow-y-auto max-h-[160px] pr-1 overscroll-y-contain"
+                        >
                             {(dayData.tasks || []).map((task) => (
                                 <div
                                     key={task.id}
@@ -497,7 +530,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                         <p className="text-white/80 font-bold text-[10px] tracking-widest">{dateString}</p>
                     </div>
 
-                    <div className="p-4 flex-1 flex flex-col gap-4 overflow-y-auto">
+                    <div className="p-4 flex-1 flex flex-col gap-4 overflow-y-auto overscroll-y-contain">
                         {/* Mood Selector */}
                         <div className="space-y-2">
                             <label className="text-[10px] font-black uppercase tracking-widest text-stone-400 block text-center">Mood</label>

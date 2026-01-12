@@ -45,6 +45,83 @@ export const DailyCard: React.FC<DailyCardProps> = ({
     const [editingTaskText, setEditingTaskText] = useState('');
     const [isFlipped, setIsFlipped] = useState(defaultFlipped);
     const taskInputRef = useRef<HTMLInputElement>(null);
+    const dailyHabitsRef = useRef<HTMLDivElement>(null);
+    const flexibleHabitsRef = useRef<HTMLDivElement>(null);
+    const tasksRef = useRef<HTMLDivElement>(null);
+    const journalRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        // Helper: smooth-scroll animator per element. Stores state on element.
+        const scheduleSmoothScroll = (el: HTMLElement, targetScrollTop: number) => {
+            const maxScroll = el.scrollHeight - el.clientHeight;
+            if (targetScrollTop < 0) targetScrollTop = 0;
+            if (targetScrollTop > maxScroll) targetScrollTop = maxScroll;
+
+            const state = (el as any).__smoothScroll ||= { raf: null as number | null, target: el.scrollTop };
+            state.target = targetScrollTop;
+            if (state.raf) return;
+
+            const step = () => {
+                const cur = el.scrollTop;
+                const to = state.target;
+                const diff = to - cur;
+                const delta = diff * 0.22;
+
+                if (Math.abs(diff) < 0.5) {
+                    el.scrollTop = to;
+                    state.raf = null;
+                    return;
+                }
+
+                el.scrollTop = cur + delta;
+                state.raf = requestAnimationFrame(step) as unknown as number;
+            };
+
+            state.raf = requestAnimationFrame(step) as unknown as number;
+        };
+
+        const handleWheel = (e: WheelEvent) => {
+            const target = e.currentTarget as HTMLElement;
+            const isScrollable = target.scrollHeight > target.clientHeight + 1;
+            if (!isScrollable) return;
+
+            const maxScroll = target.scrollHeight - target.clientHeight;
+            const oldScrollTop = target.scrollTop;
+            let newScrollTop = oldScrollTop + e.deltaY;
+            if (newScrollTop < 0) newScrollTop = 0;
+            if (newScrollTop > maxScroll) newScrollTop = maxScroll;
+
+            if (newScrollTop !== oldScrollTop) {
+                e.preventDefault();
+                e.stopPropagation();
+                scheduleSmoothScroll(target, newScrollTop);
+            }
+        };
+
+        const refs = [dailyHabitsRef, flexibleHabitsRef, tasksRef, journalRef];
+
+        refs.forEach(ref => {
+            if (ref.current) {
+                ref.current.addEventListener('wheel', handleWheel, { passive: false });
+            }
+        });
+
+        return () => {
+            refs.forEach(ref => {
+                const el = ref.current;
+                if (el) {
+                    el.removeEventListener('wheel', handleWheel);
+                    const s = (el as any).__smoothScroll;
+                    if (s && s.raf) cancelAnimationFrame(s.raf);
+                    (el as any).__smoothScroll = null;
+                }
+            });
+        };
+    }, []);
+
+    useEffect(() => {
+        setIsFlipped(defaultFlipped);
+    }, [defaultFlipped]);
 
     const dayName = DAYS_OF_WEEK[date.getDay()];
     const dateString = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -56,12 +133,11 @@ export const DailyCard: React.FC<DailyCardProps> = ({
         if (!data) return { tasks: [] };
         if (Array.isArray(data)) return { tasks: data };
         if ('tasks' in data) return data;
-        return { tasks: [] }; // Fallback
+        return { tasks: [] };
     };
 
     const dayData = getDayData();
 
-    // Local state for Journal/Mood (synced with date transition)
     const [mood, setMood] = useState<number | undefined>(dayData.mood);
     const [journal, setJournal] = useState(dayData.journal || '');
 
@@ -69,11 +145,6 @@ export const DailyCard: React.FC<DailyCardProps> = ({
         setMood(dayData.mood);
         setJournal(dayData.journal || '');
     }, [dateKey, dayData.mood, dayData.journal]);
-
-    // Sync flip state with defaultFlipped prop
-    useEffect(() => {
-        setIsFlipped(defaultFlipped);
-    }, [defaultFlipped]);
 
     const handleSaveJournal = () => {
         updateNote(dateKey, { mood, journal });
@@ -166,12 +237,6 @@ export const DailyCard: React.FC<DailyCardProps> = ({
         <div
             className="relative w-full h-full group"
             style={{ perspective: '1000px' }}
-            onMouseEnter={() => {
-                document.body.style.overflow = 'hidden';
-            }}
-            onMouseLeave={() => {
-                document.body.style.overflow = '';
-            }}
         >
             <div
                 className={`relative w-full h-full transition-transform duration-700`}
@@ -246,11 +311,9 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                             <span className="text-[10px] font-black text-stone-400">{dailyHabits.length}</span>
                         </div>
                         <div
-                            className="space-y-1 overflow-y-auto max-h-[120px] pr-1 scroll-container"
-                            onWheel={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                            }}
+                            ref={dailyHabitsRef}
+                            className="space-y-1 overflow-y-auto max-h-[120px] pr-1 scroll-container touch-pan-y"
+                            style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
                         >
                             {dailyHabits.length > 0 ? dailyHabits.map(habit => {
                                 const done = checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
@@ -286,11 +349,9 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                                 <span className="text-[10px] font-black text-stone-400">{flexibleHabits.length}</span>
                             </div>
                             <div
-                                className="space-y-1 overflow-y-auto max-h-[100px] pr-1 scroll-container"
-                                onWheel={(e) => {
-                                    e.stopPropagation();
-                                    e.preventDefault();
-                                }}
+                                ref={flexibleHabitsRef}
+                                className="space-y-1 overflow-y-auto max-h-[100px] pr-1 scroll-container touch-pan-y"
+                                style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
                             >
                                 {flexibleHabits.map(habit => {
                                     const done = checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
@@ -420,11 +481,9 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                             </button>
                         </div>
                         <div
-                            className="p-2 space-y-2 overflow-y-auto max-h-[160px] pr-1 scroll-container"
-                            onWheel={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                            }}
+                            ref={tasksRef}
+                            className="p-2 space-y-2 overflow-y-auto max-h-[160px] pr-1 scroll-container touch-pan-y"
+                            style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
                         >
                             {(dayData.tasks || []).map((task) => (
                                 <div
@@ -537,11 +596,9 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                     </div>
 
                     <div
-                        className="p-4 flex-1 flex flex-col gap-4 overflow-y-auto scroll-container"
-                        onWheel={(e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                        }}
+                        ref={journalRef}
+                        className="p-4 flex-1 flex flex-col gap-4 overflow-y-auto scroll-container touch-pan-y"
+                        style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
                     >
                         {/* Mood Selector */}
                         <div className="space-y-2">

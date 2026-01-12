@@ -93,7 +93,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-4 pt-20 md:pt-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white border-[2px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-full max-w-md overflow-hidden flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-200">
                 <div className="p-4 border-b-[2px] border-black flex items-center justify-between bg-white">
                     <h2 className="text-3xl font-black uppercase tracking-tighter text-black">My Habits</h2>

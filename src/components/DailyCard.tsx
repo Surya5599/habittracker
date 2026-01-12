@@ -235,16 +235,16 @@ export const DailyCard: React.FC<DailyCardProps> = ({
 
     return (
         <div
-            className="relative w-full h-full group"
+            className="relative w-full md:h-full group"
             style={{ perspective: '1000px' }}
         >
             <div
-                className={`relative w-full h-full transition-transform duration-700`}
+                className={`relative w-full md:h-full transition-transform duration-700`}
                 style={{ transformStyle: 'preserve-3d', transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
             >
                 {/* --- FRONT FACE --- */}
                 <div
-                    className={`relative w-full h-full bg-white neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans ${isToday ? 'ring-2 ring-black ring-offset-2' : ''}`}
+                    className={`relative w-full md:h-full h-auto bg-white neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans ${isToday ? 'ring-2 ring-black ring-offset-2' : ''}`}
                     style={{ backfaceVisibility: 'hidden' }}
                 >
                     {/* Header */}
@@ -312,7 +312,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                         </div>
                         <div
                             ref={dailyHabitsRef}
-                            className="space-y-1 overflow-y-auto max-h-[120px] pr-1 scroll-container touch-pan-y"
+                            className="space-y-1 md:overflow-y-auto md:max-h-[120px] pr-1 md:scroll-container touch-pan-y"
                             style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
                         >
                             {dailyHabits.length > 0 ? dailyHabits.map(habit => {
@@ -343,14 +343,14 @@ export const DailyCard: React.FC<DailyCardProps> = ({
 
                     {/* Flexible Habits List */}
                     {flexibleHabits.length > 0 && (
-                        <div className="py-1 px-3 bg-white flex flex-col">
+                        <div className="py-1 px-3 bg-white flex flex-col border-b border-stone-100">
                             <div className="flex items-center justify-between mb-1 pb-1 border-b border-black/5 flex-shrink-0">
                                 <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">Flexible Habits</span>
                                 <span className="text-[10px] font-black text-stone-400">{flexibleHabits.length}</span>
                             </div>
                             <div
                                 ref={flexibleHabitsRef}
-                                className="space-y-1 overflow-y-auto max-h-[100px] pr-1 scroll-container touch-pan-y"
+                                className="space-y-1 md:overflow-y-auto md:max-h-[100px] pr-1 md:scroll-container touch-pan-y"
                                 style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
                             >
                                 {flexibleHabits.map(habit => {
@@ -398,6 +398,8 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                             </div>
                         </div>
                     )}
+
+
 
                     {dailyCompletedCount === totalDailyCount && totalDailyCount > 0 ? (
                         <div className="border-t border-black flex-shrink-0">
@@ -482,7 +484,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                         </div>
                         <div
                             ref={tasksRef}
-                            className="p-2 space-y-2 overflow-y-auto max-h-[160px] pr-1 scroll-container touch-pan-y"
+                            className="p-2 space-y-2 md:overflow-y-auto md:max-h-[160px] pr-1 md:scroll-container touch-pan-y"
                             style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
                         >
                             {(dayData.tasks || []).map((task) => (

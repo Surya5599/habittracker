@@ -146,8 +146,8 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
             </div>
 
             {/* Mobile View (Day Switcher) */}
-            <div className="md:hidden flex flex-col h-full gap-4">
-                <div className="flex-1">
+            <div className="md:hidden flex flex-col gap-4 min-h-full">
+                <div className="w-full">
                     <DailyCard
                         key={weekDates[mobileDayIndex].toISOString()}
                         date={weekDates[mobileDayIndex]}

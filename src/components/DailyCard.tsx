@@ -163,7 +163,16 @@ export const DailyCard: React.FC<DailyCardProps> = ({
     ];
 
     return (
-        <div className="relative w-full h-full group" style={{ perspective: '1000px' }}>
+        <div
+            className="relative w-full h-full group"
+            style={{ perspective: '1000px' }}
+            onMouseEnter={() => {
+                document.body.style.overflow = 'hidden';
+            }}
+            onMouseLeave={() => {
+                document.body.style.overflow = '';
+            }}
+        >
             <div
                 className={`relative w-full h-full transition-transform duration-700`}
                 style={{ transformStyle: 'preserve-3d', transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
@@ -237,8 +246,11 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                             <span className="text-[10px] font-black text-stone-400">{dailyHabits.length}</span>
                         </div>
                         <div
-                            className="space-y-1 overflow-y-auto max-h-[120px] pr-1"
-                            onWheel={(e) => e.stopPropagation()}
+                            className="space-y-1 overflow-y-auto max-h-[120px] pr-1 scroll-container"
+                            onWheel={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                            }}
                         >
                             {dailyHabits.length > 0 ? dailyHabits.map(habit => {
                                 const done = checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
@@ -274,8 +286,11 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                                 <span className="text-[10px] font-black text-stone-400">{flexibleHabits.length}</span>
                             </div>
                             <div
-                                className="space-y-1 overflow-y-auto max-h-[100px] pr-1"
-                                onWheel={(e) => e.stopPropagation()}
+                                className="space-y-1 overflow-y-auto max-h-[100px] pr-1 scroll-container"
+                                onWheel={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                }}
                             >
                                 {flexibleHabits.map(habit => {
                                     const done = checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
@@ -405,8 +420,11 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                             </button>
                         </div>
                         <div
-                            className="p-2 space-y-2 overflow-y-auto max-h-[160px] pr-1"
-                            onWheel={(e) => e.stopPropagation()}
+                            className="p-2 space-y-2 overflow-y-auto max-h-[160px] pr-1 scroll-container"
+                            onWheel={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                            }}
                         >
                             {(dayData.tasks || []).map((task) => (
                                 <div
@@ -519,8 +537,11 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                     </div>
 
                     <div
-                        className="p-4 flex-1 flex flex-col gap-4 overflow-y-auto"
-                        onWheel={(e) => e.stopPropagation()}
+                        className="p-4 flex-1 flex flex-col gap-4 overflow-y-auto scroll-container"
+                        onWheel={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                        }}
                     >
                         {/* Mood Selector */}
                         <div className="space-y-2">

@@ -304,37 +304,42 @@ export const Header: React.FC<HeaderProps> = ({
                     </div>
 
                     <div className="flex items-center gap-2 w-full">
-                        <button
-                            onClick={() => { resetWeekOffset(); setView('weekly'); }}
-                            className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 border-[2px] border-black text-[9px] font-black uppercase tracking-widest transition-all ${view === 'weekly' ? 'bg-black text-white shadow-none translate-y-0.5' : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5'}`}
-                        >
-                            <Clock size={12} />
-                            {t('header.myWeek')}
-                        </button>
+                        <div className="flex-1 bg-stone-100 p-1 rounded-full relative flex items-center shadow-inner">
+                            <button
+                                onClick={() => { resetWeekOffset(); setView('weekly'); }}
+                                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all z-10 relative ${view === 'weekly' ? 'bg-black text-white shadow-md transform scale-100' : 'text-stone-500 hover:text-black'}`}
+                                title={t('header.myWeek')}
+                            >
+                                <Clock size={12} strokeWidth={3} />
+                                <span className="inline md:hidden xl:inline">{t('header.myWeek')}</span>
+                            </button>
 
-                        <button
-                            onClick={() => {
-                                setView('monthly');
-                                const now = new Date();
-                                setCurrentMonthIndex(now.getMonth());
-                                setCurrentYear(now.getFullYear());
-                            }}
-                            className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 border-[2px] border-black text-[9px] font-black uppercase tracking-widest transition-all ${view === 'monthly' ? 'bg-black text-white shadow-none translate-y-0.5' : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5'}`}
-                        >
-                            <Calendar size={12} />
-                            {t('header.myMonth')}
-                        </button>
+                            <button
+                                onClick={() => {
+                                    setView('monthly');
+                                    const now = new Date();
+                                    setCurrentMonthIndex(now.getMonth());
+                                    setCurrentYear(now.getFullYear());
+                                }}
+                                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all z-10 relative ${view === 'monthly' ? 'bg-black text-white shadow-md transform scale-100' : 'text-stone-500 hover:text-black'}`}
+                                title={t('header.myMonth')}
+                            >
+                                <Calendar size={12} strokeWidth={3} />
+                                <span className="inline md:hidden xl:inline">{t('header.myMonth')}</span>
+                            </button>
 
-                        <button
-                            onClick={() => {
-                                setView('dashboard');
-                                setCurrentYear(new Date().getFullYear());
-                            }}
-                            className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 border-[2px] border-black text-[9px] font-black uppercase tracking-widest transition-all ${view === 'dashboard' ? 'bg-black text-white shadow-none translate-y-0.5' : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5'}`}
-                        >
-                            <LayoutDashboard size={12} />
-                            {t('header.dashboard')}
-                        </button>
+                            <button
+                                onClick={() => {
+                                    setView('dashboard');
+                                    setCurrentYear(new Date().getFullYear());
+                                }}
+                                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all z-10 relative ${view === 'dashboard' ? 'bg-black text-white shadow-md transform scale-100' : 'text-stone-500 hover:text-black'}`}
+                                title={t('header.dashboard')}
+                            >
+                                <LayoutDashboard size={12} strokeWidth={3} />
+                                <span className="inline md:hidden xl:inline">{t('header.dashboard')}</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 

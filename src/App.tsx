@@ -149,10 +149,13 @@ const AppContent: React.FC = () => {
       const remoteView = session.user.user_metadata.default_view;
       if (['monthly', 'dashboard', 'weekly'].includes(remoteView)) {
         setDefaultView(remoteView);
+        localStorage.setItem('habit_default_view', remoteView);
       }
     }
     if (session?.user?.user_metadata?.language) {
-      setLanguage(session.user.user_metadata.language);
+      const remoteLang = session.user.user_metadata.language;
+      setLanguage(remoteLang);
+      localStorage.setItem('habit_language', remoteLang);
     }
   }, [session]);
 
@@ -786,7 +789,7 @@ const AppContent: React.FC = () => {
 
         {selectedDateForCard && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setSelectedDateForCard(null)}>
-            <div className="w-full max-w-sm h-auto relative animate-in zoom-in-95 slide-in-from-bottom-4 duration-300" onClick={e => e.stopPropagation()}>
+            <div className="w-full max-w-4xl h-auto relative animate-in zoom-in-95 slide-in-from-bottom-4 duration-300" onClick={e => e.stopPropagation()}>
               <button
                 onClick={() => setSelectedDateForCard(null)}
                 className="absolute -top-12 right-0 text-white hover:text-stone-300 p-2 transition-colors"
@@ -803,6 +806,7 @@ const AppContent: React.FC = () => {
                 updateNote={updateNote}
                 onShareClick={() => { }}
                 defaultFlipped={cardOpenFlipped}
+                combinedView={true}
               />
             </div>
           </div>

@@ -59,3 +59,23 @@ export interface MonthlyGoals {
   [monthKey: string]: MonthlyGoal[]; // monthKey format: YYYY-M
 }
 
+export interface FeedbackReply {
+  id: string;
+  feedback_id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  is_admin_reply: boolean;
+}
+
+export interface Feedback {
+  id: string;
+  user_id: string;
+  type: 'bug' | 'suggestion';
+  content: string;
+  status: 'open' | 'closed' | 'replied';
+  created_at: string;
+  metadata?: any;
+  replies?: FeedbackReply[];
+}
+

@@ -1,0 +1,124 @@
+{
+    "settings": {
+        "title": "Impostazioni",
+        "general": {
+            "title": "Generale",
+            "defaultView": "Vista Predefinita",
+            "views": {
+                "daily": "Giornaliero",
+                "monthly": "Mensile",
+                "dashboard": "Cruscotto"
+            }
+        },
+        "language": {
+            "title": "Lingua"
+        },
+        "theme": {
+            "title": "Tema"
+        },
+        "support": {
+            "title": "Supporto",
+            "reportBug": "Segnala Bug o Suggerimento"
+        }
+    },
+    "header": {
+        "dashboard": "Cruscotto",
+        "signIn": "Accedi",
+        "logout": "Esci",
+        "myWeek": "La Mia Settimana",
+        "myMonth": "Il Mio Mese",
+        "monthlyTrends": "Trend Mensili",
+        "weeklyTrends": "Trend Settimanali",
+        "annualTrends": "Trend Annuali",
+        "vsLM": "vs MP",
+        "vsLW": "vs SP",
+        "switchChart": "Passa al Grafico",
+        "monthlySuccess": "Successo Mensile",
+        "weeklySuccess": "Successo Settimanale",
+        "annualPerformance": "Performance Annuale",
+        "monthMastery": "Maestria Mensile",
+        "habitMaster": "Maestro delle Abitudini",
+        "yourStoryMonth": "La tua storia questo mese",
+        "yourStoryWeek": "La tua storia questa settimana",
+        "completed": "Completato",
+        "vsPrev": "vs Prec",
+        "best": "Migliore",
+        "thisYearResolutions": "Risoluzioni di quest'anno"
+    },
+    "story": {
+        "annual": {
+            "momentum": {
+                "ascending": "Hai costruito un serio slancio ultimamente, finendo l'anno più forte di come hai iniziato.",
+                "descending": "Il tuo ritmo recente si è ammorbidito verso la fine dell'anno. Questo è spesso un segnale per ricalibrare, non un fallimento.",
+                "stable": "La tua coerenza è rimasta notevolmente stabile attraverso le transizioni dell'anno.",
+                "main": "Quest'anno, la tua identità si è concentrata su [[{{habitName}}]]. {{momentumMsg}}"
+            },
+            "rhythm": {
+                "weekend": "Trovi il tuo miglior ritmo nei fine settimana — è allora che la tua identità brilla davvero.",
+                "weekday": "Sei un guerriero dei giorni feriali, ma i fine settimana tendono ad essere un 'punto cieco' per le tue abitudini.",
+                "consistent": "Mantieni un ritmo costante per tutta la settimana, da lunedì a domenica."
+            },
+            "consistency": {
+                "high": "Ti sei presentato in [[{{activeDays}}]] giorni finora quest'anno — abbastanza per formare un vero slancio identitario.",
+                "medium": "Hai la scintilla. Con un po' più di ritmo, questo potrebbe diventare automatico.",
+                "low": "Stai gettando le basi. La coerenza iniziale conta più del volume."
+            },
+            "experimental": "Hai sperimentato ampiamente quest'anno. Quella curiosità è una forza — restringere il focus può sbloccare la coerenza.",
+            "fading": "La tua coerenza con [[{{habitName}}]] è calata significativamente di recente. Se era intenzionale, è chiarezza. Se no, un piccolo riavvio potrebbe riportare il focus.",
+            "neglected": "Non hai registrato [[{{habitName}}]] per [[{{days}}]] giorni. Quando ha senso, una piccola rivisitazione è sufficiente."
+        },
+        "weekly": {
+            "intro": {
+                "elite": "Stai operando a un livello d'élite con [[{{count}}]] azioni finora questa settimana. Le tue abitudini non sono solo azioni; sono la tua identità.",
+                "strong": "Forte coerenza con [[{{count}}]] completamenti. Ti stai presentando per te stesso, e lo slancio è visibile.",
+                "balanced": "Una settimana di equilibrio ([[{{count}}]] completamenti). Alcune fondamenta hanno tenuto, altre sono state testate. Rientrare è parte del processo.",
+                "low": "Una settimana a bassa velocità con [[{{count}}]] completamenti. Questi sono spesso periodi di riposo o resistenza — in ogni caso, sono dati per una prossima settimana migliore."
+            },
+            "momentum": {
+                "highlight": "La tua identità è stata più forte in [[{{habitName}}]] questa settimana, con [[{{count}}/{{total}}]] giorni completati finora."
+            },
+            "neglected": "Non hai ancora registrato [[{{habitName}}]] questa settimana. Una piccola versione di 2 minuti domani potrebbe riavviare il ritmo.",
+            "growth": {
+                "recovery": "Hai finito la settimana più forte di come hai iniziato. Questa è 'capacità di recupero' in azione.",
+                "friction": "Hai avuto un inizio potente, ma il fine settimana ha portato un po' di attrito. Identificare quel 'calo del venerdì' è il primo passo per padroneggiarlo."
+            }
+        },
+        "monthly": {
+            "intro": {
+                "exceptional": "Un mese di eccezionale focus ([[{{count}}]] completamenti finora). Hai integrato con successo queste abitudini nel tuo stile di vita.",
+                "solid": "Solido progresso questo mese. Con [[{{count}}]] completamenti totali, hai stabilito una forte base di coerenza.",
+                "exploration": "Un mese di esplorazione. [[{{count}}]] completamenti mostrano sforzo, ma c'è spazio per stringere il tuo ritmo per il prossimo mese.",
+                "low": "Un mese a basso slancio. Usa i [[{{count}}]] completamenti che hai gestito come dati architettonici per un prossimo mese più sostenibile."
+            },
+            "momentum": {
+                "growth": "Hai visto una crescita del [[{{delta}}%]] dal mese scorso — questo è un significativo cambiamento di identità in azione.",
+                "cooling": "Il tuo ritmo si è raffreddato del [[{{delta}}%]] questo mese. Questo è spesso un segno di aggiustamento dell'equilibrio di vita; usalo per ricalibrare."
+            },
+            "rhythm": {
+                "anchor": "Sei stato più dedicato a [[{{habitName}}]] questo mese, presentandoti [[{{count}}]] volte. Questa è la tua ancora attuale."
+            }
+        }
+    },
+    "common": {
+        "done": "Fatto",
+        "rate": "Valuta",
+        "days": "GIORNI",
+        "myHabits": "Le Mie Abitudini",
+        "manageHabits": "Gestisci abitudini",
+        "currentStreak": "Serie Attuale",
+        "months": {
+            "jan": "Gen",
+            "feb": "Feb",
+            "mar": "Mar",
+            "apr": "Apr",
+            "may": "Mag",
+            "jun": "Giu",
+            "jul": "Lug",
+            "aug": "Ago",
+            "sep": "Set",
+            "oct": "Ott",
+            "nov": "Nov",
+            "dec": "Dic"
+        }
+    }
+}

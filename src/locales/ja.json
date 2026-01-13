@@ -1,0 +1,124 @@
+{
+    "settings": {
+        "title": "設定",
+        "general": {
+            "title": "一般",
+            "defaultView": "デフォルト表示",
+            "views": {
+                "daily": "日別",
+                "monthly": "月別",
+                "dashboard": "ダッシュ"
+            }
+        },
+        "language": {
+            "title": "言語"
+        },
+        "theme": {
+            "title": "テーマ"
+        },
+        "support": {
+            "title": "サポート",
+            "reportBug": "バグ報告・ご提案"
+        }
+    },
+    "header": {
+        "dashboard": "ダッシュボード",
+        "signIn": "サインイン",
+        "logout": "ログアウト",
+        "myWeek": "今週",
+        "myMonth": "今月",
+        "monthlyTrends": "月間トレンド",
+        "weeklyTrends": "週間トレンド",
+        "annualTrends": "年間トレンド",
+        "vsLM": "前月比",
+        "vsLW": "先週比",
+        "switchChart": "チャートに切替",
+        "monthlySuccess": "月間達成率",
+        "weeklySuccess": "週間達成率",
+        "annualPerformance": "年間パフォーマンス",
+        "monthMastery": "月間マスタリー",
+        "habitMaster": "習慣マスター",
+        "yourStoryMonth": "今月のストーリー",
+        "yourStoryWeek": "今週のストーリー",
+        "completed": "完了",
+        "vsPrev": "前回比",
+        "best": "ベスト",
+        "thisYearResolutions": "今年の目標"
+    },
+    "story": {
+        "annual": {
+            "momentum": {
+                "ascending": "最近は勢いが増しており、年初よりも力強く一年を締めくくっています。",
+                "descending": "年末にかけてリズムが少し落ち着きました。これは失敗ではなく、調整のサインです。",
+                "stable": "一年を通して、非常に安定した継続力を保ってきました。",
+                "main": "今年のあなたの軸は [[{{habitName}}]] でした。{{momentumMsg}}"
+            },
+            "rhythm": {
+                "weekend": "週末に最も良いリズムが生まれています。その時間こそが、あなたらしさが輝く瞬間です。",
+                "weekday": "平日は強い一方、週末は習慣の盲点になりやすいようです。",
+                "consistent": "月曜から日曜まで、一週間を通して安定したリズムを維持しています。"
+            },
+            "consistency": {
+                "high": "今年はこれまでに [[{{activeDays}}]] 日行動しました。確かなアイデンティティが育っています。",
+                "medium": "火種はあります。もう少しリズムが整えば、自動化されていくでしょう。",
+                "low": "基盤づくりの段階です。初期の継続は量よりも大切です。"
+            },
+            "experimental": "今年は幅広く試しました。その探究心は強みです。焦点を絞ることで継続が生まれるかもしれません。",
+            "fading": "[[{{habitName}}]] の継続が最近大きく落ちています。意図的なら明確さ、そうでなければ小さな再開が助けになります。",
+            "neglected": "[[{{habitName}}]] を [[{{days}}]] 日間記録していません。必要なときに、ほんの少し戻るだけで十分です。"
+        },
+        "weekly": {
+            "intro": {
+                "elite": "今週は [[{{count}}]] 回の行動。習慣が行動ではなく、アイデンティティになっています。",
+                "strong": "[[{{count}}]] 回の達成。自分との約束を守り、勢いが見えています。",
+                "balanced": "バランスの取れた一週間（[[{{count}}]] 回）。保てた部分と試された部分、その両方が成長です。",
+                "low": "今週は低速モード（[[{{count}}]] 回）。休息や抵抗の時期も、次につながる大切なデータです。"
+            },
+            "momentum": {
+                "highlight": "今週は [[{{habitName}}]] が最も強く、[[{{count}}/{{total}}]] 日達成しています。"
+            },
+            "neglected": "今週はまだ [[{{habitName}}]] を記録していません。明日2分だけやることで、流れを取り戻せます。",
+            "growth": {
+                "recovery": "週の後半にかけて持ち直しました。それは回復力の証です。",
+                "friction": "良いスタートでしたが、週末に摩擦がありました。その気づきが次の成長につながります。"
+            }
+        },
+        "monthly": {
+            "intro": {
+                "exceptional": "非常に集中した一ヶ月（[[{{count}}]] 回）。習慣が生活にしっかり溶け込んでいます。",
+                "solid": "[[{{count}}]] 回の達成。安定したベースが築けています。",
+                "exploration": "探索の月でした。[[{{count}}]] 回の実行は良い兆し。次月はリズムを整えましょう。",
+                "low": "低速な一ヶ月でしたが、[[{{count}}]] 回の達成は次の設計図になります。"
+            },
+            "momentum": {
+                "growth": "先月から [[{{delta}}%]] の成長。確かな変化が起きています。",
+                "cooling": "今月は [[{{delta}}%]] リズムが落ちました。生活バランス調整のサインです。"
+            },
+            "rhythm": {
+                "anchor": "今月は [[{{habitName}}]] が軸となり、[[{{count}}]] 回取り組みました。"
+            }
+        }
+    },
+    "common": {
+        "done": "完了",
+        "rate": "評価",
+        "days": "日",
+        "myHabits": "自分の習慣",
+        "manageHabits": "習慣を管理",
+        "currentStreak": "連続記録",
+        "months": {
+            "jan": "1月",
+            "feb": "2月",
+            "mar": "3月",
+            "apr": "4月",
+            "may": "5月",
+            "jun": "6月",
+            "jul": "7月",
+            "aug": "8月",
+            "sep": "9月",
+            "oct": "10月",
+            "nov": "11月",
+            "dec": "12月"
+        }
+    }
+}

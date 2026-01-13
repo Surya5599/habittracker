@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .neo-border {
+    @apply border-2 border-black;
+  }
+  .neo-shadow {
+    @apply shadow-[4px_4px_0px_0px_rgba(0,0,0,1)];
+  }
+  .neo-shadow-sm {
+      @apply shadow-[2px_2px_0px_0px_rgba(0,0,0,1)];
+  }
+}

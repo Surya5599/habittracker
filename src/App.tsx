@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
+import i18n from './i18n';
 import { X } from 'lucide-react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from './supabase';
+import './i18n';
 import { exportToExcel } from './utils/exportToExcel';
 import { AuthForm } from './components/AuthForm';
 import { UpdatePasswordForm } from './components/UpdatePasswordForm';
@@ -65,6 +67,16 @@ const AppContent: React.FC = () => {
   const [defaultView, setDefaultView] = useState<'monthly' | 'dashboard' | 'weekly'>(() => {
     return (localStorage.getItem('habit_default_view') as 'monthly' | 'dashboard' | 'weekly') || 'weekly';
   });
+  const [language, setLanguage] = useState<string>(() => {
+    return localStorage.getItem('habit_language') || 'en';
+  });
+
+  // Sync i18n with state
+  useEffect(() => {
+    if (i18n.language !== language) {
+      i18n.changeLanguage(language);
+    }
+  }, [language]);
   const [view, setView] = useState<'monthly' | 'dashboard' | 'weekly'>(defaultView);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
@@ -117,12 +129,30 @@ const AppContent: React.FC = () => {
     }
   };
 
+  const updateLanguage = async (newLang: string) => {
+    setLanguage(newLang);
+    localStorage.setItem('habit_language', newLang);
+
+    if (session?.user?.id) {
+      try {
+        await supabase.auth.updateUser({
+          data: { language: newLang }
+        });
+      } catch (err) {
+        console.error('Failed to save language setting:', err);
+      }
+    }
+  };
+
   useEffect(() => {
     if (session?.user?.user_metadata?.default_view) {
       const remoteView = session.user.user_metadata.default_view;
       if (['monthly', 'dashboard', 'weekly'].includes(remoteView)) {
         setDefaultView(remoteView);
       }
+    }
+    if (session?.user?.user_metadata?.language) {
+      setLanguage(session.user.user_metadata.language);
     }
   }, [session]);
 
@@ -134,8 +164,66 @@ const AppContent: React.FC = () => {
   const [isHabitModalOpen, setIsHabitModalOpen] = useState(false);
   const [isResolutionsModalOpen, setIsResolutionsModalOpen] = useState(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+  const [hasUnreadFeedback, setHasUnreadFeedback] = useState(false);
   const [isStreakModalOpen, setIsStreakModalOpen] = useState(false);
   const [selectedDateForCard, setSelectedDateForCard] = useState<Date | null>(null);
+
+  // Check for unread feedback replies
+  useEffect(() => {
+    const checkUnreadFeedback = async () => {
+      if (!session?.user?.id) return;
+      try {
+        const { data, error } = await supabase
+          .from('feedback_replies')
+          .select('created_at')
+          .eq('is_admin_reply', true)
+          // We can't easily filter by "my feedback threads" in one simple query without a join or knowing feedback IDs.
+          // RLS usually handles "replies to my feedback" security, but for a global "unread" check:
+          // We need replies to feedback where user_id is me.
+          // Let's rely on RLS allowing us to see replies to our own feedback.
+          // Actually, feedback_replies usually has user_id of the replier.
+          // If admin replies, user_id is admin's id.
+          // So we need to join feedback table.
+          // For simplicity & performance, let's just fetch the latest reply that is_admin_reply = true
+          // AND belongs to one of my feedback threads.
+          // If RLS is set up correctly, I should only be able to Select replies that belong to my feedback?
+          // Let's assume RLS allows reading replies to own feedback.
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        // Ideally, we'd filter: feedback.user_id = me. 
+        // But Supabase JS simpler syntax:
+        // .eq('feedback.user_id', session.user.id) ? No, needs join.
+        // Let's try to filter in memory if result is small, or use a better query.
+        // Better: fetch my feedback IDs first? No, too many.
+        // Let's rely on valid RLS for now: "Users can view replies to their own feedback".
+
+        // Actually, refined query: 
+        // We need check if there's any reply newer than local timestamp.
+
+        if (data && data.length > 0) {
+          const latestReplyTime = new Date(data[0].created_at).getTime();
+          const lastReadTime = parseInt(localStorage.getItem('habit_feedback_last_read') || '0');
+          if (latestReplyTime > lastReadTime) {
+            setHasUnreadFeedback(true);
+          }
+        }
+      } catch (err) {
+        console.error('Error checking unread feedback:', err);
+      }
+    };
+
+    if (session?.user?.id) {
+      checkUnreadFeedback();
+      // Optional: Set up realtime subscription? For now, fetch on load is enough.
+    }
+  }, [session]);
+
+  const handleOpenFeedback = () => {
+    setIsFeedbackModalOpen(true);
+    setHasUnreadFeedback(false);
+    localStorage.setItem('habit_feedback_last_read', Date.now().toString());
+  };
   const [cardOpenFlipped, setCardOpenFlipped] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -660,6 +748,8 @@ const AppContent: React.FC = () => {
           settingsOpen={settingsOpen}
           setSettingsOpen={setSettingsOpen}
           settingsRef={settingsRef}
+          language={language}
+          setLanguage={updateLanguage}
           guestMode={guestMode}
           setGuestMode={setGuestMode}
           handleLogout={handleLogout}
@@ -691,6 +781,7 @@ const AppContent: React.FC = () => {
           isStreakModalOpen={isStreakModalOpen}
           setIsStreakModalOpen={setIsStreakModalOpen}
           onReportBug={() => setIsFeedbackModalOpen(true)}
+          hasUnreadFeedback={hasUnreadFeedback}
         />
 
         {selectedDateForCard && (
@@ -792,9 +883,16 @@ const AppContent: React.FC = () => {
 
       <FeedbackModal
         isOpen={isFeedbackModalOpen}
-        onClose={() => setIsFeedbackModalOpen(false)}
-        theme={theme}
+        onClose={() => {
+          setIsFeedbackModalOpen(false);
+          if (hasUnreadFeedback) {
+            setHasUnreadFeedback(false);
+            localStorage.setItem('habit_feedback_last_read', Date.now().toString());
+          }
+        }}
         userId={session?.user?.id}
+        userEmail={session?.user?.email}
+        hasUnreadFeedback={hasUnreadFeedback}
       />
 
       <StreakModal

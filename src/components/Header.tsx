@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, LayoutDashboard, Calendar, Clock, LogIn, Log
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 import { MONTHS } from '../constants';
 import { Habit, Theme, MonthStats, MonthlyGoal, MonthlyGoals } from '../types';
+import { useTranslation } from 'react-i18next';
 import { SettingsMenu } from './SettingsMenu';
 import { HabitManagerModal } from './HabitManagerModal';
 import { ResolutionsModal } from './ResolutionsModal';
@@ -30,6 +31,8 @@ interface HeaderProps {
     settingsOpen: boolean;
     setSettingsOpen: (open: boolean) => void;
     settingsRef: React.RefObject<HTMLDivElement>;
+    language: string;
+    setLanguage: (lang: string) => void;
     guestMode: boolean;
     setGuestMode: (mode: boolean) => void;
     handleLogout: () => void;
@@ -61,6 +64,7 @@ interface HeaderProps {
     setIsStreakModalOpen: (open: boolean) => void;
     reorderHabits: (newHabits: Habit[]) => Promise<void>;
     onReportBug: () => void;
+    hasUnreadFeedback: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -80,6 +84,8 @@ export const Header: React.FC<HeaderProps> = ({
     settingsOpen,
     setSettingsOpen,
     settingsRef,
+    language,
+    setLanguage,
     guestMode,
     setGuestMode,
     handleLogout,
@@ -110,8 +116,10 @@ export const Header: React.FC<HeaderProps> = ({
     isStreakModalOpen,
     setIsStreakModalOpen,
     reorderHabits,
-    onReportBug
+    onReportBug,
+    hasUnreadFeedback
 }) => {
+    const { t } = useTranslation();
     const today = new Date();
     const currentDayOfWeek = today.getDay() === 0 ? 7 : today.getDay();
     const currentDayOfMonth = today.getDate();
@@ -267,9 +275,12 @@ export const Header: React.FC<HeaderProps> = ({
                                 settingsOpen={settingsOpen}
                                 setSettingsOpen={setSettingsOpen}
                                 settingsRef={settingsRef}
+                                language={language}
+                                setLanguage={setLanguage}
                                 defaultView={defaultView}
                                 setDefaultView={setDefaultView}
                                 onReportBug={onReportBug}
+                                hasUnreadFeedback={hasUnreadFeedback}
                             />
 
                             {guestMode ? (
@@ -284,7 +295,7 @@ export const Header: React.FC<HeaderProps> = ({
                                 <button
                                     onClick={handleLogout}
                                     className="p-1.5 rounded-full border border-stone-200 text-stone-300 hover:text-rose-500 transition-colors"
-                                    title="Logout"
+                                    title={t('header.logout')}
                                 >
                                     <LogOut size={14} />
                                 </button>
@@ -298,7 +309,7 @@ export const Header: React.FC<HeaderProps> = ({
                             className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 border-[2px] border-black text-[9px] font-black uppercase tracking-widest transition-all ${view === 'weekly' ? 'bg-black text-white shadow-none translate-y-0.5' : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5'}`}
                         >
                             <Clock size={12} />
-                            My Week
+                            {t('header.myWeek')}
                         </button>
 
                         <button
@@ -311,7 +322,7 @@ export const Header: React.FC<HeaderProps> = ({
                             className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 border-[2px] border-black text-[9px] font-black uppercase tracking-widest transition-all ${view === 'monthly' ? 'bg-black text-white shadow-none translate-y-0.5' : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5'}`}
                         >
                             <Calendar size={12} />
-                            My Month
+                            {t('header.myMonth')}
                         </button>
 
                         <button
@@ -322,7 +333,7 @@ export const Header: React.FC<HeaderProps> = ({
                             className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 border-[2px] border-black text-[9px] font-black uppercase tracking-widest transition-all ${view === 'dashboard' ? 'bg-black text-white shadow-none translate-y-0.5' : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5'}`}
                         >
                             <LayoutDashboard size={12} />
-                            Dashboard
+                            {t('header.dashboard')}
                         </button>
                     </div>
                 </div>
@@ -474,7 +485,7 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="md:col-span-6 bg-[#f9f9f9] neo-border neo-shadow rounded-2xl p-2 min-h-[160px] h-auto relative overflow-hidden flex flex-col">
                 <div className="flex justify-between items-center mb-6">
                     <h4 className="font-black uppercase text-sm tracking-widest">
-                        {view === 'monthly' ? 'Monthly Trends' : (view === 'weekly' ? 'Weekly Trends' : 'Annual Trends')}
+                        {view === 'monthly' ? t('header.monthlyTrends') : (view === 'weekly' ? t('header.weeklyTrends') : t('header.annualTrends'))}
                     </h4>
                     <div className="flex items-center gap-2">
                         {view !== 'dashboard' && (
@@ -482,13 +493,13 @@ export const Header: React.FC<HeaderProps> = ({
                                 ? 'bg-green-100 text-green-700'
                                 : 'bg-red-100 text-red-700'
                                 }`}>
-                                {Math.abs(view === 'weekly' ? weekDelta : monthDelta).toFixed(0)}% vs {view === 'weekly' ? 'LW' : 'LM'}
+                                {Math.abs(view === 'weekly' ? weekDelta : monthDelta).toFixed(0)}% {view === 'weekly' ? t('header.vsLW') : t('header.vsLM')}
                             </div>
                         )}
                         <button
                             onClick={() => setChartType(prev => prev === 'area' ? 'bar' : 'area')}
                             className="p-1 hover:bg-stone-200 rounded-sm transition-colors text-stone-400 hover:text-stone-600"
-                            title={chartType === 'area' ? "Switch to Bar Chart" : "Switch to Line Chart"}
+                            title={t('header.switchChart')}
                         >
                             {chartType === 'area' ? <BarChart2 size={12} /> : <Activity size={12} />}
                         </button>
@@ -582,8 +593,8 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
 
             <div className="md:col-span-3 bg-white neo-border neo-shadow rounded-2xl relative flex flex-col overflow-hidden min-h-[160px]">
-                <div className="text-white text-[9px] font-bold uppercase py-1 text-center tracking-widest" style={{ backgroundColor: theme.primary }} title={view === 'monthly' ? 'Percentage of habits completed this month' : (view === 'weekly' ? 'Percentage of habits completed this week' : 'Percentage of all possible completions this year')}>
-                    {view === 'monthly' ? 'Monthly Success' : (view === 'weekly' ? 'Weekly Success' : 'Annual Performance')}
+                <div className="text-white text-[9px] font-bold uppercase py-1 text-center tracking-widest" style={{ backgroundColor: theme.primary }}>
+                    {view === 'monthly' ? t('header.monthlySuccess') : (view === 'weekly' ? t('header.weeklySuccess') : t('header.annualPerformance'))}
                 </div>
                 <div className="flex-1 flex flex-col items-center justify-center p-2 relative">
                     {view === 'monthly' ? (
@@ -622,7 +633,7 @@ export const Header: React.FC<HeaderProps> = ({
                                 {(() => {
                                     const isCurrentMonth = currentMonthIndex === currentMonthOfYear && currentYear === currentFullYear;
                                     const daysElapsed = isCurrentMonth ? currentDayOfMonth : new Date(currentYear, currentMonthIndex + 1, 0).getDate();
-                                    const story = buildMonthlyStory(monthProgress, topHabitsThisMonth, monthDelta, daysElapsed);
+                                    const story = buildMonthlyStory(monthProgress, topHabitsThisMonth, monthDelta, t, daysElapsed);
                                     return (
                                         <div className="space-y-3">
                                             <div className="flex items-center gap-2 mb-1">
@@ -678,7 +689,7 @@ export const Header: React.FC<HeaderProps> = ({
                             <div className="h-[140px] bg-stone-50/50 neo-border rounded-xl p-2 overflow-y-auto custom-scrollbar">
                                 {(() => {
                                     const daysElapsed = weekOffset === 0 ? currentDayOfWeek : 7;
-                                    const story = buildWeeklyStory(weekProgress, weeklyStats, habits, daysElapsed);
+                                    const story = buildWeeklyStory(weekProgress, weeklyStats, habits, t, daysElapsed);
                                     return (
                                         <div className="space-y-3">
                                             <div className="flex items-center gap-2 mb-1">

@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Trophy, Zap, Target, Award, ArrowRight, TrendingUp, TrendingDown, Pencil, Sparkles, RefreshCw, GripVertical } from 'lucide-react';
 import { Reorder, useDragControls } from 'framer-motion';
 import YearView from './YearView';
@@ -51,6 +52,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     reorderHabits,
     setSelectedDateForCard,
 }) => {
+    const { t } = useTranslation();
     const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
     const [editingGoalText, setEditingGoalText] = useState('');
     const [warningMonthKey, setWarningMonthKey] = useState<string | null>(null);
@@ -178,7 +180,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     {(() => {
                         const today = new Date();
                         const monthsElapsed = currentYear === today.getFullYear() ? today.getMonth() + 1 : 12;
-                        const story = buildAnnualStory(annualStats, monthsElapsed);
+                        const story = buildAnnualStory(annualStats, t, monthsElapsed);
                         if (!story.focused) {
                             return <div className="flex-1 flex items-center justify-center text-stone-300 italic text-sm">No significant habit outcomes for this year yet.</div>;
                         }

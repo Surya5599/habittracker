@@ -1,0 +1,124 @@
+{
+    "settings": {
+        "title": "设置",
+        "general": {
+            "title": "常规",
+            "defaultView": "默认视图",
+            "views": {
+                "daily": "每日",
+                "monthly": "每月",
+                "dashboard": "仪表板"
+            }
+        },
+        "language": {
+            "title": "语言"
+        },
+        "theme": {
+            "title": "主题"
+        },
+        "support": {
+            "title": "支持",
+            "reportBug": "报告错误或建议"
+        }
+    },
+    "header": {
+        "dashboard": "仪表板",
+        "signIn": "登录",
+        "logout": "登出",
+        "myWeek": "我的一周",
+        "myMonth": "我的一个月",
+        "monthlyTrends": "月度趋势",
+        "weeklyTrends": "每周趋势",
+        "annualTrends": "年度趋势",
+        "vsLM": "对比上月",
+        "vsLW": "对比上周",
+        "switchChart": "切换到图表",
+        "monthlySuccess": "月度成功",
+        "weeklySuccess": "每周成功",
+        "annualPerformance": "年度表现",
+        "monthMastery": "月度掌握",
+        "habitMaster": "习惯大师",
+        "yourStoryMonth": "本月你的故事",
+        "yourStoryWeek": "本周你的故事",
+        "completed": "已完成",
+        "vsPrev": "对比之前",
+        "best": "最佳",
+        "thisYearResolutions": "今年的决心"
+    },
+    "story": {
+        "annual": {
+            "momentum": {
+                "ascending": "你最近建立了很多势头，年度结束时比开始时更强大。",
+                "descending": "你最近的节奏在年底有所放缓。这通常是重新校准的信号，而不是失败。",
+                "stable": "在这一年的过渡中，你的连贯性保持得非常稳定。",
+                "main": "今年，你的身份围绕着 [[{{habitName}}]] 展开。{{momentumMsg}}"
+            },
+            "rhythm": {
+                "weekend": "你在周末找到了最佳节奏——那是你身份真正闪耀的时刻。",
+                "weekday": "你是工作日战士，但周末往往是你习惯的'盲点'。",
+                "consistent": "你在一整周内保持一致的节奏，从周一到周日。"
+            },
+            "consistency": {
+                "high": "今年到目前为止你已经出现了 [[{{activeDays}}]] 天——足以形成真正的身份势头。",
+                "medium": "你有火花。只要稍微多一点节奏，这可能会变得自动。",
+                "low": "你正在打基础。早期的连贯性比数量更重要。"
+            },
+            "experimental": "你今年进行了广泛的实验。这种好奇心是一种力量——缩小关注范围可能会解锁连贯性。",
+            "fading": "你最近对 [[{{habitName}}]] 的连贯性显著下降。如果是故意的，那是清晰度。如果不是，一个小小的重新开始可能会带回焦点。",
+            "neglected": "你已经 [[{{days}}]] 天没有记录 [[{{habitName}}]] 了。当有意义时，一个小小的回顾就足够了。"
+        },
+        "weekly": {
+            "intro": {
+                "elite": "这周到目前为止，你的行动达到了精英水平，有 [[{{count}}]] 次行动。你的习惯不仅仅是行动；它们是你的身份。",
+                "strong": "连贯性强，完成了 [[{{count}}]] 次。你为自己而在，势头可见。",
+                "balanced": "平衡的一周（完成了 [[{{count}}]] 次）。一些基础稳固，其他的受到了考验。重新调整是过程的一部分。",
+                "low": "低速的一周，完成了 [[{{count}}]] 次。这通常是休息或抵抗的时期——无论哪种方式，它们都是为了更好的下周的数据。"
+            },
+            "momentum": {
+                "highlight": "这周你在 [[{{habitName}}]] 上的身份最强，到目前为止完成了 [[{{count}}/{{total}}]] 天。"
+            },
+            "neglected": "这周你还没有记录 [[{{habitName}}]]。明天一个小小的2分钟版本可能会重新启动节奏。",
+            "growth": {
+                "recovery": "你结束这周时比开始时更强大。这是'恢复能力'在起作用。",
+                "friction": "你有了一个强有力的开始，但周末带来了一些摩擦。识别那个'周五消退'是掌握它的第一步。"
+            }
+        },
+        "monthly": {
+            "intro": {
+                "exceptional": "异常专注的一个月（到目前为止完成了 [[{{count}}]] 次）。你已经成功地将这些习惯融入了你的生活方式。",
+                "solid": "这个月进展扎实。总共完成了 [[{{count}}]] 次，你建立了坚实的连贯性基础。",
+                "exploration": "探索的一个月。完成了 [[{{count}}]] 次显示了努力，但下个月有收紧节奏的空间。",
+                "low": "势头低迷的一个月。利用你完成的 [[{{count}}]] 次作为架构数据，为了一个更可持续的下个月。"
+            },
+            "momentum": {
+                "growth": "自上个月以来，你看到了 [[{{delta}}%]] 的增长——这是显著的身份转变在起作用。",
+                "cooling": "你这个月的节奏冷却了 [[{{delta}}%]]。这通常是生活平衡调整的迹象；利用它来重新校准。"
+            },
+            "rhythm": {
+                "anchor": "这个月你最致力于 [[{{habitName}}]]，出现了 [[{{count}}]] 次。那是你目前的锚点。"
+            }
+        }
+    },
+    "common": {
+        "done": "完成",
+        "rate": "评分",
+        "days": "天",
+        "myHabits": "我的习惯",
+        "manageHabits": "管理习惯",
+        "currentStreak": "当前连续",
+        "months": {
+            "jan": "一月",
+            "feb": "二月",
+            "mar": "三月",
+            "apr": "四月",
+            "may": "五月",
+            "jun": "六月",
+            "jul": "七月",
+            "aug": "八月",
+            "sep": "九月",
+            "oct": "十月",
+            "nov": "十一月",
+            "dec": "十二月"
+        }
+    }
+}

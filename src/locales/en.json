@@ -1,0 +1,124 @@
+{
+    "settings": {
+        "title": "Settings",
+        "general": {
+            "title": "General",
+            "defaultView": "Default View",
+            "views": {
+                "daily": "Daily",
+                "monthly": "Mnth",
+                "dashboard": "Dash"
+            }
+        },
+        "language": {
+            "title": "Language"
+        },
+        "theme": {
+            "title": "Theme"
+        },
+        "support": {
+            "title": "Support",
+            "reportBug": "Report Bug or Suggestion"
+        }
+    },
+    "header": {
+        "dashboard": "Dashboard",
+        "signIn": "Sign In",
+        "logout": "Logout",
+        "myWeek": "My Week",
+        "myMonth": "My Month",
+        "monthlyTrends": "Monthly Trends",
+        "weeklyTrends": "Weekly Trends",
+        "annualTrends": "Annual Trends",
+        "vsLM": "vs LM",
+        "vsLW": "vs LW",
+        "switchChart": "Switch to Chart",
+        "monthlySuccess": "Monthly Success",
+        "weeklySuccess": "Weekly Success",
+        "annualPerformance": "Annual Performance",
+        "monthMastery": "Month Mastery",
+        "habitMaster": "Habit Master",
+        "yourStoryMonth": "Your Story This Month",
+        "yourStoryWeek": "Your Story This Week",
+        "completed": "Completed",
+        "vsPrev": "vs Prev",
+        "best": "Best",
+        "thisYearResolutions": "This Year Resolutions"
+    },
+    "story": {
+        "annual": {
+            "momentum": {
+                "ascending": "You've been building serious momentum lately, finishing the year stronger than you started.",
+                "descending": "Your recent rhythm softened toward the end of the year. That's often a signal for recalibration—not failure.",
+                "stable": "Your consistency has remained remarkably stable throughout the transitions of the year.",
+                "main": "This year, your identity centered around [[{{habitName}}]]. {{momentumMsg}}"
+            },
+            "rhythm": {
+                "weekend": "You find your best rhythm on the weekends—that's when your identity truly shines.",
+                "weekday": "You are a weekday warrior, but the weekends tend to be a 'blind spot' for your habits.",
+                "consistent": "You maintain a consistent rhythm throughout the entire week, from Monday to Sunday."
+            },
+            "consistency": {
+                "high": "You've shown up on [[{{activeDays}}]] days so far this year — enough to form real identity momentum.",
+                "medium": "You have the spark. With slightly more rhythm, this could become automatic.",
+                "low": "You're laying foundations. Early consistency matters more than volume."
+            },
+            "experimental": "You experimented broadly this year. That curiosity is a strength — narrowing focus may unlock consistency.",
+            "fading": "Your consistency with [[{{habitName}}]] has dropped significantly recently. If this was intentional, that’s clarity. If not, a small restart could bring it back into focus.",
+            "neglected": "You haven't logged [[{{habitName}}]] for [[{{days}}]] days. When it makes sense, a small revisit is enough."
+        },
+        "weekly": {
+            "intro": {
+                "elite": "You're operating at an elite level with [[{{count}}]] actions so far this week. Your habits aren't just actions; they are your identity.",
+                "strong": "Strong consistency with [[{{count}}]] completions. You're showing up for yourself, and the momentum is visible.",
+                "balanced": "A week of balance ([[{{count}}]] completions). Some foundations held firm, others were tested. Re-centering is part of the process.",
+                "low": "A low-velocity week with [[{{count}}]] completions. These are often periods of rest or resistance—either way, they are data for a better next week."
+            },
+            "momentum": {
+                "highlight": "Your identity was strongest in [[{{habitName}}]] this week, with [[{{count}}/{{total}}]] days completed so far."
+            },
+            "neglected": "You haven't logged [[{{habitName}}]] yet this week. A small 2-minute version of it tomorrow could restart the rhythm.",
+            "growth": {
+                "recovery": "You finished the week stronger than you started. That's 'recovery capacity' in action.",
+                "friction": "You had a powerful start, but the weekend brought some friction. Identifying that 'Friday fade' is the first step to mastering it."
+            }
+        },
+        "monthly": {
+            "intro": {
+                "exceptional": "A month of exceptional focus ([[{{count}}]] completions so far). You've successfully integrated these habits into your lifestyle.",
+                "solid": "Solid progress this month. With [[{{count}}]] total completions, you've established a strong baseline of consistency.",
+                "exploration": "A month of exploration. [[{{count}}]] completions shows effort, but there's room to tighten your rhythm for next month.",
+                "low": "A low-momentum month. Use the [[{{count}}]] completions you did manage as architectural data for a more sustainable next month."
+            },
+            "momentum": {
+                "growth": "You've seen a [[{{delta}}%]] growth since last month—that's significant identity shifting in action.",
+                "cooling": "Your rhythm cooled by [[{{delta}}%]] this month. This is often a sign of life-balance adjusting; use it to recalibrate."
+            },
+            "rhythm": {
+                "anchor": "You were most dedicated to [[{{habitName}}]] this month, showing up [[{{count}}]] times. That is your current anchor."
+            }
+        }
+    },
+    "common": {
+        "done": "Done",
+        "rate": "Rate",
+        "days": "DAYS",
+        "myHabits": "My Habits",
+        "manageHabits": "Manage habits",
+        "currentStreak": "Current Streak",
+        "months": {
+            "jan": "Jan",
+            "feb": "Feb",
+            "mar": "Mar",
+            "apr": "Apr",
+            "may": "May",
+            "jun": "Jun",
+            "jul": "Jul",
+            "aug": "Aug",
+            "sep": "Sep",
+            "oct": "Oct",
+            "nov": "Nov",
+            "dec": "Dec"
+        }
+    }
+}

@@ -21,7 +21,7 @@ const daysSince = (dateString: string): number => {
     return Math.floor((today.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
 };
 
-export const buildAnnualStory = (annualStats: any, monthsElapsed: number = 12): StoryResult => {
+export const buildAnnualStory = (annualStats: any, t: any, monthsElapsed: number = 12): StoryResult => {
     const sections: StorySection[] = [];
     const focused = annualStats.topHabits?.[0];
 
@@ -32,23 +32,23 @@ export const buildAnnualStory = (annualStats: any, monthsElapsed: number = 12): 
 
     // 1. Momentum Section
     const momentumMsg = annualStats.momentum === "ascending"
-        ? "You've been building serious momentum lately, finishing the year stronger than you started."
+        ? t('story.annual.momentum.ascending')
         : annualStats.momentum === "descending"
-            ? "Your recent rhythm softened toward the end of the year. That's often a signal for recalibration—not failure."
-            : "Your consistency has remained remarkably stable throughout the transitions of the year.";
+            ? t('story.annual.momentum.descending')
+            : t('story.annual.momentum.stable');
 
     sections.push({
         type: 'momentum',
-        text: `This year, your identity centered around [[${focused.name.toUpperCase()}]]. ${momentumMsg}`,
+        text: t('story.annual.momentum.main', { habitName: focused.name.toUpperCase(), momentumMsg }),
         priority: annualStats.storyVariant === 'momentum' ? 1 : 2
     });
 
     // 2. Rhythm Section
     const rhythmMsg = annualStats.weekendRate > annualStats.weekdayRate * 1.2
-        ? "You find your best rhythm on the weekends—that's when your identity truly shines."
+        ? t('story.annual.rhythm.weekend')
         : annualStats.weekdayRate > annualStats.weekendRate * 1.2
-            ? "You are a weekday warrior, but the weekends tend to be a 'blind spot' for your habits."
-            : "You maintain a consistent rhythm throughout the entire week, from Monday to Sunday.";
+            ? t('story.annual.rhythm.weekday')
+            : t('story.annual.rhythm.consistent');
 
     sections.push({
         type: 'rhythm',
@@ -59,10 +59,10 @@ export const buildAnnualStory = (annualStats: any, monthsElapsed: number = 12): 
     // 3. Consistency Block
     const consistencyRate = monthsElapsed > 0 ? adjustedRate : annualStats.consistencyRate;
     const consistencyText = consistencyRate > 70
-        ? `You've shown up on [[${annualStats.activeDays}]] days so far this year — enough to form real identity momentum.`
+        ? t('story.annual.consistency.high', { activeDays: annualStats.activeDays })
         : consistencyRate > 40
-            ? "You have the spark. With slightly more rhythm, this could become automatic."
-            : "You're laying foundations. Early consistency matters more than volume.";
+            ? t('story.annual.consistency.medium')
+            : t('story.annual.consistency.low');
 
     sections.push({
         type: 'consistency',
@@ -75,7 +75,7 @@ export const buildAnnualStory = (annualStats: any, monthsElapsed: number = 12): 
     if (annualStats.activeHabitsCount > 7 && consistencyRate < 45) {
         sections.push({
             type: 'experimental',
-            text: "You experimented broadly this year. That curiosity is a strength — narrowing focus may unlock consistency.",
+            text: t('story.annual.experimental'),
             priority: 0
         });
     }
@@ -83,7 +83,7 @@ export const buildAnnualStory = (annualStats: any, monthsElapsed: number = 12): 
     if (annualStats.fadingHabit) {
         sections.push({
             type: 'fading',
-            text: `Your consistency with [[${annualStats.fadingHabit.name.toUpperCase()}]] has dropped significantly recently. If this was intentional, that’s clarity. If not, a small restart could bring it back into focus.`,
+            text: t('story.annual.fading', { habitName: annualStats.fadingHabit.name.toUpperCase() }),
             priority: 5
         });
     }
@@ -100,7 +100,7 @@ export const buildAnnualStory = (annualStats: any, monthsElapsed: number = 12): 
     if (neglected) {
         sections.push({
             type: 'neglected',
-            text: `You haven't logged [[${neglected.name.toUpperCase()}]] for [[${daysSince(neglected.lastCompletedDate)}]] days. When it makes sense, a small revisit is enough.`,
+            text: t('story.annual.neglected', { habitName: neglected.name.toUpperCase(), days: daysSince(neglected.lastCompletedDate) }),
             priority: 6
         });
     }
@@ -118,7 +118,7 @@ export const buildAnnualStory = (annualStats: any, monthsElapsed: number = 12): 
     };
 };
 
-export const buildWeeklyStory = (weekProgress: any, weeklyStats: any[], habits: Habit[], daysElapsed: number = 7): StoryResult => {
+export const buildWeeklyStory = (weekProgress: any, weeklyStats: any[], habits: Habit[], t: any, daysElapsed: number = 7): StoryResult => {
     const sections: StorySection[] = [];
     const completedCount = weekProgress.completed;
     const habitsCount = habits.length;
@@ -133,10 +133,10 @@ export const buildWeeklyStory = (weekProgress: any, weeklyStats: any[], habits: 
 
     // 1. Initial Reflection
     let intro = "";
-    if (rate >= 90) intro = `You're operating at an elite level with [[${completedCount}]] actions so far this week. Your habits aren't just actions; they are your identity.`;
-    else if (rate >= 70) intro = `Strong consistency with [[${completedCount}]] completions. You're showing up for yourself, and the momentum is visible.`;
-    else if (rate >= 40) intro = `A week of balance ([[${completedCount}]] completions). Some foundations held firm, others were tested. Re-centering is part of the process.`;
-    else intro = `A low-velocity week with [[${completedCount}]] completions. These are often periods of rest or resistance—either way, they are data for a better next week.`;
+    if (rate >= 90) intro = t('story.weekly.intro.elite', { count: completedCount });
+    else if (rate >= 70) intro = t('story.weekly.intro.strong', { count: completedCount });
+    else if (rate >= 40) intro = t('story.weekly.intro.balanced', { count: completedCount });
+    else intro = t('story.weekly.intro.low', { count: completedCount });
 
     sections.push({
         type: 'consistency',
@@ -148,7 +148,7 @@ export const buildWeeklyStory = (weekProgress: any, weeklyStats: any[], habits: 
     if (topHabit && topHabit.completed >= Math.max(1, Math.floor(daysElapsed * 0.6))) {
         sections.push({
             type: 'momentum',
-            text: `Your identity was strongest in [[${topHabit.name.toUpperCase()}]] this week, with [[${topHabit.completed}/${daysElapsed}]] days completed so far.`,
+            text: t('story.weekly.momentum.highlight', { habitName: topHabit.name.toUpperCase(), count: topHabit.completed, total: daysElapsed }),
             priority: 2
         });
     }
@@ -156,7 +156,7 @@ export const buildWeeklyStory = (weekProgress: any, weeklyStats: any[], habits: 
     if (lowHabit && daysElapsed >= 3) {
         sections.push({
             type: 'neglected',
-            text: `You haven't logged [[${lowHabit.name.toUpperCase()}]] yet this week. A small 2-minute version of it tomorrow could restart the rhythm.`,
+            text: t('story.weekly.neglected', { habitName: lowHabit.name.toUpperCase() }),
             priority: 4
         });
     }
@@ -169,13 +169,13 @@ export const buildWeeklyStory = (weekProgress: any, weeklyStats: any[], habits: 
         if (endWeekStrength > midWeekStrength && rate > 30) {
             sections.push({
                 type: 'momentum',
-                text: "You finished the week stronger than you started. That's 'recovery capacity' in action.",
+                text: t('story.weekly.growth.recovery'),
                 priority: 3
             });
         } else if (midWeekStrength > endWeekStrength + 5) {
             sections.push({
                 type: 'rhythm',
-                text: "You had a powerful start, but the weekend brought some friction. Identifying that 'Friday fade' is the first step to mastering it.",
+                text: t('story.weekly.growth.friction'),
                 priority: 3
             });
         }
@@ -188,7 +188,7 @@ export const buildWeeklyStory = (weekProgress: any, weeklyStats: any[], habits: 
     };
 };
 
-export const buildMonthlyStory = (monthProgress: any, topHabits: any[], monthDelta: number, daysElapsed: number = 30): StoryResult => {
+export const buildMonthlyStory = (monthProgress: any, topHabits: any[], monthDelta: number, t: any, daysElapsed: number = 30): StoryResult => {
     const sections: StorySection[] = [];
     const completedCount = monthProgress.completed;
     const habitsCount = topHabits.length || 1; // Fallback to avoid div by zero
@@ -199,10 +199,10 @@ export const buildMonthlyStory = (monthProgress: any, topHabits: any[], monthDel
 
     // 1. Monthly Reflection
     let intro = "";
-    if (rate >= 80) intro = `A month of exceptional focus ([[${completedCount}]] completions so far). You've successfully integrated these habits into your lifestyle.`;
-    else if (rate >= 60) intro = `Solid progress this month. With [[${completedCount}]] total completions, you've established a strong baseline of consistency.`;
-    else if (rate >= 30) intro = `A month of exploration. [[${completedCount}]] completions shows effort, but there's room to tighten your rhythm for next month.`;
-    else intro = `A low-momentum month. Use the [[${completedCount}]] completions you did manage as architectural data for a more sustainable next month.`;
+    if (rate >= 80) intro = t('story.monthly.intro.exceptional', { count: completedCount });
+    else if (rate >= 60) intro = t('story.monthly.intro.solid', { count: completedCount });
+    else if (rate >= 30) intro = t('story.monthly.intro.exploration', { count: completedCount });
+    else intro = t('story.monthly.intro.low', { count: completedCount });
 
     sections.push({
         type: 'consistency',
@@ -213,8 +213,8 @@ export const buildMonthlyStory = (monthProgress: any, topHabits: any[], monthDel
     // 2. Momentum / Delta
     if (Math.abs(monthDelta) > 5) {
         const momentumText = monthDelta > 0
-            ? `You've seen a [[${monthDelta.toFixed(0)}%]] growth since last month—that's significant identity shifting in action.`
-            : `Your rhythm cooled by [[${Math.abs(monthDelta).toFixed(0)}%]] this month. This is often a sign of life-balance adjusting; use it to recalibrate.`;
+            ? t('story.monthly.momentum.growth', { delta: monthDelta.toFixed(0) })
+            : t('story.monthly.momentum.cooling', { delta: Math.abs(monthDelta).toFixed(0) });
 
         sections.push({
             type: 'momentum',
@@ -228,7 +228,7 @@ export const buildMonthlyStory = (monthProgress: any, topHabits: any[], monthDel
     if (topHabit && topHabit.percentage > 50) {
         sections.push({
             type: 'rhythm',
-            text: `You were most dedicated to [[${topHabit.name.toUpperCase()}]] this month, showing up [[${topHabit.stats.completed}]] times. That is your current anchor.`,
+            text: t('story.monthly.rhythm.anchor', { habitName: topHabit.name.toUpperCase(), count: topHabit.stats.completed }),
             priority: 3
         });
     }

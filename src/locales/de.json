@@ -119,6 +119,44 @@
             "oct": "Okt",
             "nov": "Nov",
             "dec": "Dez"
+        },
+        "selectYear": "Jahr auswählen"
+    },
+    "dailyCard": {
+        "dailyHabits": "Tägliche Gewohnheiten",
+        "flexibleHabits": "Flexible Gewohnheiten",
+        "tasks": "Aufgaben",
+        "dailyDone": "Täglich Erledigt",
+        "remaining": "Verbleibend",
+        "noDailyHabits": "Keine täglichen Gewohnheiten heute fällig",
+        "addTask": "Klicken Sie auf +, um eine Aufgabe hinzuzufügen",
+        "share": "Errungenschaft teilen",
+        "journal": "Tagebuch",
+        "mood": "Stimmung",
+        "notes": "Notizen",
+        "saveEntry": "Eintrag speichern",
+        "journalPlaceholder": "Schreibe über heute...",
+        "editTask": "Aufgabe bearbeiten",
+        "deleteTask": "Aufgabe löschen",
+        "untitled": "Ohne Titel",
+        "moods": {
+            "veryBad": "Sehr schlecht",
+            "bad": "Schlecht",
+            "neutral": "Neutral",
+            "good": "Gut",
+            "veryGood": "Sehr gut"
         }
+    },
+    "habitManager": {
+        "title": "Meine Gewohnheiten",
+        "addHabit": "Neue Gewohnheit",
+        "noHabits": "Noch keine Gewohnheiten. Fügen Sie eine hinzu!",
+        "dragToReorder": "Ziehen Sie Gewohnheiten, um sie neu zu ordnen.",
+        "fixed": "Fest",
+        "flexible": "Flexibel",
+        "timesPerWeek": "Mal pro Woche",
+        "habitNamePlaceholder": "Gewohnheitsname",
+        "untitled": "Unbenannte Gewohnheit",
+        "deleteConfirm": "Sind Sie sicher, dass Sie diese Gewohnheit löschen möchten? Sie verlieren alle historischen Daten."
     }
 }

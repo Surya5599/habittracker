@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Check, Plus, Share2, Trash2, Pencil, ChevronLeft, ChevronRight, BookOpen, X, Save, Meh, Frown, Smile, Laugh, Star, Angry } from 'lucide-react';
 import { Habit, HabitCompletion, Theme, DailyNote, Task, DayData } from '../types';
-import { DAYS_OF_WEEK } from '../constants';
 import { isCompleted as checkCompleted } from '../utils/stats';
 import { generateUUID } from '../utils/uuid';
 
@@ -41,6 +41,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
     defaultFlipped = false,
     onJournalClick,
 }) => {
+    const { t, i18n } = useTranslation();
     const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
     const [editingTaskText, setEditingTaskText] = useState('');
     const [isFlipped, setIsFlipped] = useState(defaultFlipped);
@@ -123,8 +124,8 @@ export const DailyCard: React.FC<DailyCardProps> = ({
         setIsFlipped(defaultFlipped);
     }, [defaultFlipped]);
 
-    const dayName = DAYS_OF_WEEK[date.getDay()];
-    const dateString = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const dayName = date.toLocaleDateString(i18n.language, { weekday: 'long' });
+    const dateString = date.toLocaleDateString(i18n.language, { month: 'short', day: 'numeric', year: 'numeric' });
     const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     const isToday = date.toDateString() === new Date().toDateString();
 
@@ -226,11 +227,11 @@ export const DailyCard: React.FC<DailyCardProps> = ({
     };
 
     const MOODS = [
-        { value: 1, icon: Angry, label: 'Very Bad', color: '#ef4444', tooltip: 'Very Bad' },
-        { value: 2, icon: Frown, label: 'Bad', color: '#f97316', tooltip: 'Bad' },
-        { value: 3, icon: Meh, label: 'Neutral', color: '#eab308', tooltip: 'Neutral' },
-        { value: 4, icon: Smile, label: 'Good', color: '#84cc16', tooltip: 'Good' },
-        { value: 5, icon: Laugh, label: 'Very Good', color: '#10b981', tooltip: 'Very Good' },
+        { value: 1, icon: Angry, label: t('dailyCard.moods.veryBad'), color: '#ef4444', tooltip: t('dailyCard.moods.veryBad') },
+        { value: 2, icon: Frown, label: t('dailyCard.moods.bad'), color: '#f97316', tooltip: t('dailyCard.moods.bad') },
+        { value: 3, icon: Meh, label: t('dailyCard.moods.neutral'), color: '#eab308', tooltip: t('dailyCard.moods.neutral') },
+        { value: 4, icon: Smile, label: t('dailyCard.moods.good'), color: '#84cc16', tooltip: t('dailyCard.moods.good') },
+        { value: 5, icon: Laugh, label: t('dailyCard.moods.veryGood'), color: '#10b981', tooltip: t('dailyCard.moods.veryGood') },
     ];
 
     return (
@@ -307,7 +308,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                     {/* Daily Habits List */}
                     <div className="py-1 px-3 bg-stone-50/50 flex flex-col border-b border-stone-100">
                         <div className="flex items-center justify-between mb-1 pb-1 border-b border-black/5 flex-shrink-0">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">Daily Habits</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">{t('dailyCard.dailyHabits')}</span>
                             <span className="text-[10px] font-black text-stone-400">{dailyHabits.length}</span>
                         </div>
                         <div
@@ -325,7 +326,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                                     >
                                         <div className="flex items-center flex-1 min-w-0">
                                             <span className={`text-[11px] font-bold truncate ${done ? 'text-stone-400 line-through' : 'text-stone-700'}`}>
-                                                {habit.name || 'Untitled'}
+                                                {habit.name || t('dailyCard.untitled')}
                                             </span>
                                         </div>
                                         <div
@@ -336,7 +337,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                                     </div>
                                 );
                             }) : (
-                                <div className="text-[9px] text-stone-300 italic py-1">No daily habits due today</div>
+                                <div className="text-[9px] text-stone-300 italic py-1">{t('dailyCard.noDailyHabits')}</div>
                             )}
                         </div>
                     </div>
@@ -345,7 +346,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                     {flexibleHabits.length > 0 && (
                         <div className="py-1 px-3 bg-white flex flex-col border-b border-stone-100">
                             <div className="flex items-center justify-between mb-1 pb-1 border-b border-black/5 flex-shrink-0">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">Flexible Habits</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">{t('dailyCard.flexibleHabits')}</span>
                                 <span className="text-[10px] font-black text-stone-400">{flexibleHabits.length}</span>
                             </div>
                             <div
@@ -381,7 +382,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                                         >
                                             <div className="flex items-center flex-1 min-w-0">
                                                 <span className={`text-[11px] font-bold truncate ${done ? 'text-stone-400 line-through' : 'text-stone-700'}`}>
-                                                    {habit.name || 'Untitled'}
+                                                    {habit.name || t('dailyCard.untitled')}
                                                 </span>
                                                 <span className={`ml-1 text-[9px] px-1 py-0 border-[1px] font-black uppercase tracking-tighter ${goalMet ? 'bg-black text-white border-black' : 'bg-stone-50 text-stone-400 border-stone-200'}`}>
                                                     {weekCompletions}/{habit.weeklyTarget}
@@ -408,17 +409,17 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                                 className="w-full p-3 bg-black text-white font-black uppercase tracking-widest text-[11px] hover:bg-stone-800 transition-all flex items-center justify-center gap-2 group"
                             >
                                 <Share2 size={14} className="group-hover:scale-110 transition-transform" />
-                                Share Achievement
+                                {t('dailyCard.share')}
                             </button>
                         </div>
                     ) : (
                         <div className="grid grid-cols-2 text-center text-[9px] font-black uppercase tracking-tight border-t border-black flex-shrink-0">
                             <div className="p-1 px-2 border-r border-black" style={{ backgroundColor: (isToday ? theme.primary : theme.secondary) + '20' }}>
-                                <span className="text-stone-500 block">Daily Done</span>
+                                <span className="text-stone-500 block">{t('dailyCard.dailyDone')}</span>
                                 <span className="text-lg leading-none">{dailyCompletedCount}</span>
                             </div>
                             <div className="p-1 px-2" style={{ backgroundColor: '#f0f0f0' }}>
-                                <span className="text-stone-500 block">Remaining</span>
+                                <span className="text-stone-500 block">{t('dailyCard.remaining')}</span>
                                 <span className="text-lg leading-none">{totalDailyCount - dailyCompletedCount}</span>
                             </div>
                         </div>
@@ -453,7 +454,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                         }}
                     >
                         <div className="p-2 bg-stone-100 border-b-2 border-black text-[9px] font-black uppercase tracking-widest text-stone-500 flex items-center justify-center relative flex-shrink-0 group/header">
-                            <span>Tasks</span>
+                            <span>{t('dailyCard.tasks')}</span>
 
                             {/* Journal Trigger */}
                             {(() => {
@@ -462,7 +463,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                                     <button
                                         onClick={() => onJournalClick ? onJournalClick() : setIsFlipped(true)}
                                         className={`absolute left-2 p-1.5 rounded transition-colors ${activeMood ? '' : (dayData.journal ? 'text-black bg-stone-200' : 'text-stone-400 hover:text-black hover:bg-stone-200')}`}
-                                        title={activeMood ? activeMood.tooltip : "Daily Journal & Mood"}
+                                        title={activeMood ? activeMood.tooltip : t('dailyCard.journal')}
                                     >
                                         {activeMood ? <activeMood.icon size={16} fill={activeMood.color} className="text-stone-700" /> : <BookOpen size={12} strokeWidth={3} />}
                                     </button>
@@ -545,7 +546,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                                                 setEditingTaskText(task.text);
                                             }}
                                             className="text-stone-400 hover:text-black transition-colors"
-                                            title="Edit task"
+                                            title={t('dailyCard.editTask')}
                                         >
                                             <Pencil size={10} />
                                         </button>
@@ -556,7 +557,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                                                 updateNote(dateKey, { tasks: newTasks });
                                             }}
                                             className="text-stone-400 hover:text-red-500 transition-colors"
-                                            title="Delete task"
+                                            title={t('dailyCard.deleteTask')}
                                         >
                                             <Trash2 size={10} />
                                         </button>
@@ -571,7 +572,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                                     setEditingTaskId(newTask.id);
                                     setEditingTaskText('');
                                 }}>
-                                    Click + to add a task
+                                    {t('dailyCard.addTask')}
                                 </div>
                             )}
                         </div>
@@ -593,7 +594,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                             <ChevronLeft size={20} strokeWidth={3} />
                         </button>
 
-                        <h3 className="text-white font-black uppercase tracking-tighter text-lg leading-tight">Journal</h3>
+                        <h3 className="text-white font-black uppercase tracking-tighter text-lg leading-tight">{t('dailyCard.journal')}</h3>
                         <p className="text-white/80 font-bold text-[10px] tracking-widest">{dateString}</p>
                     </div>
 
@@ -604,7 +605,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                     >
                         {/* Mood Selector */}
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-stone-600 block text-center">Mood</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-stone-600 block text-center">{t('dailyCard.mood')}</label>
                             <div className="grid grid-cols-5 gap-1 px-2">
                                 {MOODS.map((m) => {
                                     const isSelected = mood === m.value;
@@ -629,11 +630,11 @@ export const DailyCard: React.FC<DailyCardProps> = ({
 
                         {/* Journal Textarea */}
                         <div className="flex-1 flex flex-col gap-2 min-h-0">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-stone-600 block text-center">Notes</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-stone-600 block text-center">{t('dailyCard.notes')}</label>
                             <textarea
                                 value={journal}
                                 onChange={(e) => setJournal(e.target.value)}
-                                placeholder="Write regarding today..."
+                                placeholder={t('dailyCard.journalPlaceholder')}
                                 className="w-full flex-1 p-3 bg-stone-50 border-2 border-transparent focus:border-black rounded-xl resize-none text-xs leading-relaxed text-stone-900 placeholder:text-stone-300 outline-none transition-all font-medium"
                             />
                         </div>
@@ -645,7 +646,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                                 style={{ backgroundColor: theme.primary }}
                             >
                                 <Save size={12} />
-                                Save Entry
+                                {t('dailyCard.saveEntry')}
                             </button>
                         </div>
                     </div>

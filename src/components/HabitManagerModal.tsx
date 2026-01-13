@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X, Plus, Trash2, Check, Edit2, GripVertical } from 'lucide-react';
 import { Habit } from '../types';
 import { Reorder, useDragControls } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 interface HabitManagerModalProps {
     isOpen: boolean;
@@ -24,6 +25,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
     reorderHabits,
     themePrimary
 }) => {
+    const { t } = useTranslation();
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editName, setEditName] = useState('');
     const [editFrequency, setEditFrequency] = useState<number[] | undefined>(undefined);
@@ -85,7 +87,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
     };
 
     const handleDelete = async (id: string) => {
-        if (confirm('Are you sure you want to delete this habit? You will lose all its historical data.')) {
+        if (confirm(t('habitManager.deleteConfirm'))) {
             await removeHabit(id);
         }
     };
@@ -96,7 +98,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
         <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-4 pt-20 md:pt-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white border-[2px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-full max-w-md overflow-hidden flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-200">
                 <div className="p-4 border-b-[2px] border-black flex items-center justify-between bg-white">
-                    <h2 className="text-3xl font-black uppercase tracking-tighter text-black">My Habits</h2>
+                    <h2 className="text-3xl font-black uppercase tracking-tighter text-black">{t('habitManager.title')}</h2>
                     <button onClick={onClose} className="border-2 border-transparent hover:border-black p-1 transition-all hover:bg-stone-100">
                         <X size={20} className="text-black" />
                     </button>
@@ -105,7 +107,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                 <div ref={listRef} className="flex-1 overflow-y-auto p-4">
                     {habits.length === 0 ? (
                         <div className="text-center py-8 text-stone-400 text-xs font-medium uppercase tracking-wider">
-                            No habits yet. Start by adding one!
+                            {t('habitManager.noHabits')}
                         </div>
                     ) : (
                         <Reorder.Group
@@ -144,10 +146,10 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                         className="w-full py-3 bg-black text-white text-xs font-black uppercase tracking-widest border-2 border-black shadow-[4px_4px_0px_0px_gray] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[2px_2px_0px_0px_gray] active:translate-y-[4px] active:translate-x-[4px] active:shadow-none transition-all flex items-center justify-center gap-2"
                     >
                         <Plus size={16} strokeWidth={3} />
-                        Add New Habit
+                        {t('habitManager.addHabit')}
                     </button>
                     <p className="text-[10px] text-center text-stone-500 mt-3 font-bold uppercase tracking-wide">
-                        Drag habits to reorder them.
+                        {t('habitManager.dragToReorder')}
                     </p>
                 </div>
             </div>
@@ -190,6 +192,7 @@ const HabitItem: React.FC<HabitItemProps> = ({
     handleDelete,
     themePrimary
 }) => {
+    const { t } = useTranslation();
     const controls = useDragControls();
 
     return (
@@ -228,7 +231,7 @@ const HabitItem: React.FC<HabitItemProps> = ({
                                 }
                             }}
                             className="w-full bg-white border-2 border-black px-2 py-1 text-sm font-bold text-black outline-none focus:ring-0 focus:bg-stone-50"
-                            placeholder="Habit name"
+                            placeholder={t('habitManager.habitNamePlaceholder')}
                         />
                         <div className="flex flex-col gap-3">
                             <div className="flex border-2 border-black divide-x-2 divide-black self-start overflow-hidden shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
@@ -236,13 +239,13 @@ const HabitItem: React.FC<HabitItemProps> = ({
                                     onClick={() => setFrequencyType('fixed')}
                                     className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest transition-colors ${frequencyType === 'fixed' ? 'bg-black text-white' : 'bg-white text-black hover:bg-stone-50'}`}
                                 >
-                                    Fixed
+                                    {t('habitManager.fixed')}
                                 </button>
                                 <button
                                     onClick={() => setFrequencyType('flexible')}
                                     className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest transition-colors ${frequencyType === 'flexible' ? 'bg-black text-white' : 'bg-white text-black hover:bg-stone-50'}`}
                                 >
-                                    Flexible
+                                    {t('habitManager.flexible')}
                                 </button>
                             </div>
 
@@ -292,7 +295,7 @@ const HabitItem: React.FC<HabitItemProps> = ({
                                             {editWeeklyTarget || 3}x
                                         </span>
                                     </div>
-                                    <span className="text-[9px] font-bold text-stone-500 uppercase tracking-tight">Times per week</span>
+                                    <span className="text-[9px] font-bold text-stone-500 uppercase tracking-tight">{t('habitManager.timesPerWeek')}</span>
                                 </div>
                             )}
                         </div>
@@ -302,7 +305,7 @@ const HabitItem: React.FC<HabitItemProps> = ({
                         onClick={() => startEditing(habit)}
                         className="flex-1 text-sm font-bold text-black truncate cursor-pointer hover:underline decoration-2 underline-offset-2"
                     >
-                        {habit.name || 'Untitled Habit'}
+                        {habit.name || t('habitManager.untitled')}
                     </span>
                 )}
             </div>

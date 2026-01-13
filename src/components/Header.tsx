@@ -343,7 +343,7 @@ export const Header: React.FC<HeaderProps> = ({
                         <div className="grid grid-cols-2 gap-2">
                             <div className="bg-stone-50 border border-stone-200 p-2 rounded-sm" title="Total habits completed this month">
                                 <div className="flex flex-col items-center justify-center mb-1">
-                                    <span className="text-[8px] font-black uppercase text-stone-500 tracking-wider">Done</span>
+                                    <span className="text-[8px] font-black uppercase text-stone-500 tracking-wider">{t('common.done')}</span>
                                     <span className="text-lg font-black leading-none" style={{ color: theme.primary }}>{monthProgress.completed}</span>
                                 </div>
                                 <div className="w-full bg-stone-200 h-1 rounded-full overflow-hidden">
@@ -352,7 +352,7 @@ export const Header: React.FC<HeaderProps> = ({
                             </div>
                             <div className="bg-stone-50 border border-stone-200 p-2 rounded-sm" title="Percentage of monthly habits completed">
                                 <div className="flex flex-col items-center justify-center mb-1">
-                                    <span className="text-[8px] font-black uppercase text-stone-500 tracking-wider">Rate</span>
+                                    <span className="text-[8px] font-black uppercase text-stone-500 tracking-wider">{t('common.rate')}</span>
                                     <span className="text-lg font-black leading-none" style={{ color: theme.secondary }}>{monthProgress.percentage.toFixed(0)}%</span>
                                 </div>
                                 <div className="w-full bg-stone-200 h-1 rounded-full overflow-hidden">
@@ -367,16 +367,16 @@ export const Header: React.FC<HeaderProps> = ({
                                 className="flex flex-col items-center justify-center p-2 text-white rounded-2xl neo-border neo-shadow hover:translate-y-0.5 hover:shadow-none transition-all group min-h-[60px]"
                                 style={{ backgroundColor: theme.secondary }}
                             >
-                                <span className="text-[14px] font-black uppercase tracking-widest leading-none">My Habits</span>
+                                <span className="text-[14px] font-black uppercase tracking-widest leading-none">{t('common.myHabits')}</span>
                                 <span className="text-xl font-black mt-1 leading-none">{habits.length}</span>
-                                <span className="text-[8px] text-white uppercase tracking-tighter mt-1 leading-none">Manage habits</span>
+                                <span className="text-[8px] text-white uppercase tracking-tighter mt-1 leading-none">{t('common.manageHabits')}</span>
                             </button>
                             <div
                                 onClick={() => setIsStreakModalOpen(true)}
                                 className="bg-white neo-border neo-shadow p-2 text-center rounded-2xl flex flex-col items-center justify-center min-h-[60px] cursor-pointer hover:bg-orange-50 transition-colors group/streak"
                             >
-                                <p className="text-[8px] font-black opacity-50 uppercase tracking-widest leading-none group-hover/streak:text-orange-500 transition-colors">Current Streak</p>
-                                <p className="text-2xl font-black mt-1 leading-none group-hover/streak:scale-110 transition-transform">{annualStats.currentStreak} <span className="text-[10px]">DAYS</span></p>
+                                <p className="text-[8px] font-black opacity-50 uppercase tracking-widest leading-none group-hover/streak:text-orange-500 transition-colors">{t('common.currentStreak')}</p>
+                                <p className="text-2xl font-black mt-1 leading-none group-hover/streak:scale-110 transition-transform">{annualStats.currentStreak} <span className="text-[10px]">{t('common.days')}</span></p>
                             </div>
                         </div>
                     </div>
@@ -385,7 +385,7 @@ export const Header: React.FC<HeaderProps> = ({
                         <div className="grid grid-cols-2 gap-2">
                             <div className="bg-stone-50 border border-stone-200 p-2 rounded-sm" title="Total habits completed this week">
                                 <div className="flex flex-col items-center justify-center mb-1">
-                                    <span className="text-[8px] font-black uppercase text-stone-500 tracking-wider">Done</span>
+                                    <span className="text-[8px] font-black uppercase text-stone-500 tracking-wider">{t('common.done')}</span>
                                     <span className="text-lg font-black leading-none" style={{ color: theme.primary }}>{weekProgress.completed}</span>
                                 </div>
                                 <div className="w-full bg-stone-200 h-1 rounded-full overflow-hidden">
@@ -394,7 +394,7 @@ export const Header: React.FC<HeaderProps> = ({
                             </div>
                             <div className="bg-stone-50 border border-stone-200 p-2 rounded-sm" title="Percentage of weekly habits completed">
                                 <div className="flex flex-col items-center justify-center mb-1">
-                                    <span className="text-[8px] font-black uppercase text-stone-500 tracking-wider">Rate</span>
+                                    <span className="text-[8px] font-black uppercase text-stone-500 tracking-wider">{t('common.rate')}</span>
                                     <span className="text-lg font-black leading-none" style={{ color: theme.secondary }}>{weekProgress.percentage.toFixed(0)}%</span>
                                 </div>
                                 <div className="w-full bg-stone-200 h-1 rounded-full overflow-hidden">
@@ -409,16 +409,16 @@ export const Header: React.FC<HeaderProps> = ({
                                 className="flex flex-col items-center justify-center p-2 text-white rounded-2xl neo-border neo-shadow hover:translate-y-0.5 hover:shadow-none transition-all group min-h-[60px]"
                                 style={{ backgroundColor: theme.secondary }}
                             >
-                                <span className="text-[12px] font-black uppercase tracking-widest leading-none">My Habits</span>
+                                <span className="text-[12px] font-black uppercase tracking-widest leading-none">{t('common.myHabits')}</span>
                                 <span className="text-xl font-black mt-1 leading-none">{habits.length}</span>
-                                <span className="text-[8px] text-white uppercase tracking-tighter mt-1 leading-none">Manage habits</span>
+                                <span className="text-[8px] text-white uppercase tracking-tighter mt-1 leading-none">{t('common.manageHabits')}</span>
                             </button>
                             <div
                                 onClick={() => setIsStreakModalOpen(true)}
                                 className="bg-white neo-border neo-shadow p-2 text-center rounded-2xl flex flex-col items-center justify-center min-h-[60px] cursor-pointer hover:bg-orange-50 transition-colors group/streak"
                             >
-                                <p className="text-[8px] font-black opacity-50 uppercase tracking-widest leading-none group-hover/streak:text-orange-500 transition-colors">Current Streak</p>
-                                <p className="text-2xl font-black mt-1 leading-none group-hover/streak:scale-110 transition-transform">{annualStats.currentStreak} <span className="text-[10px]">DAYS</span></p>
+                                <p className="text-[8px] font-black opacity-50 uppercase tracking-widest leading-none group-hover/streak:text-orange-500 transition-colors">{t('common.currentStreak')}</p>
+                                <p className="text-2xl font-black mt-1 leading-none group-hover/streak:scale-110 transition-transform">{annualStats.currentStreak} <span className="text-[10px]">{t('common.days')}</span></p>
                             </div>
                         </div>
                     </div>
@@ -466,16 +466,16 @@ export const Header: React.FC<HeaderProps> = ({
                                 className="flex flex-col items-center justify-center p-2 text-white rounded-2xl neo-border neo-shadow hover:translate-y-0.5 hover:shadow-none transition-all group min-h-[60px]"
                                 style={{ backgroundColor: theme.secondary }}
                             >
-                                <span className="text-[12px] font-black uppercase tracking-widest leading-none">My Habits</span>
+                                <span className="text-[12px] font-black uppercase tracking-widest leading-none">{t('common.myHabits')}</span>
                                 <span className="text-xl font-black mt-1 leading-none">{habits.length}</span>
-                                <span className="text-[8px] text-white uppercase tracking-tighter mt-1 leading-none">Manage habits</span>
+                                <span className="text-[8px] text-white uppercase tracking-tighter mt-1 leading-none">{t('common.manageHabits')}</span>
                             </button>
                             <div
                                 onClick={() => setIsStreakModalOpen(true)}
                                 className="bg-white neo-border neo-shadow p-2 text-center rounded-2xl flex flex-col items-center justify-center min-h-[60px] cursor-pointer hover:bg-orange-50 transition-colors group/streak"
                             >
-                                <p className="text-[8px] font-black opacity-50 uppercase tracking-widest leading-none group-hover/streak:text-orange-500 transition-colors">Current Streak</p>
-                                <p className="text-2xl font-black mt-1 leading-none group-hover/streak:scale-110 transition-transform">{annualStats.currentStreak} <span className="text-[10px]">DAYS</span></p>
+                                <p className="text-[8px] font-black opacity-50 uppercase tracking-widest leading-none group-hover/streak:text-orange-500 transition-colors">{t('common.currentStreak')}</p>
+                                <p className="text-2xl font-black mt-1 leading-none group-hover/streak:scale-110 transition-transform">{annualStats.currentStreak} <span className="text-[10px]">{t('common.days')}</span></p>
                             </div>
                         </div>
                     </div>

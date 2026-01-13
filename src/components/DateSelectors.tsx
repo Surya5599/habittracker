@@ -1,6 +1,6 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { MONTHS, DAYS_OF_WEEK_SHORT } from '../constants';
 
 interface WeekPickerProps {
     isOpen: boolean;
@@ -11,6 +11,7 @@ interface WeekPickerProps {
 }
 
 export const WeekPicker: React.FC<WeekPickerProps> = ({ isOpen, onClose, currentDate, onWeekSelect, themePrimary }) => {
+    const { i18n } = useTranslation();
     const [viewDate, setViewDate] = React.useState(new Date(currentDate));
 
     if (!isOpen) return null;
@@ -45,17 +46,21 @@ export const WeekPicker: React.FC<WeekPickerProps> = ({ isOpen, onClose, current
             <div className="flex items-center justify-between mb-4">
                 <button onClick={handlePrevMonth} className="p-1 hover:bg-stone-100 rounded-full"><ChevronLeft size={16} /></button>
                 <div className="font-bold text-sm">
-                    {MONTHS[viewDate.getMonth()]} {viewDate.getFullYear()}
+                    {viewDate.toLocaleDateString(i18n.language, { month: 'long' })} {viewDate.getFullYear()}
                 </div>
                 <button onClick={handleNextMonth} className="p-1 hover:bg-stone-100 rounded-full"><ChevronRight size={16} /></button>
             </div>
 
             <div className="grid grid-cols-7 gap-1 mb-2">
-                {DAYS_OF_WEEK_SHORT.map(day => (
-                    <div key={day} className="text-center text-[10px] font-bold text-stone-400 uppercase">
-                        {day}
-                    </div>
-                ))}
+                {Array.from({ length: 7 }).map((_, i) => {
+                    const d = new Date(2023, 0, 1 + i); // Jan 1 2023 is a Sunday
+                    const dayName = d.toLocaleDateString(i18n.language, { weekday: 'short' });
+                    return (
+                        <div key={i} className="text-center text-[10px] font-bold text-stone-400 uppercase">
+                            {dayName}
+                        </div>
+                    );
+                })}
             </div>
 
             <div className="grid grid-cols-7 gap-1">
@@ -101,6 +106,7 @@ interface MonthPickerProps {
 }
 
 export const MonthPicker: React.FC<MonthPickerProps> = ({ isOpen, onClose, currentMonthIndex, currentYear, onMonthSelect, themePrimary }) => {
+    const { i18n } = useTranslation();
     const [viewYear, setViewYear] = React.useState(currentYear);
 
     if (!isOpen) return null;
@@ -116,11 +122,13 @@ export const MonthPicker: React.FC<MonthPickerProps> = ({ isOpen, onClose, curre
             </div>
 
             <div className="grid grid-cols-3 gap-2">
-                {MONTHS.map((month, index) => {
+                {Array.from({ length: 12 }).map((_, index) => {
+                    const d = new Date(viewYear, index, 1);
+                    const monthName = d.toLocaleDateString(i18n.language, { month: 'short' });
                     const isSelected = index === currentMonthIndex && viewYear === currentYear;
                     return (
                         <button
-                            key={month}
+                            key={index}
                             onClick={() => {
                                 onMonthSelect(index, viewYear);
                                 onClose();
@@ -131,7 +139,7 @@ export const MonthPicker: React.FC<MonthPickerProps> = ({ isOpen, onClose, curre
                             `}
                             style={isSelected ? { backgroundColor: themePrimary } : {}}
                         >
-                            {month.substring(0, 3)}
+                            {monthName}
                         </button>
                     );
                 })}
@@ -152,6 +160,7 @@ interface YearPickerProps {
 }
 
 export const YearPicker: React.FC<YearPickerProps> = ({ isOpen, onClose, currentYear, onYearSelect, themePrimary }) => {
+    const { t } = useTranslation();
     if (!isOpen) return null;
 
     const years = [];
@@ -161,7 +170,7 @@ export const YearPicker: React.FC<YearPickerProps> = ({ isOpen, onClose, current
 
     return (
         <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 bg-white border border-stone-200 shadow-xl p-4 rounded-lg w-[200px]">
-            <div className="text-center font-bold text-sm mb-3 uppercase tracking-wider text-stone-500">Select Year</div>
+            <div className="text-center font-bold text-sm mb-3 uppercase tracking-wider text-stone-500">{t('common.selectYear')}</div>
             <div className="grid grid-cols-3 gap-2 h-[200px] overflow-y-auto custom-scrollbar">
                 {years.map(year => {
                     const isSelected = year === currentYear;

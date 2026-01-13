@@ -119,6 +119,44 @@
             "oct": "Oct",
             "nov": "Nov",
             "dec": "Dec"
+        },
+        "selectYear": "Select Year"
+    },
+    "dailyCard": {
+        "dailyHabits": "Daily Habits",
+        "flexibleHabits": "Flexible Habits",
+        "tasks": "Tasks",
+        "dailyDone": "Daily Done",
+        "remaining": "Remaining",
+        "noDailyHabits": "No daily habits due today",
+        "addTask": "Click + to add a task",
+        "share": "Share Achievement",
+        "journal": "Journal",
+        "mood": "Mood",
+        "notes": "Notes",
+        "saveEntry": "Save Entry",
+        "journalPlaceholder": "Write regarding today...",
+        "editTask": "Edit task",
+        "deleteTask": "Delete task",
+        "untitled": "Untitled",
+        "moods": {
+            "veryBad": "Very Bad",
+            "bad": "Bad",
+            "neutral": "Neutral",
+            "good": "Good",
+            "veryGood": "Very Good"
         }
+    },
+    "habitManager": {
+        "title": "My Habits",
+        "addHabit": "Add New Habit",
+        "noHabits": "No habits yet. Start by adding one!",
+        "dragToReorder": "Drag habits to reorder them.",
+        "fixed": "Fixed",
+        "flexible": "Flexible",
+        "timesPerWeek": "Times per week",
+        "habitNamePlaceholder": "Habit name",
+        "untitled": "Untitled Habit",
+        "deleteConfirm": "Are you sure you want to delete this habit? You will lose all its historical data."
     }
 }

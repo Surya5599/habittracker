@@ -97,12 +97,13 @@ const AppContent: React.FC = () => {
     }
 
     // Handle Extension Login
+    // Handle Extension Login
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('source') === 'extension' && session) {
       // Send session to extension
       window.postMessage({ type: 'HABIT_EXTENSION_LOGIN', session }, '*');
     }
-  }, [showOnboarding, guestMode, session]);
+  }, [showOnboarding, guestMode, session?.user?.id]);
 
   const handleUpdateModalClose = () => {
     setShowUpdateModal(false);
@@ -157,7 +158,7 @@ const AppContent: React.FC = () => {
       setLanguage(remoteLang);
       localStorage.setItem('habit_language', remoteLang);
     }
-  }, [session]);
+  }, [session?.user?.id]);
 
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [currentMonthIndex, setCurrentMonthIndex] = useState(new Date().getMonth());
@@ -220,7 +221,7 @@ const AppContent: React.FC = () => {
       checkUnreadFeedback();
       // Optional: Set up realtime subscription? For now, fetch on load is enough.
     }
-  }, [session]);
+  }, [session?.user?.id]);
 
   const handleOpenFeedback = () => {
     setIsFeedbackModalOpen(true);
@@ -456,7 +457,7 @@ const AppContent: React.FC = () => {
       setNotesLoaded(true);
     };
     loadData();
-  }, [session]);
+  }, [session?.user?.id]);
 
   useEffect(() => {
     if (session?.user) {
@@ -469,7 +470,7 @@ const AppContent: React.FC = () => {
         setShowOnboarding(true);
       }
     }
-  }, [session, guestMode]);
+  }, [session?.user?.id, guestMode]);
 
   const handleOnboardingComplete = async () => {
     setShowOnboarding(false);
@@ -554,7 +555,7 @@ const AppContent: React.FC = () => {
     if (!session?.user?.id && notesLoaded) {
       localStorage.setItem('habit_daily_notes', JSON.stringify(notes));
     }
-  }, [notes, session, notesLoaded]);
+  }, [notes, session?.user?.id, notesLoaded]);
 
   const updateNote = async (dateKey: string, data: Partial<DayData>) => {
     setNotes(prev => {

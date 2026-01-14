@@ -177,14 +177,16 @@ export const useHabits = (session: any, guestMode: boolean) => {
         }
     }, []);
 
+    const userId = session?.user?.id;
+
     useEffect(() => {
-        if (session) {
+        if (userId) {
             const localH = JSON.parse(localStorage.getItem(LOCAL_HABITS_KEY) || '[]');
             const localC = JSON.parse(localStorage.getItem(LOCAL_COMPLETIONS_KEY) || '{}');
             if (localH.length > 0) {
-                syncGuestToCloud(session.user.id, localH, localC).then(() => fetchUserData(session.user.id));
+                syncGuestToCloud(userId, localH, localC).then(() => fetchUserData(userId));
             } else {
-                fetchUserData(session.user.id);
+                fetchUserData(userId);
             }
         } else if (guestMode) {
             // Guest Logic
@@ -254,9 +256,11 @@ export const useHabits = (session: any, guestMode: boolean) => {
             // Logged out, not guest
             setHabits([]);
             setCompletions({});
+            // Don't set loading false here immediately if we are switching from valid session?
+            // Actually, if userId is null and not guestMode, we are logged out.
             setLoading(false);
         }
-    }, [session, guestMode, fetchUserData, syncGuestToCloud]);
+    }, [userId, guestMode, fetchUserData, syncGuestToCloud]);
 
     useEffect(() => {
         if (guestMode && !loading) {

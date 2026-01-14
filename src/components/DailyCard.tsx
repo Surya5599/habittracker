@@ -148,6 +148,21 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
         setJournal(dayData.journal || '');
     }, [dateKey, dayData.mood, dayData.journal]);
 
+    // Lazy save effect
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            // Only save if the state differs from the prop (DB) state
+            const currentJournal = journal || '';
+            const propJournal = dayData.journal || '';
+
+            if (mood !== dayData.mood || currentJournal !== propJournal) {
+                updateNote(dateKey, { mood, journal });
+            }
+        }, 1500);
+
+        return () => clearTimeout(timeoutId);
+    }, [mood, journal, dayData.mood, dayData.journal, dateKey, updateNote]);
+
     const handleSaveJournal = () => {
         updateNote(dateKey, { mood, journal });
         if (!combinedView) {

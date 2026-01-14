@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
-import { Settings, LayoutDashboard, Calendar, Clock, MessageSquare, ChevronRight, ChevronDown, Check } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Settings, LayoutDashboard, Calendar, Clock, MessageSquare, ChevronRight, ChevronDown, Check, Shield } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Theme } from '../types';
 
@@ -33,6 +34,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     hasUnreadFeedback = false,
 }) => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const [expandedSection, setExpandedSection] = useState<'language' | 'theme' | null>(null);
 
     const toggleSection = (section: 'language' | 'theme') => {
@@ -160,6 +162,21 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                             )}
                             <span className="text-[10px] font-bold">{t('settings.support.reportBug')}</span>
                             <MessageSquare size={12} />
+                        </div>
+                    </button>
+
+                    {/* Privacy Policy Link */}
+                    <button
+                        onClick={() => {
+                            navigate('/privacy');
+                            setSettingsOpen(false);
+                        }}
+                        className="flex items-center justify-between p-2 rounded-lg hover:bg-stone-50 transition-colors w-full text-left group"
+                    >
+                        <span className="text-[10px] font-bold uppercase text-stone-500 group-hover:text-stone-700">Privacy</span>
+                        <div className="flex items-center gap-1.5 text-stone-400 group-hover:text-black transition-colors">
+                            <span className="text-[10px] font-bold">Policy</span>
+                            <Shield size={12} />
                         </div>
                     </button>
                 </div>

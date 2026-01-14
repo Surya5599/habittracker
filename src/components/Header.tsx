@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, LayoutDashboard, Calendar, Clock, LogIn, LogOut, ArrowUp, ArrowDown, Minus, Trophy, BarChart2, Activity, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LayoutDashboard, Calendar, Clock, LogIn, LogOut, ArrowUp, ArrowDown, Minus, Trophy, BarChart2, Activity, Sparkles, Search } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 import { MONTHS } from '../constants';
 import { Habit, Theme, MonthStats, MonthlyGoal, MonthlyGoals } from '../types';
@@ -65,6 +65,7 @@ interface HeaderProps {
     reorderHabits: (newHabits: Habit[]) => Promise<void>;
     onReportBug: () => void;
     hasUnreadFeedback: boolean;
+    onSearch: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -117,7 +118,8 @@ export const Header: React.FC<HeaderProps> = ({
     setIsStreakModalOpen,
     reorderHabits,
     onReportBug,
-    hasUnreadFeedback
+    hasUnreadFeedback,
+    onSearch
 }) => {
     const { t } = useTranslation();
     const today = new Date();
@@ -268,6 +270,12 @@ export const Header: React.FC<HeaderProps> = ({
                         </div>
 
                         <div className="flex items-center gap-2">
+                            <button
+                                onClick={onSearch}
+                                className="p-1.5 rounded-full border border-stone-200 text-stone-400 hover:text-black hover:bg-stone-50 transition-colors"
+                            >
+                                <Search size={14} />
+                            </button>
                             <SettingsMenu
                                 theme={theme}
                                 setTheme={setTheme}

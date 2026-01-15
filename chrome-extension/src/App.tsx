@@ -197,7 +197,7 @@ const App: React.FC = () => {
             onClick={() => {
               chrome.tabs.create({ url: `${WEB_APP_URL}/?source=extension` });
             }}
-            className="w-full px-4 py-2 border-[2px] border-black text-sm font-black uppercase tracking-widest bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2"
+            className="w-full px-4 py-2 border-[2px] border-black text-sm font-black uppercase tracking-widest bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all flex flex-wrap h-auto items-center justify-center gap-2"
           >
             <span>Sign in to HabiCard</span>
             <ExternalLink size={14} />

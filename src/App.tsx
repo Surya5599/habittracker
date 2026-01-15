@@ -982,11 +982,7 @@ const AppContent: React.FC = () => {
           .overflow-x-auto { -webkit-overflow-scrolling: touch; }
         }
       `}</style>
-          {/* Login Form Overlay */}
-          <div className="relative z-10 w-full min-h-screen flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-transparent"></div>
-            <AuthForm onContinueAsGuest={handleContinueAsGuest} />
-          </div>
+
         </>
       )}
     </div>

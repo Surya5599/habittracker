@@ -79,6 +79,9 @@ const AppContent: React.FC = () => {
   const [language, setLanguage] = useState<string>(() => {
     return localStorage.getItem('habit_language') || 'en';
   });
+  const [startOfWeek, setStartOfWeek] = useState<'monday' | 'sunday'>(() => {
+    return (localStorage.getItem('habit_start_of_week') as 'monday' | 'sunday') || 'monday';
+  });
 
   // Sync i18n with state
   useEffect(() => {
@@ -167,6 +170,21 @@ const AppContent: React.FC = () => {
     }
   };
 
+  const updateStartOfWeek = async (newStart: 'monday' | 'sunday') => {
+    setStartOfWeek(newStart);
+    localStorage.setItem('habit_start_of_week', newStart);
+
+    if (session?.user?.id && !isImpersonating) {
+      try {
+        await supabase.auth.updateUser({
+          data: { start_of_week: newStart }
+        });
+      } catch (err) {
+        console.error('Failed to save start of week setting:', err);
+      }
+    }
+  };
+
   useEffect(() => {
     if (session?.user?.user_metadata?.default_view) {
       const remoteView = session.user.user_metadata.default_view;
@@ -179,6 +197,13 @@ const AppContent: React.FC = () => {
       const remoteLang = session.user.user_metadata.language;
       setLanguage(remoteLang);
       localStorage.setItem('habit_language', remoteLang);
+    }
+    if (session?.user?.user_metadata?.start_of_week) {
+      const remoteStart = session.user.user_metadata.start_of_week;
+      if (['monday', 'sunday'].includes(remoteStart)) {
+        setStartOfWeek(remoteStart);
+        localStorage.setItem('habit_start_of_week', remoteStart);
+      }
     }
   }, [session?.user?.id]);
 
@@ -330,29 +355,49 @@ const AppContent: React.FC = () => {
     monthProgress,
     topHabitsThisMonth,
     annualStats
-  } = useHabitStats(habits, completions, notes, currentMonthIndex, currentYear, daysInMonth, monthDates, weekOffset);
+  } = useHabitStats(
+    habits,
+    completions,
+    notes,
+    currentMonthIndex,
+    currentYear,
+    daysInMonth,
+    monthDates,
+    weekOffset,
+    startOfWeek
+  );
 
   const weekRange = useMemo(() => {
     const today = new Date();
     const day = today.getDay();
-    const diff = today.getDate() - day + (day === 0 ? -6 : 1) + (weekOffset * 7);
-    const monday = new Date(today.getFullYear(), today.getMonth(), diff);
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
+    // Calculate difference to start of week
+    // If startOfWeek is 'monday': Monday(1) is start. Diff = day - 1. (If Sunday(0), diff = -6)
+    // If startOfWeek is 'sunday': Sunday(0) is start. Diff = day - 0.
 
-    const startYear = monday.getFullYear();
-    const endYear = sunday.getFullYear();
+    let diff;
+    if (startOfWeek === 'monday') {
+      diff = today.getDate() - day + (day === 0 ? -6 : 1) + (weekOffset * 7);
+    } else {
+      diff = today.getDate() - day + (weekOffset * 7);
+    }
+
+    const startOfCurrentWeek = new Date(today.getFullYear(), today.getMonth(), diff);
+    const endOfCurrentWeek = new Date(startOfCurrentWeek);
+    endOfCurrentWeek.setDate(startOfCurrentWeek.getDate() + 6);
+
+    const startYear = startOfCurrentWeek.getFullYear();
+    const endYear = endOfCurrentWeek.getFullYear();
 
     if (startYear === endYear) {
-      const fromStr = monday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      const toStr = sunday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const fromStr = startOfCurrentWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const toStr = endOfCurrentWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       return `${fromStr} - ${toStr}, ${startYear}`;
     } else {
-      const fromStr = monday.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-      const toStr = sunday.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const fromStr = startOfCurrentWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const toStr = endOfCurrentWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       return `${fromStr} - ${toStr}`;
     }
-  }, [weekOffset]);
+  }, [weekOffset, startOfWeek]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
@@ -797,6 +842,8 @@ const AppContent: React.FC = () => {
           settingsRef={settingsRef}
           language={language}
           setLanguage={updateLanguage}
+          startOfWeek={startOfWeek}
+          setStartOfWeek={updateStartOfWeek}
           guestMode={guestMode}
           setGuestMode={setGuestMode}
           handleLogout={handleLogout}
@@ -943,6 +990,7 @@ const AppContent: React.FC = () => {
               setSelectedDateForCard(date);
               setCardOpenFlipped(flipped);
             }}
+            startOfWeek={startOfWeek}
           />
         )}
       </div>

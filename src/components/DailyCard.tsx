@@ -25,6 +25,7 @@ interface DailyCardProps {
     onNext?: () => void;
     defaultFlipped?: boolean;
     onJournalClick?: () => void;
+    startOfWeek?: 'monday' | 'sunday';
 }
 
 export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = ({
@@ -41,6 +42,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
     defaultFlipped = false,
     onJournalClick,
     combinedView = false,
+    startOfWeek = 'monday',
 }) => {
     const { t, i18n } = useTranslation();
     const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -368,13 +370,20 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                             // Calculate weekly progress
                             const today = date;
                             const day = today.getDay();
-                            const diff = today.getDate() - day + (day === 0 ? -6 : 1);
-                            const monday = new Date(today.getFullYear(), today.getMonth(), diff);
+
+                            let diff;
+                            if (startOfWeek === 'monday') {
+                                diff = today.getDate() - day + (day === 0 ? -6 : 1);
+                            } else {
+                                diff = today.getDate() - day;
+                            }
+
+                            const startDay = new Date(today.getFullYear(), today.getMonth(), diff);
 
                             let weekCompletions = 0;
                             for (let i = 0; i < 7; i++) {
-                                const d = new Date(monday);
-                                d.setDate(monday.getDate() + i);
+                                const d = new Date(startDay);
+                                d.setDate(startDay.getDate() + i);
                                 if (checkCompleted(habit.id, d.getDate(), completions, d.getMonth(), d.getFullYear())) {
                                     weekCompletions++;
                                 }

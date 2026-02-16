@@ -11,19 +11,28 @@ export const useHabitStats = (
     currentYear: number,
     daysInMonth: number,
     monthDates: number[],
-    weekOffset: number = 0
+    weekOffset: number = 0,
+    startOfWeek: 'monday' | 'sunday' = 'monday'
 ) => {
+    const getStartDate = (date: Date, offset: number = 0) => {
+        const day = date.getDay();
+        let diff = date.getDate() - day;
+        if (startOfWeek === 'monday') {
+            diff += (day === 0 ? -6 : 1);
+        }
+        diff += (offset * 7);
+        return new Date(date.getFullYear(), date.getMonth(), diff);
+    };
+
     const weeklyStats = useMemo(() => {
         const today = new Date();
-        const day = today.getDay();
-        const diff = today.getDate() - day + (day === 0 ? -6 : 1) + (weekOffset * 7);
-        const monday = new Date(today.getFullYear(), today.getMonth(), diff);
+        const startDate = getStartDate(today, weekOffset);
 
         const usedCount: Record<string, number> = {};
 
         return Array.from({ length: 7 }, (_, i) => {
-            const date = new Date(monday);
-            date.setDate(monday.getDate() + i);
+            const date = new Date(startDate);
+            date.setDate(startDate.getDate() + i);
             const d = date.getDate();
             const m = date.getMonth();
             const y = date.getFullYear();
@@ -49,18 +58,16 @@ export const useHabitStats = (
                 count
             };
         });
-    }, [habits, completions, weekOffset]);
+    }, [habits, completions, weekOffset, startOfWeek]);
 
     const weekProgress = useMemo(() => {
         const today = new Date();
-        const day = today.getDay();
-        const diff = today.getDate() - day + (day === 0 ? -6 : 1) + (weekOffset * 7);
-        const monday = new Date(today.getFullYear(), today.getMonth(), diff);
+        const startDate = getStartDate(today, weekOffset);
 
         let totalPossible = 0;
         for (let i = 0; i < 7; i++) {
-            const d = new Date(monday);
-            d.setDate(monday.getDate() + i);
+            const d = new Date(startDate);
+            d.setDate(startDate.getDate() + i);
             const dayIdx = d.getDay();
 
             habits.forEach(h => {
@@ -82,8 +89,8 @@ export const useHabitStats = (
             if (h.weeklyTarget) return acc + h.weeklyTarget;
             let count = 0;
             for (let i = 0; i < 7; i++) {
-                const d = new Date(monday);
-                d.setDate(monday.getDate() + i);
+                const d = new Date(startDate);
+                d.setDate(startDate.getDate() + i);
                 if (!h.frequency || h.frequency.includes(d.getDay())) count++;
             }
             return acc + count;
@@ -92,12 +99,11 @@ export const useHabitStats = (
         let completed = 0;
         habits.forEach(h => {
             let actualCount = 0;
-            const weekDiff = today.getDate() - day + (day === 0 ? -6 : 1) + (weekOffset * 7);
-            const weekMonday = new Date(today.getFullYear(), today.getMonth(), weekDiff);
+            const weekStartDate = getStartDate(today, weekOffset);
 
             for (let i = 0; i < 7; i++) {
-                const date = new Date(weekMonday);
-                date.setDate(weekMonday.getDate() + i);
+                const date = new Date(weekStartDate);
+                date.setDate(weekStartDate.getDate() + i);
                 if (isCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear())) {
                     actualCount++;
                 }
@@ -112,12 +118,11 @@ export const useHabitStats = (
         // Per-habit performance for the week (for display)
         const habitPerformance = habits.map(h => {
             let hCompletedActual = 0;
-            const weekDiff = today.getDate() - day + (day === 0 ? -6 : 1) + (weekOffset * 7);
-            const weekMonday = new Date(today.getFullYear(), today.getMonth(), weekDiff);
+            const weekStartDate = getStartDate(today, weekOffset);
 
             for (let i = 0; i < 7; i++) {
-                const date = new Date(weekMonday);
-                date.setDate(weekMonday.getDate() + i);
+                const date = new Date(weekStartDate);
+                date.setDate(weekStartDate.getDate() + i);
                 if (isCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear())) {
                     hCompletedActual++;
                 }
@@ -136,7 +141,8 @@ export const useHabitStats = (
             percentage: totalPossible > 0 ? (completed / totalPossible) * 100 : 0,
             habitPerformance
         };
-    }, [habits, completions, weeklyStats, weekOffset]);
+    }, [habits, completions, weeklyStats, weekOffset, startOfWeek]);
+
     const dailyStats = useMemo(() => {
         return monthDates.map(day => {
             let count = 0;
@@ -566,17 +572,14 @@ export const useHabitStats = (
 
     const prevWeekProgress = useMemo(() => {
         const today = new Date();
-        const day = today.getDay();
-        // Shift to previous week
-        const diff = today.getDate() - day + (day === 0 ? -6 : 1) + ((weekOffset - 1) * 7);
-        const monday = new Date(today.getFullYear(), today.getMonth(), diff);
+        const startDate = getStartDate(today, weekOffset - 1);
 
         let completed = 0;
         const totalPossible = habits.length * 7;
 
         for (let i = 0; i < 7; i++) {
-            const date = new Date(monday);
-            date.setDate(monday.getDate() + i);
+            const date = new Date(startDate);
+            date.setDate(startDate.getDate() + i);
             const d = date.getDate();
             const m = date.getMonth();
             const y = date.getFullYear();
@@ -589,7 +592,7 @@ export const useHabitStats = (
         return {
             percentage: totalPossible > 0 ? (completed / totalPossible) * 100 : 0
         };
-    }, [habits, completions, weekOffset]);
+    }, [habits, completions, weekOffset, startOfWeek]);
 
     const allTimeBestWeek = useMemo(() => {
         const weekCounts: Record<string, number> = {};
@@ -604,9 +607,13 @@ export const useHabitStats = (
 
                     // Get ISO Week roughly or just Monday of that week
                     const day = date.getDay();
-                    const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-                    const monday = new Date(date.getFullYear(), date.getMonth(), diff);
-                    const key = `${monday.getFullYear()}-${(monday.getMonth() + 1).toString().padStart(2, '0')}-${monday.getDate().toString().padStart(2, '0')}`;
+                    let diff = date.getDate() - day;
+                    if (startOfWeek === 'monday') {
+                        diff += (day === 0 ? -6 : 1);
+                    }
+
+                    const startOfWeekDate = new Date(date.getFullYear(), date.getMonth(), diff);
+                    const key = `${startOfWeekDate.getFullYear()}-${(startOfWeekDate.getMonth() + 1).toString().padStart(2, '0')}-${startOfWeekDate.getDate().toString().padStart(2, '0')}`;
 
                     weekCounts[key] = (weekCounts[key] || 0) + 1;
                 }
@@ -617,22 +624,22 @@ export const useHabitStats = (
             const totalPossible = habits.length * 7;
             const rate = totalPossible > 0 ? (count / totalPossible) * 100 : 0;
             const [y, m, d] = key.split('-').map(Number);
-            const monday = new Date(y, m - 1, d);
-            const sunday = new Date(monday);
-            sunday.setDate(monday.getDate() + 6);
+            const startOfWeekDate = new Date(y, m - 1, d);
+            const endOfWeekDate = new Date(startOfWeekDate);
+            endOfWeekDate.setDate(startOfWeekDate.getDate() + 6);
 
-            const startYear = monday.getFullYear();
-            const endYear = sunday.getFullYear();
+            const startYear = startOfWeekDate.getFullYear();
+            const endYear = endOfWeekDate.getFullYear();
 
             let dateRangeStr = '';
 
             if (startYear === endYear) {
-                const fromStr = monday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                const toStr = sunday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const fromStr = startOfWeekDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const toStr = endOfWeekDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                 dateRangeStr = `${fromStr} - ${toStr}, ${startYear}`;
             } else {
-                const fromStr = monday.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                const toStr = sunday.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const fromStr = startOfWeekDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const toStr = endOfWeekDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                 dateRangeStr = `${fromStr} - ${toStr}`;
             }
 
@@ -645,7 +652,7 @@ export const useHabitStats = (
         }).sort((a, b) => b.rate - a.rate)[0];
 
         return best || { rate: 0, dateRangeStr: '', year: 0 };
-    }, [habits, completions]);
+    }, [habits, completions, startOfWeek]);
 
     const weekDelta = weekProgress.percentage - prevWeekProgress.percentage;
 

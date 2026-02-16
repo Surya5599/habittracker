@@ -13,6 +13,8 @@ interface SettingsMenuProps {
     settingsRef: React.RefObject<HTMLDivElement>;
     language: string;
     setLanguage: (lang: string) => void;
+    startOfWeek: 'monday' | 'sunday';
+    setStartOfWeek: (start: 'monday' | 'sunday') => void;
     defaultView: 'daily' | 'monthly' | 'dashboard';
     setDefaultView: (view: 'daily' | 'monthly' | 'dashboard') => void;
     onReportBug: () => void;
@@ -28,6 +30,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     settingsRef,
     language,
     setLanguage,
+    startOfWeek,
+    setStartOfWeek,
     defaultView,
     setDefaultView,
     onReportBug,
@@ -104,6 +108,26 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                                 ))}
                             </div>
                         )}
+                    </div>
+
+                    {/* Start of Week - Segmented Control */}
+                    <div className="flex items-center justify-between p-2 rounded-lg hover:bg-stone-50 transition-colors">
+                        <span className="text-[10px] font-bold uppercase text-stone-500">{t('settings.general.startOfWeek')}</span>
+                        <div className="flex bg-stone-100 p-0.5 rounded-md">
+                            {[
+                                { id: 'sunday', label: 'SUN' },
+                                { id: 'monday', label: 'MON' }
+                            ].map((day) => (
+                                <button
+                                    key={day.id}
+                                    onClick={() => setStartOfWeek(day.id as 'monday' | 'sunday')}
+                                    className={`px-2 py-1 rounded flex items-center justify-center transition-all text-[10px] font-bold ${startOfWeek === day.id ? 'bg-white shadow-sm text-black' : 'text-stone-400 hover:text-stone-600'}`}
+                                    title={day.label}
+                                >
+                                    {day.label}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     {/* Theme Section */}

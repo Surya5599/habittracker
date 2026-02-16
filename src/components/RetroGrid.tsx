@@ -9,22 +9,24 @@ interface RetroGridProps {
     monthIndex: number;
     year: number;
     onDayClick?: (day: number) => void;
+    startOfWeek: 'monday' | 'sunday';
 }
 
 export const RetroGrid: React.FC<RetroGridProps> = ({
     days,
     viewMode,
-    theme,
     monthIndex,
     year,
-    onDayClick
+    onDayClick,
+    startOfWeek
 }) => {
     const firstDayOfMonth = new Date(year, monthIndex, 1).getDay();
     // In our calendar we start on Sunday (0) or Monday (1)?
     // The screenshot shows M T W T F S S, which means Monday is first.
     // Sunday in JS is 0, Monday is 1.
     // To start with Monday, we shift: (day + 6) % 7
-    const firstDayShifted = (firstDayOfMonth + 6) % 7;
+    // To start with Sunday, we don't shift (day is already 0-6 starting Sun)
+    const firstDayShifted = startOfWeek === 'monday' ? (firstDayOfMonth + 6) % 7 : firstDayOfMonth;
 
     const MOOD_CONFIG: Record<number, { icon: any, color: string }> = {
         1: { icon: Angry, color: '#ef4444' },
@@ -93,7 +95,10 @@ export const RetroGrid: React.FC<RetroGridProps> = ({
     return (
         <div className="w-full space-y-2">
             <div className="grid grid-cols-7 gap-1 w-full">
-                {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
+                {(startOfWeek === 'monday'
+                    ? ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+                    : ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+                ).map((d, i) => (
                     <div key={i} className="text-[10px] font-black text-black text-center">{d}</div>
                 ))}
             </div>

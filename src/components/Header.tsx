@@ -35,6 +35,8 @@ interface HeaderProps {
     setLanguage: (lang: string) => void;
     guestMode: boolean;
     setGuestMode: (mode: boolean) => void;
+    startOfWeek: 'monday' | 'sunday';
+    setStartOfWeek: (start: 'monday' | 'sunday') => void;
     handleLogout: () => void;
     monthProgress: any;
     annualStats: any;
@@ -89,6 +91,8 @@ export const Header: React.FC<HeaderProps> = ({
     setLanguage,
     guestMode,
     setGuestMode,
+    startOfWeek,
+    setStartOfWeek,
     handleLogout,
     monthProgress,
     annualStats,
@@ -285,6 +289,8 @@ export const Header: React.FC<HeaderProps> = ({
                                 settingsRef={settingsRef}
                                 language={language}
                                 setLanguage={setLanguage}
+                                startOfWeek={startOfWeek}
+                                setStartOfWeek={setStartOfWeek}
                                 defaultView={defaultView}
                                 setDefaultView={setDefaultView}
                                 onReportBug={onReportBug}

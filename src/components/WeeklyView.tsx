@@ -16,6 +16,7 @@ interface WeeklyViewProps {
     updateNote: (dateKey: string, data: Partial<DayData>) => void;
     addHabit: () => void;
     setSelectedDateForCard: (date: Date | null, flipped?: boolean) => void;
+    startOfWeek: 'monday' | 'sunday';
 }
 
 export const WeeklyView: React.FC<WeeklyViewProps> = ({
@@ -28,6 +29,7 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
     notes,
     updateNote,
     addHabit,
+    startOfWeek,
 }) => {
     const [shareModalOpen, setShareModalOpen] = useState(false);
     const [shareData, setShareData] = useState<{
@@ -59,9 +61,20 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
         // Tue(2) -> 1
         // ...
         // Sun(0) -> 6
-        const adjustedIndex = day === 0 ? 6 : day - 1;
+
+        // If week starts on Sunday (0):
+        // Sun(0) -> 0
+        // Mon(1) -> 1
+        // ...
+
+        let adjustedIndex;
+        if (startOfWeek === 'monday') {
+            adjustedIndex = day === 0 ? 6 : day - 1;
+        } else {
+            adjustedIndex = day;
+        }
         setMobileDayIndex(Math.max(0, Math.min(6, adjustedIndex)));
-    }, []);
+    }, [startOfWeek]);
     // ^ Only run on mount. If weekOffset changes, maybe reset? 
     // Ideally we stay on the same "relative" day index when switching weeks.
 
@@ -69,12 +82,20 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
     const getWeekDates = () => {
         const today = new Date();
         const day = today.getDay();
-        const diff = today.getDate() - day + (day === 0 ? -6 : 1) + (weekOffset * 7); // adjust when day is sunday and add offset
-        const monday = new Date(today.getFullYear(), today.getMonth(), diff);
+
+        let diff;
+        if (startOfWeek === 'monday') {
+            diff = today.getDate() - day + (day === 0 ? -6 : 1) + (weekOffset * 7);
+        } else {
+            diff = today.getDate() - day + (weekOffset * 7);
+        }
+
+        const startOfCurrentWeek = new Date(today.getFullYear(), today.getMonth(), diff);
+        const startDay = startOfCurrentWeek; // Rename for clarity, it's either Mon or Sun
 
         return Array.from({ length: 7 }, (_, i) => {
-            const date = new Date(monday);
-            date.setDate(monday.getDate() + i);
+            const date = new Date(startDay);
+            date.setDate(startDay.getDate() + i);
             return date;
         });
     };
@@ -140,6 +161,7 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                         onShareClick={handleShareClick}
                         defaultFlipped={showJournalView}
                         onJournalClick={handleJournalClick}
+                        startOfWeek={startOfWeek}
                     />
                 ))}
             </div>
@@ -161,6 +183,7 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                         onNext={handleNextDay}
                         defaultFlipped={showJournalView}
                         onJournalClick={handleJournalClick}
+                        startOfWeek={startOfWeek}
                     />
                 </div>
             </div>

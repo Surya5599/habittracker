@@ -38,6 +38,7 @@ interface DashboardViewProps {
     updateMonthlyGoals: (key: string, goals: any[]) => void;
     reorderHabits: (newHabits: Habit[]) => Promise<void>;
     setSelectedDateForCard: (date: Date | null, flipped?: boolean) => void;
+    startOfWeek: 'monday' | 'sunday';
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -51,6 +52,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     updateMonthlyGoals,
     reorderHabits,
     setSelectedDateForCard,
+    startOfWeek,
 }) => {
     const { t } = useTranslation();
     const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
@@ -305,6 +307,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     monthIndex={idx}
                                     year={currentYear}
                                     onDayClick={(day) => setSelectedDateForCard(new Date(currentYear, idx, day), viewMode === 'mood')}
+                                    startOfWeek={startOfWeek}
                                 />
 
                                 <div className="text-center py-2">

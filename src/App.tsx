@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
 import i18n from './i18n';
-import { X, Search } from 'lucide-react';
+import { X, Search, Key } from 'lucide-react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from './supabase';
 import './i18n';
@@ -62,7 +62,13 @@ const DEMO_ANNUAL_STATS = {
 const AppContent: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const impersonateId = queryParams.get('impersonate');
   const [session, setSession] = useState<any>(null);
+
+  const isAdmin = session?.user?.email === 'admin@habicard.com';
+  const effectiveUserId = (isAdmin && impersonateId) ? impersonateId : session?.user?.id;
+  const isImpersonating = !!(isAdmin && impersonateId);
   const [guestMode, setGuestMode] = useState(() => {
     return localStorage.getItem('habit_guest_mode') === 'true';
   });
@@ -135,7 +141,7 @@ const AppContent: React.FC = () => {
     setDefaultView(newView);
     localStorage.setItem('habit_default_view', newView);
 
-    if (session?.user?.id) {
+    if (session?.user?.id && !isImpersonating) {
       try {
         await supabase.auth.updateUser({
           data: { default_view: newView }
@@ -150,7 +156,7 @@ const AppContent: React.FC = () => {
     setLanguage(newLang);
     localStorage.setItem('habit_language', newLang);
 
-    if (session?.user?.id) {
+    if (session?.user?.id && !isImpersonating) {
       try {
         await supabase.auth.updateUser({
           data: { language: newLang }
@@ -233,11 +239,11 @@ const AppContent: React.FC = () => {
       }
     };
 
-    if (session?.user?.id) {
+    if (session?.user?.id && !isImpersonating) {
       checkUnreadFeedback();
       // Optional: Set up realtime subscription? For now, fetch on load is enough.
     }
-  }, [session?.user?.id]);
+  }, [session?.user?.id, isImpersonating]);
 
   const handleOpenFeedback = () => {
     setIsFeedbackModalOpen(true);
@@ -280,12 +286,12 @@ const AppContent: React.FC = () => {
       return updated;
     });
 
-    if (session?.user?.id) {
+    if (effectiveUserId) {
       try {
         await supabase
           .from('monthly_goals')
           .upsert({
-            user_id: session.user.id,
+            user_id: effectiveUserId,
             month_key: monthKey,
             goals: goals // jsonb
           }, {
@@ -308,7 +314,7 @@ const AppContent: React.FC = () => {
     removeHabit,
     reorderHabits,
     setLoading
-  } = useHabits(session, guestMode);
+  } = useHabits(session, guestMode, isImpersonating ? effectiveUserId : undefined);
 
   const daysInMonth = useMemo(() => new Date(currentYear, currentMonthIndex + 1, 0).getDate(), [currentYear, currentMonthIndex]);
   const monthDates = useMemo(() => Array.from({ length: daysInMonth }, (_, i) => i + 1), [daysInMonth]);
@@ -372,12 +378,12 @@ const AppContent: React.FC = () => {
   // Load notes and monthly goals from database or localStorage
   useEffect(() => {
     const loadData = async () => {
-      if (session?.user?.id) {
+      if (effectiveUserId) {
         // 1. Load Daily Notes
         const { data: notesData, error: notesError } = await supabase
           .from('daily_notes')
           .select('date_key, content')
-          .eq('user_id', session.user.id);
+          .eq('user_id', effectiveUserId);
 
         if (!notesError && notesData) {
           const notesObj: DailyNote = {};
@@ -414,7 +420,7 @@ const AppContent: React.FC = () => {
         const { data: goalsData, error: goalsError } = await supabase
           .from('monthly_goals')
           .select('month_key, goals')
-          .eq('user_id', session.user.id);
+          .eq('user_id', effectiveUserId);
 
         if (!goalsError && goalsData) {
           const goalsObj: MonthlyGoals = {};
@@ -478,7 +484,7 @@ const AppContent: React.FC = () => {
       setNotesLoaded(true);
     };
     loadData();
-  }, [session?.user?.id]);
+  }, [effectiveUserId]);
 
   useEffect(() => {
     if (session?.user) {
@@ -501,7 +507,7 @@ const AppContent: React.FC = () => {
       setShowUpdateModal(true);
     }
 
-    if (session?.user) {
+    if (session?.user && !isImpersonating) {
       try {
         await supabase.auth.updateUser({
           data: { onboarding_completed: true }
@@ -509,7 +515,7 @@ const AppContent: React.FC = () => {
       } catch (err) {
         console.error('Failed to update onboarding status', err);
       }
-    } else {
+    } else if (!session) {
       localStorage.setItem('habit_onboarding_completed', 'true');
     }
   };
@@ -602,20 +608,20 @@ const AppContent: React.FC = () => {
     const isEmpty = (!updatedNote.tasks || updatedNote.tasks.length === 0) && !updatedNote.mood && !updatedNote.journal;
 
     // Sync to database for logged-in users
-    if (session?.user?.id) {
+    if (effectiveUserId) {
       if (isEmpty) {
         // Delete empty notes
         await supabase
           .from('daily_notes')
           .delete()
-          .eq('user_id', session.user.id)
+          .eq('user_id', effectiveUserId)
           .eq('date_key', dateKey);
       } else {
         // Upsert note
         await supabase
           .from('daily_notes')
           .upsert({
-            user_id: session.user.id,
+            user_id: effectiveUserId,
             date_key: dateKey,
             content: JSON.stringify(updatedNote)
           }, {
@@ -736,239 +742,243 @@ const AppContent: React.FC = () => {
 
       <Toaster position="top-center" reverseOrder={false} />
 
-      {location.pathname === '/privacy' ? (
-        <>
-          <PrivacyPolicy onOpenFeedback={handleOpenFeedback} />
-          <FeedbackModal
-            isOpen={isFeedbackModalOpen}
-            onClose={() => setIsFeedbackModalOpen(false)}
-            username={session?.user?.email || (guestMode ? 'Guest' : '')}
-          />
-        </>
-      ) : (
-        <>
-          <OnboardingModal
-            isOpen={showOnboarding}
-            onClose={handleOnboardingComplete}
-            initialTheme={theme}
-            onThemeChange={setTheme}
-            initialView={defaultView}
-            onViewChange={updateDefaultView}
-            username={session?.user?.email}
-          />
-
-          <FeatureAnnouncementModal
-            isOpen={showUpdateModal}
-            onClose={handleUpdateModalClose}
-            title="Retro Dashboard & Streaks"
-            description="Experience the new Retro Grids for visual habit history, and master your routines with the all-new Streak Master analysis modal!"
-            actionLabel="View Dashboard"
-            onAction={handleUpdateModalAction}
-          />
-
-          <div className="max-w-full mx-auto bg-white border-[2px] sm:border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] p-2 sm:p-4 space-y-4 min-h-[calc(100vh-2rem)]">
-
-            <Header
-              view={view}
-              setView={setView}
-              currentYear={currentYear}
-              setCurrentYear={setCurrentYear}
-              currentMonthIndex={currentMonthIndex}
-              setCurrentMonthIndex={setCurrentMonthIndex}
-              navigateMonth={navigateMonth}
-              navigateWeek={navigateWeek}
-              resetWeekOffset={resetWeekOffset}
-              weekRange={weekRange}
-              theme={theme}
-              setTheme={setTheme}
-              themes={THEMES}
-              settingsOpen={settingsOpen}
-              setSettingsOpen={setSettingsOpen}
-              settingsRef={settingsRef}
-              language={language}
-              setLanguage={updateLanguage}
-              guestMode={guestMode}
-              setGuestMode={setGuestMode}
-              handleLogout={handleLogout}
-              monthProgress={monthProgress}
-              annualStats={annualStats}
-              dailyStats={dailyStats}
-              weeklyStats={weeklyStats}
-              weekProgress={weekProgress}
-              prevWeekProgress={prevWeekProgress}
-              weekDelta={weekDelta}
-              monthDelta={monthDelta}
-              allTimeBestWeek={allTimeBestWeek}
-              habits={habits}
-              defaultView={defaultView}
-              setDefaultView={updateDefaultView}
-              addHabit={addHabit}
-              updateHabit={updateHabit}
-              removeHabit={removeHabit}
-              reorderHabits={reorderHabits}
-              setWeekOffset={setWeekOffset}
-              monthlyGoals={monthlyGoals}
-              updateMonthlyGoals={updateMonthlyGoals}
-              topHabitsThisMonth={topHabitsThisMonth}
-              weekOffset={weekOffset}
-              isHabitModalOpen={isHabitModalOpen}
-              setIsHabitModalOpen={setIsHabitModalOpen}
-              isResolutionsModalOpen={isResolutionsModalOpen}
-              setIsResolutionsModalOpen={setIsResolutionsModalOpen}
-              isStreakModalOpen={isStreakModalOpen}
-              setIsStreakModalOpen={setIsStreakModalOpen}
-              onReportBug={() => setIsFeedbackModalOpen(true)}
-              hasUnreadFeedback={hasUnreadFeedback}
-              onSearch={() => setIsSearchOpen(true)}
-            />
-
-            <SearchModal
-              isOpen={isSearchOpen}
-              onClose={() => setIsSearchOpen(false)}
-              habits={habits}
-              notes={notes}
-              onSelectHabit={(habitId) => {
-                setEditingHabitId(habitId);
-                setIsHabitModalOpen(true);
-              }}
-              onSelectDate={(date) => {
-                setSelectedDateForCard(date);
-              }}
-              themePrimary={theme.primary}
-            />
-
-            {selectedDateForCard && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setSelectedDateForCard(null)}>
-                <div className="w-full max-w-4xl h-auto relative animate-in zoom-in-95 slide-in-from-bottom-4 duration-300" onClick={e => e.stopPropagation()}>
-                  {isSearchOpen && (
-                    <button
-                      onClick={() => setSelectedDateForCard(null)}
-                      className="absolute -top-12 left-0 text-white hover:text-stone-300 p-2 transition-colors flex items-center gap-2"
-                    >
-                      <Search size={20} />
-                      <span className="font-bold text-sm uppercase tracking-wider">Back to Search</span>
-                    </button>
-                  )}
-                  <button
-                    onClick={() => setSelectedDateForCard(null)}
-                    className="absolute -top-12 right-0 text-white hover:text-stone-300 p-2 transition-colors"
-                  >
-                    <X size={24} />
-                  </button>
-                  <DailyCard
-                    date={selectedDateForCard}
-                    habits={habits}
-                    completions={completions}
-                    theme={theme}
-                    toggleCompletion={toggleCompletion}
-                    notes={notes}
-                    updateNote={updateNote}
-                    onShareClick={() => { }}
-                    defaultFlipped={cardOpenFlipped}
-                    combinedView={true}
-                  />
-                </div>
-              </div>
-            )}
-
-            {view === 'monthly' ? (
-              <MonthlyView
-                habits={habits}
-                completions={completions}
-                currentMonthIndex={currentMonthIndex}
-                currentYear={currentYear}
-                theme={theme}
-                weeks={weeks}
-                monthDates={monthDates}
-                topHabitsThisMonth={topHabitsThisMonth}
-                editingHabitId={editingHabitId}
-                editingGoalId={editingGoalId}
-                inputRef={inputRef}
-                goalInputRef={goalInputRef}
-                addHabit={() => addHabit(theme.primary).then(id => setEditingHabitId(id))}
-                toggleCompletion={toggleCompletion}
-                updateHabitNameState={(id, name) => updateHabit(id, { name })}
-                updateHabitGoalState={(id, goal) => updateHabit(id, { goal: parseInt(goal) || 0 })}
-                handleHabitBlur={handleHabitBlur}
-                setEditingHabitId={setEditingHabitId}
-                setEditingGoalId={setEditingGoalId}
-                removeHabit={removeHabit}
-                isDayFullyCompleted={isDayFullyCompleted}
-                isModalOpen={isHabitModalOpen || isResolutionsModalOpen}
-                notes={notes}
-                updateNote={updateNote}
-                setSelectedDateForCard={(date, flipped = false) => {
-                  setSelectedDateForCard(date);
-                  setCardOpenFlipped(flipped);
-                }}
-              />
-            ) : view === 'dashboard' ? (
-              <DashboardView
-                annualStats={annualStats}
-                habits={habits}
-                theme={theme}
-                currentYear={currentYear}
-                setCurrentMonthIndex={setCurrentMonthIndex}
-                setView={setView}
-                monthlyGoals={monthlyGoals}
-                updateMonthlyGoals={updateMonthlyGoals}
-                reorderHabits={reorderHabits}
-                setSelectedDateForCard={(date, flipped = false) => {
-                  setSelectedDateForCard(date);
-                  setCardOpenFlipped(flipped);
-                }}
-              />
-            ) : (
-              <WeeklyView
-                habits={habits}
-                completions={completions}
-                currentYear={currentYear}
-                weekOffset={weekOffset}
-                theme={theme}
-                toggleCompletion={toggleCompletion}
-                notes={notes}
-                updateNote={updateNote}
-                addHabit={() => addHabit(theme.primary).then(id => setEditingHabitId(id))}
-                setSelectedDateForCard={(date, flipped = false) => {
-                  setSelectedDateForCard(date);
-                  setCardOpenFlipped(flipped);
-                }}
-              />
-            )}
+      {isImpersonating && (
+        <div className="bg-amber-100 border-b-2 border-black p-2 flex items-center justify-between sticky top-0 z-50">
+          <div className="flex items-center gap-2 text-amber-900 font-bold text-sm uppercase tracking-wider">
+            <Key size={16} />
+            <span>Viewing as: {effectiveUserId}</span>
           </div>
+          <button
+            onClick={() => window.location.href = '/'}
+            className="px-3 py-1 bg-black text-white text-xs font-bold uppercase hover:opacity-80 transition-opacity"
+          >
+            Exit View
+          </button>
+        </div>
+      )}
 
-          <BottomNav
-            view={view}
-            setView={setView}
-            resetWeekOffset={resetWeekOffset}
-            theme={theme}
-          />
+      <OnboardingModal
+        isOpen={showOnboarding}
+        onClose={handleOnboardingComplete}
+        initialTheme={theme}
+        onThemeChange={setTheme}
+        initialView={defaultView}
+        onViewChange={updateDefaultView}
+        username={session?.user?.email}
+      />
 
-          <FeedbackModal
-            isOpen={isFeedbackModalOpen}
-            onClose={() => {
-              setIsFeedbackModalOpen(false);
-              if (hasUnreadFeedback) {
-                setHasUnreadFeedback(false);
-                localStorage.setItem('habit_feedback_last_read', Date.now().toString());
-              }
-            }}
-            userId={session?.user?.id}
-            userEmail={session?.user?.email}
-            hasUnreadFeedback={hasUnreadFeedback}
-          />
+      <FeatureAnnouncementModal
+        isOpen={showUpdateModal}
+        onClose={handleUpdateModalClose}
+        title="Retro Dashboard & Streaks"
+        description="Experience the new Retro Grids for visual habit history, and master your routines with the all-new Streak Master analysis modal!"
+        actionLabel="View Dashboard"
+        onAction={handleUpdateModalAction}
+      />
 
-          <StreakModal
-            isOpen={isStreakModalOpen}
-            onClose={() => setIsStreakModalOpen(false)}
+      <div className="max-w-full mx-auto bg-white border-[2px] sm:border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] p-2 sm:p-4 space-y-4 min-h-[calc(100vh-2rem)]">
+
+        <Header
+          view={view}
+          setView={setView}
+          currentYear={currentYear}
+          setCurrentYear={setCurrentYear}
+          currentMonthIndex={currentMonthIndex}
+          setCurrentMonthIndex={setCurrentMonthIndex}
+          navigateMonth={navigateMonth}
+          navigateWeek={navigateWeek}
+          resetWeekOffset={resetWeekOffset}
+          weekRange={weekRange}
+          theme={theme}
+          setTheme={setTheme}
+          themes={THEMES}
+          settingsOpen={settingsOpen}
+          setSettingsOpen={setSettingsOpen}
+          settingsRef={settingsRef}
+          language={language}
+          setLanguage={updateLanguage}
+          guestMode={guestMode}
+          setGuestMode={setGuestMode}
+          handleLogout={handleLogout}
+          monthProgress={monthProgress}
+          annualStats={annualStats}
+          dailyStats={dailyStats}
+          weeklyStats={weeklyStats}
+          weekProgress={weekProgress}
+          prevWeekProgress={prevWeekProgress}
+          weekDelta={weekDelta}
+          monthDelta={monthDelta}
+          allTimeBestWeek={allTimeBestWeek}
+          habits={habits}
+          defaultView={defaultView}
+          setDefaultView={updateDefaultView}
+          addHabit={addHabit}
+          updateHabit={updateHabit}
+          removeHabit={removeHabit}
+          reorderHabits={reorderHabits}
+          setWeekOffset={setWeekOffset}
+          monthlyGoals={monthlyGoals}
+          updateMonthlyGoals={updateMonthlyGoals}
+          topHabitsThisMonth={topHabitsThisMonth}
+          weekOffset={weekOffset}
+          isHabitModalOpen={isHabitModalOpen}
+          setIsHabitModalOpen={setIsHabitModalOpen}
+          isResolutionsModalOpen={isResolutionsModalOpen}
+          setIsResolutionsModalOpen={setIsResolutionsModalOpen}
+          isStreakModalOpen={isStreakModalOpen}
+          setIsStreakModalOpen={setIsStreakModalOpen}
+          onReportBug={() => setIsFeedbackModalOpen(true)}
+          hasUnreadFeedback={hasUnreadFeedback}
+          onSearch={() => setIsSearchOpen(true)}
+        />
+
+        <SearchModal
+          isOpen={isSearchOpen}
+          onClose={() => setIsSearchOpen(false)}
+          habits={habits}
+          notes={notes}
+          onSelectHabit={(habitId) => {
+            setEditingHabitId(habitId);
+            setIsHabitModalOpen(true);
+          }}
+          onSelectDate={(date) => {
+            setSelectedDateForCard(date);
+          }}
+          themePrimary={theme.primary}
+        />
+
+        {selectedDateForCard && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setSelectedDateForCard(null)}>
+            <div className="w-full max-w-4xl h-auto relative animate-in zoom-in-95 slide-in-from-bottom-4 duration-300" onClick={e => e.stopPropagation()}>
+              {isSearchOpen && (
+                <button
+                  onClick={() => setSelectedDateForCard(null)}
+                  className="absolute -top-12 left-0 text-white hover:text-stone-300 p-2 transition-colors flex items-center gap-2"
+                >
+                  <Search size={20} />
+                  <span className="font-bold text-sm uppercase tracking-wider">Back to Search</span>
+                </button>
+              )}
+              <button
+                onClick={() => setSelectedDateForCard(null)}
+                className="absolute -top-12 right-0 text-white hover:text-stone-300 p-2 transition-colors"
+              >
+                <X size={24} />
+              </button>
+              <DailyCard
+                date={selectedDateForCard}
+                habits={habits}
+                completions={completions}
+                theme={theme}
+                toggleCompletion={toggleCompletion}
+                notes={notes}
+                updateNote={updateNote}
+                onShareClick={() => { }}
+                defaultFlipped={cardOpenFlipped}
+                combinedView={true}
+              />
+            </div>
+          </div>
+        )}
+
+        {view === 'monthly' ? (
+          <MonthlyView
             habits={habits}
-            topHabits={annualStats.allTopHabits}
+            completions={completions}
+            currentMonthIndex={currentMonthIndex}
+            currentYear={currentYear}
             theme={theme}
-            globalCurrentStreak={annualStats.currentStreak}
-            globalMaxStreak={annualStats.maxStreak}
+            weeks={weeks}
+            monthDates={monthDates}
+            topHabitsThisMonth={topHabitsThisMonth}
+            editingHabitId={editingHabitId}
+            editingGoalId={editingGoalId}
+            inputRef={inputRef}
+            goalInputRef={goalInputRef}
+            addHabit={() => addHabit(theme.primary).then(id => setEditingHabitId(id))}
+            toggleCompletion={toggleCompletion}
+            updateHabitNameState={(id, name) => updateHabit(id, { name })}
+            updateHabitGoalState={(id, goal) => updateHabit(id, { goal: parseInt(goal) || 0 })}
+            handleHabitBlur={handleHabitBlur}
+            setEditingHabitId={setEditingHabitId}
+            setEditingGoalId={setEditingGoalId}
+            removeHabit={removeHabit}
+            isDayFullyCompleted={isDayFullyCompleted}
+            isModalOpen={isHabitModalOpen || isResolutionsModalOpen}
+            notes={notes}
+            updateNote={updateNote}
+            setSelectedDateForCard={(date, flipped = false) => {
+              setSelectedDateForCard(date);
+              setCardOpenFlipped(flipped);
+            }}
           />
+        ) : view === 'dashboard' ? (
+          <DashboardView
+            annualStats={annualStats}
+            habits={habits}
+            theme={theme}
+            currentYear={currentYear}
+            setCurrentMonthIndex={setCurrentMonthIndex}
+            setView={setView}
+            monthlyGoals={monthlyGoals}
+            updateMonthlyGoals={updateMonthlyGoals}
+            reorderHabits={reorderHabits}
+            setSelectedDateForCard={(date, flipped = false) => {
+              setSelectedDateForCard(date);
+              setCardOpenFlipped(flipped);
+            }}
+          />
+        ) : (
+          <WeeklyView
+            habits={habits}
+            completions={completions}
+            currentYear={currentYear}
+            weekOffset={weekOffset}
+            theme={theme}
+            toggleCompletion={toggleCompletion}
+            notes={notes}
+            updateNote={updateNote}
+            addHabit={() => addHabit(theme.primary).then(id => setEditingHabitId(id))}
+            setSelectedDateForCard={(date, flipped = false) => {
+              setSelectedDateForCard(date);
+              setCardOpenFlipped(flipped);
+            }}
+          />
+        )}
+      </div>
 
-          <style>{`
+      <BottomNav
+        view={view}
+        setView={setView}
+        resetWeekOffset={resetWeekOffset}
+        theme={theme}
+      />
+
+      <FeedbackModal
+        isOpen={isFeedbackModalOpen}
+        onClose={() => {
+          setIsFeedbackModalOpen(false);
+          if (hasUnreadFeedback) {
+            setHasUnreadFeedback(false);
+            localStorage.setItem('habit_feedback_last_read', Date.now().toString());
+          }
+        }}
+        userId={session?.user?.id}
+        userEmail={session?.user?.email}
+        hasUnreadFeedback={hasUnreadFeedback}
+      />
+
+      <StreakModal
+        isOpen={isStreakModalOpen}
+        onClose={() => setIsStreakModalOpen(false)}
+        habits={habits}
+        topHabits={annualStats.allTopHabits}
+        theme={theme}
+        globalCurrentStreak={annualStats.currentStreak}
+        globalMaxStreak={annualStats.maxStreak}
+      />
+
+      <style>{`
         .animate-spin-slow { animation: spin 3s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         ::-webkit-scrollbar { height: 8px; width: 8px; }
@@ -982,9 +992,6 @@ const AppContent: React.FC = () => {
           .overflow-x-auto { -webkit-overflow-scrolling: touch; }
         }
       `}</style>
-
-        </>
-      )}
     </div>
   );
 };
@@ -1104,6 +1111,16 @@ const App: React.FC = () => {
     <BrowserRouter>
       <Routes>
         <Route path="/signin" element={<SignInPage />} />
+        <Route
+          path="/privacy"
+          element={
+            <PrivacyPolicy
+              onOpenFeedback={() => {
+                window.location.href = 'mailto:support@habicard.com?subject=Privacy%20Policy%20Feedback';
+              }}
+            />
+          }
+        />
 
         <Route
           path="/*"

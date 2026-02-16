@@ -4,7 +4,7 @@ import { Habit, HabitCompletion } from '../types';
 import { INITIAL_HABITS, LOCAL_HABITS_KEY, LOCAL_COMPLETIONS_KEY } from '../constants';
 import toast from 'react-hot-toast';
 
-export const useHabits = (session: any, guestMode: boolean) => {
+export const useHabits = (session: any, guestMode: boolean, overrideUserId?: string) => {
     const [habits, setHabits] = useState<Habit[]>([]);
     const [completions, setCompletions] = useState<HabitCompletion>({});
     const [loading, setLoading] = useState(true);
@@ -177,18 +177,18 @@ export const useHabits = (session: any, guestMode: boolean) => {
         }
     }, []);
 
-    const userId = session?.user?.id;
+    const userId = overrideUserId || session?.user?.id;
 
     useEffect(() => {
         if (userId) {
             const localH = JSON.parse(localStorage.getItem(LOCAL_HABITS_KEY) || '[]');
             const localC = JSON.parse(localStorage.getItem(LOCAL_COMPLETIONS_KEY) || '{}');
-            if (localH.length > 0) {
+            if (localH.length > 0 && !overrideUserId) {
                 syncGuestToCloud(userId, localH, localC).then(() => fetchUserData(userId));
             } else {
                 fetchUserData(userId);
             }
-        } else if (guestMode) {
+        } else if (guestMode && !overrideUserId) {
             // Guest Logic
             const localH = JSON.parse(localStorage.getItem(LOCAL_HABITS_KEY) || '[]');
             const localC = JSON.parse(localStorage.getItem(LOCAL_COMPLETIONS_KEY) || '{}');
@@ -263,7 +263,7 @@ export const useHabits = (session: any, guestMode: boolean) => {
     }, [userId, guestMode, fetchUserData, syncGuestToCloud]);
 
     useEffect(() => {
-        if (guestMode && !loading) {
+        if (guestMode && !loading && !overrideUserId) {
             localStorage.setItem(LOCAL_HABITS_KEY, JSON.stringify(habits));
             localStorage.setItem(LOCAL_COMPLETIONS_KEY, JSON.stringify(completions));
         }
@@ -283,17 +283,17 @@ export const useHabits = (session: any, guestMode: boolean) => {
             };
         });
 
-        if (session && !guestMode) {
+        if ((session || overrideUserId) && !guestMode) {
             try {
                 if (alreadyDone) {
                     await supabase
                         .from('completions')
                         .delete()
-                        .match({ user_id: session.user.id, habit_id: habitId, date_key: dateKey });
+                        .match({ user_id: userId, habit_id: habitId, date_key: dateKey });
                 } else {
                     await supabase
                         .from('completions')
-                        .insert({ user_id: session.user.id, habit_id: habitId, date_key: dateKey });
+                        .insert({ user_id: userId, habit_id: habitId, date_key: dateKey });
                 }
             } catch (err) {
                 console.error('Sync error:', err);

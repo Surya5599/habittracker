@@ -47,8 +47,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                     key={theme.name}
                                     onClick={() => onSelectTheme(theme)}
                                     className={`w-full px-4 py-3 flex items-center justify-between border-[2px] transition-all ${currentTheme.name === theme.name
-                                            ? 'border-black bg-stone-50 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] translate-x-[2px] translate-y-[2px]'
-                                            : 'border-stone-200 hover:border-black hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5'
+                                        ? 'border-black bg-stone-50 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] translate-x-[2px] translate-y-[2px]'
+                                        : 'border-stone-200 hover:border-black hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5'
                                         }`}
                                 >
                                     <div className="flex items-center gap-3">
@@ -79,6 +79,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     >
                         Done
                     </button>
+                    <div className="mt-4 text-center">
+                        <a
+                            href="https://habicard.com/privacy"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[10px] text-stone-500 hover:text-black underline uppercase tracking-widest font-bold"
+                        >
+                            Privacy Policy
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

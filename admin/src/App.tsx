@@ -3,7 +3,8 @@ import { supabase } from './supabase';
 import type { Session } from '@supabase/supabase-js';
 import { Toaster, toast } from 'react-hot-toast';
 import { TicketList } from './components/TicketList';
-import { Shield, Loader2, LogOut } from 'lucide-react';
+import { UserList } from './components/UserList';
+import { Shield, Loader2, LogOut, Ticket, Users } from 'lucide-react';
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);
@@ -11,6 +12,7 @@ function App() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
+  const [currentView, setCurrentView] = useState<'tickets' | 'users'>('tickets');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -105,11 +107,30 @@ function App() {
     <div className="min-h-screen bg-stone-50 flex flex-col">
       <Toaster />
       <header className="bg-white border-b-2 border-black p-4 flex items-center justify-between sticky top-0 z-10">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-black text-white flex items-center justify-center rounded-full">
-            <Shield size={16} />
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-black text-white flex items-center justify-center rounded-full">
+              <Shield size={16} />
+            </div>
+            <span className="font-black uppercase tracking-tight">HabiAdmin</span>
           </div>
-          <span className="font-black uppercase tracking-tight">HabiAdmin</span>
+
+          <nav className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentView('tickets')}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-bold uppercase tracking-wider transition-all ${currentView === 'tickets' ? 'bg-black text-white' : 'text-stone-500 hover:bg-stone-100'}`}
+            >
+              <Ticket size={16} />
+              Tickets
+            </button>
+            <button
+              onClick={() => setCurrentView('users')}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-bold uppercase tracking-wider transition-all ${currentView === 'users' ? 'bg-black text-white' : 'text-stone-500 hover:bg-stone-100'}`}
+            >
+              <Users size={16} />
+              Users
+            </button>
+          </nav>
         </div>
         <div className="flex items-center gap-4">
           <span className="text-sm font-bold text-stone-500 hidden md:inline">{session.user.email}</span>
@@ -120,7 +141,7 @@ function App() {
       </header>
 
       <main className="flex-1 p-4 md:p-8 max-w-5xl mx-auto w-full">
-        <TicketList />
+        {currentView === 'tickets' ? <TicketList /> : <UserList />}
       </main>
     </div>
   );

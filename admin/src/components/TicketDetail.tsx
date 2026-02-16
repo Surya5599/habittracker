@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
 import type { Feedback, FeedbackReply } from '../types';
-import { X, Send, User, Shield, CheckCircle } from 'lucide-react';
+import { X, Send, User, Shield, CheckCircle, ExternalLink } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 interface TicketDetailProps {
@@ -103,9 +103,20 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({ feedback, onClose, o
                             <span>{new Date(feedback.created_at).toLocaleString()}</span>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-1 hover:bg-stone-200 rounded transition-colors">
-                        <X size={20} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <a
+                            href={`http://localhost:5173/?impersonate=${feedback.user_id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1 hover:bg-stone-200 rounded transition-colors text-stone-500 hover:text-black"
+                            title="View User App"
+                        >
+                            <ExternalLink size={20} />
+                        </a>
+                        <button onClick={onClose} className="p-1 hover:bg-stone-200 rounded transition-colors">
+                            <X size={20} />
+                        </button>
+                    </div>
                 </div>
 
                 {/* THREAD */}

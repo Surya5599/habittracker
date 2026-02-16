@@ -203,6 +203,16 @@ const App: React.FC = () => {
             <ExternalLink size={14} />
           </button>
         </div>
+        <div className="mt-4 text-center">
+          <a
+            href="https://habicard.com/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[10px] text-stone-500 hover:text-black underline uppercase tracking-widest font-bold"
+          >
+            Privacy Policy
+          </a>
+        </div>
       </div>
     );
   }

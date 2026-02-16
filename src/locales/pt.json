@@ -8,7 +8,8 @@
                 "daily": "Diário",
                 "monthly": "Mensal",
                 "dashboard": "Painel"
-            }
+            },
+            "startOfWeek": "Start of Week"
         },
         "language": {
             "title": "Idioma"

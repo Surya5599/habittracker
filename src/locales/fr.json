@@ -8,7 +8,8 @@
                 "daily": "Quotidien",
                 "monthly": "Mensuel",
                 "dashboard": "Tableau de bord"
-            }
+            },
+            "startOfWeek": "Start of Week"
         },
         "language": {
             "title": "Langue"

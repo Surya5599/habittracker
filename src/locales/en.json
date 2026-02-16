@@ -8,7 +8,8 @@
                 "daily": "Daily",
                 "monthly": "Mnth",
                 "dashboard": "Dash"
-            }
+            },
+            "startOfWeek": "Start of Week"
         },
         "language": {
             "title": "Language"

@@ -7,8 +7,9 @@
             "views": {
                 "daily": "日別",
                 "monthly": "月別",
-                "dashboard": "ダッシュ"
-            }
+                "dashboard": "ダッシュボード"
+            },
+            "startOfWeek": "Start of Week"
         },
         "language": {
             "title": "言語"

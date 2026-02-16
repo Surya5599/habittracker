@@ -193,9 +193,11 @@ const AppContent: React.FC = () => {
         localStorage.setItem('habit_default_view', remoteView);
       }
     }
-    const remoteLang = session.user.user_metadata.language;
-    setLanguage(remoteLang);
-    localStorage.setItem('habit_language', remoteLang);
+    if (session?.user?.user_metadata?.language) {
+      const remoteLang = session.user.user_metadata.language;
+      setLanguage(remoteLang);
+      localStorage.setItem('habit_language', remoteLang);
+    }
     if (session?.user?.user_metadata?.start_of_week) {
       const remoteStart = session.user.user_metadata.start_of_week;
       if (['monday', 'sunday'].includes(remoteStart)) {
@@ -353,7 +355,17 @@ const AppContent: React.FC = () => {
     monthProgress,
     topHabitsThisMonth,
     annualStats
-  } = useHabitStats(habits, completions, notes, currentMonthIndex, currentYear, daysInMonth, monthDates, weekOffset);
+  } = useHabitStats(
+    habits,
+    completions,
+    notes,
+    currentMonthIndex,
+    currentYear,
+    daysInMonth,
+    monthDates,
+    weekOffset,
+    startOfWeek
+  );
 
   const weekRange = useMemo(() => {
     const today = new Date();
@@ -978,6 +990,7 @@ const AppContent: React.FC = () => {
               setSelectedDateForCard(date);
               setCardOpenFlipped(flipped);
             }}
+            startOfWeek={startOfWeek}
           />
         )}
       </div>

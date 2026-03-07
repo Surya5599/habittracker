@@ -1,7 +1,7 @@
 
 const ADMIN_EMAILS = ['knowheredeveloper@gmail.com']; // Replace with actual admin emails
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { X, MessageSquare, Bug, Send, Clock, ChevronRight, User, Shield, Reply } from 'lucide-react';
 import { supabase } from '../supabase';
 import toast from 'react-hot-toast';
@@ -29,6 +29,70 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
 
     const isAdmin = userEmail && ADMIN_EMAILS.includes(userEmail);
     const threadEndRef = useRef<HTMLDivElement>(null);
+
+    const reporterDirectory = useMemo(() => {
+        const directory: Record<string, { name?: string; email?: string }> = {};
+
+        history.forEach((item) => {
+            if (!item.user_id) return;
+            const meta = item.metadata || {};
+            const emailCandidates = [meta.reporterEmail, meta.email, meta.userEmail, meta.user_email];
+            const nameCandidates = [meta.reporterName, meta.userName, meta.user_name, meta.fullName, meta.name];
+            const existing = directory[item.user_id] || {};
+
+            if (!existing.email) {
+                const foundEmail = emailCandidates.find((v) => typeof v === 'string' && v.trim());
+                if (foundEmail) existing.email = foundEmail.trim();
+            }
+            if (!existing.name) {
+                const foundName = nameCandidates.find((v) => typeof v === 'string' && v.trim());
+                if (foundName) existing.name = foundName.trim();
+            }
+
+            directory[item.user_id] = existing;
+        });
+
+        Object.keys(directory).forEach((uid) => {
+            if (!directory[uid].name && directory[uid].email) {
+                directory[uid].name = directory[uid].email!.split('@')[0];
+            }
+        });
+
+        return directory;
+    }, [history]);
+
+    const getReporterName = (item: Feedback) => {
+        const meta = item.metadata || {};
+        const name =
+            meta.reporterName ||
+            meta.userName ||
+            meta.user_name ||
+            meta.fullName ||
+            meta.name ||
+            reporterDirectory[item.user_id || '']?.name;
+        if (typeof name === 'string' && name.trim()) return name.trim();
+        if (item.user_id) return `User ${item.user_id.slice(0, 8)}`;
+        return 'Guest user';
+    };
+
+    const getReporterEmail = (item: Feedback) => {
+        const meta = item.metadata || {};
+        const email =
+            meta.reporterEmail ||
+            meta.email ||
+            meta.userEmail ||
+            meta.user_email ||
+            reporterDirectory[item.user_id || '']?.email;
+        if (typeof email === 'string' && email.trim()) return email.trim();
+        return null;
+    };
+
+    const getTicketUrl = (item: Feedback) => {
+        const meta = item.metadata || {};
+        const url = meta.url;
+        if (typeof url === 'string' && url.trim()) return url.trim();
+        return null;
+    };
 
     useEffect(() => {
         if (isOpen) {
@@ -135,6 +199,8 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                     content,
                     status: 'open',
                     metadata: {
+                        reporterName: userEmail ? userEmail.split('@')[0] : 'Guest',
+                        reporterEmail: userEmail || null,
                         url: window.location.href,
                         userAgent: navigator.userAgent,
                         timestamp: new Date().toISOString()
@@ -333,11 +399,16 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                                     const latestReply = item.replies && item.replies.length > 0 ? item.replies[item.replies.length - 1] : null;
                                     const lastReadTime = parseInt(localStorage.getItem('habit_feedback_last_read') || '0');
                                     const hasNewReply = latestReply && latestReply.is_admin_reply && new Date(latestReply.created_at).getTime() > lastReadTime;
+                                    const hasAdminReply = !!item.replies?.some(reply => reply.is_admin_reply);
+                                    const needsAdminResponse = activeTab === 'admin' && item.status !== 'closed' && !hasAdminReply;
 
                                     return (
                                         <div key={item.id} onClick={() => setSelectedThread(item)} className="p-3 bg-white neo-border hover:bg-stone-50 cursor-pointer transition-colors group relative">
-                                            {hasNewReply && (
-                                                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse z-10" title="New Reply" />
+                                            {(hasNewReply || needsAdminResponse) && (
+                                                <span
+                                                    className={`absolute top-2 right-2 w-2 h-2 rounded-full animate-pulse z-10 ${needsAdminResponse ? 'bg-amber-500' : 'bg-red-500'}`}
+                                                    title={needsAdminResponse ? 'Awaiting admin response' : 'New Reply'}
+                                                />
                                             )}
                                             <div className="flex items-start justify-between mb-1">
                                                 <span className={`text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 border border-black ${item.type === 'bug' ? 'bg-rose-100 text-rose-800' : 'bg-sky-100 text-sky-800'}`}>
@@ -346,6 +417,13 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                                                 <span className="text-[10px] text-stone-400 font-bold">{new Date(item.created_at).toLocaleDateString()}</span>
                                             </div>
                                             <p className="text-sm font-medium text-stone-800 line-clamp-2 leading-snug">{item.content}</p>
+                                            {activeTab === 'admin' && (
+                                                <div className="mt-2 text-[10px] text-stone-500 space-y-0.5">
+                                                    <p className="font-semibold text-stone-700">{getReporterName(item)}</p>
+                                                    <p>{getReporterEmail(item) || 'Email unavailable'}</p>
+                                                    <p className="font-mono">User ID: {item.user_id || 'guest'}</p>
+                                                </div>
+                                            )}
                                             <div className="flex items-center justify-between mt-2 pt-2 border-t border-dashed border-stone-200">
                                                 <div className="flex items-center gap-1.5">
                                                     {item.status === 'replied' && <span className="text-[9px] font-bold uppercase text-green-600 flex items-center gap-1"><Reply size={10} /> HabiCard Replied</span>}
@@ -381,9 +459,20 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                                     </div>
                                     <div className="flex-1 space-y-1">
                                         <div className="flex items-baseline gap-2">
-                                            <span className="text-xs font-black">You</span>
+                                            <span className="text-xs font-black">
+                                                {activeTab === 'admin' ? getReporterName(selectedThread) : 'You'}
+                                            </span>
                                             <span className="text-[10px] text-stone-400">{new Date(selectedThread.created_at).toLocaleString()}</span>
                                         </div>
+                                        {activeTab === 'admin' && (
+                                            <div className="text-[10px] text-stone-500 space-y-0.5">
+                                                <p>{getReporterEmail(selectedThread) || 'Email unavailable'}</p>
+                                                <p className="font-mono">User ID: {selectedThread.user_id || 'guest'}</p>
+                                                {getTicketUrl(selectedThread) && (
+                                                    <p className="truncate">URL: {getTicketUrl(selectedThread)}</p>
+                                                )}
+                                            </div>
+                                        )}
                                         <div className="bg-white p-3 neo-border rounded-tl-none text-sm text-stone-800 leading-relaxed shadow-sm">
                                             {selectedThread.content}
                                         </div>

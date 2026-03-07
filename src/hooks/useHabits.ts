@@ -423,19 +423,6 @@ export const useHabits = (session: any, guestMode: boolean, overrideUserId?: str
 
         if (session && !guestMode) {
             try {
-                // Update each habit's sort_order in Supabase
-                // We can do this in a single query by using upsert if we include the ID
-                const updates = newHabits.map((h, idx) => ({
-                    id: h.id,
-                    user_id: session.user.id,
-                    sort_order: idx,
-                    // Include other fields to satisfy row constraints if any, 
-                    // though for upsert with id on Supabase it usually just updates the specified fields.
-                    // To be safe we should only update what's needed but Supabase upsert requires full rows or specific config.
-                    // Alternatively, we can use a stored procedure or multiple updates.
-                    // Given the constraint of not having a stored procedure handy, multiple updates or a single upsert (if possible)
-                }));
-
                 // Performing individual updates for simplicity and reliability in this context
                 // In a production app, a single RPC call would be better.
                 const updatePromises = newHabits.map((h, idx) =>
@@ -452,39 +439,39 @@ export const useHabits = (session: any, guestMode: boolean, overrideUserId?: str
                 toast.error('Failed to save habit order');
             }
         }
-        const toggleArchiveHabit = async (id: string, archive: boolean) => {
-            const timestamp = archive ? new Date().toISOString() : null;
-
-            setHabits(prev => prev.map(h => h.id === id ? { ...h, archivedAt: timestamp } : h));
-
-            if (session && !guestMode) {
-                try {
-                    await supabase
-                        .from('habits')
-                        .update({ archived_at: timestamp })
-                        .eq('id', id)
-                        .eq('user_id', session.user.id);
-                } catch (err) {
-                    console.error('Error archiving habit:', err);
-                    toast.error('Failed to update habit archive status');
-                }
-            }
-        };
-
-        return {
-            habits,
-            setHabits,
-            completions,
-            setCompletions,
-            loading,
-            toggleCompletion,
-            addHabit,
-            updateHabit,
-            removeHabit,
-            reorderHabits,
-            toggleArchiveHabit,
-            setLoading
-        };
-
-
     };
+
+    const toggleArchiveHabit = async (id: string, archive: boolean) => {
+        const timestamp = archive ? new Date().toISOString() : null;
+
+        setHabits(prev => prev.map(h => h.id === id ? { ...h, archivedAt: timestamp } : h));
+
+        if (session && !guestMode) {
+            try {
+                await supabase
+                    .from('habits')
+                    .update({ archived_at: timestamp })
+                    .eq('id', id)
+                    .eq('user_id', session.user.id);
+            } catch (err) {
+                console.error('Error archiving habit:', err);
+                toast.error('Failed to update habit archive status');
+            }
+        }
+    };
+
+    return {
+        habits,
+        setHabits,
+        completions,
+        setCompletions,
+        loading,
+        toggleCompletion,
+        addHabit,
+        updateHabit,
+        removeHabit,
+        reorderHabits,
+        toggleArchiveHabit,
+        setLoading
+    };
+};

@@ -12,6 +12,8 @@ interface WeeklyViewProps {
     weekOffset: number;
     theme: Theme;
     toggleCompletion: (habitId: string, dateKey: string) => void;
+    toggleHabitInactive: (habitId: string, dateKey: string) => void;
+    isHabitInactive: (habitId: string, dateKey: string) => boolean;
     notes: DailyNote;
     updateNote: (dateKey: string, data: Partial<DayData>) => void;
     addHabit: () => void;
@@ -26,6 +28,8 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
     weekOffset,
     theme,
     toggleCompletion,
+    toggleHabitInactive,
+    isHabitInactive,
     notes,
     updateNote,
     addHabit,
@@ -156,6 +160,8 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                         completions={completions}
                         theme={theme}
                         toggleCompletion={toggleCompletion}
+                        toggleHabitInactive={toggleHabitInactive}
+                        isHabitInactive={isHabitInactive}
                         notes={notes}
                         updateNote={updateNote}
                         onShareClick={handleShareClick}
@@ -176,6 +182,8 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                         completions={completions}
                         theme={theme}
                         toggleCompletion={toggleCompletion}
+                        toggleHabitInactive={toggleHabitInactive}
+                        isHabitInactive={isHabitInactive}
                         notes={notes}
                         updateNote={updateNote}
                         onShareClick={handleShareClick}

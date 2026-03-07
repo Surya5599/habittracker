@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Habit, HabitCompletion, DailyNote } from '../types';
 import { MONTHS } from '../constants';
 import { isCompleted, getHabitMonthStats } from '../utils/stats';
+import { isHabitActiveOnDate, isHabitManuallyInactive, toDateKey } from '../utils/habitActivity';
 
 export const useHabitStats = (
     habits: Habit[],
@@ -14,6 +15,16 @@ export const useHabitStats = (
     weekOffset: number = 0,
     startOfWeek: 'monday' | 'sunday' = 'monday'
 ) => {
+    const isHabitInactiveOnDate = (habit: Habit, date: Date) => {
+        const dateKey = toDateKey(date);
+        return !isHabitActiveOnDate(habit, date) || isHabitManuallyInactive(notes, dateKey, habit.id);
+    };
+
+    const isHabitDueOnDate = (habit: Habit, date: Date) => {
+        if (isHabitInactiveOnDate(habit, date)) return false;
+        return !habit.frequency || habit.frequency.includes(date.getDay());
+    };
+
     const getStartDate = (date: Date, offset: number = 0) => {
         const day = date.getDay();
         let diff = date.getDate() - day;
@@ -39,6 +50,7 @@ export const useHabitStats = (
 
             let count = 0;
             habits.forEach(habit => {
+                if (isHabitInactiveOnDate(habit, date)) return;
                 if (isCompleted(habit.id, d, completions, m, y)) {
                     if (habit.weeklyTarget) {
                         const current = usedCount[habit.id] || 0;
@@ -58,7 +70,7 @@ export const useHabitStats = (
                 count
             };
         });
-    }, [habits, completions, weekOffset, startOfWeek]);
+    }, [habits, completions, notes, weekOffset, startOfWeek]);
 
     const weekProgress = useMemo(() => {
         const today = new Date();
@@ -72,11 +84,12 @@ export const useHabitStats = (
 
             habits.forEach(h => {
                 if (h.weeklyTarget) {
+                    if (isHabitInactiveOnDate(h, d)) return;
                     // For flexible habits, we add 1/7 of their weekly target to each day of the week
                     // so that the total possible for the week matches the weeklyTarget.
                     totalPossible += h.weeklyTarget / 7;
                 } else {
-                    if (!h.frequency || h.frequency.includes(dayIdx)) {
+                    if ((!h.frequency || h.frequency.includes(dayIdx)) && !isHabitInactiveOnDate(h, d)) {
                         totalPossible += 1;
                     }
                 }
@@ -86,12 +99,20 @@ export const useHabitStats = (
         totalPossible = Math.round(totalPossible * 100) / 100;
         // Actually, if we just want the total for the week:
         totalPossible = habits.reduce((acc, h) => {
-            if (h.weeklyTarget) return acc + h.weeklyTarget;
+            if (h.weeklyTarget) {
+                let possible = 0;
+                for (let i = 0; i < 7; i++) {
+                    const d = new Date(startDate);
+                    d.setDate(startDate.getDate() + i);
+                    if (!isHabitInactiveOnDate(h, d)) possible += h.weeklyTarget / 7;
+                }
+                return acc + possible;
+            }
             let count = 0;
             for (let i = 0; i < 7; i++) {
                 const d = new Date(startDate);
                 d.setDate(startDate.getDate() + i);
-                if (!h.frequency || h.frequency.includes(d.getDay())) count++;
+                if (isHabitDueOnDate(h, d)) count++;
             }
             return acc + count;
         }, 0);
@@ -104,6 +125,7 @@ export const useHabitStats = (
             for (let i = 0; i < 7; i++) {
                 const date = new Date(weekStartDate);
                 date.setDate(weekStartDate.getDate() + i);
+                if (isHabitInactiveOnDate(h, date)) continue;
                 if (isCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear())) {
                     actualCount++;
                 }
@@ -123,6 +145,7 @@ export const useHabitStats = (
             for (let i = 0; i < 7; i++) {
                 const date = new Date(weekStartDate);
                 date.setDate(weekStartDate.getDate() + i);
+                if (isHabitInactiveOnDate(h, date)) continue;
                 if (isCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear())) {
                     hCompletedActual++;
                 }
@@ -141,7 +164,7 @@ export const useHabitStats = (
             percentage: totalPossible > 0 ? (completed / totalPossible) * 100 : 0,
             habitPerformance
         };
-    }, [habits, completions, weeklyStats, weekOffset, startOfWeek]);
+    }, [habits, completions, notes, weeklyStats, weekOffset, startOfWeek]);
 
     const dailyStats = useMemo(() => {
         return monthDates.map(day => {
@@ -154,7 +177,7 @@ export const useHabitStats = (
                 // EXCLUDE flexible habits from daily percentages
                 if (habit.weeklyTarget) return;
 
-                const isDue = !habit.frequency || habit.frequency.includes(today.getDay());
+                const isDue = isHabitDueOnDate(habit, today);
 
                 if (isDue) {
                     totalDue++;
@@ -164,18 +187,22 @@ export const useHabitStats = (
             });
             return { day, count, totalDue };
         });
-    }, [completions, currentMonthIndex, currentYear, habits, monthDates]);
+    }, [completions, notes, currentMonthIndex, currentYear, habits, monthDates]);
 
     const monthProgress = useMemo(() => {
         let totalPossible = 0;
         habits.forEach(habit => {
             if (habit.weeklyTarget) {
-                // Approximate monthly possible for flexible habits: (weeklyTarget / 7) * daysInMonth
-                totalPossible += (habit.weeklyTarget / 7) * monthDates.length;
+                monthDates.forEach(day => {
+                    const date = new Date(currentYear, currentMonthIndex, day);
+                    if (!isHabitInactiveOnDate(habit, date)) {
+                        totalPossible += habit.weeklyTarget / 7;
+                    }
+                });
             } else {
                 monthDates.forEach(day => {
                     const date = new Date(currentYear, currentMonthIndex, day);
-                    if (!habit.frequency || habit.frequency.includes(date.getDay())) {
+                    if (isHabitDueOnDate(habit, date)) {
                         totalPossible += 1;
                     }
                 });
@@ -186,13 +213,19 @@ export const useHabitStats = (
         habits.forEach(habit => {
             let actualCount = 0;
             monthDates.forEach(day => {
+                const date = new Date(currentYear, currentMonthIndex, day);
+                if (isHabitInactiveOnDate(habit, date)) return;
                 if (isCompleted(habit.id, day, completions, currentMonthIndex, currentYear)) {
                     actualCount++;
                 }
             });
             if (habit.weeklyTarget) {
                 // Monthly cap for flexible habits (approximate)
-                const monthlyCap = (habit.weeklyTarget / 7) * monthDates.length;
+                const activeDays = monthDates.filter(day => {
+                    const date = new Date(currentYear, currentMonthIndex, day);
+                    return !isHabitInactiveOnDate(habit, date);
+                }).length;
+                const monthlyCap = (habit.weeklyTarget / 7) * activeDays;
                 completed += Math.min(actualCount, monthlyCap);
             } else {
                 completed += actualCount;
@@ -204,12 +237,23 @@ export const useHabitStats = (
             remaining: Math.max(0, Math.round(totalPossible - completed)),
             percentage: totalPossible > 0 ? (completed / totalPossible) * 100 : 0
         };
-    }, [completions, currentMonthIndex, currentYear, habits, daysInMonth, monthDates]);
+    }, [completions, notes, currentMonthIndex, currentYear, habits, daysInMonth, monthDates]);
 
     const topHabitsThisMonth = useMemo(() => {
         return habits
             .map(h => {
-                const stats = getHabitMonthStats(h.id, completions, currentMonthIndex, currentYear, h.frequency);
+                const stats = getHabitMonthStats(
+                    h.id,
+                    completions,
+                    currentMonthIndex,
+                    currentYear,
+                    h.frequency,
+                    (dateKey) => {
+                        const [y, m, d] = dateKey.split('-').map(Number);
+                        const date = new Date(y, m - 1, d);
+                        return isHabitInactiveOnDate(h, date);
+                    }
+                );
                 return {
                     ...h,
                     stats,
@@ -218,7 +262,7 @@ export const useHabitStats = (
             })
             .sort((a, b) => b.stats.completed - a.stats.completed || a.name.localeCompare(b.name) || a.id.localeCompare(b.id))
             .slice(0, 10);
-    }, [habits, completions, currentMonthIndex, currentYear]);
+    }, [habits, completions, notes, currentMonthIndex, currentYear]);
 
     const annualStats = useMemo(() => {
         let totalCompletions = 0;
@@ -242,12 +286,17 @@ export const useHabitStats = (
             habits.forEach(h => {
                 if (h.weeklyTarget) {
                     // Pro-rated monthly possible for flexible habits
-                    const monthlyPossible = (h.weeklyTarget / 7) * dInM;
+                    let monthlyPossible = 0;
+                    for (let d = 1; d <= dInM; d++) {
+                        const date = new Date(currentYear, mIdx, d);
+                        if (!isHabitInactiveOnDate(h, date)) monthlyPossible += h.weeklyTarget / 7;
+                    }
                     mPossible += monthlyPossible;
 
                     let hMonthActual = 0;
                     for (let d = 1; d <= dInM; d++) {
                         const date = new Date(currentYear, mIdx, d);
+                        if (isHabitInactiveOnDate(h, date)) continue;
                         const isFuture = currentYear > currentYearToday ||
                             (currentYear === currentYearToday && (mIdx > currentMonthToday || (mIdx === currentMonthToday && d > currentDateToday)));
 
@@ -263,7 +312,7 @@ export const useHabitStats = (
                 } else {
                     for (let d = 1; d <= dInM; d++) {
                         const date = new Date(currentYear, mIdx, d);
-                        const isDue = !h.frequency || h.frequency.includes(date.getDay());
+                        const isDue = isHabitDueOnDate(h, date);
 
                         if (isDue) {
                             const isFuture = currentYear > currentYearToday ||
@@ -334,6 +383,8 @@ export const useHabitStats = (
             const mHabitStats = habits.map(h => {
                 let hCompleted = 0;
                 for (let d = 1; d <= dInM; d++) {
+                    const date = new Date(currentYear, idx, d);
+                    if (isHabitInactiveOnDate(h, date)) continue;
                     if (isCompleted(h.id, d, completions, idx, currentYear)) hCompleted++;
                 }
                 return { name: h.name, rate: hCompleted / dInM };
@@ -351,9 +402,9 @@ export const useHabitStats = (
                 const dayIdx = dayDate.getDay();
 
                 habits.forEach(h => {
-                    const isDue = !h.frequency || h.frequency.includes(dayIdx);
+                    const isDue = isHabitDueOnDate(h, dayDate);
                     if (isDue) dailyPossibleCount++;
-                    if (isCompleted(h.id, d, completions, idx, currentYear)) dailyCompletedCount++;
+                    if (isDue && isCompleted(h.id, d, completions, idx, currentYear)) dailyCompletedCount++;
                 });
 
                 const dayNote = notes[dateKey];
@@ -373,12 +424,12 @@ export const useHabitStats = (
                     currentMStreak = 0;
                 }
 
-                if (habits.length > 0 && dailyCompletedCount === habits.length) {
+                if (dailyPossibleCount > 0 && dailyCompletedCount === dailyPossibleCount) {
                     perfectDays++;
                 }
 
                 weekCompleted += dailyCompletedCount;
-                weekPossible += habits.length;
+                weekPossible += dailyPossibleCount;
 
                 // Calculate weekly rate every 7 days or at end of month
                 if (d % 7 === 0 || d === dInM) {
@@ -410,7 +461,11 @@ export const useHabitStats = (
             const dInM = new Date(currentYear, m + 1, 0).getDate();
             for (let d = 1; d <= dInM; d++) {
                 if (m === currentM && d > currentD && currentYear === today.getFullYear()) break;
-                const anyCompleted = habits.some(h => isCompleted(h.id, d, completions, m, currentYear));
+                const anyCompleted = habits.some(h => {
+                    const date = new Date(currentYear, m, d);
+                    if (isHabitInactiveOnDate(h, date)) return false;
+                    return isCompleted(h.id, d, completions, m, currentYear);
+                });
                 if (anyCompleted) {
                     currentStreak++;
                     maxStreak = Math.max(maxStreak, currentStreak);
@@ -436,13 +491,13 @@ export const useHabitStats = (
                 const dInM = new Date(currentYear, mIdx + 1, 0).getDate();
                 for (let d = 1; d <= dInM; d++) {
                     const date = new Date(currentYear, mIdx, d);
-                    const isDue = !h.frequency || h.frequency.includes(date.getDay());
+                    const isDue = isHabitDueOnDate(h, date);
                     const isWeekend = date.getDay() === 0 || date.getDay() === 6;
 
                     const isFuture = currentYear > currentYearToday ||
                         (currentYear === currentYearToday && (mIdx > currentMonthToday || (mIdx === currentMonthToday && d > currentDateToday)));
 
-                    const done = isCompleted(h.id, d, completions, mIdx, currentYear);
+                    const done = !isHabitInactiveOnDate(h, date) && isCompleted(h.id, d, completions, mIdx, currentYear);
 
                     if (done) {
                         hCompleted++;
@@ -462,7 +517,7 @@ export const useHabitStats = (
                                 if (isWeekend) weekendPossible++;
                                 else weekdayPossible++;
                             }
-                        } else {
+                        } else if (!isHabitInactiveOnDate(h, date)) {
                             // Flexible habits: (target/7) per day
                             hPossible += h.weeklyTarget / 7;
                             if (isWeekend) weekendPossible += h.weeklyTarget / 7;
@@ -568,14 +623,14 @@ export const useHabitStats = (
             activeHabitsCount,
             storyVariant
         };
-    }, [completions, habits, currentYear]);
+    }, [completions, notes, habits, currentYear]);
 
     const prevWeekProgress = useMemo(() => {
         const today = new Date();
         const startDate = getStartDate(today, weekOffset - 1);
 
         let completed = 0;
-        const totalPossible = habits.length * 7;
+        let totalPossible = 0;
 
         for (let i = 0; i < 7; i++) {
             const date = new Date(startDate);
@@ -585,6 +640,10 @@ export const useHabitStats = (
             const y = date.getFullYear();
 
             habits.forEach(habit => {
+                if (isHabitDueOnDate(habit, date)) {
+                    totalPossible++;
+                }
+                if (isHabitInactiveOnDate(habit, date)) return;
                 if (isCompleted(habit.id, d, completions, m, y)) completed++;
             });
         }
@@ -592,7 +651,7 @@ export const useHabitStats = (
         return {
             percentage: totalPossible > 0 ? (completed / totalPossible) * 100 : 0
         };
-    }, [habits, completions, weekOffset, startOfWeek]);
+    }, [habits, completions, notes, weekOffset, startOfWeek]);
 
     const allTimeBestWeek = useMemo(() => {
         const weekCounts: Record<string, number> = {};
@@ -660,17 +719,20 @@ export const useHabitStats = (
         const prevMonthIdx = currentMonthIndex === 0 ? 11 : currentMonthIndex - 1;
         const prevYear = currentMonthIndex === 0 ? currentYear - 1 : currentYear;
         const dInPrevM = new Date(prevYear, prevMonthIdx + 1, 0).getDate();
-        const totalPossible = habits.length * dInPrevM;
+        let totalPossible = 0;
         let completed = 0;
         habits.forEach(habit => {
             for (let d = 1; d <= dInPrevM; d++) {
+                const date = new Date(prevYear, prevMonthIdx, d);
+                if (isHabitDueOnDate(habit, date)) totalPossible++;
+                if (isHabitInactiveOnDate(habit, date)) continue;
                 if (isCompleted(habit.id, d, completions, prevMonthIdx, prevYear)) completed++;
             }
         });
         return {
             percentage: totalPossible > 0 ? (completed / totalPossible) * 100 : 0
         };
-    }, [habits, completions, currentMonthIndex, currentYear]);
+    }, [habits, completions, notes, currentMonthIndex, currentYear]);
 
     const monthDelta = monthProgress.percentage - prevMonthProgress.percentage;
 
@@ -689,4 +751,3 @@ export const useHabitStats = (
 };
 
 // Helper function needed because utility might not have been imported correctly in the hook context if not careful
-

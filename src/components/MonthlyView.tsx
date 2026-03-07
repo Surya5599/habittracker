@@ -1,10 +1,11 @@
 import React, { useEffect, useRef } from 'react';
-import { Plus, Trash2, Save, Check, Laugh, Smile, Meh, Frown, Angry, BookOpen, X } from 'lucide-react';
+import { Plus, Trash2, Save, Check, Minus, Laugh, Smile, Meh, Frown, Angry, BookOpen, X } from 'lucide-react';
 import { CircularProgress } from './CircularProgress';
 import { Habit, HabitCompletion, Theme, DailyNote, DayData } from '../types';
 import { DAYS_OF_WEEK_SHORT } from '../constants';
 import { getHabitMonthStats, isCompleted as checkCompleted } from '../utils/stats';
 import { DailyCard } from './DailyCard';
+import { isHabitActiveOnDate, isHabitManuallyInactive } from '../utils/habitActivity';
 
 interface MonthlyViewProps {
     habits: Habit[];
@@ -21,6 +22,8 @@ interface MonthlyViewProps {
     goalInputRef: React.RefObject<HTMLInputElement>;
     addHabit: () => void;
     toggleCompletion: (habitId: string, dateKey: string) => void;
+    toggleHabitInactive: (habitId: string, dateKey: string) => void;
+    isHabitInactive: (habitId: string, dateKey: string) => boolean;
     updateHabitNameState: (id: string, name: string) => void;
     updateHabitGoalState: (id: string, goal: string) => void;
     handleHabitBlur: (habit: Habit) => void;
@@ -49,6 +52,8 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
     goalInputRef,
     addHabit,
     toggleCompletion,
+    toggleHabitInactive,
+    isHabitInactive,
     updateHabitNameState,
     updateHabitGoalState,
     handleHabitBlur,
@@ -61,11 +66,17 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
     updateNote,
     setSelectedDateForCard,
 }) => {
+    const visibleHabits = habits.filter(h =>
+        monthDates.some(day => isHabitActiveOnDate(h, new Date(currentYear, currentMonthIndex, day)))
+    );
+
     const tableScrollRef = useRef<HTMLDivElement>(null);
     const todayRef = useRef<HTMLTableHeaderCellElement>(null);
     const weeksScrollRef = useRef<HTMLDivElement>(null);
     const currentWeekRef = useRef<HTMLDivElement>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const longPressTimerRef = useRef<number | null>(null);
+    const longPressTriggeredRef = useRef(false);
 
     useEffect(() => {
         // Scroll main table to today
@@ -159,7 +170,13 @@ total possible">
                                                 const dayIndex = dayDate.getDay();
 
                                                 // Only use fixed-frequency habits for the daily activity bars and "all done" state
-                                                const dueHabits = habits.filter(h => !h.weeklyTarget && (!h.frequency || h.frequency.includes(dayIndex)));
+                                                const dueHabits = habits.filter(h => {
+                                                    if (h.weeklyTarget) return false;
+                                                    if (!(!h.frequency || h.frequency.includes(dayIndex))) return false;
+                                                    if (!isHabitActiveOnDate(h, dayDate)) return false;
+                                                    const dateKey = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                                                    return !isHabitManuallyInactive(notes, dateKey, h.id);
+                                                });
                                                 let dc = 0;
                                                 dueHabits.forEach(h => { if (checkCompleted(h.id, day, completions, currentMonthIndex, currentYear)) dc++; });
 
@@ -306,8 +323,19 @@ total possible">
                                 <td className="p-0 border-l border-stone-200 bg-[#fcfcfc]"></td>
                                 <td className="p-0 border-l border-stone-100 bg-[#fcfcfc]"></td>
                             </tr>
-                            {habits.map((habit) => {
-                                const habitStats = getHabitMonthStats(habit.id, completions, currentMonthIndex, currentYear, habit.frequency);
+                            {visibleHabits.map((habit) => {
+                                const habitStats = getHabitMonthStats(
+                                    habit.id,
+                                    completions,
+                                    currentMonthIndex,
+                                    currentYear,
+                                    habit.frequency,
+                                    (dateKey) => {
+                                        const [y, m, d] = dateKey.split('-').map(Number);
+                                        const date = new Date(y, m - 1, d);
+                                        return !isHabitActiveOnDate(habit, date) || isHabitManuallyInactive(notes, dateKey, habit.id);
+                                    }
+                                );
                                 const perc = (habitStats.completed / habitStats.totalDays) * 100;
                                 const isEditingName = editingHabitId === habit.id;
                                 const isEditingGoal = editingGoalId === habit.id;
@@ -360,12 +388,13 @@ total possible">
                                         {monthDates.map(day => {
                                             const dateKey = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                                             const done = checkCompleted(habit.id, day, completions, currentMonthIndex, currentYear);
+                                            const inactive = isHabitInactive(habit.id, dateKey);
                                             const isToday = day === new Date().getDate() && currentMonthIndex === new Date().getMonth() && currentYear === new Date().getFullYear();
                                             const isFull = isDayFullyCompleted(day);
 
                                             // Check frequency
                                             const dayDate = new Date(currentYear, currentMonthIndex, day);
-                                            const isDue = !habit.frequency || habit.frequency.includes(dayDate.getDay());
+                                            const isDue = (!habit.frequency || habit.frequency.includes(dayDate.getDay())) && isHabitActiveOnDate(habit, dayDate);
 
                                             if (!isDue) {
                                                 return (
@@ -378,7 +407,55 @@ total possible">
                                                     className={`p-0.5 border-r border-stone-50 transition-colors duration-300`}
                                                     style={{ backgroundColor: isToday ? theme.primary + '15' : (isFull ? theme.primary + '20' : undefined) }}
                                                 >
-                                                    <button onClick={() => toggleCompletion(habit.id, dateKey)} className={`w-full aspect-square flex items-center justify-center border transition-all duration-200 ${done ? 'text-white shadow-sm' : 'bg-white border-stone-200 shadow-none'} hover:border-black`} style={{ backgroundColor: done ? theme.secondary : undefined, borderColor: done ? theme.secondary : undefined }}>{done && <Check size={10} strokeWidth={4} />}</button>
+                                                    <button
+                                                        onClick={() => {
+                                                            if (longPressTriggeredRef.current) {
+                                                                longPressTriggeredRef.current = false;
+                                                                return;
+                                                            }
+                                                            toggleCompletion(habit.id, dateKey);
+                                                        }}
+                                                        onMouseDown={() => {
+                                                            if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current);
+                                                            longPressTimerRef.current = window.setTimeout(() => {
+                                                                longPressTriggeredRef.current = true;
+                                                                toggleHabitInactive(habit.id, dateKey);
+                                                            }, 450);
+                                                        }}
+                                                        onMouseUp={() => {
+                                                            if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current);
+                                                            longPressTimerRef.current = null;
+                                                        }}
+                                                        onMouseLeave={() => {
+                                                            if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current);
+                                                            longPressTimerRef.current = null;
+                                                        }}
+                                                        onTouchStart={() => {
+                                                            if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current);
+                                                            longPressTimerRef.current = window.setTimeout(() => {
+                                                                longPressTriggeredRef.current = true;
+                                                                toggleHabitInactive(habit.id, dateKey);
+                                                            }, 450);
+                                                        }}
+                                                        onTouchEnd={() => {
+                                                            if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current);
+                                                            longPressTimerRef.current = null;
+                                                        }}
+                                                        onTouchCancel={() => {
+                                                            if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current);
+                                                            longPressTimerRef.current = null;
+                                                        }}
+                                                        onContextMenu={(e) => {
+                                                            e.preventDefault();
+                                                            if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current);
+                                                            longPressTimerRef.current = null;
+                                                            toggleHabitInactive(habit.id, dateKey);
+                                                        }}
+                                                        className={`w-full aspect-square flex items-center justify-center border transition-all duration-200 ${inactive ? 'text-amber-900 bg-amber-300 border-amber-700' : (done ? 'text-white shadow-sm' : 'bg-white border-stone-200 shadow-none')} hover:border-black`}
+                                                        style={{ backgroundColor: inactive ? undefined : (done ? theme.secondary : undefined), borderColor: inactive ? undefined : (done ? theme.secondary : undefined) }}
+                                                    >
+                                                        {inactive ? <Minus size={10} strokeWidth={4} /> : (done && <Check size={10} strokeWidth={4} />)}
+                                                    </button>
                                                 </td>
                                             );
                                         })}

@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, Plus, Share2, Trash2, Pencil, ChevronLeft, ChevronRight, BookOpen, X, Save, Meh, Frown, Smile, Laugh, Star, Angry } from 'lucide-react';
+import { Check, Minus, Plus, Share2, Trash2, Pencil, ChevronLeft, ChevronRight, BookOpen, X, Save, Meh, Frown, Smile, Laugh, Star, Angry } from 'lucide-react';
 import { Habit, HabitCompletion, Theme, DailyNote, Task, DayData } from '../types';
 import { isCompleted as checkCompleted } from '../utils/stats';
 import { generateUUID } from '../utils/uuid';
+import { isHabitActiveOnDate } from '../utils/habitActivity';
 
 interface DailyCardProps {
     date: Date;
@@ -11,6 +12,8 @@ interface DailyCardProps {
     completions: HabitCompletion;
     theme: Theme;
     toggleCompletion: (habitId: string, dateKey: string) => void;
+    toggleHabitInactive: (habitId: string, dateKey: string) => void;
+    isHabitInactive: (habitId: string, dateKey: string) => boolean;
     notes: DailyNote;
     updateNote: (dateKey: string, data: Partial<DayData>) => void;
     onShareClick: (data: {
@@ -34,6 +37,8 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
     completions,
     theme,
     toggleCompletion,
+    toggleHabitInactive,
+    isHabitInactive,
     notes,
     updateNote,
     onShareClick,
@@ -53,6 +58,8 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
     const flexibleHabitsRef = useRef<HTMLDivElement>(null);
     const tasksRef = useRef<HTMLDivElement>(null);
     const journalRef = useRef<HTMLDivElement>(null);
+    const longPressTimerRef = useRef<number | null>(null);
+    const longPressTriggeredRef = useRef(false);
 
     useEffect(() => {
         // Helper: smooth-scroll animator per element. Stores state on element.
@@ -176,21 +183,23 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
         }
     };
 
-    const dailyHabits = habits.filter(h => !h.weeklyTarget);
-    const flexibleHabits = habits.filter(h => !!h.weeklyTarget);
+    const visibleHabitsForDate = habits.filter(h => isHabitActiveOnDate(h, date));
+    const dailyHabits = visibleHabitsForDate.filter(h => !h.weeklyTarget);
+    const flexibleHabits = visibleHabitsForDate.filter(h => !!h.weeklyTarget);
 
     const getDayProgress = () => {
-        if (dailyHabits.length === 0) return 0;
+        const activeDailyHabits = dailyHabits.filter(h => !isHabitInactive(h.id, dateKey));
+        if (activeDailyHabits.length === 0) return 0;
         const monthIdx = date.getMonth();
         const day = date.getDate();
         const year = date.getFullYear();
         let doneCount = 0;
-        dailyHabits.forEach(h => {
+        activeDailyHabits.forEach(h => {
             if (checkCompleted(h.id, day, completions, monthIdx, year)) {
                 doneCount++;
             }
         });
-        return (doneCount / dailyHabits.length) * 100;
+        return (doneCount / activeDailyHabits.length) * 100;
     };
 
     const actualProgress = getDayProgress();
@@ -204,11 +213,27 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
     }, [actualProgress]);
 
     const dailyCompletedCount = dailyHabits.reduce((acc, h) => {
+        if (isHabitInactive(h.id, dateKey)) return acc;
         const doneToday = checkCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
         return doneToday ? acc + 1 : acc;
     }, 0);
 
-    const totalDailyCount = dailyHabits.length;
+    const totalDailyCount = dailyHabits.filter(h => !isHabitInactive(h.id, dateKey)).length;
+
+    const clearLongPress = () => {
+        if (longPressTimerRef.current) {
+            window.clearTimeout(longPressTimerRef.current);
+            longPressTimerRef.current = null;
+        }
+    };
+
+    const startLongPress = (habitId: string) => {
+        clearLongPress();
+        longPressTimerRef.current = window.setTimeout(() => {
+            longPressTriggeredRef.current = true;
+            toggleHabitInactive(habitId, dateKey);
+        }, 450);
+    };
 
     const handleFinishEditing = (taskId: string) => {
         const currentTasks = dayData.tasks || [];
@@ -328,21 +353,39 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 >
                     {dailyHabits.length > 0 ? dailyHabits.map(habit => {
                         const done = checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
+                        const inactive = isHabitInactive(habit.id, dateKey);
                         return (
                             <div
                                 key={habit.id}
-                                onClick={() => toggleCompletion(habit.id, dateKey)}
+                                onClick={() => {
+                                    if (longPressTriggeredRef.current) {
+                                        longPressTriggeredRef.current = false;
+                                        return;
+                                    }
+                                    toggleCompletion(habit.id, dateKey);
+                                }}
+                                onMouseDown={() => startLongPress(habit.id)}
+                                onMouseUp={clearLongPress}
+                                onMouseLeave={clearLongPress}
+                                onTouchStart={() => startLongPress(habit.id)}
+                                onTouchEnd={clearLongPress}
+                                onTouchCancel={clearLongPress}
+                                onContextMenu={(e) => {
+                                    e.preventDefault();
+                                    clearLongPress();
+                                    toggleHabitInactive(habit.id, dateKey);
+                                }}
                                 className="flex items-center justify-between group cursor-pointer hover:bg-black/5 rounded p-1 -mx-1 transition-colors"
                             >
                                 <div className="flex items-center flex-1 min-w-0">
-                                    <span className={`text-[11px] font-bold truncate ${done ? 'text-stone-400 line-through' : 'text-stone-700'}`}>
+                                    <span className={`text-[11px] font-bold truncate ${inactive ? 'text-amber-700' : (done ? 'text-stone-400 line-through' : 'text-stone-700')}`}>
                                         {habit.name || t('dailyCard.untitled')}
                                     </span>
                                 </div>
                                 <div
-                                    className={`w-4 h-4 border-2 border-black flex items-center justify-center transition-all ${done ? 'bg-black text-white' : 'bg-white'}`}
+                                    className={`w-4 h-4 border-2 border-black flex items-center justify-center transition-all ${inactive ? 'bg-amber-300 text-amber-900 border-amber-700' : (done ? 'bg-black text-white' : 'bg-white')}`}
                                 >
-                                    {done && <Check size={10} strokeWidth={4} />}
+                                    {inactive ? <Minus size={10} strokeWidth={4} /> : (done && <Check size={10} strokeWidth={4} />)}
                                 </div>
                             </div>
                         );
@@ -366,6 +409,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                     >
                         {flexibleHabits.map(habit => {
                             const done = checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
+                            const inactive = isHabitInactive(habit.id, dateKey);
 
                             // Calculate weekly progress
                             const today = date;
@@ -384,6 +428,8 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                             for (let i = 0; i < 7; i++) {
                                 const d = new Date(startDay);
                                 d.setDate(startDay.getDate() + i);
+                                const dKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                                if (isHabitInactive(habit.id, dKey)) continue;
                                 if (checkCompleted(habit.id, d.getDate(), completions, d.getMonth(), d.getFullYear())) {
                                     weekCompletions++;
                                 }
@@ -394,11 +440,28 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                             return (
                                 <div
                                     key={habit.id}
-                                    onClick={() => toggleCompletion(habit.id, dateKey)}
+                                    onClick={() => {
+                                        if (longPressTriggeredRef.current) {
+                                            longPressTriggeredRef.current = false;
+                                            return;
+                                        }
+                                        toggleCompletion(habit.id, dateKey);
+                                    }}
+                                    onMouseDown={() => startLongPress(habit.id)}
+                                    onMouseUp={clearLongPress}
+                                    onMouseLeave={clearLongPress}
+                                    onTouchStart={() => startLongPress(habit.id)}
+                                    onTouchEnd={clearLongPress}
+                                    onTouchCancel={clearLongPress}
+                                    onContextMenu={(e) => {
+                                        e.preventDefault();
+                                        clearLongPress();
+                                        toggleHabitInactive(habit.id, dateKey);
+                                    }}
                                     className="flex items-center justify-between group cursor-pointer hover:bg-black/5 rounded p-1 -mx-1 transition-colors"
                                 >
                                     <div className="flex items-center flex-1 min-w-0">
-                                        <span className={`text-[11px] font-bold truncate ${done ? 'text-stone-400 line-through' : 'text-stone-700'}`}>
+                                        <span className={`text-[11px] font-bold truncate ${inactive ? 'text-amber-700' : (done ? 'text-stone-400 line-through' : 'text-stone-700')}`}>
                                             {habit.name || t('dailyCard.untitled')}
                                         </span>
                                         <span className={`ml-1 text-[9px] px-1 py-0 border-[1px] font-black uppercase tracking-tighter ${goalMet ? 'bg-black text-white border-black' : 'bg-stone-50 text-stone-400 border-stone-200'}`}>
@@ -406,9 +469,9 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                         </span>
                                     </div>
                                     <div
-                                        className={`w-4 h-4 border-2 border-black flex items-center justify-center transition-all ${done ? 'bg-black text-white' : 'bg-white'}`}
+                                        className={`w-4 h-4 border-2 border-black flex items-center justify-center transition-all ${inactive ? 'bg-amber-300 text-amber-900 border-amber-700' : (done ? 'bg-black text-white' : 'bg-white')}`}
                                     >
-                                        {done && <Check size={10} strokeWidth={4} />}
+                                        {inactive ? <Minus size={10} strokeWidth={4} /> : (done && <Check size={10} strokeWidth={4} />)}
                                     </div>
                                 </div>
                             );

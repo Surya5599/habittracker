@@ -137,6 +137,8 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                                         completions={dummyCompletions}
                                         theme={selectedTheme}
                                         toggleCompletion={() => { }}
+                                        toggleHabitInactive={() => { }}
+                                        isHabitInactive={() => false}
                                         notes={dummyNotes}
                                         updateNote={() => { }}
                                         onShareClick={() => { }}

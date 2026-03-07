@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
 import i18n from './i18n';
-import { X, Search, Key } from 'lucide-react';
+import { X, Search, Key, Archive, Minus } from 'lucide-react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from './supabase';
 import './i18n';
@@ -19,6 +19,7 @@ import { Habit, DailyNote, MonthlyGoals, MonthlyGoal, DayData } from './types';
 import { BottomNav } from './components/BottomNav';
 import { DailyCard } from './components/DailyCard';
 import { generateUUID } from './utils/uuid';
+import { getInactiveHabitsForDate, isHabitActiveOnDate, isHabitManuallyInactive } from './utils/habitActivity';
 import { OnboardingModal } from './components/OnboardingModal';
 import { FeatureAnnouncementModal } from './components/FeatureAnnouncementModal';
 import { LoadingScreen } from './components/LoadingScreen';
@@ -110,7 +111,7 @@ const AppContent: React.FC = () => {
 
   useEffect(() => {
     // Check for specific feature announcements
-    const seenDashboardUpdate = localStorage.getItem('seen_dashboard_update_2026');
+    const seenDashboardUpdate = localStorage.getItem('seen_archive_skip_update_2026');
 
     // Determine if onboarding is completed based on current mode
     const isGuestOnboardingDone = localStorage.getItem('habit_onboarding_completed') === 'true';
@@ -132,7 +133,7 @@ const AppContent: React.FC = () => {
 
   const handleUpdateModalClose = () => {
     setShowUpdateModal(false);
-    localStorage.setItem('seen_dashboard_update_2026', 'true');
+    localStorage.setItem('seen_archive_skip_update_2026', 'true');
   };
 
   const handleUpdateModalAction = () => {
@@ -333,7 +334,7 @@ const AppContent: React.FC = () => {
     habits,
     completions,
     loading,
-    toggleCompletion,
+    toggleCompletion: baseToggleCompletion,
     addHabit,
     updateHabit,
     removeHabit,
@@ -651,7 +652,11 @@ const AppContent: React.FC = () => {
     const currentNote = notes[dateKey] || { tasks: [] };
     updatedNote = { ...currentNote, ...data };
 
-    const isEmpty = (!updatedNote.tasks || updatedNote.tasks.length === 0) && !updatedNote.mood && !updatedNote.journal;
+    const isEmpty =
+      (!updatedNote.tasks || updatedNote.tasks.length === 0) &&
+      !updatedNote.mood &&
+      !updatedNote.journal &&
+      (!updatedNote.inactiveHabits || updatedNote.inactiveHabits.length === 0);
 
     // Sync to database for logged-in users
     if (effectiveUserId) {
@@ -675,6 +680,41 @@ const AppContent: React.FC = () => {
           });
       }
     }
+  };
+
+  const toggleHabitInactive = async (habitId: string, dateKey: string) => {
+    const currentlyInactive = isHabitManuallyInactive(notes, dateKey, habitId);
+    const existing = getInactiveHabitsForDate(notes, dateKey);
+    const next = currentlyInactive
+      ? existing.filter(id => id !== habitId)
+      : Array.from(new Set([...existing, habitId]));
+
+    await updateNote(dateKey, { inactiveHabits: next });
+
+    if (!currentlyInactive && completions[habitId]?.[dateKey]) {
+      await baseToggleCompletion(habitId, dateKey);
+    }
+  };
+
+  const isHabitInactive = (habitId: string, dateKey: string) => {
+    const [y, m, d] = dateKey.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    const habit = habits.find(h => h.id === habitId);
+    if (!habit) return false;
+    const autoInactive = !isHabitActiveOnDate(habit, date);
+    return autoInactive || isHabitManuallyInactive(notes, dateKey, habitId);
+  };
+
+  const toggleCompletion = async (habitId: string, dateKey: string) => {
+    if (isHabitInactive(habitId, dateKey)) {
+      const existing = getInactiveHabitsForDate(notes, dateKey);
+      if (existing.includes(habitId)) {
+        await updateNote(dateKey, { inactiveHabits: existing.filter(id => id !== habitId) });
+      } else {
+        return;
+      }
+    }
+    await baseToggleCompletion(habitId, dateKey);
   };
 
   const isDayFullyCompleted = (day: number) => {
@@ -816,8 +856,45 @@ const AppContent: React.FC = () => {
       <FeatureAnnouncementModal
         isOpen={showUpdateModal}
         onClose={handleUpdateModalClose}
-        title="Retro Dashboard & Streaks"
-        description="Experience the new Retro Grids for visual habit history, and master your routines with the all-new Streak Master analysis modal!"
+        title="Archive + Skip Controls"
+        description="You can now archive habits and keep them visible only through the archive day (example: archived on Jan 15 appears until Jan 15, hidden from Jan 16 onward). You can also mark days as Not Active/Skip (example: a habit started in July can skip Jan-Jun days so those dates do not reduce your scores)."
+        image={
+          <div className="space-y-2">
+            <div className="space-y-1">
+              <p className="text-[11px] font-bold text-stone-700 leading-snug">
+                Skip / Not Active: mark days that should not count against your score.
+              </p>
+              <div className="border-2 border-black bg-amber-50 p-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                <div className="text-[9px] font-black uppercase tracking-widest text-amber-800 mb-1">Sample</div>
+                <div className="flex items-center justify-between bg-white border border-amber-300 px-2 py-1">
+                  <span className="text-xs font-bold text-stone-700">Morning Run (Jan 03)</span>
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 border border-amber-700 bg-amber-300 text-amber-900 text-[10px] font-black uppercase">
+                    <Minus size={10} strokeWidth={3} />
+                    Skip
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-[11px] font-bold text-stone-700 leading-snug">
+                Archive: keep habit history through archive day, then hide it from future dates.
+              </p>
+              <div className="flex items-center justify-between bg-white border border-amber-300 px-2 py-1">
+                <div className="border-2 border-black bg-stone-50 p-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] w-full">
+                  <div className="text-[9px] font-black uppercase tracking-widest text-stone-700 mb-1">Sample</div>
+                  <div className="flex items-center justify-between bg-white border border-stone-300 px-2 py-1">
+                    <span className="text-xs font-bold text-stone-700">Read 20 Pages (Archived Jan 15)</span>
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 border border-black bg-white text-[10px] font-black uppercase">
+                      <Archive size={10} strokeWidth={3} />
+                      Archived
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
         actionLabel="View Dashboard"
         onAction={handleUpdateModalAction}
       />
@@ -920,6 +997,8 @@ const AppContent: React.FC = () => {
                 completions={completions}
                 theme={theme}
                 toggleCompletion={toggleCompletion}
+                toggleHabitInactive={toggleHabitInactive}
+                isHabitInactive={isHabitInactive}
                 notes={notes}
                 updateNote={updateNote}
                 onShareClick={() => { }}
@@ -946,6 +1025,8 @@ const AppContent: React.FC = () => {
             goalInputRef={goalInputRef}
             addHabit={() => addHabit(theme.primary).then(id => setEditingHabitId(id))}
             toggleCompletion={toggleCompletion}
+            toggleHabitInactive={toggleHabitInactive}
+            isHabitInactive={isHabitInactive}
             updateHabitNameState={(id, name) => updateHabit(id, { name })}
             updateHabitGoalState={(id, goal) => updateHabit(id, { goal: parseInt(goal) || 0 })}
             handleHabitBlur={handleHabitBlur}
@@ -985,6 +1066,8 @@ const AppContent: React.FC = () => {
             weekOffset={weekOffset}
             theme={theme}
             toggleCompletion={toggleCompletion}
+            toggleHabitInactive={toggleHabitInactive}
+            isHabitInactive={isHabitInactive}
             notes={notes}
             updateNote={updateNote}
             addHabit={() => addHabit(theme.primary).then(id => setEditingHabitId(id))}

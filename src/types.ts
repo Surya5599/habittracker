@@ -30,6 +30,7 @@ export interface DayData {
   tasks: Task[];
   mood?: number; // 1-5
   journal?: string;
+  inactiveHabits?: string[];
 }
 
 export interface DailyNote {
@@ -80,4 +81,3 @@ export interface Feedback {
   metadata?: any;
   replies?: FeedbackReply[];
 }
-

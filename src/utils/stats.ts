@@ -5,7 +5,8 @@ export const getHabitMonthStats = (
     completions: HabitCompletion,
     monthIdx: number,
     year: number,
-    frequency?: number[]
+    frequency?: number[],
+    isInactive?: (dateKey: string) => boolean
 ) => {
     const today = new Date();
     const dInM = new Date(year, monthIdx + 1, 0).getDate();
@@ -34,6 +35,9 @@ export const getHabitMonthStats = (
         totalDueDays++;
 
         const dateKey = `${year}-${String(monthIdx + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        if (isInactive?.(dateKey)) {
+            continue;
+        }
         const isDone = completions[habitId]?.[dateKey] || false;
 
         if (isDone) {

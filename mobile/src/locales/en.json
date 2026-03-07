@@ -1,0 +1,268 @@
+{
+    "settings": {
+        "title": "Settings",
+        "general": {
+            "title": "General",
+            "defaultView": "Default View",
+            "views": {
+                "daily": "Daily",
+                "monthly": "Mnth",
+                "dashboard": "Dash"
+            },
+            "startOfWeek": "Start of Week"
+        },
+        "language": {
+            "title": "Language"
+        },
+        "theme": {
+            "title": "Theme",
+            "select": "Select Theme"
+        },
+        "support": {
+            "title": "Support",
+            "reportBug": "Report Bug or Suggestion"
+        }
+    },
+    "header": {
+        "dashboard": "Dashboard",
+        "signIn": "Sign In",
+        "logout": "Logout",
+        "myWeek": "My Week",
+        "myMonth": "My Month",
+        "monthlyTrends": "Monthly Trends",
+        "weeklyTrends": "Weekly Trends",
+        "annualTrends": "Annual Trends",
+        "vsLM": "vs LM",
+        "vsLW": "vs LW",
+        "switchChart": "Switch to Chart",
+        "monthlySuccess": "Monthly Success",
+        "weeklySuccess": "Weekly Success",
+        "annualPerformance": "Annual Performance",
+        "monthMastery": "Month Mastery",
+        "habitMaster": "Habit Master",
+        "yourStoryMonth": "Your Story This Month",
+        "yourStoryWeek": "Your Story This Week",
+        "completed": "Completed",
+        "vsPrev": "vs Prev",
+        "best": "Best",
+        "thisYearResolutions": "This Year Resolutions"
+    },
+    "story": {
+        "annual": {
+            "momentum": {
+                "ascending": "You've been building serious momentum lately, finishing the year stronger than you started.",
+                "descending": "Your recent rhythm softened toward the end of the year. That's often a signal for recalibration—not failure.",
+                "stable": "Your consistency has remained remarkably stable throughout the transitions of the year.",
+                "main": "This year, your identity centered around [[{{habitName}}]]. {{momentumMsg}}"
+            },
+            "rhythm": {
+                "weekend": "You find your best rhythm on the weekends—that's when your identity truly shines.",
+                "weekday": "You are a weekday warrior, but the weekends tend to be a 'blind spot' for your habits.",
+                "consistent": "You maintain a consistent rhythm throughout the entire week, from Monday to Sunday."
+            },
+            "consistency": {
+                "high": "You've shown up on [[{{activeDays}}]] days so far this year — enough to form real identity momentum.",
+                "medium": "You have the spark. With slightly more rhythm, this could become automatic.",
+                "low": "You're laying foundations. Early consistency matters more than volume."
+            },
+            "experimental": "You experimented broadly this year. That curiosity is a strength — narrowing focus may unlock consistency.",
+            "fading": "Your consistency with [[{{habitName}}]] has dropped significantly recently. If this was intentional, that’s clarity. If not, a small restart could bring it back into focus.",
+            "neglected": "You haven't logged [[{{habitName}}]] for [[{{days}}]] days. When it makes sense, a small revisit is enough."
+        },
+        "weekly": {
+            "intro": {
+                "elite": "You're operating at an elite level with [[{{count}}]] actions so far this week. Your habits aren't just actions; they are your identity.",
+                "strong": "Strong consistency with [[{{count}}]] completions. You're showing up for yourself, and the momentum is visible.",
+                "balanced": "A week of balance ([[{{count}}]] completions). Some foundations held firm, others were tested. Re-centering is part of the process.",
+                "low": "A low-velocity week with [[{{count}}]] completions. These are often periods of rest or resistance—either way, they are data for a better next week."
+            },
+            "momentum": {
+                "highlight": "Your identity was strongest in [[{{habitName}}]] this week, with [[{{count}}/{{total}}]] days completed so far."
+            },
+            "neglected": "You haven't logged [[{{habitName}}]] yet this week. A small 2-minute version of it tomorrow could restart the rhythm.",
+            "growth": {
+                "recovery": "You finished the week stronger than you started. That's 'recovery capacity' in action.",
+                "friction": "You had a powerful start, but the weekend brought some friction. Identifying that 'Friday fade' is the first step to mastering it."
+            }
+        },
+        "monthly": {
+            "intro": {
+                "exceptional": "A month of exceptional focus ([[{{count}}]] completions so far). You've successfully integrated these habits into your lifestyle.",
+                "solid": "Solid progress this month. With [[{{count}}]] total completions, you've established a strong baseline of consistency.",
+                "exploration": "A month of exploration. [[{{count}}]] completions shows effort, but there's room to tighten your rhythm for next month.",
+                "low": "A low-momentum month. Use the [[{{count}}]] completions you did manage as architectural data for a more sustainable next month."
+            },
+            "momentum": {
+                "growth": "You've seen a [[{{delta}}%]] growth since last month—that's significant identity shifting in action.",
+                "cooling": "Your rhythm cooled by [[{{delta}}%]] this month. This is often a sign of life-balance adjusting; use it to recalibrate."
+            },
+            "rhythm": {
+                "anchor": "You were most dedicated to [[{{habitName}}]] this month, showing up [[{{count}}]] times. That is your current anchor."
+            }
+        }
+    },
+    "common": {
+        "done": "Done",
+        "rate": "Rate",
+        "days": "DAYS",
+        "myHabits": "My Habits",
+        "manageHabits": "Manage habits",
+        "currentStreak": "Current Streak",
+        "months": {
+            "jan": "Jan",
+            "feb": "Feb",
+            "mar": "Mar",
+            "apr": "Apr",
+            "may": "May",
+            "jun": "Jun",
+            "jul": "Jul",
+            "aug": "Aug",
+            "sep": "Sep",
+            "oct": "Oct",
+            "nov": "Nov",
+            "dec": "Dec"
+        },
+        "selectYear": "Select Year",
+        "cancel": "Cancel",
+        "thisWeek": "this week",
+        "untitled": "Untitled",
+        "daysShort": {
+            "mon": "M",
+            "tue": "T",
+            "wed": "W",
+            "thu": "T",
+            "fri": "F",
+            "sat": "S",
+            "sun": "S"
+        }
+    },
+    "dailyCard": {
+        "dailyHabits": "Daily Habits",
+        "flexibleHabits": "Flexible Habits",
+        "tasks": "Tasks",
+        "dailyDone": "Daily Done",
+        "remaining": "Remaining",
+        "noDailyHabits": "No daily habits due today",
+        "addTask": "Click + to add a task",
+        "share": "Share Achievement",
+        "journal": "Journal",
+        "mood": "Mood",
+        "notes": "Notes",
+        "saveEntry": "Save Entry",
+        "journalPlaceholder": "Write regarding today...",
+        "editTask": "Edit task",
+        "deleteTask": "Delete task",
+        "untitled": "Untitled",
+        "moods": {
+            "veryBad": "Very Bad",
+            "bad": "Bad",
+            "neutral": "Neutral",
+            "good": "Good",
+            "veryGood": "Very Good"
+        },
+        "goal": "Goal"
+    },
+    "tasks": {
+        "enterTask": "Enter your task",
+        "placeholder": "Type something...",
+        "addTask": "Add Task",
+        "newTaskPlaceholder": "New task...",
+        "empty": "No tasks yet"
+    },
+    "journal": {
+        "title": "Journal",
+        "prompt": "Reflect on your day",
+        "placeholder": "Write regarding today...",
+        "save": "Save Entry"
+    },
+    "habitManager": {
+        "title": "My Habits",
+        "addHabit": "Add New Habit",
+        "noHabits": "No habits yet. Start by adding one!",
+        "dragToReorder": "Drag habits to reorder them.",
+        "fixed": "Fixed",
+        "flexible": "Flexible",
+        "timesPerWeek": "Times per week",
+        "habitNamePlaceholder": "Habit name",
+        "untitled": "Untitled Habit",
+        "deleteConfirm": "Are you sure you want to delete this habit? You will lose all its historical data."
+    },
+    "weeklyCard": {
+        "title": "Weekly Goals",
+        "target": "Target: {{count}}x this week"
+    },
+    "monthlyView": {
+        "journals": "Journals",
+        "habits": "Habits",
+        "emptyEntry": "Empty entry...",
+        "noActivity": "No activity today",
+        "dayDetails": "Day Details"
+    },
+    "dashboard": {
+        "week": "Week",
+        "month": "Month",
+        "year": "Year",
+        "weekTab": "WEEK",
+        "monthTab": "MONTH",
+        "yearTab": "YEAR"
+    },
+    "analytics": {
+        "success": "{{period}} Success",
+        "mastery": "{{period}} Mastery",
+        "notEnoughData": "Not enough data to generate a story yet.",
+        "retrospectiveGrid": "Retrospective Grid",
+        "done": "Done",
+        "moodAnalysis": "Mood Analysis",
+        "vibe": "{{period}} Vibe",
+        "activityMomentum": "Activity Momentum",
+        "bestHabit": "Best Habit This {{period}}",
+        "needsFocus": "Needs Focus This {{period}}",
+        "noData": "No Data",
+        "onTrack": "On Track"
+    },
+    "bottomNav": {
+        "today": "Today",
+        "analytics": "Analytics",
+        "logs": "Logs",
+        "analysis": "Analysis"
+    },
+    "auth": {
+        "enterEmail": "Please enter your email",
+        "enterPassword": "Please enter your password",
+        "resetSent": "Password reset email sent!",
+        "signInSignUp": "Sign In / Sign Up",
+        "requestReset": "Request Pin Reset",
+        "returnLogin": "Return to Login",
+        "forgotPassword": "Forgot your password?",
+        "guestEntry": "Guest Entry",
+        "checkEmail": "Check your email to confirm your account.",
+        "sending": "Sending...",
+        "verifying": "Verifying...",
+        "tagline": "A calming analytical tracker to build your habits",
+        "email": "Email",
+        "password": "Password",
+        "or": "OR"
+    },
+    "dashboardScreen": {
+        "title": "Dashboard",
+        "welcome": "Welcome!",
+        "description": "This is the mobile version of HabiCard.",
+        "signOut": "Sign Out"
+    },
+    "aiAnalysis": {
+        "premiumOnly": "Premium Only",
+        "premiumDesc": "Get deep insights into your habits and life patterns with AI analysis. Unlock this feature with a premium subscription.",
+        "upgrade": "Upgrade to Premium",
+        "weeklyUsage": "Weekly Usage",
+        "analyses": "Analyses",
+        "limitReached": "Limit Reached",
+        "generateNew": "Generate New Analysis",
+        "resetMessage": "Resets next Monday",
+        "analyzeMessage": "AI will analyze your recent habits & notes",
+        "history": "Insights History",
+        "viewReport": "View Full Report",
+        "insight": "Insight",
+        "mockTitle": "Patterns & Energy",
+        "mockContent": "You tend to complete more habits on days when you record a \"productive\" mood early in the morning. Your consistency with \"Reading\" has improved by 15% this week."
+    }
+}

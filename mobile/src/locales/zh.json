@@ -1,0 +1,267 @@
+{
+    "settings": {
+        "title": "设置",
+        "general": {
+            "title": "常规",
+            "defaultView": "默认视图",
+            "views": {
+                "daily": "每日",
+                "monthly": "每月",
+                "dashboard": "仪表板"
+            },
+            "startOfWeek": "Start of Week"
+        },
+        "language": {
+            "title": "语言"
+        },
+        "theme": {
+            "title": "主题"
+        },
+        "support": {
+            "title": "支持",
+            "reportBug": "报告错误或建议"
+        }
+    },
+    "header": {
+        "dashboard": "仪表板",
+        "signIn": "登录",
+        "logout": "登出",
+        "myWeek": "我的一周",
+        "myMonth": "我的一个月",
+        "monthlyTrends": "月度趋势",
+        "weeklyTrends": "每周趋势",
+        "annualTrends": "年度趋势",
+        "vsLM": "对比上月",
+        "vsLW": "对比上周",
+        "switchChart": "切换到图表",
+        "monthlySuccess": "月度成功",
+        "weeklySuccess": "每周成功",
+        "annualPerformance": "年度表现",
+        "monthMastery": "月度掌握",
+        "habitMaster": "习惯大师",
+        "yourStoryMonth": "本月你的故事",
+        "yourStoryWeek": "本周你的故事",
+        "completed": "已完成",
+        "vsPrev": "对比之前",
+        "best": "最佳",
+        "thisYearResolutions": "今年的决心"
+    },
+    "story": {
+        "annual": {
+            "momentum": {
+                "ascending": "你最近建立了很多势头，年度结束时比开始时更强大。",
+                "descending": "你最近的节奏在年底有所放缓。这通常是重新校准的信号，而不是失败。",
+                "stable": "在这一年的过渡中，你的连贯性保持得非常稳定。",
+                "main": "今年，你的身份围绕着 [[{{habitName}}]] 展开。{{momentumMsg}}"
+            },
+            "rhythm": {
+                "weekend": "你在周末找到了最佳节奏——那是你身份真正闪耀的时刻。",
+                "weekday": "你是工作日战士，但周末往往是你习惯的'盲点'。",
+                "consistent": "你在一整周内保持一致的节奏，从周一到周日。"
+            },
+            "consistency": {
+                "high": "今年到目前为止你已经出现了 [[{{activeDays}}]] 天——足以形成真正的身份势头。",
+                "medium": "你有火花。只要稍微多一点节奏，这可能会变得自动。",
+                "low": "你正在打基础。早期的连贯性比数量更重要。"
+            },
+            "experimental": "你今年进行了广泛的实验。这种好奇心是一种力量——缩小关注范围可能会解锁连贯性。",
+            "fading": "你最近对 [[{{habitName}}]] 的连贯性显著下降。如果是故意的，那是清晰度。如果不是，一个小小的重新开始可能会带回焦点。",
+            "neglected": "你已经 [[{{days}}]] 天没有记录 [[{{habitName}}]] 了。当有意义时，一个小小的回顾就足够了。"
+        },
+        "weekly": {
+            "intro": {
+                "elite": "这周到目前为止，你的行动达到了精英水平，有 [[{{count}}]] 次行动。你的习惯不仅仅是行动；它们是你的身份。",
+                "strong": "连贯性强，完成了 [[{{count}}]] 次。你为自己而在，势头可见。",
+                "balanced": "平衡的一周（完成了 [[{{count}}]] 次）。一些基础稳固，其他的受到了考验。重新调整是过程的一部分。",
+                "low": "低速的一周，完成了 [[{{count}}]] 次。这通常是休息或抵抗的时期——无论哪种方式，它们都是为了更好的下周的数据。"
+            },
+            "momentum": {
+                "highlight": "这周你在 [[{{habitName}}]] 上的身份最强，到目前为止完成了 [[{{count}}/{{total}}]] 天。"
+            },
+            "neglected": "这周你还没有记录 [[{{habitName}}]]。明天一个小小的2分钟版本可能会重新启动节奏。",
+            "growth": {
+                "recovery": "你结束这周时比开始时更强大。这是'恢复能力'在起作用。",
+                "friction": "你有了一个强有力的开始，但周末带来了一些摩擦。识别那个'周五消退'是掌握它的第一步。"
+            }
+        },
+        "monthly": {
+            "intro": {
+                "exceptional": "异常专注的一个月（到目前为止完成了 [[{{count}}]] 次）。你已经成功地将这些习惯融入了你的生活方式。",
+                "solid": "这个月进展扎实。总共完成了 [[{{count}}]] 次，你建立了坚实的连贯性基础。",
+                "exploration": "探索的一个月。完成了 [[{{count}}]] 次显示了努力，但下个月有收紧节奏的空间。",
+                "low": "势头低迷的一个月。利用你完成的 [[{{count}}]] 次作为架构数据，为了一个更可持续的下个月。"
+            },
+            "momentum": {
+                "growth": "自上个月以来，你看到了 [[{{delta}}%]] 的增长——这是显著的身份转变在起作用。",
+                "cooling": "你这个月的节奏冷却了 [[{{delta}}%]]。这通常是生活平衡调整的迹象；利用它来重新校准。"
+            },
+            "rhythm": {
+                "anchor": "这个月你最致力于 [[{{habitName}}]]，出现了 [[{{count}}]] 次。那是你目前的锚点。"
+            }
+        }
+    },
+    "common": {
+        "done": "完成",
+        "rate": "评分",
+        "days": "天",
+        "myHabits": "我的习惯",
+        "manageHabits": "管理习惯",
+        "currentStreak": "当前连续",
+        "months": {
+            "jan": "一月",
+            "feb": "二月",
+            "mar": "三月",
+            "apr": "四月",
+            "may": "五月",
+            "jun": "六月",
+            "jul": "七月",
+            "aug": "八月",
+            "sep": "九月",
+            "oct": "十月",
+            "nov": "十一月",
+            "dec": "十二月"
+        },
+        "selectYear": "选择年份",
+        "cancel": "取消",
+        "thisWeek": "本周",
+        "untitled": "无标题",
+        "daysShort": {
+            "mon": "一",
+            "tue": "二",
+            "wed": "三",
+            "thu": "四",
+            "fri": "五",
+            "sat": "六",
+            "sun": "日"
+        }
+    },
+    "dailyCard": {
+        "dailyHabits": "每日习惯",
+        "flexibleHabits": "灵活习惯",
+        "tasks": "任务",
+        "dailyDone": "今日完成",
+        "remaining": "剩余",
+        "noDailyHabits": "今天没有截止的习惯",
+        "addTask": "点击 + 添加任务",
+        "share": "分享成就",
+        "journal": "日记",
+        "mood": "心情",
+        "notes": "笔记",
+        "saveEntry": "保存条目",
+        "journalPlaceholder": "写下今天...",
+        "editTask": "编辑任务",
+        "deleteTask": "删除任务",
+        "untitled": "无标题",
+        "moods": {
+            "veryBad": "很差",
+            "bad": "差",
+            "neutral": "一般",
+            "good": "好",
+            "veryGood": "很好"
+        },
+        "goal": "目标"
+    },
+    "tasks": {
+        "enterTask": "输入任务",
+        "placeholder": "写点什么...",
+        "addTask": "添加任务",
+        "newTaskPlaceholder": "新任务...",
+        "empty": "暂无任务"
+    },
+    "journal": {
+        "title": "日记",
+        "prompt": "反思你的一天",
+        "placeholder": "写下今天...",
+        "save": "保存条目"
+    },
+    "habitManager": {
+        "title": "我的习惯",
+        "addHabit": "添加新习惯",
+        "noHabits": "暂无习惯。开始添加一个吧！",
+        "dragToReorder": "拖动习惯进行排序。",
+        "fixed": "固定",
+        "flexible": "灵活",
+        "timesPerWeek": "每周次数",
+        "habitNamePlaceholder": "习惯名称",
+        "untitled": "无标题习惯",
+        "deleteConfirm": "确定要删除这个习惯吗？您将丢失所有历史数据。"
+    },
+    "weeklyCard": {
+        "title": "每周目标",
+        "target": "目标：本周 {{count}}次"
+    },
+    "monthlyView": {
+        "journals": "日记",
+        "habits": "习惯",
+        "emptyEntry": "空条目...",
+        "noActivity": "今天无活动",
+        "dayDetails": "每日详情"
+    },
+    "dashboard": {
+        "week": "周",
+        "month": "月",
+        "year": "年",
+        "weekTab": "周",
+        "monthTab": "月",
+        "yearTab": "年"
+    },
+    "analytics": {
+        "success": "{{period}} 成功率",
+        "mastery": "{{period}} 掌握度",
+        "notEnoughData": "数据不足，无法生成故事。",
+        "retrospectiveGrid": "回顾网格",
+        "done": "完成",
+        "moodAnalysis": "心情分析",
+        "vibe": "{{period}} 氛围",
+        "activityMomentum": "活动势头",
+        "bestHabit": "{{period}} 最佳习惯",
+        "needsFocus": "{{period}} 需要关注",
+        "noData": "无数据",
+        "onTrack": "正轨"
+    },
+    "bottomNav": {
+        "today": "今天",
+        "analytics": "分析",
+        "logs": "日志",
+        "analysis": "AI分析"
+    },
+    "auth": {
+        "enterEmail": "请输入您的邮箱",
+        "enterPassword": "请输入您的密码",
+        "resetSent": "重置邮件已发送！",
+        "signInSignUp": "登录 / 注册",
+        "requestReset": "请求重置PIN",
+        "returnLogin": "返回登录",
+        "forgotPassword": "忘记密码？",
+        "guestEntry": "访客进入",
+        "checkEmail": "请检查邮件以确认您的账户。",
+        "sending": "发送中...",
+        "verifying": "验证中...",
+        "tagline": "一个平静的分析追踪器，助你养成习惯",
+        "email": "邮箱",
+        "password": "密码",
+        "or": "或"
+    },
+    "dashboardScreen": {
+        "title": "仪表板",
+        "welcome": "欢迎！",
+        "description": "这是HabiCard的移动版。",
+        "signOut": "登出"
+    },
+    "aiAnalysis": {
+        "premiumOnly": "仅限高级版",
+        "premiumDesc": "通过AI分析深入了解您的习惯和生活模式。订阅高级版以解锁此功能。",
+        "upgrade": "升级到高级版",
+        "weeklyUsage": "每周使用",
+        "analyses": "分析",
+        "limitReached": "达到上限",
+        "generateNew": "生成新分析",
+        "resetMessage": "下周一重置",
+        "analyzeMessage": "AI将分析您最近的习惯和笔记",
+        "history": "洞察历史",
+        "viewReport": "查看完整报告",
+        "insight": "洞察",
+        "mockTitle": "模式与能量",
+        "mockContent": "您倾向于在清晨记录“高效”心情的日子里完成更多习惯。本周您在“阅读”方面的一致性提高了15%。"
+    }
+}

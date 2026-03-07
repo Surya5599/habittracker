@@ -13,6 +13,8 @@ import { useHabitStats } from './src/hooks/useHabitStats';
 import { useDailyNotes } from './src/hooks/useDailyNotes';
 import { useAIAnalysis } from './src/hooks/useAIAnalysis';
 import { THEMES } from './src/constants';
+import i18n from './src/i18n';
+// import { useTranslation } from 'react-i18next'; // Removing hook usage in App.js context
 
 const Stack = createStackNavigator();
 
@@ -25,6 +27,8 @@ export default function App() {
   const [currentMonthIndex, setCurrentMonthIndex] = useState(new Date().getMonth());
   const [weekOffset, setWeekOffset] = useState(0);
   const [weekStart, setWeekStart] = useState('MON'); // 'MON' or 'SUN'
+  // const { i18n } = useTranslation(); // Use imported instance instead
+  const [language, setLanguage] = useState('en');
 
   // Theme support
   const [theme, setTheme] = useState(THEMES[1]); // default ocean
@@ -37,6 +41,22 @@ export default function App() {
   const handleWeekStartChange = async (start) => {
     setWeekStart(start);
     await AsyncStorage.setItem('habit_tracker_week_start', start);
+  };
+
+  const handleLanguageChange = async (lang) => {
+    setLanguage(lang);
+    i18n.changeLanguage(lang);
+    await AsyncStorage.setItem('habit_language', lang);
+
+    if (session?.user) {
+      try {
+        await supabase.auth.updateUser({
+          data: { language: lang }
+        });
+      } catch (err) {
+        console.error('Failed to sync language to profile:', err);
+      }
+    }
   };
 
   // Initialize Session
@@ -63,9 +83,25 @@ export default function App() {
 
       const savedWeekStart = await AsyncStorage.getItem('habit_tracker_week_start');
       if (savedWeekStart) setWeekStart(savedWeekStart);
+
+      const savedLanguage = await AsyncStorage.getItem('habit_language');
+      if (savedLanguage) {
+        setLanguage(savedLanguage);
+        i18n.changeLanguage(savedLanguage);
+      }
     };
     checkGuest();
   }, []);
+
+  // Sync session language
+  useEffect(() => {
+    if (session?.user?.user_metadata?.language) {
+      const remoteLang = session.user.user_metadata.language;
+      setLanguage(remoteLang);
+      i18n.changeLanguage(remoteLang);
+      AsyncStorage.setItem('habit_language', remoteLang);
+    }
+  }, [session?.user?.id]);
 
   const {
     habits,
@@ -74,7 +110,8 @@ export default function App() {
     addHabit,
     updateHabit,
     removeHabit,
-    reorderHabits
+    reorderHabits,
+    toggleArchiveHabit
   } = useHabits(session, guestMode);
 
   const {
@@ -130,12 +167,15 @@ export default function App() {
                   updateHabit={updateHabit}
                   removeHabit={removeHabit}
                   reorderHabits={reorderHabits}
+                  toggleArchiveHabit={toggleArchiveHabit}
                   weeklyStats={weeklyStats}
                   isGuest={guestMode}
                   onOpenSignIn={handleOpenSignIn}
                   weekStart={weekStart}
                   setWeekStart={handleWeekStartChange}
                   aiAnalysis={aiAnalysis}
+                  language={language}
+                  setLanguage={handleLanguageChange}
                 />
               )}
             </Stack.Screen>

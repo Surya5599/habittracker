@@ -17,8 +17,11 @@
     "expo": "~54.0.31",
     "expo-haptics": "~15.0.8",
     "expo-status-bar": "~3.0.9",
+    "i18next": "^25.8.10",
+    "intl-pluralrules": "^2.0.1",
     "lucide-react-native": "^0.562.0",
     "react": "19.1.0",
+    "react-i18next": "^16.5.4",
     "react-native": "0.81.5",
     "react-native-draggable-flatlist": "^4.0.3",
     "react-native-gesture-handler": "~2.28.0",
@@ -31,6 +34,7 @@
   },
   "private": true,
   "devDependencies": {
+    "babel-plugin-module-resolver": "^5.0.2",
     "react-native-dotenv": "^3.4.11"
   }
 }

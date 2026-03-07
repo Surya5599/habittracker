@@ -338,6 +338,7 @@ const AppContent: React.FC = () => {
     updateHabit,
     removeHabit,
     reorderHabits,
+    toggleArchiveHabit,
     setLoading
   } = useHabits(session, guestMode, isImpersonating ? effectiveUserId : undefined);
 
@@ -863,6 +864,7 @@ const AppContent: React.FC = () => {
           updateHabit={updateHabit}
           removeHabit={removeHabit}
           reorderHabits={reorderHabits}
+          toggleArchiveHabit={toggleArchiveHabit}
           setWeekOffset={setWeekOffset}
           monthlyGoals={monthlyGoals}
           updateMonthlyGoals={updateMonthlyGoals}

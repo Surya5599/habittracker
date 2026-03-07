@@ -65,6 +65,7 @@ interface HeaderProps {
     isStreakModalOpen: boolean;
     setIsStreakModalOpen: (open: boolean) => void;
     reorderHabits: (newHabits: Habit[]) => Promise<void>;
+    toggleArchiveHabit: (id: string, archive: boolean) => Promise<void>;
     onReportBug: () => void;
     hasUnreadFeedback: boolean;
     onSearch: () => void;
@@ -121,6 +122,7 @@ export const Header: React.FC<HeaderProps> = ({
     isStreakModalOpen,
     setIsStreakModalOpen,
     reorderHabits,
+    toggleArchiveHabit,
     onReportBug,
     hasUnreadFeedback,
     onSearch
@@ -805,6 +807,7 @@ export const Header: React.FC<HeaderProps> = ({
                 updateHabit={updateHabit}
                 removeHabit={removeHabit}
                 reorderHabits={reorderHabits}
+                toggleArchiveHabit={toggleArchiveHabit}
                 themePrimary={theme.primary}
             />
             <ResolutionsModal

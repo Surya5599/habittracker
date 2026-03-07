@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { Check, Target } from 'lucide-react-native';
 import tw from 'twrnc';
@@ -28,6 +29,7 @@ export const WeeklyCard = ({
     weekOffset,
     weekStart = 'MON'
 }) => {
+    const { t } = useTranslation();
     // Filter for flexible habits
     const flexibleHabits = habits.filter(h => h.weekly_target);
 
@@ -57,7 +59,7 @@ export const WeeklyCard = ({
                 <View style={tw`flex-row items-center justify-between`}>
                     <View style={tw`flex-row items-center gap-2`}>
                         <Target size={20} color="white" strokeWidth={3} />
-                        <Text style={tw`text-white font-black uppercase text-sm tracking-widest`}>Weekly Goals</Text>
+                        <Text style={tw`text-white font-black uppercase text-sm tracking-widest`}>{t('weeklyCard.title')}</Text>
                     </View>
                 </View>
             </View>
@@ -81,7 +83,7 @@ export const WeeklyCard = ({
                                         {habit.name}
                                     </Text>
                                     <Text style={tw`text-[10px] font-black uppercase text-gray-400`}>
-                                        Target: {habit.weekly_target}x this week
+                                        {t('weeklyCard.target', { count: habit.weekly_target })}
                                     </Text>
                                 </View>
 

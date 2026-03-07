@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import tw from 'twrnc';
 import { ChevronLeft, ChevronRight, Settings, Check, Zap, Trophy, Target } from 'lucide-react-native';
@@ -24,6 +25,7 @@ export const DashboardView = ({
     toggleCompletion,
     weekStart = 'MON'
 }) => {
+    const { t, i18n } = useTranslation();
     const [analyticsView, setAnalyticsView] = React.useState('WEEK'); // WEEK, MONTH, YEAR
     const [monthOffset, setMonthOffset] = React.useState(0);
     const [yearOffset, setYearOffset] = React.useState(0);
@@ -46,7 +48,7 @@ export const DashboardView = ({
             d.setDate(monday.getDate() + i);
             const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
             return {
-                label: d.toLocaleDateString('default', { weekday: 'short' }),
+                label: d.toLocaleDateString(i18n.language, { weekday: 'short' }),
                 mood: notes[dateKey]?.mood || null
             };
         });
@@ -70,10 +72,11 @@ export const DashboardView = ({
 
     const annualMoodData = React.useMemo(() => {
         const targetYear = today.getFullYear() + yearOffset;
-        const months = [
-            "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
-            "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"
-        ];
+        // Generate month names dynamically
+        const months = Array.from({ length: 12 }, (_, i) => {
+            const d = new Date(targetYear, i, 1);
+            return d.toLocaleString(i18n.language, { month: 'long' }).toUpperCase();
+        });
         return months.map((monthName, monthIndex) => {
             const moodCounts = {};
             const daysInMonth = new Date(targetYear, monthIndex + 1, 0).getDate();
@@ -105,10 +108,10 @@ export const DashboardView = ({
     // Annual Data Calculation
     const annualData = React.useMemo(() => {
         const currentYear = new Date().getFullYear();
-        const months = [
-            "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
-            "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"
-        ];
+        const months = Array.from({ length: 12 }, (_, i) => {
+            const d = new Date(currentYear, i, 1);
+            return d.toLocaleString(i18n.language, { month: 'long' }).toUpperCase();
+        });
         let totalPossible = 0;
         let totalCompleted = 0;
 
@@ -142,7 +145,7 @@ export const DashboardView = ({
         const currentYear = baseDate.getFullYear();
         const currentMonth = baseDate.getMonth();
         const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-        const monthName = baseDate.toLocaleString('default', { month: 'long' });
+        const monthName = baseDate.toLocaleString(i18n.language, { month: 'long' });
 
         // Calculate stats per habit
         const habitStats = habits.map(habit => {
@@ -221,10 +224,10 @@ export const DashboardView = ({
     // Annual Data Refined for Dashboard
     const annualDashboardData = React.useMemo(() => {
         const targetYear = today.getFullYear() + yearOffset;
-        const months = [
-            "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
-            "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"
-        ];
+        const months = Array.from({ length: 12 }, (_, i) => {
+            const d = new Date(targetYear, i, 1);
+            return d.toLocaleString(i18n.language, { month: 'long' }).toUpperCase();
+        });
 
         let totalPossible = 0;
         let totalCompleted = 0;
@@ -352,9 +355,11 @@ export const DashboardView = ({
             : today.getDate() - (day === 0 ? 6 : day - 1) + (weekOffset * 7);
         currentWeekStart.setDate(diff);
 
-        const days = weekStart === 'SUN'
-            ? ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
-            : ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+        const days = Array.from({ length: 7 }, (_, i) => {
+            const d = new Date(currentWeekStart);
+            d.setDate(currentWeekStart.getDate() + i);
+            return d.toLocaleDateString(i18n.language, { weekday: 'short' }).toUpperCase();
+        });
 
         return days.map((dayName, index) => {
             // Calculate date for this day of the week
@@ -408,9 +413,9 @@ export const DashboardView = ({
     const currentWeekEnd = new Date(currentWeekStart);
     currentWeekEnd.setDate(currentWeekStart.getDate() + 6);
 
-    const monthName = currentWeekStart.toLocaleString('default', { month: 'short' });
-    const startStr = currentWeekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    const endStr = currentWeekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const monthName = currentWeekStart.toLocaleString(i18n.language, { month: 'short' });
+    const startStr = currentWeekStart.toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' });
+    const endStr = currentWeekEnd.toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' });
     const fullDateString = `${startStr} - ${endStr}, ${currentWeekEnd.getFullYear()}`;
 
     // Chart Logic
@@ -483,7 +488,7 @@ export const DashboardView = ({
                                         tw`text-xs font-black tracking-widest`,
                                         isActive ? tw`text-white` : tw`text-gray-500`
                                     ]}>
-                                        {viewName}
+                                        {t(`dashboard.${viewName.toLowerCase()}Tab`)}
                                     </Text>
                                 </TouchableOpacity>
                             );
@@ -551,7 +556,7 @@ export const DashboardView = ({
                 {analyticsView === 'MONTH' && (
                     <View style={tw`px-3`}>
                         <AnalyticsDashboard
-                            periodLabel="Month"
+                            periodLabel={t('dashboard.month')}
                             story={monthlyData.story}
                             chartData={monthlyData.chartData}
                             stats={monthlyData.stats}
@@ -573,7 +578,7 @@ export const DashboardView = ({
                 {analyticsView === 'YEAR' && (
                     <View style={tw`px-3`}>
                         <AnalyticsDashboard
-                            periodLabel="Year"
+                            periodLabel={t('dashboard.year')}
                             story={annualDashboardData.story}
                             chartData={annualDashboardData.chartData}
                             stats={annualDashboardData.stats}
@@ -603,7 +608,7 @@ export const DashboardView = ({
                             weekStart={weekStart}
                         />
                         <AnalyticsDashboard
-                            periodLabel="Week"
+                            periodLabel={t('dashboard.week')}
                             story={story}
                             chartData={weeklyStats.map(d => ({ label: d.displayDay, value: d.count }))}
                             stats={{

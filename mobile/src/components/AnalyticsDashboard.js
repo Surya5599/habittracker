@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, ScrollView, Dimensions, Animated, Easing, PanResponder, FlatList } from 'react-native';
 import tw from 'twrnc';
 import Svg, { Path, Defs, LinearGradient, Stop, Circle, ClipPath, Rect, G, Text as SvgText } from 'react-native-svg';
@@ -85,6 +86,7 @@ export const AnalyticsDashboard = ({
     moodData, // Mood aggregation
     weekStart = 'MON', // Start of week preference
 }) => {
+    const { t } = useTranslation();
     const screenWidth = Dimensions.get('window').width;
     const chartWidth = screenWidth - 64;
     const chartHeight = 100;
@@ -177,7 +179,15 @@ export const AnalyticsDashboard = ({
         }
 
         if (periodLabel === 'Month') {
-            const daysOfWeek = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+            const daysOfWeek = [
+                t('common.daysShort.mon'),
+                t('common.daysShort.tue'),
+                t('common.daysShort.wed'),
+                t('common.daysShort.thu'),
+                t('common.daysShort.fri'),
+                t('common.daysShort.sat'),
+                t('common.daysShort.sun')
+            ];
             const emptySlotsStart = Array.from({ length: gridPadding || 0 });
             const totalItemsSoFar = emptySlotsStart.length + retrospectiveData.length;
             const emptySlotsEnd = Array.from({ length: (7 - (totalItemsSoFar % 7)) % 7 });
@@ -311,8 +321,24 @@ export const AnalyticsDashboard = ({
 
         if (periodLabel === 'Month') {
             const daysOfWeek = weekStart === 'SUN'
-                ? ['S', 'M', 'T', 'W', 'T', 'F', 'S']
-                : ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+                ? [
+                    t('common.daysShort.sun'),
+                    t('common.daysShort.mon'),
+                    t('common.daysShort.tue'),
+                    t('common.daysShort.wed'),
+                    t('common.daysShort.thu'),
+                    t('common.daysShort.fri'),
+                    t('common.daysShort.sat')
+                ]
+                : [
+                    t('common.daysShort.mon'),
+                    t('common.daysShort.tue'),
+                    t('common.daysShort.wed'),
+                    t('common.daysShort.thu'),
+                    t('common.daysShort.fri'),
+                    t('common.daysShort.sat'),
+                    t('common.daysShort.sun')
+                ];
             const emptySlotsStart = Array.from({ length: gridPadding || 0 });
             const totalItemsSoFar = emptySlotsStart.length + moodData.length;
             const emptySlotsEnd = Array.from({ length: (7 - (totalItemsSoFar % 7)) % 7 });
@@ -422,13 +448,13 @@ export const AnalyticsDashboard = ({
                 <HardShadowCardLocal style={{ height: 280 }}>
                     {/* Header bar from image */}
                     <View style={[tw`py-1.5 px-4 items-center`, { backgroundColor: theme.primary }]}>
-                        <Text style={tw`text-[10px] font-black uppercase text-white tracking-widest leading-none`}>{periodLabel} Success</Text>
+                        <Text style={tw`text-[10px] font-black uppercase text-white tracking-widest leading-none`}>{t('analytics.success', { period: periodLabel })}</Text>
                     </View>
 
                     <View style={tw`p-5 flex-1`}>
                         <View style={tw`flex-row items-center justify-between mb-6`}>
                             <View>
-                                <Text style={tw`text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 leading-none`}>{periodLabel} Mastery</Text>
+                                <Text style={tw`text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 leading-none`}>{t('analytics.mastery', { period: periodLabel })}</Text>
                                 <View style={tw`flex-row items-baseline gap-1`}>
                                     <View style={tw`flex-row items-baseline`}>
                                         <Text style={tw`text-4xl font-black text-gray-800`}>{completionStats.completed}</Text>
@@ -473,7 +499,7 @@ export const AnalyticsDashboard = ({
                                     </View>
                                 ))}
                                 {story.sections.length === 0 && (
-                                    <Text style={tw`text-gray-400 italic font-bold text-center py-4`}>Not enough data to generate a story yet.</Text>
+                                    <Text style={tw`text-gray-400 italic font-bold text-center py-4`}>{t('analytics.notEnoughData')}</Text>
                                 )}
                             </View>
                         </ScrollView>
@@ -486,8 +512,8 @@ export const AnalyticsDashboard = ({
                 <HardShadowCardLocal>
                     <View style={tw`p-5`}>
                         <View style={tw`flex-row justify-between items-center mb-6`}>
-                            <Text style={tw`text-xs font-black uppercase text-gray-400 tracking-widest leading-none`}>Retrospective Grid</Text>
-                            <Text style={[tw`text-xs font-black uppercase tracking-widest leading-none`, { color: theme.primary }]}>{Math.round(completionStats.percentage)}% Done</Text>
+                            <Text style={tw`text-xs font-black uppercase text-gray-400 tracking-widest leading-none`}>{t('analytics.retrospectiveGrid')}</Text>
+                            <Text style={[tw`text-xs font-black uppercase tracking-widest leading-none`, { color: theme.primary }]}>{Math.round(completionStats.percentage)}% {t('analytics.done')}</Text>
                         </View>
                         {renderRetrospectiveGrid()}
                     </View>
@@ -498,8 +524,8 @@ export const AnalyticsDashboard = ({
                 <HardShadowCardLocal>
                     <View style={tw`p-5`}>
                         <View style={tw`flex-row justify-between items-center mb-6`}>
-                            <Text style={tw`text-xs font-black uppercase text-gray-400 tracking-widest leading-none`}>Mood Analysis</Text>
-                            <Text style={[tw`text-[10px] font-black uppercase tracking-widest leading-none`, { color: theme.primary }]}>{periodLabel} Vibe</Text>
+                            <Text style={tw`text-xs font-black uppercase text-gray-400 tracking-widest leading-none`}>{t('analytics.moodAnalysis')}</Text>
+                            <Text style={[tw`text-[10px] font-black uppercase tracking-widest leading-none`, { color: theme.primary }]}>{t('analytics.vibe', { period: periodLabel })}</Text>
                         </View>
                         {renderMoodAnalysis()}
                     </View>
@@ -511,10 +537,10 @@ export const AnalyticsDashboard = ({
                 <HardShadowCardLocal>
                     <View style={tw`p-5`}>
                         <View style={tw`flex-row justify-between items-center mb-6`}>
-                            <Text style={tw`text-xs font-black uppercase text-gray-400 tracking-widest leading-none`}>Activity Momentum</Text>
+                            <Text style={tw`text-xs font-black uppercase text-gray-400 tracking-widest leading-none`}>{t('analytics.activityMomentum')}</Text>
                             {activePoint && (
                                 <Text style={[tw`text-[10px] font-black uppercase tracking-widest leading-none`, { color: theme.primary }]}>
-                                    {activePoint.label}: {activePoint.value} Done
+                                    {activePoint.label}: {activePoint.value} {t('analytics.done')}
                                 </Text>
                             )}
                         </View>
@@ -614,8 +640,8 @@ export const AnalyticsDashboard = ({
                 <HardShadowCardLocal>
                     <View style={tw`p-4 flex-row items-center justify-between`}>
                         <View style={tw`flex-1 pr-4`}>
-                            <Text style={tw`text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1 leading-none`}>Best Habit This {periodLabel}</Text>
-                            <Text style={tw`text-lg font-black text-gray-800`} numberOfLines={1}>{stats.best?.name || "No Data"}</Text>
+                            <Text style={tw`text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1 leading-none`}>{t('analytics.bestHabit', { period: periodLabel })}</Text>
+                            <Text style={tw`text-lg font-black text-gray-800`} numberOfLines={1}>{stats.best?.name || t('analytics.noData')}</Text>
                         </View>
                         <View style={tw`items-end`}>
                             <Text style={tw`text-xl font-black text-gray-800`}>{stats.best?.value || "-"}</Text>
@@ -627,8 +653,8 @@ export const AnalyticsDashboard = ({
                 <HardShadowCardLocal>
                     <View style={tw`p-4 flex-row items-center justify-between`}>
                         <View style={tw`flex-1 pr-4`}>
-                            <Text style={tw`text-[10px] font-black uppercase text-red-300 tracking-widest mb-1 leading-none`}>Needs Focus This {periodLabel}</Text>
-                            <Text style={tw`text-lg font-black text-gray-800`} numberOfLines={1}>{stats.worst?.name || "On Track"}</Text>
+                            <Text style={tw`text-[10px] font-black uppercase text-red-300 tracking-widest mb-1 leading-none`}>{t('analytics.needsFocus', { period: periodLabel })}</Text>
+                            <Text style={tw`text-lg font-black text-gray-800`} numberOfLines={1}>{stats.worst?.name || t('analytics.onTrack')}</Text>
                         </View>
                         <View style={tw`items-end`}>
                             <Text style={tw`text-xl font-black text-gray-800`}>{stats.worst?.value || "-"}</Text>

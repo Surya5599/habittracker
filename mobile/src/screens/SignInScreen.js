@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, TouchableOpacity, Alert, SafeAreaView, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import tw from 'twrnc';
 import { supabase } from '../lib/supabase';
 import { NeoButton, NeoInput, NeoCard } from '../components/NeoComponents';
 
 export const SignInScreen = ({ navigation, onGuestLogin }) => {
+    const { t } = useTranslation();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -16,7 +18,7 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
 
     const handleSubmit = async () => {
         if (!email) {
-            Alert.alert('Error', 'Please enter your email');
+            Alert.alert('Error', t('auth.enterEmail'));
             return;
         }
 
@@ -25,13 +27,13 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
         if (isResetMode) {
             const { error } = await supabase.auth.resetPasswordForEmail(email);
             if (error) Alert.alert('Error', error.message);
-            else Alert.alert('Success', 'Password reset email sent!');
+            else Alert.alert('Success', t('auth.resetSent'));
             setLoading(false);
             return;
         }
 
         if (!password) {
-            Alert.alert('Error', 'Please enter your password');
+            Alert.alert('Error', t('auth.enterPassword'));
             setLoading(false);
             return;
         }
@@ -55,7 +57,7 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
                 // Try checking if we can sign in now (sometimes signup auto-logs in)
                 const { error: retryError } = await supabase.auth.signInWithPassword({ email, password });
                 if (retryError) {
-                    Alert.alert('Info', 'Check your email to confirm your account.');
+                    Alert.alert('Info', t('auth.checkEmail'));
                 }
             }
             setLoading(false);
@@ -84,7 +86,7 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
                             Habi<Text style={tw`text-[#C19A9A]`}>Card</Text>
                         </Text>
                         <Text style={tw`text-sm font-medium opacity-60 text-center max-w-[240px]`}>
-                            A calming analytical tracker to build your habits
+                            {t('auth.tagline')}
                         </Text>
                     </View>
 
@@ -92,7 +94,7 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
                         <View style={tw`gap-4`}>
                             <View>
                                 <Text style={tw`text-[10px] font-black uppercase tracking-widest text-[#999] mb-1`}>
-                                    Email
+                                    {t('auth.email')}
                                 </Text>
                                 <NeoInput
                                     value={email}
@@ -105,7 +107,7 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
                             {!isResetMode && (
                                 <View>
                                     <Text style={tw`text-[10px] font-black uppercase tracking-widest text-[#999] mb-1`}>
-                                        Password
+                                        {t('auth.password')}
                                     </Text>
                                     <NeoInput
                                         value={password}
@@ -120,29 +122,29 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
                             {isResetMode ? (
                                 <>
                                     <NeoButton onPress={handleSubmit} style={tw`mt-2`}>
-                                        {loading ? 'Sending...' : 'Request Pin Reset'}
+                                        {loading ? t('auth.sending') : t('auth.requestReset')}
                                     </NeoButton>
                                     <TouchableOpacity onPress={() => setIsResetMode(false)}>
                                         <Text style={tw`text-center text-[10px] font-black uppercase tracking-widest text-[#999]`}>
-                                            Return to Login
+                                            {t('auth.returnLogin')}
                                         </Text>
                                     </TouchableOpacity>
                                 </>
                             ) : (
                                 <>
                                     <NeoButton onPress={handleSubmit} style={tw`mt-2`}>
-                                        {loading ? 'Verifying...' : 'Sign In / Sign Up'}
+                                        {loading ? t('auth.verifying') : t('auth.signInSignUp')}
                                     </NeoButton>
 
                                     <TouchableOpacity onPress={() => setIsResetMode(true)} style={tw`mt-2`}>
                                         <Text style={tw`text-center text-[10px] font-black uppercase tracking-widest text-[#999]`}>
-                                            Forgot your password?
+                                            {t('auth.forgotPassword')}
                                         </Text>
                                     </TouchableOpacity>
 
                                     <View style={tw`flex-row items-center py-4`}>
                                         <View style={tw`flex-1 border-t border-gray-200`} />
-                                        <Text style={tw`mx-3 text-[10px] font-black uppercase text-gray-300`}>OR</Text>
+                                        <Text style={tw`mx-3 text-[10px] font-black uppercase text-gray-300`}>{t('auth.or')}</Text>
                                         <View style={tw`flex-1 border-t border-gray-200`} />
                                     </View>
 
@@ -151,7 +153,7 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
                                         style={tw`w-full py-3 bg-white/50 border-2 border-dashed border-gray-300 items-center justify-center`}
                                     >
                                         <Text style={tw`text-[10px] font-black uppercase tracking-widest text-black`}>
-                                            Guest Entry
+                                            {t('auth.guestEntry')}
                                         </Text>
                                     </TouchableOpacity>
                                 </>

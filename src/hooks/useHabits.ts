@@ -76,7 +76,9 @@ export const useHabits = (session: any, guestMode: boolean, overrideUserId?: str
                 frequency: h.frequency,
                 weeklyTarget: h.weekly_target,
                 sortOrder: h.sort_order,
-                user_id: h.user_id
+                user_id: h.user_id,
+                archivedAt: h.archived_at,
+                createdAt: h.created_at
             })));
 
             const { data: completionsData, error: compError } = await supabase
@@ -131,7 +133,9 @@ export const useHabits = (session: any, guestMode: boolean, overrideUserId?: str
                 frequency: h.frequency,
                 weekly_target: h.weeklyTarget,
                 user_id: userId,
-                sort_order: idx
+                sort_order: idx,
+                archived_at: h.archivedAt,
+                created_at: h.createdAt || new Date().toISOString()
             }));
 
             const { data: insertedHabits, error: hError } = await supabase
@@ -319,7 +323,8 @@ export const useHabits = (session: any, guestMode: boolean, overrideUserId?: str
             goal: 80,
             frequency: undefined,
             weeklyTarget: undefined,
-            sortOrder: nextSortOrder
+            sortOrder: nextSortOrder,
+            createdAt: new Date().toISOString()
         };
 
         setHabits(prev => [...prev, newHabit]);
@@ -351,7 +356,9 @@ export const useHabits = (session: any, guestMode: boolean, overrideUserId?: str
                         frequency: data[0].frequency,
                         weeklyTarget: data[0].weekly_target,
                         sortOrder: data[0].sort_order,
-                        user_id: data[0].user_id
+                        user_id: data[0].user_id,
+                        createdAt: data[0].created_at,
+                        archivedAt: data[0].archived_at
                     };
                     setHabits(prev => prev.map(h => h.id === tempId ? mapped : h));
                     return data[0].id;
@@ -445,19 +452,39 @@ export const useHabits = (session: any, guestMode: boolean, overrideUserId?: str
                 toast.error('Failed to save habit order');
             }
         }
-    };
+        const toggleArchiveHabit = async (id: string, archive: boolean) => {
+            const timestamp = archive ? new Date().toISOString() : null;
 
-    return {
-        habits,
-        setHabits,
-        completions,
-        setCompletions,
-        loading,
-        toggleCompletion,
-        addHabit,
-        updateHabit,
-        removeHabit,
-        reorderHabits,
-        setLoading
+            setHabits(prev => prev.map(h => h.id === id ? { ...h, archivedAt: timestamp } : h));
+
+            if (session && !guestMode) {
+                try {
+                    await supabase
+                        .from('habits')
+                        .update({ archived_at: timestamp })
+                        .eq('id', id)
+                        .eq('user_id', session.user.id);
+                } catch (err) {
+                    console.error('Error archiving habit:', err);
+                    toast.error('Failed to update habit archive status');
+                }
+            }
+        };
+
+        return {
+            habits,
+            setHabits,
+            completions,
+            setCompletions,
+            loading,
+            toggleCompletion,
+            addHabit,
+            updateHabit,
+            removeHabit,
+            reorderHabits,
+            toggleArchiveHabit,
+            setLoading
+        };
+
+
     };
-};

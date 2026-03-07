@@ -1,10 +1,13 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Home, BarChart2, Cookie, Sparkles } from 'lucide-react-native';
 import tw from 'twrnc';
 
 export const BottomNav = ({ view, setView, resetWeekOffset, theme }) => {
+    const { t } = useTranslation();
 
+    // Color palette matching the image
     // Color palette matching the image
     const activeColor = theme?.primary || '#a18e78'; // Use theme primary or fallback to Brownish/Taupe
     const inactiveColor = '#78716c'; // Stone 500 equivalent
@@ -38,26 +41,26 @@ export const BottomNav = ({ view, setView, resetWeekOffset, theme }) => {
         <View style={tw`absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-2 pb-8 flex-row justify-between items-center z-50 rounded-t-3xl shadow-lg`}>
 
             <NavItem
-                label="Today"
+                label={t('bottomNav.today')}
                 icon={Home}
                 targetView="weekly"
                 onPress={() => { resetWeekOffset(); setView('weekly'); }}
             />
 
             <NavItem
-                label="Analytics"
+                label={t('bottomNav.analytics')}
                 icon={BarChart2}
                 targetView="dashboard"
             />
 
             <NavItem
-                label="Logs"
+                label={t('bottomNav.logs')}
                 icon={Cookie}
                 targetView="monthly"
             />
 
             <NavItem
-                label="Analysis"
+                label={t('bottomNav.analysis')}
                 icon={Sparkles}
                 targetView="analysis"
             />

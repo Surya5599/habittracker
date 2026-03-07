@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Plus, Trash2, Check, Edit2, GripVertical } from 'lucide-react';
+import { X, Plus, Trash2, Check, Edit2, GripVertical, Archive, RotateCcw } from 'lucide-react';
 import { Habit } from '../types';
 import { Reorder, useDragControls } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +12,7 @@ interface HabitManagerModalProps {
     updateHabit: (id: string, updates: Partial<Habit>) => Promise<void>;
     removeHabit: (id: string) => Promise<void>;
     reorderHabits: (newHabits: Habit[]) => Promise<void>;
+    toggleArchiveHabit: (id: string, archive: boolean) => Promise<void>;
     themePrimary: string;
 }
 
@@ -23,10 +24,12 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
     updateHabit,
     removeHabit,
     reorderHabits,
+    toggleArchiveHabit,
     themePrimary
 }) => {
     const { t } = useTranslation();
     const [editingId, setEditingId] = useState<string | null>(null);
+    const [showArchived, setShowArchived] = useState(false);
     const [editName, setEditName] = useState('');
     const [editFrequency, setEditFrequency] = useState<number[] | undefined>(undefined);
     const [editWeeklyTarget, setEditWeeklyTarget] = useState<number | undefined>(undefined);
@@ -104,6 +107,21 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                     </button>
                 </div>
 
+                <div className="px-4 py-2 border-b-[2px] border-black flex gap-2 overflow-x-auto bg-stone-50">
+                    <button
+                        onClick={() => setShowArchived(false)}
+                        className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest border-2 transition-all ${!showArchived ? 'bg-black text-white border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,0.2)]' : 'bg-white text-stone-400 border-stone-200 hover:border-black hover:text-black'}`}
+                    >
+                        Active Habits
+                    </button>
+                    <button
+                        onClick={() => setShowArchived(true)}
+                        className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest border-2 transition-all ${showArchived ? 'bg-black text-white border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,0.2)]' : 'bg-white text-stone-400 border-stone-200 hover:border-black hover:text-black'}`}
+                    >
+                        Archived
+                    </button>
+                </div>
+
                 <div ref={listRef} className="flex-1 overflow-y-auto p-4">
                     {habits.length === 0 ? (
                         <div className="text-center py-8 text-stone-400 text-xs font-medium uppercase tracking-wider">
@@ -116,26 +134,30 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                             onReorder={reorderHabits}
                             className="space-y-3"
                         >
-                            {habits.map(habit => (
-                                <HabitItem
-                                    key={habit.id}
-                                    habit={habit}
-                                    editingId={editingId}
-                                    editName={editName}
-                                    setEditName={setEditName}
-                                    frequencyType={frequencyType}
-                                    setFrequencyType={setFrequencyType}
-                                    editFrequency={editFrequency}
-                                    setEditFrequency={setEditFrequency}
-                                    editWeeklyTarget={editWeeklyTarget}
-                                    setEditWeeklyTarget={setEditWeeklyTarget}
-                                    inputRef={inputRef}
-                                    saveEdit={saveEdit}
-                                    startEditing={startEditing}
-                                    handleDelete={handleDelete}
-                                    themePrimary={themePrimary}
-                                />
-                            ))}
+                            {habits
+                                .filter(h => showArchived ? h.archivedAt : !h.archivedAt)
+                                .map(habit => (
+                                    <HabitItem
+                                        key={habit.id}
+                                        habit={habit}
+                                        editingId={editingId}
+                                        editName={editName}
+                                        setEditName={setEditName}
+                                        frequencyType={frequencyType}
+                                        setFrequencyType={setFrequencyType}
+                                        editFrequency={editFrequency}
+                                        setEditFrequency={setEditFrequency}
+                                        editWeeklyTarget={editWeeklyTarget}
+                                        setEditWeeklyTarget={setEditWeeklyTarget}
+                                        inputRef={inputRef}
+                                        saveEdit={saveEdit}
+                                        startEditing={startEditing}
+                                        handleDelete={handleDelete}
+                                        themePrimary={themePrimary}
+                                        toggleArchiveHabit={toggleArchiveHabit}
+                                        isArchived={!!habit.archivedAt}
+                                    />
+                                ))}
                         </Reorder.Group>
                     )}
                 </div>
@@ -173,6 +195,8 @@ interface HabitItemProps {
     startEditing: (habit: Habit) => void;
     handleDelete: (id: string) => void;
     themePrimary: string;
+    toggleArchiveHabit: (id: string, archive: boolean) => Promise<void>;
+    isArchived: boolean;
 }
 
 const HabitItem: React.FC<HabitItemProps> = ({
@@ -190,7 +214,9 @@ const HabitItem: React.FC<HabitItemProps> = ({
     saveEdit,
     startEditing,
     handleDelete,
-    themePrimary
+    themePrimary,
+    toggleArchiveHabit,
+    isArchived
 }) => {
     const { t } = useTranslation();
     const controls = useDragControls();
@@ -324,6 +350,14 @@ const HabitItem: React.FC<HabitItemProps> = ({
                     title="Delete Habit"
                 >
                     <Trash2 size={14} strokeWidth={3} />
+                </button>
+                {/* Archive Button */}
+                <button
+                    onClick={() => toggleArchiveHabit(habit.id, !isArchived)}
+                    className="p-1.5 text-black hover:bg-stone-500 hover:text-white border-2 border-transparent hover:border-black transition-all"
+                    title={isArchived ? "Unarchive Habit" : "Archive Habit"}
+                >
+                    {isArchived ? <RotateCcw size={14} strokeWidth={3} /> : <Archive size={14} strokeWidth={3} />}
                 </button>
             </div>
         </Reorder.Item>

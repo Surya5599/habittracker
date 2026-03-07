@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { Sparkles, Lock, ChevronRight, Zap } from 'lucide-react-native';
 import tw from 'twrnc';
@@ -11,6 +12,7 @@ export const AIAnalysisView = ({
     incrementAnalysis,
     togglePremiumMock // For demo purposes
 }) => {
+    const { t, i18n } = useTranslation();
     const primaryColor = theme?.primary || '#a18e78';
 
     const renderPremiumGate = () => (
@@ -22,9 +24,9 @@ export const AIAnalysisView = ({
                     <Lock size={32} color={primaryColor} />
                 </View>
 
-                <Text style={tw`text-2xl font-black text-gray-800 uppercase text-center mb-2`}>Premium Only</Text>
+                <Text style={tw`text-2xl font-black text-gray-800 uppercase text-center mb-2`}>{t('aiAnalysis.premiumOnly')}</Text>
                 <Text style={tw`text-gray-500 text-center mb-8 font-medium`}>
-                    Get deep insights into your habits and life patterns with AI analysis. Unlock this feature with a premium subscription.
+                    {t('aiAnalysis.premiumDesc')}
                 </Text>
 
                 <TouchableOpacity
@@ -32,7 +34,7 @@ export const AIAnalysisView = ({
                     style={[tw`w-full py-4 rounded-2xl flex-row items-center justify-center border-2 border-black`, { backgroundColor: primaryColor }]}
                 >
                     <Zap size={20} color="white" fill="white" style={tw`mr-2`} />
-                    <Text style={tw`text-white font-black uppercase tracking-widest`}>Upgrade to Premium</Text>
+                    <Text style={tw`text-white font-black uppercase tracking-widest`}>{t('aiAnalysis.upgrade')}</Text>
                 </TouchableOpacity>
             </View>
         </View>
@@ -46,9 +48,9 @@ export const AIAnalysisView = ({
                     <View style={[tw`absolute bg-black rounded-3xl`, { top: 6, left: 6, right: -6, bottom: -6, zIndex: -1 }]} />
 
                     <View style={tw`flex-row justify-between items-center mb-2`}>
-                        <Text style={tw`text-xs font-black uppercase text-gray-400 tracking-widest`}>Weekly Usage</Text>
+                        <Text style={tw`text-xs font-black uppercase text-gray-400 tracking-widest`}>{t('aiAnalysis.weeklyUsage')}</Text>
                         <Text style={[tw`text-xs font-black uppercase tracking-widest`, { color: primaryColor }]}>
-                            {analysisCount} / {maxAnalyses} Analyses
+                            {analysisCount} / {maxAnalyses} {t('aiAnalysis.analyses')}
                         </Text>
                     </View>
 
@@ -84,15 +86,15 @@ export const AIAnalysisView = ({
 
                 <Sparkles size={32} color="white" strokeWidth={2.5} style={tw`mb-2`} />
                 <Text style={tw`text-white text-xl font-black uppercase tracking-widest mb-1 text-center`}>
-                    {analysisCount >= maxAnalyses ? 'Limit Reached' : 'Generate New Analysis'}
+                    {analysisCount >= maxAnalyses ? t('aiAnalysis.limitReached') : t('aiAnalysis.generateNew')}
                 </Text>
                 <Text style={tw`text-white/80 text-xs font-bold text-center`}>
-                    {analysisCount >= maxAnalyses ? 'Resets next Monday' : 'AI will analyze your recent habits & notes'}
+                    {analysisCount >= maxAnalyses ? t('aiAnalysis.resetMessage') : t('aiAnalysis.analyzeMessage')}
                 </Text>
             </TouchableOpacity>
 
             {/* Recent Analysis Feed (Mock) - Using a carousel-like feel */}
-            <Text style={tw`text-xs font-black uppercase text-gray-400 tracking-widest mb-4 ml-2`}>Insights History</Text>
+            <Text style={tw`text-xs font-black uppercase text-gray-400 tracking-widest mb-4 ml-2`}>{t('aiAnalysis.history')}</Text>
 
             {[1, 2].map((i) => (
                 <View key={i} style={tw`mb-6`}>
@@ -101,20 +103,22 @@ export const AIAnalysisView = ({
 
                         <View style={tw`flex-row justify-between items-start mb-3`}>
                             <View>
-                                <Text style={tw`text-lg font-black text-gray-800 uppercase leading-5 mb-1`}>Patterns & Energy</Text>
-                                <Text style={tw`text-[10px] font-black uppercase text-gray-400`}>Jan {10 - i}, 2026</Text>
+                                <Text style={tw`text-lg font-black text-gray-800 uppercase leading-5 mb-1`}>{t('aiAnalysis.mockTitle')}</Text>
+                                <Text style={tw`text-[10px] font-black uppercase text-gray-400`}>
+                                    {new Date(2026, 0, 10 - i).toLocaleDateString(i18n.language, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                </Text>
                             </View>
                             <View style={[tw`px-2 py-1 rounded-lg`, { backgroundColor: primaryColor + '10' }]}>
-                                <Text style={[tw`text-[10px] font-black uppercase`, { color: primaryColor }]}>Insight #{i}</Text>
+                                <Text style={[tw`text-[10px] font-black uppercase`, { color: primaryColor }]}>{t('aiAnalysis.insight')} #{i}</Text>
                             </View>
                         </View>
 
                         <Text style={tw`text-sm text-gray-600 font-medium leading-5`}>
-                            You tend to complete more habits on days when you record a "productive" mood early in the morning. Your consistency with "Reading" has improved by 15% this week.
+                            {t('aiAnalysis.mockContent')}
                         </Text>
 
                         <TouchableOpacity style={tw`flex-row items-center mt-4`}>
-                            <Text style={[tw`text-xs font-black uppercase mr-1`, { color: primaryColor }]}>View Full Report</Text>
+                            <Text style={[tw`text-xs font-black uppercase mr-1`, { color: primaryColor }]}>{t('aiAnalysis.viewReport')}</Text>
                             <ChevronRight size={14} color={primaryColor} strokeWidth={3} />
                         </TouchableOpacity>
                     </View>

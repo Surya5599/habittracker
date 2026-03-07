@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, TouchableOpacity, ScrollView, Animated, TextInput, Easing, Modal, useWindowDimensions, KeyboardAvoidingView, Platform } from 'react-native';
 import { Check, ChevronLeft, ChevronRight, BookOpen, Save, Plus, X, Share, Meh, Frown, Smile, Laugh, Angry } from 'lucide-react-native';
 import tw from 'twrnc';
@@ -43,6 +44,7 @@ export const DailyCard = ({
     const [newTaskText, setNewTaskText] = useState('');
     const [editingTaskId, setEditingTaskId] = useState(null);
     const animatedValue = useRef(new Animated.Value(0)).current;
+    const { t, i18n } = useTranslation();
 
     const finalDayData = dayData || { tasks: [], mood: undefined, journal: '' };
 
@@ -97,11 +99,11 @@ export const DailyCard = ({
     };
 
     const MOODS = [
-        { value: 1, icon: Angry, label: 'Very Bad', color: '#ef4444' },
-        { value: 2, icon: Frown, label: 'Bad', color: '#f97316' },
-        { value: 3, icon: Meh, label: 'Okay', color: '#eab308' },
-        { value: 4, icon: Smile, label: 'Good', color: '#84cc16' },
-        { value: 5, icon: Laugh, label: 'Great', color: '#22c55e' },
+        { value: 1, icon: Angry, label: t('mood.veryBad'), color: '#ef4444' },
+        { value: 2, icon: Frown, label: t('mood.bad'), color: '#f97316' },
+        { value: 3, icon: Meh, label: t('mood.okay'), color: '#eab308' },
+        { value: 4, icon: Smile, label: t('mood.good'), color: '#84cc16' },
+        { value: 5, icon: Laugh, label: t('mood.great'), color: '#22c55e' },
     ];
 
     // Animation interpolation
@@ -139,12 +141,55 @@ export const DailyCard = ({
         flipToFront();
     };
 
-    const dayName = DAYS_OF_WEEK[date.getDay()];
-    const dateString = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const dayName = date.toLocaleDateString(i18n.language, { weekday: 'long' });
+    const dateString = date.toLocaleDateString(i18n.language, { month: 'short', day: 'numeric', year: 'numeric' });
     const isToday = date.toDateString() === new Date().toDateString();
 
-    const dailyHabits = habits.filter(h => !h.weeklyTarget && (!h.frequency || h.frequency.includes(date.getDay())));
-    const flexibleHabits = habits.filter(h => h.weeklyTarget);
+
+    const getStartOfDay = (d) => {
+        const date = new Date(d);
+        date.setHours(0, 0, 0, 0);
+        return date;
+    };
+
+    // Helper to check if a habit is active for the current view date
+    const isHabitActive = (habit) => {
+        const viewDate = getStartOfDay(date);
+
+        // Check Start Date (createdAt)
+        if (habit.createdAt) {
+            const startDate = getStartOfDay(new Date(habit.createdAt));
+            if (viewDate < startDate) return false;
+        }
+
+        // Check End Date (archivedAt)
+        // If archived today (e.g. at 2pm), it should still be visible today.
+        // So we hide it if viewDate is strictly AFTER the archive date.
+        // Actually, better logic: if archivedAt exists, viewDate must be <= getStartOfDay(archivedAt)
+        // No, if I archive it today at 2pm, archivedAt is today. 
+        // getStartOfDay(archivedAt) is Today 00:00.
+        // viewDate is Today 00:00. 
+        // viewDate <= startArchived is True.
+        // Tomorrow: viewDate > startArchived. True. Hidden.
+        // This works for "remove from future dates".
+
+        if (habit.archivedAt) {
+            const archiveDate = getStartOfDay(new Date(habit.archivedAt));
+            if (viewDate > archiveDate) return false;
+        }
+
+        return true;
+    };
+
+    const dailyHabits = habits.filter(h =>
+        !h.weeklyTarget &&
+        (!h.frequency || h.frequency.includes(date.getDay())) &&
+        isHabitActive(h)
+    );
+    const flexibleHabits = habits.filter(h =>
+        h.weeklyTarget &&
+        isHabitActive(h)
+    );
 
     const getDayProgress = (d) => {
         if (dailyHabits.length === 0) return 100; // If no daily habits, it's "complete" or 100%? Web used 100 if totalDue is 0.
@@ -233,13 +278,13 @@ export const DailyCard = ({
                         <View style={[tw`absolute bg-black rounded-3xl`, { top: 8, left: 8, right: -8, bottom: -8, zIndex: -1 }]} />
                         <View style={tw`bg-white rounded-3xl w-full border-[3px] border-black overflow-hidden`}>
                             <View style={[tw`p-4 border-b-[3px] border-black items-center`, { backgroundColor: theme.primary }]}>
-                                <Text style={tw`text-lg font-black uppercase text-white tracking-widest`}>Enter your task</Text>
+                                <Text style={tw`text-lg font-black uppercase text-white tracking-widest`}>{t('tasks.enterTask') || 'Enter your task'}</Text>
                             </View>
 
                             <View style={tw`p-6`}>
                                 <TextInput
                                     style={tw`bg-gray-50 border-[3px] border-black p-4 rounded-xl text-gray-800 text-lg font-bold mb-6`}
-                                    placeholder="Type something..."
+                                    placeholder={t('tasks.placeholder') || "Type something..."}
                                     placeholderTextColor="#d6d3d1"
                                     autoFocus={true}
                                     value={newTaskText}
@@ -252,13 +297,13 @@ export const DailyCard = ({
                                         onPress={() => setIsTaskModalOpen(false)}
                                         style={tw`flex-1 py-4 rounded-xl border-[3px] border-black bg-gray-100 items-center`}
                                     >
-                                        <Text style={tw`text-black font-black uppercase text-xs tracking-widest`}>Cancel</Text>
+                                        <Text style={tw`text-black font-black uppercase text-xs tracking-widest`}>{t('common.cancel')}</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity
                                         onPress={confirmAddTask}
                                         style={[tw`flex-2 py-4 rounded-xl border-[3px] border-black items-center`, { backgroundColor: theme.primary }]}
                                     >
-                                        <Text style={tw`text-white font-black uppercase text-xs tracking-widest`}>Add Task</Text>
+                                        <Text style={tw`text-white font-black uppercase text-xs tracking-widest`}>{t('tasks.addTask') || 'Add Task'}</Text>
                                     </TouchableOpacity>
                                 </View>
                             </View>
@@ -327,12 +372,12 @@ export const DailyCard = ({
                         {/* ... Habits List ... */}
                         <View style={tw`px-5 pb-6 pt-4`}>
                             <View style={tw`border-b border-gray-100 mb-2 pb-2 flex-row justify-between items-center`}>
-                                <Text style={tw`text-xs font-black uppercase text-gray-400 tracking-widest`}>Daily Habits</Text>
+                                <Text style={tw`text-xs font-black uppercase text-gray-400 tracking-widest`}>{t('dailyCard.dailyHabits')}</Text>
                                 <Text style={tw`text-xs font-black text-gray-400 mr-2`}>{dailyHabits.length}</Text>
                             </View>
 
                             {dailyHabits.length === 0 ? (
-                                <Text style={tw`text-center text-gray-300 italic py-2 text-xs`}>No fixed habits today</Text>
+                                <Text style={tw`text-center text-gray-300 italic py-2 text-xs`}>{t('dailyCard.noDailyHabits')}</Text>
                             ) : (
                                 <View style={[tw`mb-4`, { maxHeight: 160 }]}>
                                     <ScrollView nestedScrollEnabled={true} showsVerticalScrollIndicator={false}>
@@ -349,7 +394,7 @@ export const DailyCard = ({
                                                     activeOpacity={0.7}
                                                 >
                                                     <Text style={[tw`text-base font-bold`, habit.done ? tw`text-gray-300 line-through` : tw`text-gray-800`]}>
-                                                        {habit.name || 'Untitled'}
+                                                        {habit.name || t('common.untitled')}
                                                     </Text>
 
                                                     <View style={[
@@ -368,7 +413,7 @@ export const DailyCard = ({
                             {flexibleHabits.length > 0 && (
                                 <>
                                     <View style={tw`border-b border-gray-100 mb-2 pb-2 mt-0 flex-row justify-between items-center`}>
-                                        <Text style={tw`text-xs font-black uppercase text-gray-400 tracking-widest`}>Flexible Habits</Text>
+                                        <Text style={tw`text-xs font-black uppercase text-gray-400 tracking-widest`}>{t('dailyCard.flexibleHabits')}</Text>
                                         <Text style={tw`text-xs font-black text-gray-400 mr-2`}>{flexibleHabits.length}</Text>
                                     </View>
                                     <View style={[tw`mb-2`, { maxHeight: 160 }]}>
@@ -385,10 +430,10 @@ export const DailyCard = ({
                                                     >
                                                         <View>
                                                             <Text style={[tw`text-base font-bold`, flexDone ? tw`text-gray-300 line-through` : tw`text-gray-800`]}>
-                                                                {habit.name || 'Untitled'}
+                                                                {habit.name || t('common.untitled')}
                                                             </Text>
                                                             <Text style={tw`text-[10px] font-black text-gray-400 uppercase`}>
-                                                                Goal: {current}/{habit.weeklyTarget} this week
+                                                                {t('dailyCard.goal')}: {current}/{habit.weeklyTarget} {t('common.thisWeek')}
                                                             </Text>
                                                         </View>
 
@@ -407,14 +452,13 @@ export const DailyCard = ({
                             )}
                         </View>
 
-                        {/* Stats Row */}
                         <View style={tw`flex-row border-t-[3px] border-b-[3px] border-black`}>
                             <View style={[tw`flex-1 p-3 items-center border-r-[3px] border-black`, { backgroundColor: theme.primary }]}>
-                                <Text style={tw`text-[10px] font-black uppercase text-white/80`}>Habits Maintained</Text>
+                                <Text style={tw`text-[10px] font-black uppercase text-white/80`}>{t('dailyCard.dailyDone')}</Text>
                                 <Text style={tw`text-2xl font-black text-white`}>{completedCount}</Text>
                             </View>
                             <View style={[tw`flex-1 p-3 items-center`, { backgroundColor: theme.secondary }]}>
-                                <Text style={tw`text-[10px] font-black uppercase text-white/80`}>To Build</Text>
+                                <Text style={tw`text-[10px] font-black uppercase text-white/80`}>{t('dailyCard.remaining')}</Text>
                                 <Text style={tw`text-2xl font-black text-white`}>{Math.max(0, totalCount - completedCount)}</Text>
                             </View>
                         </View>
@@ -430,7 +474,7 @@ export const DailyCard = ({
                                     return <BookOpen size={20} color="#a8a29e" />;
                                 })()}
                             </TouchableOpacity>
-                            <Text style={tw`text-xs font-black uppercase text-gray-500 tracking-widest`}>Tasks</Text>
+                            <Text style={tw`text-xs font-black uppercase text-gray-500 tracking-widest`}>{t('dailyCard.tasks')}</Text>
                             <TouchableOpacity
                                 onPress={handleAddTask}
                             >
@@ -461,7 +505,7 @@ export const DailyCard = ({
                                             autoFocus={editingTaskId === task.id}
                                             onFocus={() => setEditingTaskId(task.id)}
                                             onBlur={() => setEditingTaskId(null)}
-                                            placeholder="New task..."
+                                            placeholder={t('tasks.newTaskPlaceholder') || "New task..."}
                                             placeholderTextColor="#d6d3d1"
                                         />
                                         <TouchableOpacity onPress={() => handleDeleteTask(task.id)}>
@@ -471,7 +515,7 @@ export const DailyCard = ({
                                 ))
                             ) : (
                                 <View style={tw`items-center justify-center w-full py-2`}>
-                                    <Text style={tw`text-gray-300 italic text-[10px]`}>No tasks yet. Click + to add one!</Text>
+                                    <Text style={tw`text-gray-300 italic text-[10px]`}>{t('tasks.empty')}</Text>
                                 </View>
                             )}
                         </View>
@@ -499,13 +543,13 @@ export const DailyCard = ({
                             <ChevronLeft size={28} color="white" />
                         </TouchableOpacity>
                         <View style={tw`flex-1 items-center`}>
-                            <Text style={tw`text-white font-black uppercase text-2xl tracking-tighter`}>Journal</Text>
+                            <Text style={tw`text-white font-black uppercase text-2xl tracking-tighter`}>{t('journal.title')}</Text>
                             <Text style={tw`text-white/90 font-bold text-sm tracking-widest mt-1`}>{dateString}</Text>
                         </View>
                     </View>
 
                     <ScrollView style={tw`flex-1 p-6`} showsVerticalScrollIndicator={false}>
-                        <Text style={tw`text-xs font-black uppercase tracking-widest text-gray-400 text-center mb-4`}>How did today go?</Text>
+                        <Text style={tw`text-xs font-black uppercase tracking-widest text-gray-400 text-center mb-4`}>{t('journal.prompt')}</Text>
                         <View style={tw`flex-row justify-between mb-8`}>
                             {MOODS.map((m) => {
                                 const Icon = m.icon;
@@ -531,7 +575,7 @@ export const DailyCard = ({
 
                         <TextInput
                             style={tw`bg-gray-50 border-[3px] border-gray-200 p-4 rounded-xl text-gray-800 h-60 text-base font-medium leading-relaxed mb-6`}
-                            placeholder="Write your thoughts..."
+                            placeholder={t('journal.placeholder')}
                             placeholderTextColor="#d6d3d1"
                             multiline
                             textAlignVertical="top"
@@ -544,7 +588,7 @@ export const DailyCard = ({
                             style={[tw`w-full py-4 rounded-xl flex-row items-center justify-center gap-2 border-[3px] border-black`, { backgroundColor: '#000' }]}
                         >
                             <Save size={20} color="white" />
-                            <Text style={tw`text-white font-black uppercase text-sm tracking-widest`}>Save Entry</Text>
+                            <Text style={tw`text-white font-black uppercase text-sm tracking-widest`}>{t('journal.save')}</Text>
                         </TouchableOpacity>
                     </ScrollView>
                 </HardShadowCard>

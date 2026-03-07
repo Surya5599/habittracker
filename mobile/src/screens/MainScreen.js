@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, TouchableOpacity, Modal, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WeeklyScreen } from './WeeklyView';
@@ -34,12 +35,29 @@ export const MainScreen = ({
     onOpenSignIn,
     weekStart,
     setWeekStart,
-    aiAnalysis
+    aiAnalysis,
+    language,
+    setLanguage,
+    toggleArchiveHabit
 }) => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isHabitManagerOpen, setIsHabitManagerOpen] = useState(false);
     const [isThemePickerOpen, setIsThemePickerOpen] = useState(false);
+    const [isLanguagePickerOpen, setIsLanguagePickerOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState(null);
+    const { t } = useTranslation();
+
+    const LANGUAGES = [
+        { code: 'en', label: 'English' },
+        { code: 'es', label: 'Español' },
+        { code: 'fr', label: 'Français' },
+        { code: 'de', label: 'Deutsch' },
+        { code: 'it', label: 'Italiano' },
+        { code: 'pt', label: 'Português' },
+        { code: 'ja', label: '日本語' },
+        { code: 'ko', label: '한국어' },
+        { code: 'zh', label: '中文' }
+    ];
 
     const handleSelectDayFromLog = (date) => {
         // Logic to navigate to weekly view at this specific date
@@ -109,7 +127,7 @@ export const MainScreen = ({
                         <View style={tw`bg-[#f5f5f4] rounded-t-3xl h-[85%] overflow-hidden`}>
                             {/* Modal Header */}
                             <View style={tw`p-5 border-b border-gray-200 flex-row items-center justify-between bg-white`}>
-                                <Text style={tw`text-xl font-black uppercase tracking-widest text-gray-700`}>Settings</Text>
+                                <Text style={tw`text-xl font-black uppercase tracking-widest text-gray-700`}>{t('settings.title')}</Text>
                                 <TouchableOpacity
                                     onPress={() => setIsSettingsOpen(false)}
                                     style={tw`p-2 bg-gray-100 rounded-full`}
@@ -119,7 +137,7 @@ export const MainScreen = ({
                             </View>
 
                             <ScrollView style={tw`p-5`} showsVerticalScrollIndicator={false}>
-                                <Text style={tw`text-xs font-black uppercase text-gray-400 tracking-widest mb-3`}>Preferences</Text>
+                                <Text style={tw`text-xs font-black uppercase text-gray-400 tracking-widest mb-3`}>{t('settings.general.title') || 'Preferences'}</Text>
                                 <View style={tw`mb-6`}>
                                     <View style={[tw`absolute bg-black rounded-3xl`, { top: 6, left: 6, right: -6, bottom: -6, zIndex: -1 }]} />
                                     <View style={tw`bg-white rounded-3xl overflow-hidden border-[3px] border-black`}>
@@ -128,7 +146,7 @@ export const MainScreen = ({
                                             style={tw`flex-row items-center justify-between p-4 border-b-[3px] border-black`}
                                             onPress={() => setIsThemePickerOpen(true)}
                                         >
-                                            <Text style={tw`text-sm font-black text-gray-800 uppercase tracking-tight`}>Theme</Text>
+                                            <Text style={tw`text-sm font-black text-gray-800 uppercase tracking-tight`}>{t('settings.theme.title')}</Text>
                                             <View style={tw`flex-row items-center`}>
                                                 <Text style={[tw`text-xs font-black uppercase mr-3`, { color: theme.primary }]}>{theme.name}</Text>
                                                 <View style={tw`flex-row`}>
@@ -138,9 +156,21 @@ export const MainScreen = ({
                                             </View>
                                         </TouchableOpacity>
 
-                                        {/* Start of Week Setting */}
+                                        {/* Language Setting */}
+                                        <TouchableOpacity
+                                            style={tw`flex-row items-center justify-between p-4 border-b-[3px] border-black`}
+                                            onPress={() => setIsLanguagePickerOpen(true)}
+                                        >
+                                            <Text style={tw`text-sm font-black text-gray-800 uppercase tracking-tight`}>{t('settings.language.title')}</Text>
+                                            <View style={tw`flex-row items-center`}>
+                                                <Text style={tw`text-xs font-black uppercase mr-2 text-gray-500`}>
+                                                    {LANGUAGES.find(l => l.code === language)?.label || language.toUpperCase()}
+                                                </Text>
+                                            </View>
+                                        </TouchableOpacity>
+
                                         <View style={tw`flex-row items-center justify-between p-4 border-b-[3px] border-black`}>
-                                            <Text style={tw`text-sm font-black text-gray-800 uppercase tracking-tight`}>Start of Week</Text>
+                                            <Text style={tw`text-sm font-black text-gray-800 uppercase tracking-tight`}>{t('settings.general.startOfWeek')}</Text>
                                             <View style={tw`flex-row bg-gray-100 p-1 rounded-xl border-2 border-black`}>
                                                 <TouchableOpacity
                                                     onPress={() => setWeekStart('SUN')}
@@ -170,7 +200,7 @@ export const MainScreen = ({
                                             }}
                                         >
                                             <Text style={tw`text-sm font-black text-red-500 uppercase tracking-tight`}>
-                                                {isGuest ? 'Sign In / Create Account' : 'Sign Out'}
+                                                {isGuest ? t('header.signIn') : t('header.logout')}
                                             </Text>
                                         </TouchableOpacity>
                                     </View>
@@ -185,7 +215,7 @@ export const MainScreen = ({
                                     <View style={[tw`absolute bg-black rounded-3xl`, { top: 8, left: 8, right: -8, bottom: -8, zIndex: -1 }]} />
                                     <View style={tw`bg-white rounded-3xl w-full border-[3px] border-black overflow-hidden`}>
                                         <View style={[tw`p-4 border-b-[3px] border-black flex-row justify-between items-center`, { backgroundColor: theme.primary }]}>
-                                            <Text style={tw`text-lg font-black uppercase text-white tracking-widest`}>Select Theme</Text>
+                                            <Text style={tw`text-lg font-black uppercase text-white tracking-widest`}>{t('settings.theme.select')}</Text>
                                             <TouchableOpacity onPress={() => setIsThemePickerOpen(false)}>
                                                 <X size={24} color="white" strokeWidth={3} />
                                             </TouchableOpacity>
@@ -223,6 +253,49 @@ export const MainScreen = ({
                                 </View>
                             </View>
                         )}
+
+                        {/* Language Picker Overlay */}
+                        {isLanguagePickerOpen && (
+                            <View style={[StyleSheet.absoluteFill, tw`items-center justify-center bg-black/80 px-6`, { zIndex: 1000 }]}>
+                                <View style={tw`w-full`}>
+                                    <View style={[tw`absolute bg-black rounded-3xl`, { top: 8, left: 8, right: -8, bottom: -8, zIndex: -1 }]} />
+                                    <View style={tw`bg-white rounded-3xl w-full border-[3px] border-black overflow-hidden`}>
+                                        <View style={[tw`p-4 border-b-[3px] border-black flex-row justify-between items-center`, { backgroundColor: theme.primary }]}>
+                                            <Text style={tw`text-lg font-black uppercase text-white tracking-widest`}>{t('settings.language.title')}</Text>
+                                            <TouchableOpacity onPress={() => setIsLanguagePickerOpen(false)}>
+                                                <X size={24} color="white" strokeWidth={3} />
+                                            </TouchableOpacity>
+                                        </View>
+
+                                        <ScrollView style={tw`p-4 max-h-[400px]`} showsVerticalScrollIndicator={false}>
+                                            <View style={tw`flex-row flex-wrap justify-between`}>
+                                                {LANGUAGES.map((l) => (
+                                                    <TouchableOpacity
+                                                        key={l.code}
+                                                        onPress={() => {
+                                                            setLanguage(l.code);
+                                                            setIsLanguagePickerOpen(false);
+                                                        }}
+                                                        style={[
+                                                            tw`w-[31%] aspect-square rounded-2xl items-center justify-center border-2 mb-3`,
+                                                            language === l.code ? tw`border-black bg-gray-50` : tw`border-gray-100 bg-white`
+                                                        ]}
+                                                    >
+                                                        <Text style={[tw`text-md font-black uppercase mb-1`, { color: theme.primary }]}>{l.code.toUpperCase()}</Text>
+                                                        <Text style={tw`text-[10px] font-bold text-gray-500 text-center`}>{l.label}</Text>
+                                                        {language === l.code && (
+                                                            <View style={tw`absolute top-1 right-1`}>
+                                                                <Check size={10} color="black" strokeWidth={4} />
+                                                            </View>
+                                                        )}
+                                                    </TouchableOpacity>
+                                                ))}
+                                            </View>
+                                        </ScrollView>
+                                    </View>
+                                </View>
+                            </View>
+                        )}
                     </View>
                 </Modal>
 
@@ -235,6 +308,7 @@ export const MainScreen = ({
                     removeHabit={removeHabit}
                     reorderHabits={reorderHabits}
                     theme={theme}
+                    toggleArchiveHabit={toggleArchiveHabit}
                 />
 
                 {view === 'weekly' && (

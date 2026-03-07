@@ -77,7 +77,8 @@ export const useHabits = (session, guestMode) => {
                 weeklyTarget: h.weekly_target,
                 sortOrder: h.sort_order,
                 user_id: h.user_id,
-                createdAt: h.created_at
+                createdAt: h.created_at,
+                archivedAt: h.archived_at
             })));
 
             const { data: completionsData, error: compError } = await supabase
@@ -131,7 +132,10 @@ export const useHabits = (session, guestMode) => {
                 frequency: h.frequency,
                 weekly_target: h.weeklyTarget,
                 user_id: userId,
-                sort_order: idx
+                user_id: userId,
+                sort_order: idx,
+                created_at: h.createdAt || new Date().toISOString(),
+                archived_at: h.archivedAt
             }));
 
             const { data: insertedHabits, error: hError } = await supabase
@@ -350,7 +354,8 @@ export const useHabits = (session, guestMode) => {
                         weeklyTarget: data[0].weekly_target,
                         sortOrder: data[0].sort_order,
                         user_id: data[0].user_id,
-                        createdAt: data[0].created_at
+                        createdAt: data[0].created_at,
+                        archivedAt: data[0].archived_at
                     };
                     setHabits(prev => prev.map(h => h.id === tempId ? mapped : h));
                     return data[0].id;
@@ -441,6 +446,24 @@ export const useHabits = (session, guestMode) => {
         }
     };
 
+    const toggleArchiveHabit = async (id, archive) => {
+        const timestamp = archive ? new Date().toISOString() : null;
+        setHabits(prev => prev.map(h => h.id === id ? { ...h, archivedAt: timestamp } : h));
+
+        if (session && !guestMode) {
+            try {
+                await supabase
+                    .from('habits')
+                    .update({ archived_at: timestamp })
+                    .eq('id', id)
+                    .eq('user_id', session.user.id);
+            } catch (err) {
+                console.error('Error archiving habit:', err);
+                Alert.alert('Error', 'Failed to update habit archive status');
+            }
+        }
+    };
+
     return {
         habits,
         setHabits,
@@ -452,6 +475,7 @@ export const useHabits = (session, guestMode) => {
         updateHabit,
         removeHabit,
         reorderHabits,
+        toggleArchiveHabit,
         setLoading
     };
 };

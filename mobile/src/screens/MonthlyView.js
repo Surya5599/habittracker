@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import tw from 'twrnc';
 import { ChevronRight, BookOpen, Cookie, X, Meh } from 'lucide-react-native';
@@ -8,6 +9,7 @@ import { MOODS } from '../constants';
 
 
 export const MonthlyView = ({ habits, completions, notes, theme, toggleCompletion, updateNote }) => {
+    const { t, i18n } = useTranslation();
     const [mode, setMode] = useState('journals'); // 'journals' or 'habits'
     const [selectedDate, setSelectedDate] = useState(null);
 
@@ -34,14 +36,14 @@ export const MonthlyView = ({ habits, completions, notes, theme, toggleCompletio
                         style={[tw`flex-1 py-3 rounded-xl items-center flex-row justify-center gap-2`, mode === 'journals' && tw`bg-white shadow-sm`]}
                     >
                         <BookOpen size={16} color={mode === 'journals' ? theme.primary : '#a1a1aa'} />
-                        <Text style={[tw`font-black uppercase text-[11px] tracking-widest`, mode === 'journals' ? { color: theme.primary } : tw`text-gray-400`]}>Journals</Text>
+                        <Text style={[tw`font-black uppercase text-[11px] tracking-widest`, mode === 'journals' ? { color: theme.primary } : tw`text-gray-400`]}>{t('monthlyView.journals')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                         onPress={() => setMode('habits')}
                         style={[tw`flex-1 py-3 rounded-xl items-center flex-row justify-center gap-2`, mode === 'habits' && tw`bg-white shadow-sm`]}
                     >
                         <Cookie size={16} color={mode === 'habits' ? theme.primary : '#a1a1aa'} />
-                        <Text style={[tw`font-black uppercase text-[11px] tracking-widest`, mode === 'habits' ? { color: theme.primary } : tw`text-gray-400`]}>Habits</Text>
+                        <Text style={[tw`font-black uppercase text-[11px] tracking-widest`, mode === 'habits' ? { color: theme.primary } : tw`text-gray-400`]}>{t('monthlyView.habits')}</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -54,9 +56,9 @@ export const MonthlyView = ({ habits, completions, notes, theme, toggleCompletio
                 {days.map((date, idx) => {
                     const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
                     const dayData = notes?.[dateKey] || {};
-                    const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                    const dayName = date.toLocaleDateString(i18n.language, { weekday: 'short' });
                     const dayNum = date.getDate();
-                    const monthName = date.toLocaleDateString('en-US', { month: 'short' });
+                    const monthName = date.toLocaleDateString(i18n.language, { month: 'short' });
 
                     return (
                         <TouchableOpacity
@@ -90,7 +92,7 @@ export const MonthlyView = ({ habits, completions, notes, theme, toggleCompletio
                                             <Text
                                                 style={[tw`text-sm font-bold`, dayData.journal ? tw`text-gray-600` : tw`text-gray-300 italic`]}
                                             >
-                                                {dayData.journal || 'Empty entry...'}
+                                                {dayData.journal || t('monthlyView.emptyEntry')}
                                             </Text>
                                         </View>
                                     </View>
@@ -102,7 +104,7 @@ export const MonthlyView = ({ habits, completions, notes, theme, toggleCompletio
                                             const allToShow = [...dailyDue, ...flexibleDone];
 
                                             if (allToShow.length === 0) {
-                                                return <Text style={tw`text-xs font-bold text-gray-300 italic`}>No activity today</Text>;
+                                                return <Text style={tw`text-xs font-bold text-gray-300 italic`}>{t('monthlyView.noActivity')}</Text>;
                                             }
 
                                             return allToShow.map(h => {
@@ -145,7 +147,7 @@ export const MonthlyView = ({ habits, completions, notes, theme, toggleCompletio
                     <View style={tw`bg-[#f5f5f4] rounded-t-3xl h-[90%] overflow-hidden`}>
                         {/* Modal Header */}
                         <View style={tw`p-5 border-b border-gray-200 flex-row items-center justify-between bg-white`}>
-                            <Text style={tw`text-xl font-black uppercase tracking-widest text-gray-700`}>Day Details</Text>
+                            <Text style={tw`text-xl font-black uppercase tracking-widest text-gray-700`}>{t('monthlyView.dayDetails')}</Text>
                             <TouchableOpacity
                                 onPress={() => setSelectedDate(null)}
                                 style={tw`p-2 bg-gray-100 rounded-full`}

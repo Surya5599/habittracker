@@ -3,6 +3,7 @@ import { X, Plus, Trash2, Check, Edit2, GripVertical, Archive, RotateCcw } from 
 import { Habit } from '../types';
 import { Reorder, useDragControls } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-hot-toast';
 
 interface HabitManagerModalProps {
     isOpen: boolean;
@@ -30,12 +31,16 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
     const { t } = useTranslation();
     const [editingId, setEditingId] = useState<string | null>(null);
     const [showArchived, setShowArchived] = useState(false);
+    const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
     const [editName, setEditName] = useState('');
     const [editFrequency, setEditFrequency] = useState<number[] | undefined>(undefined);
     const [editWeeklyTarget, setEditWeeklyTarget] = useState<number | undefined>(undefined);
     const [frequencyType, setFrequencyType] = useState<'fixed' | 'flexible'>('fixed');
+    const [isReorderMode, setIsReorderMode] = useState(false);
     const listRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const activeHabitsCount = habits.filter(h => !h.archivedAt).length;
+    const archivedHabitsCount = habits.filter(h => !!h.archivedAt).length;
 
     useEffect(() => {
         if (isOpen && listRef.current) {
@@ -49,7 +54,19 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
         }
     }, [editingId]);
 
+    const normalizeHabitName = (name: string) => name.trim().toLowerCase();
+    const hasDuplicateName = (name: string, habitId?: string) => {
+        const normalized = normalizeHabitName(name);
+        if (!normalized) return false;
+        return habits.some(h => h.id !== habitId && normalizeHabitName(h.name) === normalized);
+    };
+
     const handleAdd = async () => {
+        if (habits.some(h => !h.name.trim())) {
+            toast.error('Please enter a name for your new habit first');
+            return;
+        }
+        setShowArchived(false);
         const newId = await addHabit(themePrimary);
         if (newId) {
             setEditingId(newId);
@@ -57,6 +74,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
             setEditFrequency(undefined);
             setEditWeeklyTarget(undefined);
             setFrequencyType('fixed');
+            setIsReorderMode(false);
             // scroll to bottom
             setTimeout(() => {
                 if (listRef.current) {
@@ -74,51 +92,73 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
         setFrequencyType(habit.weeklyTarget ? 'flexible' : 'fixed');
     };
 
-    const saveEdit = (id: string) => {
-        if (editName.trim()) {
-            const updates: Partial<Habit> = { name: editName };
-            if (frequencyType === 'flexible') {
-                updates.weeklyTarget = editWeeklyTarget || 3;
-                updates.frequency = undefined; // Clear fixed frequency if switching to flexible
-            } else {
-                updates.frequency = editFrequency;
-                updates.weeklyTarget = undefined; // Clear weekly target if switching to fixed
-            }
-            updateHabit(id, updates);
+    const saveEdit = async (id: string) => {
+        const trimmedName = editName.trim();
+        if (!trimmedName) {
+            toast.error('Habit name is required');
+            return;
         }
+        if (hasDuplicateName(trimmedName, id)) {
+            toast.error('A habit with this name already exists');
+            return;
+        }
+        const updates: Partial<Habit> = { name: trimmedName };
+        if (frequencyType === 'flexible') {
+            updates.weeklyTarget = editWeeklyTarget || 3;
+            updates.frequency = undefined; // Clear fixed frequency if switching to flexible
+        } else {
+            updates.frequency = editFrequency;
+            updates.weeklyTarget = undefined; // Clear weekly target if switching to fixed
+        }
+        await updateHabit(id, updates);
         setEditingId(null);
     };
 
     const handleDelete = async (id: string) => {
-        if (confirm(t('habitManager.deleteConfirm'))) {
-            await removeHabit(id);
+        await removeHabit(id);
+        setConfirmDeleteId(null);
+    };
+
+    const handleCloseModal = async () => {
+        const unnamedHabits = habits.filter(h => !h.name.trim());
+        if (unnamedHabits.length > 0) {
+            await Promise.all(unnamedHabits.map(h => removeHabit(h.id)));
         }
+        onClose();
     };
 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-4 pt-20 md:pt-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white border-[2px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-full max-w-md overflow-hidden flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-200">
-                <div className="p-4 border-b-[2px] border-black flex items-center justify-between bg-white">
+        <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-20 md:pt-20 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white border-[2px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-full max-w-md overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+                <div className="p-4 border-b-[2px] border-black flex items-center justify-between gap-2 bg-white">
                     <h2 className="text-3xl font-black uppercase tracking-tighter text-black">{t('habitManager.title')}</h2>
-                    <button onClick={onClose} className="border-2 border-transparent hover:border-black p-1 transition-all hover:bg-stone-100">
-                        <X size={20} className="text-black" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setIsReorderMode(prev => !prev)}
+                            className={`px-2 py-1 text-[10px] font-black uppercase tracking-wide border-2 transition-all ${isReorderMode ? 'bg-black text-white border-black' : 'bg-white text-black border-black hover:bg-stone-100'}`}
+                        >
+                            Reorder {isReorderMode ? 'On' : 'Off'}
+                        </button>
+                        <button onClick={handleCloseModal} className="border-2 border-transparent hover:border-black p-1 transition-all hover:bg-stone-100">
+                            <X size={20} className="text-black" />
+                        </button>
+                    </div>
                 </div>
 
-                <div className="px-4 py-2 border-b-[2px] border-black flex gap-2 overflow-x-auto bg-stone-50">
+                <div className="px-4 py-2 border-b-[2px] border-black grid grid-cols-2 gap-2 bg-stone-50">
                     <button
                         onClick={() => setShowArchived(false)}
-                        className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest border-2 transition-all ${!showArchived ? 'bg-black text-white border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,0.2)]' : 'bg-white text-stone-400 border-stone-200 hover:border-black hover:text-black'}`}
+                        className={`w-full min-w-0 h-9 px-2 text-[8px] sm:text-[10px] leading-tight text-center font-black uppercase tracking-normal sm:tracking-wide border-2 transition-all ${!showArchived ? 'bg-black text-white border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,0.2)]' : 'bg-white text-stone-400 border-stone-200 hover:border-black hover:text-black'}`}
                     >
-                        Active Habits
+                        Active Habits ({activeHabitsCount})
                     </button>
                     <button
                         onClick={() => setShowArchived(true)}
-                        className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest border-2 transition-all ${showArchived ? 'bg-black text-white border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,0.2)]' : 'bg-white text-stone-400 border-stone-200 hover:border-black hover:text-black'}`}
+                        className={`w-full min-w-0 h-9 px-2 text-[8px] sm:text-[10px] leading-tight text-center font-black uppercase tracking-normal sm:tracking-wide border-2 transition-all ${showArchived ? 'bg-black text-white border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,0.2)]' : 'bg-white text-stone-400 border-stone-200 hover:border-black hover:text-black'}`}
                     >
-                        Archived
+                        Archived ({archivedHabitsCount})
                     </button>
                 </div>
 
@@ -132,7 +172,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                             axis="y"
                             values={habits}
                             onReorder={reorderHabits}
-                            className="space-y-3"
+                            className="space-y-2"
                         >
                             {habits
                                 .filter(h => showArchived ? h.archivedAt : !h.archivedAt)
@@ -153,26 +193,26 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                                         saveEdit={saveEdit}
                                         startEditing={startEditing}
                                         handleDelete={handleDelete}
+                                        confirmDeleteId={confirmDeleteId}
+                                        setConfirmDeleteId={setConfirmDeleteId}
                                         themePrimary={themePrimary}
                                         toggleArchiveHabit={toggleArchiveHabit}
                                         isArchived={!!habit.archivedAt}
+                                        isReorderMode={isReorderMode}
                                     />
                                 ))}
                         </Reorder.Group>
                     )}
                 </div>
 
-                <div className="p-4 border-t-[2px] border-black bg-stone-50">
+                <div className="p-3 border-t-[2px] border-black bg-stone-50">
                     <button
                         onClick={handleAdd}
-                        className="w-full py-3 bg-black text-white text-xs font-black uppercase tracking-widest border-2 border-black shadow-[4px_4px_0px_0px_gray] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[2px_2px_0px_0px_gray] active:translate-y-[4px] active:translate-x-[4px] active:shadow-none transition-all flex items-center justify-center gap-2"
+                        className="w-full py-3 mb-2 bg-black text-white text-xs font-black uppercase tracking-widest border-2 border-black shadow-[4px_4px_0px_0px_gray] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[2px_2px_0px_0px_gray] active:translate-y-[4px] active:translate-x-[4px] active:shadow-none transition-all flex items-center justify-center gap-2"
                     >
                         <Plus size={16} strokeWidth={3} />
                         {t('habitManager.addHabit')}
                     </button>
-                    <p className="text-[10px] text-center text-stone-500 mt-3 font-bold uppercase tracking-wide">
-                        {t('habitManager.dragToReorder')}
-                    </p>
                 </div>
             </div>
         </div>
@@ -194,10 +234,21 @@ interface HabitItemProps {
     saveEdit: (id: string) => void;
     startEditing: (habit: Habit) => void;
     handleDelete: (id: string) => void;
+    confirmDeleteId: string | null;
+    setConfirmDeleteId: (id: string | null) => void;
     themePrimary: string;
     toggleArchiveHabit: (id: string, archive: boolean) => Promise<void>;
     isArchived: boolean;
+    isReorderMode: boolean;
 }
+
+const getHabitFrequencyLabel = (habit: Habit) => {
+    if (habit.weeklyTarget) return `${habit.weeklyTarget}x/week`;
+    if (!habit.frequency || habit.frequency.length === 7) return 'Every day';
+    if (habit.frequency.length === 5 && [1, 2, 3, 4, 5].every(day => habit.frequency?.includes(day))) return 'Weekdays';
+    if (habit.frequency.length === 2 && habit.frequency.includes(0) && habit.frequency.includes(6)) return 'Weekend';
+    return `${habit.frequency.length} days/week`;
+};
 
 const HabitItem: React.FC<HabitItemProps> = ({
     habit,
@@ -214,9 +265,12 @@ const HabitItem: React.FC<HabitItemProps> = ({
     saveEdit,
     startEditing,
     handleDelete,
+    confirmDeleteId,
+    setConfirmDeleteId,
     themePrimary,
     toggleArchiveHabit,
-    isArchived
+    isArchived,
+    isReorderMode
 }) => {
     const { t } = useTranslation();
     const controls = useDragControls();
@@ -224,6 +278,7 @@ const HabitItem: React.FC<HabitItemProps> = ({
     return (
         <Reorder.Item
             value={habit}
+            drag={isReorderMode ? 'y' : false}
             dragListener={false}
             dragControls={controls}
             whileDrag={{
@@ -236,8 +291,11 @@ const HabitItem: React.FC<HabitItemProps> = ({
         >
             <div className="flex items-center gap-3 flex-1 min-w-0">
                 <button
-                    onPointerDown={(e) => controls.start(e)}
-                    className="p-1 px-2 cursor-grab active:cursor-grabbing text-stone-300 hover:text-black hover:bg-stone-50 rounded transition-all"
+                    onPointerDown={(e) => {
+                        if (isReorderMode) controls.start(e);
+                    }}
+                    className={`p-1 px-2 rounded transition-all ${isReorderMode ? 'cursor-grab active:cursor-grabbing text-stone-300 hover:text-black hover:bg-stone-50' : 'cursor-default text-stone-200'}`}
+                    title={isReorderMode ? 'Drag to reorder' : 'Enable reorder mode first'}
                 >
                     <GripVertical size={16} strokeWidth={2.5} />
                 </button>
@@ -327,16 +385,44 @@ const HabitItem: React.FC<HabitItemProps> = ({
                         </div>
                     </div>
                 ) : (
-                    <span
-                        onClick={() => startEditing(habit)}
-                        className="flex-1 text-sm font-bold text-black truncate cursor-pointer hover:underline decoration-2 underline-offset-2"
-                    >
-                        {habit.name || t('habitManager.untitled')}
-                    </span>
+                    <div className="flex-1 min-w-0 cursor-pointer" onClick={() => startEditing(habit)}>
+                        <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-sm font-bold text-black truncate hover:underline decoration-2 underline-offset-2">
+                                {habit.name || t('habitManager.untitled')}
+                            </span>
+                            <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide border border-black bg-stone-50">
+                                {isArchived ? 'Archived' : 'Active'}
+                            </span>
+                        </div>
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-stone-500 truncate">
+                            {getHabitFrequencyLabel(habit)}
+                        </p>
+                    </div>
                 )}
             </div>
 
-            <div className="flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="relative flex items-center gap-1 ml-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                {confirmDeleteId === habit.id && (
+                    <div className="absolute bottom-full right-0 mb-2 w-44 border-2 border-black bg-white p-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] z-20">
+                        <p className="text-[10px] font-black uppercase tracking-wide text-black mb-2">
+                            Delete this habit?
+                        </p>
+                        <div className="grid grid-cols-2 gap-1">
+                            <button
+                                onClick={() => handleDelete(habit.id)}
+                                className="border-2 border-black bg-black text-white py-1 text-[10px] font-black uppercase tracking-wide hover:bg-stone-800 transition-colors"
+                            >
+                                Delete
+                            </button>
+                            <button
+                                onClick={() => setConfirmDeleteId(null)}
+                                className="border-2 border-black bg-white text-black py-1 text-[10px] font-black uppercase tracking-wide hover:bg-stone-100 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                )}
                 <button
                     onClick={() => editingId === habit.id ? saveEdit(habit.id) : startEditing(habit)}
                     className="p-1.5 text-black hover:bg-black hover:text-white border-2 border-transparent hover:border-black transition-all"
@@ -345,7 +431,7 @@ const HabitItem: React.FC<HabitItemProps> = ({
                     {editingId === habit.id ? <Check size={14} strokeWidth={3} /> : <Edit2 size={14} strokeWidth={3} />}
                 </button>
                 <button
-                    onClick={() => handleDelete(habit.id)}
+                    onClick={() => setConfirmDeleteId(confirmDeleteId === habit.id ? null : habit.id)}
                     className="p-1.5 text-black hover:bg-red-500 hover:text-white border-2 border-transparent hover:border-black transition-all"
                     title="Delete Habit"
                 >

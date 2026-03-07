@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, Minus, Plus, Share2, Trash2, Pencil, ChevronLeft, ChevronRight, BookOpen, X, Save, Meh, Frown, Smile, Laugh, Star, Angry } from 'lucide-react';
+import { Check, Minus, Plus, Trash2, Pencil, ChevronLeft, ChevronRight, Save, Meh, Frown, Smile, Laugh, Angry } from 'lucide-react';
 import { Habit, HabitCompletion, Theme, DailyNote, Task, DayData } from '../types';
 import { isCompleted as checkCompleted } from '../utils/stats';
 import { generateUUID } from '../utils/uuid';
 import { isHabitActiveOnDate } from '../utils/habitActivity';
+import { motion } from 'framer-motion';
 
 interface DailyCardProps {
     date: Date;
@@ -26,9 +27,14 @@ interface DailyCardProps {
     }) => void;
     onPrev?: () => void;
     onNext?: () => void;
+    onDateClick?: (date: Date) => void;
     defaultFlipped?: boolean;
     onJournalClick?: () => void;
     startOfWeek?: 'monday' | 'sunday';
+    useGlobalTaskToggle?: boolean;
+    globalTaskMode?: boolean;
+    onGlobalTaskModeToggle?: () => void;
+    fitParentHeight?: boolean;
 }
 
 export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = ({
@@ -44,18 +50,23 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
     onShareClick,
     onPrev,
     onNext,
+    onDateClick,
     defaultFlipped = false,
     onJournalClick,
     combinedView = false,
     startOfWeek = 'monday',
+    useGlobalTaskToggle = false,
+    globalTaskMode,
+    onGlobalTaskModeToggle,
+    fitParentHeight = false,
 }) => {
     const { t, i18n } = useTranslation();
     const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
     const [editingTaskText, setEditingTaskText] = useState('');
     const [isFlipped, setIsFlipped] = useState(defaultFlipped);
+    const [showTasksView, setShowTasksView] = useState(false);
     const taskInputRef = useRef<HTMLInputElement>(null);
     const dailyHabitsRef = useRef<HTMLDivElement>(null);
-    const flexibleHabitsRef = useRef<HTMLDivElement>(null);
     const tasksRef = useRef<HTMLDivElement>(null);
     const journalRef = useRef<HTMLDivElement>(null);
     const longPressTimerRef = useRef<number | null>(null);
@@ -109,7 +120,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
             }
         };
 
-        const refs = [dailyHabitsRef, flexibleHabitsRef, tasksRef, journalRef];
+        const refs = [dailyHabitsRef, tasksRef, journalRef];
 
         refs.forEach(ref => {
             if (ref.current) {
@@ -138,6 +149,21 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
     const dateString = date.toLocaleDateString(i18n.language, { month: 'short', day: 'numeric', year: 'numeric' });
     const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     const isToday = date.toDateString() === new Date().toDateString();
+
+    useEffect(() => {
+        if (typeof globalTaskMode === 'boolean') {
+            setShowTasksView(globalTaskMode);
+            return;
+        }
+        setShowTasksView(false);
+    }, [dateKey, globalTaskMode]);
+
+    useEffect(() => {
+        // Prevent journal face from flashing when exiting tasks view.
+        if (showTasksView) {
+            setIsFlipped(false);
+        }
+    }, [showTasksView]);
 
     const getDayData = (): DayData => {
         const data = notes[dateKey];
@@ -174,6 +200,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
 
     const handleSaveJournal = () => {
         updateNote(dateKey, { mood, journal });
+        setShowTasksView(false);
         if (!combinedView) {
             if (onJournalClick) {
                 onJournalClick();
@@ -183,9 +210,25 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
         }
     };
 
+    const openTasksView = () => {
+        if (useGlobalTaskToggle && onGlobalTaskModeToggle) {
+            if (!showTasksView) onGlobalTaskModeToggle();
+            return;
+        }
+        setShowTasksView(true);
+    };
+
+    const openJournalView = () => {
+        setShowTasksView(false);
+        if (onJournalClick) {
+            onJournalClick();
+        } else {
+            setIsFlipped(true);
+        }
+    };
+
     const visibleHabitsForDate = habits.filter(h => isHabitActiveOnDate(h, date));
     const dailyHabits = visibleHabitsForDate.filter(h => !h.weeklyTarget);
-    const flexibleHabits = visibleHabitsForDate.filter(h => !!h.weeklyTarget);
 
     const getDayProgress = () => {
         const activeDailyHabits = dailyHabits.filter(h => !isHabitInactive(h.id, dateKey));
@@ -212,13 +255,16 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
         return () => clearTimeout(timer);
     }, [actualProgress]);
 
-    const dailyCompletedCount = dailyHabits.reduce((acc, h) => {
+    const completedHabitsCount = visibleHabitsForDate.reduce((acc, h) => {
         if (isHabitInactive(h.id, dateKey)) return acc;
         const doneToday = checkCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
         return doneToday ? acc + 1 : acc;
     }, 0);
-
-    const totalDailyCount = dailyHabits.filter(h => !isHabitInactive(h.id, dateKey)).length;
+    const totalHabitsCount = visibleHabitsForDate.filter(h => !isHabitInactive(h.id, dateKey)).length;
+    const totalTasksCount = (dayData.tasks || []).length;
+    const completedTasksCount = (dayData.tasks || []).filter(task => task.completed).length;
+    const hasJournalEntry = Boolean((dayData.journal || '').trim());
+    const hasMoodTracked = typeof mood === 'number';
 
     const clearLongPress = () => {
         if (longPressTimerRef.current) {
@@ -271,6 +317,15 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
         setEditingTaskId(null);
     };
 
+    const addNewTask = (openPanel: boolean = false) => {
+        const currentTasks = dayData.tasks || [];
+        const newTask: Task = { id: generateUUID(), text: '', completed: false };
+        updateNote(dateKey, { tasks: [...currentTasks, newTask] });
+        setEditingTaskId(newTask.id);
+        setEditingTaskText('');
+        if (openPanel) setShowTasksView(true);
+    };
+
     const MOODS = [
         { value: 1, icon: Angry, label: t('dailyCard.moods.veryBad'), color: '#ef4444', tooltip: t('dailyCard.moods.veryBad') },
         { value: 2, icon: Frown, label: t('dailyCard.moods.bad'), color: '#f97316', tooltip: t('dailyCard.moods.bad') },
@@ -278,16 +333,27 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
         { value: 4, icon: Smile, label: t('dailyCard.moods.good'), color: '#84cc16', tooltip: t('dailyCard.moods.good') },
         { value: 5, icon: Laugh, label: t('dailyCard.moods.veryGood'), color: '#10b981', tooltip: t('dailyCard.moods.veryGood') },
     ];
+    const selectedMood = MOODS.find(m => m.value === mood);
+    const MoodStatusIcon = selectedMood?.icon || Meh;
 
     const FrontFace = (
         <div
-            className={`relative w-full md:h-full h-auto bg-white neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans ${isToday ? 'ring-2 ring-black ring-offset-2' : ''}`}
+            className={`relative w-full h-full bg-white neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans ${isToday ? 'ring-2 ring-black ring-offset-0' : ''}`}
         >
             {/* Header */}
-            <div className="p-3 text-center border-b-[2px] border-black relative" style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}>
+            <div
+                className={`p-3 text-center border-b-[2px] border-black relative ${onDateClick && !combinedView ? 'cursor-pointer' : ''}`}
+                style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}
+                onClick={() => {
+                    if (onDateClick && !combinedView) onDateClick(date);
+                }}
+            >
                 {onPrev && (
                     <button
-                        onClick={onPrev}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onPrev();
+                        }}
                         className="absolute left-2 top-1/2 -translate-y-1/2 p-1 text-white hover:bg-white/20 rounded transition-colors"
                     >
                         <ChevronLeft size={20} strokeWidth={3} />
@@ -299,7 +365,10 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
 
                 {onNext && (
                     <button
-                        onClick={onNext}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onNext();
+                        }}
                         className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-white hover:bg-white/20 rounded transition-colors"
                     >
                         <ChevronRight size={20} strokeWidth={3} />
@@ -340,20 +409,51 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 </div>
             </div>
 
-            {/* Daily Habits List */}
+            <div
+                className={`${combinedView ? 'flex-1 overflow-y-auto' : 'flex-1 min-h-0 overflow-y-auto'}`}
+                style={combinedView ? { WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' } : { WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}
+            >
+            {/* Habits List */}
             <div className="py-1 px-3 bg-stone-50/50 flex flex-col border-b border-stone-100">
                 <div className="flex items-center justify-between mb-1 pb-1 border-b border-black/5 flex-shrink-0">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">{t('dailyCard.dailyHabits')}</span>
-                    <span className="text-[10px] font-black text-stone-400">{dailyHabits.length}</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">Habits</span>
+                    <span className="text-[10px] font-black text-stone-400">{completedHabitsCount}/{totalHabitsCount}</span>
                 </div>
                 <div
                     ref={dailyHabitsRef}
-                    className="space-y-1 md:overflow-y-auto md:max-h-[120px] pr-1 md:scroll-container touch-pan-y"
+                    className={`space-y-1 pr-1 touch-pan-y ${combinedView ? '' : 'md:scroll-container'}`}
                     style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
                 >
-                    {dailyHabits.length > 0 ? dailyHabits.map(habit => {
+                    {visibleHabitsForDate.length > 0 ? visibleHabitsForDate.map(habit => {
                         const done = checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
                         const inactive = isHabitInactive(habit.id, dateKey);
+                        let weekCompletions = 0;
+                        let goalMet = false;
+
+                        if (habit.weeklyTarget) {
+                            const today = date;
+                            const day = today.getDay();
+
+                            let diff;
+                            if (startOfWeek === 'monday') {
+                                diff = today.getDate() - day + (day === 0 ? -6 : 1);
+                            } else {
+                                diff = today.getDate() - day;
+                            }
+
+                            const startDay = new Date(today.getFullYear(), today.getMonth(), diff);
+                            for (let i = 0; i < 7; i++) {
+                                const d = new Date(startDay);
+                                d.setDate(startDay.getDate() + i);
+                                const dKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                                if (isHabitInactive(habit.id, dKey)) continue;
+                                if (checkCompleted(habit.id, d.getDate(), completions, d.getMonth(), d.getFullYear())) {
+                                    weekCompletions++;
+                                }
+                            }
+                            goalMet = weekCompletions >= habit.weeklyTarget;
+                        }
+
                         return (
                             <div
                                 key={habit.id}
@@ -381,6 +481,11 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                     <span className={`text-[11px] font-bold truncate ${inactive ? 'text-amber-700' : (done ? 'text-stone-400 line-through' : 'text-stone-700')}`}>
                                         {habit.name || t('dailyCard.untitled')}
                                     </span>
+                                    {habit.weeklyTarget && (
+                                        <span className={`ml-1 text-[9px] px-1 py-0 border-[1px] font-black uppercase tracking-tighter ${goalMet ? 'bg-black text-white border-black' : 'bg-stone-50 text-stone-400 border-stone-200'}`}>
+                                            {weekCompletions}/{habit.weeklyTarget}
+                                        </span>
+                                    )}
                                 </div>
                                 <div
                                     className={`w-4 h-4 border-2 border-black flex items-center justify-center transition-all ${inactive ? 'bg-amber-300 text-amber-900 border-amber-700' : (done ? 'bg-black text-white' : 'bg-white')}`}
@@ -394,273 +499,226 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                     )}
                 </div>
             </div>
+            </div>
+            {!combinedView && (
+                <div
+                    className="mt-auto border-t-2 border-black flex flex-col"
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                        e.preventDefault();
+                        const data = e.dataTransfer.getData('application/json');
+                        if (!data) return;
+                        const { taskId, sourceDateKey } = JSON.parse(data);
+                        if (sourceDateKey === dateKey) return;
 
-            {/* Flexible Habits List */}
-            {flexibleHabits.length > 0 && (
-                <div className="py-1 px-3 bg-white flex flex-col border-b border-stone-100">
-                    <div className="flex items-center justify-between mb-1 pb-1 border-b border-black/5 flex-shrink-0">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">{t('dailyCard.flexibleHabits')}</span>
-                        <span className="text-[10px] font-black text-stone-400">{flexibleHabits.length}</span>
-                    </div>
-                    <div
-                        ref={flexibleHabitsRef}
-                        className="space-y-1 md:overflow-y-auto md:max-h-[100px] pr-1 md:scroll-container touch-pan-y"
-                        style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
-                    >
-                        {flexibleHabits.map(habit => {
-                            const done = checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
-                            const inactive = isHabitInactive(habit.id, dateKey);
+                        const getSourceData = (): DayData => {
+                            const d = notes[sourceDateKey];
+                            if (Array.isArray(d)) return { tasks: d };
+                            if (d && 'tasks' in d) return d;
+                            return { tasks: [] };
+                        };
+                        const sourceData = getSourceData();
+                        const sourceTasks = sourceData.tasks || [];
+                        const targetTasks = dayData.tasks || [];
 
-                            // Calculate weekly progress
-                            const today = date;
-                            const day = today.getDay();
+                        const taskToMove = sourceTasks.find(t => t.id === taskId);
+                        if (!taskToMove) return;
 
-                            let diff;
-                            if (startOfWeek === 'monday') {
-                                diff = today.getDate() - day + (day === 0 ? -6 : 1);
-                            } else {
-                                diff = today.getDate() - day;
-                            }
-
-                            const startDay = new Date(today.getFullYear(), today.getMonth(), diff);
-
-                            let weekCompletions = 0;
-                            for (let i = 0; i < 7; i++) {
-                                const d = new Date(startDay);
-                                d.setDate(startDay.getDate() + i);
-                                const dKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                                if (isHabitInactive(habit.id, dKey)) continue;
-                                if (checkCompleted(habit.id, d.getDate(), completions, d.getMonth(), d.getFullYear())) {
-                                    weekCompletions++;
-                                }
-                            }
-
-                            const goalMet = habit.weeklyTarget ? weekCompletions >= habit.weeklyTarget : false;
-
-                            return (
-                                <div
-                                    key={habit.id}
-                                    onClick={() => {
-                                        if (longPressTriggeredRef.current) {
-                                            longPressTriggeredRef.current = false;
-                                            return;
-                                        }
-                                        toggleCompletion(habit.id, dateKey);
-                                    }}
-                                    onMouseDown={() => startLongPress(habit.id)}
-                                    onMouseUp={clearLongPress}
-                                    onMouseLeave={clearLongPress}
-                                    onTouchStart={() => startLongPress(habit.id)}
-                                    onTouchEnd={clearLongPress}
-                                    onTouchCancel={clearLongPress}
-                                    onContextMenu={(e) => {
-                                        e.preventDefault();
-                                        clearLongPress();
-                                        toggleHabitInactive(habit.id, dateKey);
-                                    }}
-                                    className="flex items-center justify-between group cursor-pointer hover:bg-black/5 rounded p-1 -mx-1 transition-colors"
-                                >
-                                    <div className="flex items-center flex-1 min-w-0">
-                                        <span className={`text-[11px] font-bold truncate ${inactive ? 'text-amber-700' : (done ? 'text-stone-400 line-through' : 'text-stone-700')}`}>
-                                            {habit.name || t('dailyCard.untitled')}
-                                        </span>
-                                        <span className={`ml-1 text-[9px] px-1 py-0 border-[1px] font-black uppercase tracking-tighter ${goalMet ? 'bg-black text-white border-black' : 'bg-stone-50 text-stone-400 border-stone-200'}`}>
-                                            {weekCompletions}/{habit.weeklyTarget}
-                                        </span>
-                                    </div>
-                                    <div
-                                        className={`w-4 h-4 border-2 border-black flex items-center justify-center transition-all ${inactive ? 'bg-amber-300 text-amber-900 border-amber-700' : (done ? 'bg-black text-white' : 'bg-white')}`}
-                                    >
-                                        {inactive ? <Minus size={10} strokeWidth={4} /> : (done && <Check size={10} strokeWidth={4} />)}
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-            )}
-
-            {dailyCompletedCount === totalDailyCount && totalDailyCount > 0 ? (
-                <div className="border-t border-black flex-shrink-0">
-                    <button
-                        onClick={() => onShareClick({ date, dayName, dateString, completedCount: dailyCompletedCount, totalCount: totalDailyCount, progress: actualProgress })}
-                        className="w-full p-3 bg-black text-white font-black uppercase tracking-widest text-[11px] hover:bg-stone-800 transition-all flex items-center justify-center gap-2 group"
-                    >
-                        <Share2 size={14} className="group-hover:scale-110 transition-transform" />
-                        {t('dailyCard.share')}
-                    </button>
-                </div>
-            ) : (
-                <div className="grid grid-cols-2 text-center text-[9px] font-black uppercase tracking-tight border-t border-black flex-shrink-0">
-                    <div className="p-1 px-2 border-r border-black" style={{ backgroundColor: (isToday ? theme.primary : theme.secondary) + '20' }}>
-                        <span className="text-stone-500 block">{t('dailyCard.dailyDone')}</span>
-                        <span className="text-lg leading-none">{dailyCompletedCount}</span>
-                    </div>
-                    <div className="p-1 px-2" style={{ backgroundColor: '#f0f0f0' }}>
-                        <span className="text-stone-500 block">{t('dailyCard.remaining')}</span>
-                        <span className="text-lg leading-none">{totalDailyCount - dailyCompletedCount}</span>
-                    </div>
-                </div>
-            )}
-
-            {/* Tasks */}
-            <div
-                className="border-t-2 border-black flex flex-col min-h-[90px]"
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => {
-                    e.preventDefault();
-                    const data = e.dataTransfer.getData('application/json');
-                    if (!data) return;
-                    const { taskId, sourceDateKey } = JSON.parse(data);
-                    if (sourceDateKey === dateKey) return;
-
-                    const getSourceData = (): DayData => {
-                        const d = notes[sourceDateKey];
-                        if (Array.isArray(d)) return { tasks: d };
-                        if (d && 'tasks' in d) return d;
-                        return { tasks: [] };
-                    };
-                    const sourceData = getSourceData();
-                    const sourceTasks = sourceData.tasks || [];
-                    const targetTasks = dayData.tasks || [];
-
-                    const taskToMove = sourceTasks.find(t => t.id === taskId);
-                    if (!taskToMove) return;
-
-                    updateNote(sourceDateKey, { tasks: sourceTasks.filter(t => t.id !== taskId) });
-                    updateNote(dateKey, { tasks: [...targetTasks, taskToMove] });
-                }}
-            >
-                <div className="p-2 bg-stone-100 border-b-2 border-black text-[9px] font-black uppercase tracking-widest text-stone-500 flex items-center justify-center relative flex-shrink-0 group/header">
-                    <span>{t('dailyCard.tasks')}</span>
-
-                    {/* Journal Trigger */}
-                    {!combinedView && (() => {
-                        const activeMood = MOODS.find(m => m.value === dayData.mood);
-                        return (
-                            <button
-                                onClick={() => onJournalClick ? onJournalClick() : setIsFlipped(true)}
-                                className={`absolute left-2 p-1.5 rounded transition-colors ${activeMood ? '' : (dayData.journal ? 'text-black bg-stone-200' : 'text-stone-400 hover:text-black hover:bg-stone-200')}`}
-                                title={activeMood ? activeMood.tooltip : t('dailyCard.journal')}
-                            >
-                                {activeMood ? <activeMood.icon size={16} fill={activeMood.color} className="text-stone-700" /> : <BookOpen size={12} strokeWidth={3} />}
-                            </button>
-                        );
-                    })()}
-
-                    <button
-                        onClick={() => {
-                            const currentTasks = dayData.tasks || [];
-                            const newTask: Task = { id: generateUUID(), text: '', completed: false };
-                            updateNote(dateKey, { tasks: [...currentTasks, newTask] });
-                            setEditingTaskId(newTask.id);
-                            setEditingTaskText('');
-                        }}
-                        className="absolute right-2 hover:bg-stone-200 p-1.5 rounded transition-colors"
-                    >
-                        <Plus size={12} strokeWidth={3} />
-                    </button>
-                </div>
+                        updateNote(sourceDateKey, { tasks: sourceTasks.filter(t => t.id !== taskId) });
+                        updateNote(dateKey, { tasks: [...targetTasks, taskToMove] });
+                    }}
+                >
                 <div
                     ref={tasksRef}
-                    className="p-2 space-y-2 md:overflow-y-auto md:max-h-[160px] pr-1 md:scroll-container touch-pan-y"
+                    className="p-2 md:overflow-y-auto md:max-h-[88px] pr-1 md:scroll-container touch-pan-y"
                     style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
                 >
-                    {(dayData.tasks || []).map((task) => (
-                        <div
-                            key={task.id}
-                            draggable={editingTaskId !== task.id}
-                            onDragStart={(e) => {
-                                e.dataTransfer.setData('application/json', JSON.stringify({ taskId: task.id, sourceDateKey: dateKey }));
-                                e.dataTransfer.effectAllowed = 'move';
-                            }}
-                            className={`flex items-start gap-2 group bg-white border border-transparent hover:border-stone-200 p-1 rounded shadow-sm hover:shadow-md transition-all ${editingTaskId === task.id ? 'ring-2 ring-black' : 'cursor-move'}`}
+                    <div className="grid grid-cols-3 gap-1">
+                        <button
+                            onClick={openTasksView}
+                            className={`text-[8px] font-black uppercase tracking-wide py-1 px-1 rounded border transition-colors ${totalTasksCount > 0 ? 'bg-white border-stone-300 text-stone-700 hover:bg-stone-50' : 'bg-stone-100 border-stone-300 text-stone-500 hover:bg-stone-200'}`}
+                            title="Open tasks"
                         >
+                            {totalTasksCount > 0 ? `${completedTasksCount}/${totalTasksCount} Tasks` : 'Add Tasks'}
+                        </button>
+                        <button
+                            onClick={openJournalView}
+                            className={`text-[8px] font-black uppercase tracking-wide py-1 px-1 rounded border text-center transition-colors ${hasJournalEntry ? 'bg-green-100 text-green-800 border-green-400 hover:bg-green-200' : 'bg-stone-100 text-stone-500 border-stone-300 hover:bg-stone-200'}`}
+                            title="Open journal"
+                        >
+                            {hasJournalEntry ? 'Journal Added' : 'No Journal'}
+                        </button>
+                        <button
+                            onClick={openJournalView}
+                            className={`${hasMoodTracked ? 'p-0 border-0 bg-transparent text-black hover:opacity-80' : 'text-[8px] font-black uppercase tracking-wide py-1 px-1 rounded border text-center bg-stone-100 text-stone-500 border-stone-300 hover:bg-stone-200'} transition-colors`}
+                            title="Open mood/journal"
+                        >
+                            {hasMoodTracked ? (
+                                <span className="flex items-center justify-center">
+                                    <MoodStatusIcon size={18} strokeWidth={2.8} className="text-black" fill={selectedMood?.color} />
+                                </span>
+                            ) : (
+                                'Add Mood'
+                            )}
+                        </button>
+                    </div>
+                </div>
+                </div>
+            )}
+        </div>
+    );
+
+    const TasksFace = (
+        <div
+            className={`relative w-full h-full bg-white neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans ${isToday && !combinedView ? 'ring-2 ring-black ring-offset-0' : ''}`}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+                e.preventDefault();
+                const data = e.dataTransfer.getData('application/json');
+                if (!data) return;
+                const { taskId, sourceDateKey } = JSON.parse(data);
+                if (sourceDateKey === dateKey) return;
+
+                const getSourceData = (): DayData => {
+                    const d = notes[sourceDateKey];
+                    if (Array.isArray(d)) return { tasks: d };
+                    if (d && 'tasks' in d) return d;
+                    return { tasks: [] };
+                };
+                const sourceData = getSourceData();
+                const sourceTasks = sourceData.tasks || [];
+                const targetTasks = dayData.tasks || [];
+                const taskToMove = sourceTasks.find(t => t.id === taskId);
+                if (!taskToMove) return;
+
+                updateNote(sourceDateKey, { tasks: sourceTasks.filter(t => t.id !== taskId) });
+                updateNote(dateKey, { tasks: [...targetTasks, taskToMove] });
+            }}
+        >
+            <div className="p-3 text-center border-b-[2px] border-black relative" style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}>
+                {!combinedView && (
+                    <button
+                        onClick={() => {
+                            if (useGlobalTaskToggle && onGlobalTaskModeToggle) {
+                                onGlobalTaskModeToggle();
+                            } else {
+                                setShowTasksView(false);
+                            }
+                        }}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 p-1 text-white hover:bg-white/20 rounded transition-colors"
+                        title="Back"
+                    >
+                        <ChevronLeft size={20} strokeWidth={3} />
+                    </button>
+                )}
+                <h3 className="text-white font-black uppercase tracking-tighter text-lg leading-tight">{t('dailyCard.tasks')}</h3>
+                <p className="text-white/80 font-bold text-[10px] tracking-widest">{dateString}</p>
+            </div>
+
+            <div className="p-3 border-b border-stone-200 bg-stone-50 flex items-center justify-between gap-2">
+                <div className="text-[10px] font-black uppercase tracking-widest text-stone-600">
+                    {(dayData.tasks || []).length} tasks
+                </div>
+                <button
+                    onClick={() => addNewTask(false)}
+                    className="inline-flex items-center gap-1 px-2 py-1 border border-black bg-white text-[10px] font-black uppercase tracking-widest hover:bg-stone-100 transition-colors"
+                >
+                    <Plus size={10} strokeWidth={3} />
+                    Add
+                </button>
+            </div>
+
+            <div
+                ref={tasksRef}
+                className="p-3 space-y-2 flex-1 overflow-y-auto scroll-container touch-pan-y"
+                style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
+            >
+                {(dayData.tasks || []).map((task) => (
+                    <div
+                        key={task.id}
+                        draggable={editingTaskId !== task.id}
+                        onDragStart={(e) => {
+                            e.dataTransfer.setData('application/json', JSON.stringify({ taskId: task.id, sourceDateKey: dateKey }));
+                            e.dataTransfer.effectAllowed = 'move';
+                        }}
+                        className={`flex items-start gap-2 group bg-white border border-transparent hover:border-stone-200 p-2 rounded shadow-sm hover:shadow-md transition-all ${editingTaskId === task.id ? 'ring-2 ring-black' : 'cursor-move'}`}
+                    >
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                const currentTasks = dayData.tasks || [];
+                                const newTasks = currentTasks.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t);
+                                updateNote(dateKey, { tasks: newTasks });
+                            }}
+                            className="p-2 -m-2 flex-shrink-0 flex items-center justify-center focus:outline-none"
+                        >
+                            <div className={`w-3 h-3 border border-black flex items-center justify-center transition-all ${task.completed ? 'bg-black text-white' : 'bg-white hover:bg-stone-100'}`}>
+                                {task.completed && <Check size={8} strokeWidth={4} />}
+                            </div>
+                        </button>
+
+                        {editingTaskId === task.id ? (
+                            <input
+                                ref={taskInputRef}
+                                type="text"
+                                value={editingTaskText}
+                                onChange={(e) => setEditingTaskText(e.target.value)}
+                                onBlur={() => handleFinishEditing(task.id)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleFinishEditing(task.id);
+                                }}
+                                className="w-full text-[11px] font-medium bg-transparent outline-none leading-tight border-none p-0 focus:ring-0 text-stone-800"
+                                autoFocus
+                            />
+                        ) : (
+                            <span
+                                className={`flex-1 text-[11px] font-medium leading-tight break-all ${task.completed ? 'text-stone-400 line-through' : 'text-stone-800'}`}
+                                onDoubleClick={() => {
+                                    setEditingTaskId(task.id);
+                                    setEditingTaskText(task.text);
+                                }}
+                            >
+                                {task.text}
+                            </span>
+                        )}
+
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
+                                onClick={() => {
+                                    setEditingTaskId(task.id);
+                                    setEditingTaskText(task.text);
+                                }}
+                                className="text-stone-400 hover:text-black transition-colors"
+                                title={t('dailyCard.editTask')}
+                            >
+                                <Pencil size={10} />
+                            </button>
+                            <button
+                                onClick={() => {
                                     const currentTasks = dayData.tasks || [];
-                                    const newTasks = currentTasks.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t);
+                                    const newTasks = currentTasks.filter(t => t.id !== task.id);
                                     updateNote(dateKey, { tasks: newTasks });
                                 }}
-                                className="p-2 -m-2 flex-shrink-0 flex items-center justify-center focus:outline-none"
+                                className="text-stone-400 hover:text-red-500 transition-colors"
+                                title={t('dailyCard.deleteTask')}
                             >
-                                <div className={`w-3 h-3 border border-black flex items-center justify-center transition-all ${task.completed ? 'bg-black text-white' : 'bg-white hover:bg-stone-100'}`}>
-                                    {task.completed && <Check size={8} strokeWidth={4} />}
-                                </div>
+                                <Trash2 size={10} />
                             </button>
-
-                            {editingTaskId === task.id ? (
-                                <input
-                                    ref={taskInputRef}
-                                    type="text"
-                                    value={editingTaskText}
-                                    onChange={(e) => setEditingTaskText(e.target.value)}
-                                    onBlur={() => handleFinishEditing(task.id)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            handleFinishEditing(task.id);
-                                        }
-                                    }}
-                                    className="w-full text-[10px] font-medium bg-transparent outline-none leading-tight border-none p-0 focus:ring-0 text-stone-800"
-                                    autoFocus
-                                />
-                            ) : (
-                                <span
-                                    className={`flex-1 text-[10px] font-medium leading-tight break-all ${task.completed ? 'text-stone-400 line-through' : 'text-stone-800'}`}
-                                    onDoubleClick={() => {
-                                        setEditingTaskId(task.id);
-                                        setEditingTaskText(task.text);
-                                    }}
-                                >
-                                    {task.text}
-                                </span>
-                            )}
-
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button
-                                    onClick={() => {
-                                        setEditingTaskId(task.id);
-                                        setEditingTaskText(task.text);
-                                    }}
-                                    className="text-stone-400 hover:text-black transition-colors"
-                                    title={t('dailyCard.editTask')}
-                                >
-                                    <Pencil size={10} />
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        const currentTasks = dayData.tasks || [];
-                                        const newTasks = currentTasks.filter(t => t.id !== task.id);
-                                        updateNote(dateKey, { tasks: newTasks });
-                                    }}
-                                    className="text-stone-400 hover:text-red-500 transition-colors"
-                                    title={t('dailyCard.deleteTask')}
-                                >
-                                    <Trash2 size={10} />
-                                </button>
-                            </div>
                         </div>
-                    ))}
-                    {(!dayData.tasks || dayData.tasks.length === 0) && (
-                        <div className="text-[9px] text-stone-300 text-center py-2 italic cursor-pointer" onClick={() => {
-                            const currentTasks = dayData.tasks || [];
-                            const newTask: Task = { id: generateUUID(), text: '', completed: false };
-                            updateNote(dateKey, { tasks: [...currentTasks, newTask] });
-                            setEditingTaskId(newTask.id);
-                            setEditingTaskText('');
-                        }}>
-                            {t('dailyCard.addTask')}
-                        </div>
-                    )}
-                </div>
+                    </div>
+                ))}
+                {(!dayData.tasks || dayData.tasks.length === 0) && (
+                    <div className="text-[10px] text-stone-400 text-center py-4 italic">
+                        No Tasks Today
+                    </div>
+                )}
             </div>
         </div>
     );
 
     const JournalFace = (
         <div
-            className={`relative w-full h-full bg-white neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans ${isToday && !combinedView ? 'ring-2 ring-black ring-offset-2' : ''}`}
+            className={`relative w-full h-full bg-white neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans ${isToday && !combinedView ? 'ring-2 ring-black ring-offset-0' : ''}`}
         >
             {/* Header (Matching style) */}
             <div className="p-3 text-center border-b-[2px] border-black relative" style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}>
@@ -698,9 +756,11 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                     className={`flex flex-col items-center justify-center gap-1 p-2 rounded-lg transition-all ${isSelected ? 'bg-stone-100 scale-105 shadow-inner' : 'hover:bg-stone-50 hover:scale-105'
                                         }`}
                                 >
-                                    <div className={`p-1.5 rounded-full transition-colors ${isSelected ? 'text-white' : 'text-stone-300'}`}
-                                        style={{ backgroundColor: isSelected ? m.color : 'transparent' }}>
-                                        <Icon size={18} strokeWidth={isSelected ? 2.5 : 2} />
+                                    <div
+                                        className="p-1.5 rounded-full transition-all"
+                                        style={{ opacity: isSelected ? 1 : 0.55 }}
+                                    >
+                                        <Icon size={18} strokeWidth={isSelected ? 2.8 : 2} className="text-black" fill={m.color} />
                                     </div>
                                 </button>
                             );
@@ -735,33 +795,61 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
 
     if (combinedView) {
         return (
-            <div className="w-full h-[600px] grid grid-cols-1 md:grid-cols-2 gap-4">
-                {FrontFace}
-                {JournalFace}
-            </div>
+            <motion.div
+                key={dateKey}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.48, ease: 'easeOut' }}
+                className="w-full h-[600px] grid grid-cols-1 md:grid-cols-3 gap-4"
+            >
+                <motion.div
+                    initial={{ opacity: 0, x: 95, y: 10, scale: 0.84 }}
+                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                    transition={{ duration: 0.62, delay: 0.42, ease: [0.22, 1, 0.36, 1] }}
+                    className="relative z-10"
+                >
+                    {JournalFace}
+                </motion.div>
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.8, y: 14 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ duration: 0.58, ease: [0.22, 1, 0.36, 1] }}
+                    className="relative z-20"
+                >
+                    {FrontFace}
+                </motion.div>
+                <motion.div
+                    initial={{ opacity: 0, x: -95, y: 10, scale: 0.84 }}
+                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                    transition={{ duration: 0.62, delay: 0.42, ease: [0.22, 1, 0.36, 1] }}
+                    className="relative z-10"
+                >
+                    {TasksFace}
+                </motion.div>
+            </motion.div>
         );
     }
 
     return (
         <div
-            className="relative w-full md:h-full group"
+            className={`relative w-full group ${fitParentHeight ? 'h-full min-h-0' : 'h-[clamp(420px,56svh,720px)] md:h-[clamp(460px,60svh,760px)]'}`}
             style={{ perspective: '1000px' }}
         >
             <div
-                className={`relative w-full md:h-full transition-transform duration-700`}
-                style={{ transformStyle: 'preserve-3d', transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
+                className={`relative w-full h-full transition-transform duration-700`}
+                style={{ transformStyle: 'preserve-3d', transform: (isFlipped || showTasksView) ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
             >
                 {/* --- FRONT FACE --- */}
                 <div style={{ backfaceVisibility: 'hidden' }} className="relative w-full h-full">
                     {FrontFace}
                 </div>
 
-                {/* --- BACK FACE (JOURNAL) --- */}
+                {/* --- BACK FACE (JOURNAL / TASKS) --- */}
                 <div
                     style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
                     className="absolute inset-0"
                 >
-                    {JournalFace}
+                    {showTasksView ? TasksFace : JournalFace}
                 </div>
             </div>
         </div>

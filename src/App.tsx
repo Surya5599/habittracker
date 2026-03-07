@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
+import { createPortal } from 'react-dom';
 import i18n from './i18n';
-import { X, Search, Key, Archive, Minus } from 'lucide-react';
+import { X, Search, Key, Archive, Minus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from './supabase';
 import './i18n';
@@ -617,6 +618,28 @@ const AppContent: React.FC = () => {
     setWeekOffset(0);
   };
 
+  const navigateSelectedCardDate = (direction: 'prev' | 'next') => {
+    setSelectedDateForCard((prev) => {
+      if (!prev) return prev;
+      const dayOffset = direction === 'prev' ? -1 : 1;
+      return new Date(prev.getFullYear(), prev.getMonth(), prev.getDate() + dayOffset);
+    });
+  };
+
+  const toDateInputValue = (date: Date) => {
+    const y = date.getFullYear();
+    const m = `${date.getMonth() + 1}`.padStart(2, '0');
+    const d = `${date.getDate()}`.padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+
+  const updateSelectedCardDateFromInput = (value: string) => {
+    if (!value) return;
+    const [year, month, day] = value.split('-').map(Number);
+    if (!year || !month || !day) return;
+    setSelectedDateForCard(new Date(year, month - 1, day));
+  };
+
 
   const handleHabitBlur = async (habit: any) => {
     setEditingHabitId(null);
@@ -824,7 +847,7 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#e5e5e5] p-2 sm:p-4 pb-20 sm:pb-4 font-sans text-[#444] relative w-full max-w-full">
+    <div className="h-[100svh] overflow-hidden bg-[#e5e5e5] p-2 sm:p-4 pb-20 sm:pb-4 font-sans text-[#444] relative w-full max-w-full">
 
       <Toaster position="top-center" reverseOrder={false} />
 
@@ -899,7 +922,7 @@ const AppContent: React.FC = () => {
         onAction={handleUpdateModalAction}
       />
 
-      <div className="max-w-full mx-auto bg-white border-[2px] sm:border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] p-2 sm:p-4 space-y-4 min-h-[calc(100vh-2rem)]">
+      <div className="max-w-full h-full mx-auto bg-white border-[2px] sm:border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] p-2 sm:p-4 flex flex-col gap-4 overflow-hidden">
 
         <Header
           view={view}
@@ -973,24 +996,60 @@ const AppContent: React.FC = () => {
           themePrimary={theme.primary}
         />
 
-        {selectedDateForCard && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setSelectedDateForCard(null)}>
-            <div className="w-full max-w-4xl h-auto relative animate-in zoom-in-95 slide-in-from-bottom-4 duration-300" onClick={e => e.stopPropagation()}>
-              {isSearchOpen && (
-                <button
-                  onClick={() => setSelectedDateForCard(null)}
-                  className="absolute -top-12 left-0 text-white hover:text-stone-300 p-2 transition-colors flex items-center gap-2"
-                >
-                  <Search size={20} />
-                  <span className="font-bold text-sm uppercase tracking-wider">Back to Search</span>
-                </button>
-              )}
-              <button
-                onClick={() => setSelectedDateForCard(null)}
-                className="absolute -top-12 right-0 text-white hover:text-stone-300 p-2 transition-colors"
-              >
-                <X size={24} />
-              </button>
+        {selectedDateForCard && createPortal(
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 md:p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setSelectedDateForCard(null)}>
+            <div className="w-full max-w-6xl relative animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 flex flex-col pt-[max(env(safe-area-inset-top),1rem)] md:pt-4" onClick={e => e.stopPropagation()}>
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 mb-2">
+                <div className="justify-self-start min-w-0">
+                  {isSearchOpen ? (
+                    <button
+                      onClick={() => setSelectedDateForCard(null)}
+                      className="text-white hover:text-stone-300 p-2 transition-colors flex items-center gap-2"
+                    >
+                      <Search size={20} />
+                      <span className="font-bold text-sm uppercase tracking-wider truncate">Back to Search</span>
+                    </button>
+                  ) : <div />}
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => navigateSelectedCardDate('prev')}
+                    className="text-white hover:text-stone-300 p-2 transition-colors border-2 border-white/30 hover:border-white/70 bg-black/20"
+                    title="Previous day"
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+                  <input
+                    type="date"
+                    value={toDateInputValue(selectedDateForCard)}
+                    onChange={(e) => updateSelectedCardDateFromInput(e.target.value)}
+                    className="h-10 px-2 text-sm font-bold border-2 border-white/60 bg-black/30 text-white focus:outline-none focus:border-white"
+                    title="Select date"
+                  />
+                  <button
+                    onClick={() => setSelectedDateForCard(new Date())}
+                    className="h-10 px-2 text-[10px] font-black uppercase tracking-wide text-white border-2 border-white/30 hover:border-white/70 bg-black/20 transition-colors"
+                    title="Jump to today"
+                  >
+                    Today
+                  </button>
+                  <button
+                    onClick={() => navigateSelectedCardDate('next')}
+                    className="text-white hover:text-stone-300 p-2 transition-colors border-2 border-white/30 hover:border-white/70 bg-black/20"
+                    title="Next day"
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                </div>
+                <div className="justify-self-end">
+                  <button
+                    onClick={() => setSelectedDateForCard(null)}
+                    className="text-white hover:text-stone-300 p-2 transition-colors"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
+              </div>
               <DailyCard
                 date={selectedDateForCard}
                 habits={habits}
@@ -1006,78 +1065,81 @@ const AppContent: React.FC = () => {
                 combinedView={true}
               />
             </div>
-          </div>
+          </div>,
+          document.body
         )}
 
-        {view === 'monthly' ? (
-          <MonthlyView
-            habits={habits}
-            completions={completions}
-            currentMonthIndex={currentMonthIndex}
-            currentYear={currentYear}
-            theme={theme}
-            weeks={weeks}
-            monthDates={monthDates}
-            topHabitsThisMonth={topHabitsThisMonth}
-            editingHabitId={editingHabitId}
-            editingGoalId={editingGoalId}
-            inputRef={inputRef}
-            goalInputRef={goalInputRef}
-            addHabit={() => addHabit(theme.primary).then(id => setEditingHabitId(id))}
-            toggleCompletion={toggleCompletion}
-            toggleHabitInactive={toggleHabitInactive}
-            isHabitInactive={isHabitInactive}
-            updateHabitNameState={(id, name) => updateHabit(id, { name })}
-            updateHabitGoalState={(id, goal) => updateHabit(id, { goal: parseInt(goal) || 0 })}
-            handleHabitBlur={handleHabitBlur}
-            setEditingHabitId={setEditingHabitId}
-            setEditingGoalId={setEditingGoalId}
-            removeHabit={removeHabit}
-            isDayFullyCompleted={isDayFullyCompleted}
-            isModalOpen={isHabitModalOpen || isResolutionsModalOpen}
-            notes={notes}
-            updateNote={updateNote}
-            setSelectedDateForCard={(date, flipped = false) => {
-              setSelectedDateForCard(date);
-              setCardOpenFlipped(flipped);
-            }}
-          />
-        ) : view === 'dashboard' ? (
-          <DashboardView
-            annualStats={annualStats}
-            habits={habits}
-            theme={theme}
-            currentYear={currentYear}
-            setCurrentMonthIndex={setCurrentMonthIndex}
-            setView={setView}
-            monthlyGoals={monthlyGoals}
-            updateMonthlyGoals={updateMonthlyGoals}
-            reorderHabits={reorderHabits}
-            setSelectedDateForCard={(date, flipped = false) => {
-              setSelectedDateForCard(date);
-              setCardOpenFlipped(flipped);
-            }}
-          />
-        ) : (
-          <WeeklyView
-            habits={habits}
-            completions={completions}
-            currentYear={currentYear}
-            weekOffset={weekOffset}
-            theme={theme}
-            toggleCompletion={toggleCompletion}
-            toggleHabitInactive={toggleHabitInactive}
-            isHabitInactive={isHabitInactive}
-            notes={notes}
-            updateNote={updateNote}
-            addHabit={() => addHabit(theme.primary).then(id => setEditingHabitId(id))}
-            setSelectedDateForCard={(date, flipped = false) => {
-              setSelectedDateForCard(date);
-              setCardOpenFlipped(flipped);
-            }}
-            startOfWeek={startOfWeek}
-          />
-        )}
+        <div className={`flex-1 min-h-0 ${view === 'weekly' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+          {view === 'monthly' ? (
+            <MonthlyView
+              habits={habits}
+              completions={completions}
+              currentMonthIndex={currentMonthIndex}
+              currentYear={currentYear}
+              theme={theme}
+              weeks={weeks}
+              monthDates={monthDates}
+              topHabitsThisMonth={topHabitsThisMonth}
+              editingHabitId={editingHabitId}
+              editingGoalId={editingGoalId}
+              inputRef={inputRef}
+              goalInputRef={goalInputRef}
+              addHabit={() => addHabit(theme.primary).then(id => setEditingHabitId(id))}
+              toggleCompletion={toggleCompletion}
+              toggleHabitInactive={toggleHabitInactive}
+              isHabitInactive={isHabitInactive}
+              updateHabitNameState={(id, name) => updateHabit(id, { name })}
+              updateHabitGoalState={(id, goal) => updateHabit(id, { goal: parseInt(goal) || 0 })}
+              handleHabitBlur={handleHabitBlur}
+              setEditingHabitId={setEditingHabitId}
+              setEditingGoalId={setEditingGoalId}
+              removeHabit={removeHabit}
+              isDayFullyCompleted={isDayFullyCompleted}
+              isModalOpen={isHabitModalOpen || isResolutionsModalOpen}
+              notes={notes}
+              updateNote={updateNote}
+              setSelectedDateForCard={(date, flipped = false) => {
+                setSelectedDateForCard(date);
+                setCardOpenFlipped(flipped);
+              }}
+            />
+          ) : view === 'dashboard' ? (
+            <DashboardView
+              annualStats={annualStats}
+              habits={habits}
+              theme={theme}
+              currentYear={currentYear}
+              setCurrentMonthIndex={setCurrentMonthIndex}
+              setView={setView}
+              monthlyGoals={monthlyGoals}
+              updateMonthlyGoals={updateMonthlyGoals}
+              reorderHabits={reorderHabits}
+              setSelectedDateForCard={(date, flipped = false) => {
+                setSelectedDateForCard(date);
+                setCardOpenFlipped(flipped);
+              }}
+            />
+          ) : (
+            <WeeklyView
+              habits={habits}
+              completions={completions}
+              currentYear={currentYear}
+              weekOffset={weekOffset}
+              theme={theme}
+              toggleCompletion={toggleCompletion}
+              toggleHabitInactive={toggleHabitInactive}
+              isHabitInactive={isHabitInactive}
+              notes={notes}
+              updateNote={updateNote}
+              addHabit={() => addHabit(theme.primary).then(id => setEditingHabitId(id))}
+              setSelectedDateForCard={(date, flipped = false) => {
+                setSelectedDateForCard(date);
+                setCardOpenFlipped(flipped);
+              }}
+              startOfWeek={startOfWeek}
+            />
+          )}
+        </div>
       </div>
 
       <BottomNav

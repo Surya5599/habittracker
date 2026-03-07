@@ -33,6 +33,7 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
     notes,
     updateNote,
     addHabit,
+    setSelectedDateForCard,
     startOfWeek,
 }) => {
     const [shareModalOpen, setShareModalOpen] = useState(false);
@@ -48,8 +49,9 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
     // Mobile navigation state
     const [mobileDayIndex, setMobileDayIndex] = useState(0);
 
-    // Journal view toggle state
-    const [showJournalView, setShowJournalView] = useState(false);
+    // Task view toggle state (applies to all weekly cards)
+    const [showTasksForWeek, setShowTasksForWeek] = useState(false);
+    const [showJournalForWeek, setShowJournalForWeek] = useState(false);
 
     // To detect mobile view and set initial day
     useEffect(() => {
@@ -144,14 +146,26 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
         // setMobileDayIndex(prev => (prev + 1) % 7);
     };
 
-    const handleJournalClick = () => {
-        setShowJournalView(!showJournalView);
+    const toggleTasksForWeek = () => {
+        setShowTasksForWeek(prev => {
+            const next = !prev;
+            if (next) setShowJournalForWeek(false);
+            return next;
+        });
+    };
+
+    const toggleJournalForWeek = () => {
+        setShowJournalForWeek(prev => {
+            const next = !prev;
+            if (next) setShowTasksForWeek(false);
+            return next;
+        });
     };
 
     return (
-        <>
+        <div className="h-full min-h-0 p-1">
             {/* Desktop View (Grid) */}
-            <div className="hidden md:grid md:grid-cols-4 lg:grid-cols-7 gap-4">
+            <div className="hidden md:grid md:grid-cols-4 lg:grid-cols-7 gap-4 h-full auto-rows-fr">
                 {weekDates.map((date) => (
                     <DailyCard
                         key={date.toISOString()}
@@ -165,16 +179,21 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                         notes={notes}
                         updateNote={updateNote}
                         onShareClick={handleShareClick}
-                        defaultFlipped={showJournalView}
-                        onJournalClick={handleJournalClick}
+                        onDateClick={(selectedDate) => setSelectedDateForCard(selectedDate, false)}
+                        defaultFlipped={showJournalForWeek}
+                        onJournalClick={toggleJournalForWeek}
+                        useGlobalTaskToggle={true}
+                        globalTaskMode={showTasksForWeek}
+                        onGlobalTaskModeToggle={toggleTasksForWeek}
                         startOfWeek={startOfWeek}
+                        fitParentHeight={true}
                     />
                 ))}
             </div>
 
             {/* Mobile View (Day Switcher) */}
-            <div className="md:hidden flex flex-col gap-4 min-h-full">
-                <div className="w-full">
+            <div className="md:hidden flex flex-col gap-4 h-full min-h-0">
+                <div className="w-full flex-1 min-h-0">
                     <DailyCard
                         key={weekDates[mobileDayIndex].toISOString()}
                         date={weekDates[mobileDayIndex]}
@@ -187,11 +206,16 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                         notes={notes}
                         updateNote={updateNote}
                         onShareClick={handleShareClick}
+                        onDateClick={(selectedDate) => setSelectedDateForCard(selectedDate, false)}
                         onPrev={handlePrevDay}
                         onNext={handleNextDay}
-                        defaultFlipped={showJournalView}
-                        onJournalClick={handleJournalClick}
+                        defaultFlipped={showJournalForWeek}
+                        onJournalClick={toggleJournalForWeek}
+                        useGlobalTaskToggle={true}
+                        globalTaskMode={showTasksForWeek}
+                        onGlobalTaskModeToggle={toggleTasksForWeek}
                         startOfWeek={startOfWeek}
+                        fitParentHeight={true}
                     />
                 </div>
             </div>
@@ -201,6 +225,6 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                 onClose={() => setShareModalOpen(false)}
                 onShare={handleShareConfirm}
             />
-        </>
+        </div>
     );
 };

@@ -209,6 +209,26 @@ export const Header: React.FC<HeaderProps> = ({
         return new Date();
     };
 
+    const monthLabel = `${MONTHS[currentMonthIndex]} ${currentYear}`;
+    const dashboardLabel = `${currentYear} Dashboard`;
+    const weekLabel = weekRange || '';
+
+    const getSelectorFontSize = (label: string) => {
+        const len = label.length;
+        if (len > 26) return '0.58rem';
+        if (len > 22) return '0.62rem';
+        if (len > 18) return '0.68rem';
+        if (len > 14) return '0.74rem';
+        return '0.82rem';
+    };
+
+    const getSelectorLetterSpacing = (label: string) => {
+        const len = label.length;
+        if (len > 22) return '0.02em';
+        if (len > 16) return '0.04em';
+        return '0.06em';
+    };
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
             <div className="md:col-span-3 bg-white neo-border neo-shadow rounded-2xl p-3 flex flex-col gap-3 h-full justify-between relative min-h-[160px]">
@@ -221,9 +241,10 @@ export const Header: React.FC<HeaderProps> = ({
                                         <button onClick={() => navigateMonth('prev')} className="hover:text-black active:scale-95 transition-transform"><ChevronLeft size={16} /></button>
                                         <button
                                             onClick={(e) => { e.stopPropagation(); setShowMonthSelector(!showMonthSelector); setShowWeekSelector(false); setShowYearSelector(false); }}
-                                            className="font-bold uppercase tracking-widest text-sm select-none hover:bg-stone-50 px-2 py-0.5 rounded-sm transition-colors"
+                                            className="flex-1 min-w-0 font-bold uppercase select-none hover:bg-stone-50 px-2 py-0.5 rounded-sm transition-colors whitespace-nowrap text-center"
+                                            style={{ fontSize: getSelectorFontSize(monthLabel), letterSpacing: getSelectorLetterSpacing(monthLabel), lineHeight: 1.1 }}
                                         >
-                                            {MONTHS[currentMonthIndex]} {currentYear}
+                                            {monthLabel}
                                         </button>
                                         <MonthPicker
                                             isOpen={showMonthSelector}
@@ -240,9 +261,10 @@ export const Header: React.FC<HeaderProps> = ({
                                         <button onClick={() => setCurrentYear(prev => prev - 1)} className="hover:text-black active:scale-95 transition-transform"><ChevronLeft size={16} /></button>
                                         <button
                                             onClick={(e) => { e.stopPropagation(); setShowYearSelector(!showYearSelector); setShowWeekSelector(false); setShowMonthSelector(false); }}
-                                            className="font-bold uppercase tracking-widest text-sm select-none hover:bg-stone-50 px-2 py-0.5 rounded-sm transition-colors"
+                                            className="flex-1 min-w-0 font-bold uppercase select-none hover:bg-stone-50 px-2 py-0.5 rounded-sm transition-colors whitespace-nowrap text-center"
+                                            style={{ fontSize: getSelectorFontSize(dashboardLabel), letterSpacing: getSelectorLetterSpacing(dashboardLabel), lineHeight: 1.1 }}
                                         >
-                                            {currentYear} Dashboard
+                                            {dashboardLabel}
                                         </button>
                                         <YearPicker
                                             isOpen={showYearSelector}
@@ -258,9 +280,10 @@ export const Header: React.FC<HeaderProps> = ({
                                         <button onClick={() => navigateWeek('prev')} className="hover:text-black active:scale-95 transition-transform"><ChevronLeft size={16} /></button>
                                         <button
                                             onClick={(e) => { e.stopPropagation(); setShowWeekSelector(!showWeekSelector); setShowMonthSelector(false); setShowYearSelector(false); }}
-                                            className="font-bold uppercase tracking-widest text-sm select-none hover:bg-stone-50 px-2 py-0.5 rounded-sm transition-colors"
+                                            className="flex-1 min-w-0 font-bold uppercase select-none hover:bg-stone-50 px-2 py-0.5 rounded-sm transition-colors whitespace-nowrap text-center"
+                                            style={{ fontSize: getSelectorFontSize(weekLabel), letterSpacing: getSelectorLetterSpacing(weekLabel), lineHeight: 1.1 }}
                                         >
-                                            {weekRange}
+                                            {weekLabel}
                                         </button>
                                         <WeekPicker
                                             isOpen={showWeekSelector}

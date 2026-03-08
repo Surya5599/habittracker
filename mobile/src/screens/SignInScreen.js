@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, TouchableOpacity, Alert, SafeAreaView, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
 import tw from 'twrnc';
 import { supabase } from '../lib/supabase';
 import { NeoButton, NeoInput, NeoCard } from '../components/NeoComponents';
@@ -79,7 +79,7 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={tw`flex-1 justify-center p-4`}
             >
-                <ScrollView contentContainerStyle={tw`flex-grow justify-center items-center`}>
+                <View style={tw`flex-1 justify-center items-center`}>
 
                     <View style={tw`mb-8 items-center`}>
                         <Text style={tw`text-5xl font-black uppercase tracking-tighter text-black`}>
@@ -161,7 +161,7 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
                         </View>
                     </NeoCard>
 
-                </ScrollView>
+                </View>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );

@@ -4,8 +4,14 @@ import { X, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import tw from 'twrnc';
 import { DAYS_OF_WEEK } from '../constants';
 
-export const DatePickerModal = ({ isVisible, onClose, onSelect, selectedDate, theme }) => {
+export const DatePickerModal = ({ isVisible, onClose, onSelect, selectedDate, theme, colorMode = 'light' }) => {
     const [currentMonth, setCurrentMonth] = useState(new Date(selectedDate || new Date()));
+    const isDark = colorMode === 'dark';
+    const panelBg = isDark ? '#0a0a0a' : '#ffffff';
+    const panelBorder = isDark ? '#ffffff' : '#000000';
+    const textPrimary = isDark ? '#f5f5f5' : '#1f2937';
+    const textMuted = isDark ? '#a3a3a3' : '#9ca3af';
+    const subtleBg = isDark ? '#111111' : '#f3f4f6';
 
     const getDaysInMonth = (date) => {
         const year = date.getFullYear();
@@ -59,12 +65,12 @@ export const DatePickerModal = ({ isVisible, onClose, onSelect, selectedDate, th
                     onPress={() => handleSelectDay(i)}
                     style={[
                         tw`w-[14.28%] aspect-square items-center justify-center m-0.5 rounded-lg`,
-                        isSelected ? { backgroundColor: theme.primary } : (isToday ? tw`bg-gray-200 border-2 border-gray-300` : tw`bg-transparent`)
+                        isSelected ? { backgroundColor: theme.primary } : (isToday ? { backgroundColor: subtleBg, borderWidth: 2, borderColor: isDark ? '#ffffff' : '#d1d5db' } : tw`bg-transparent`)
                     ]}
                 >
                     <Text style={[
                         tw`text-sm font-bold`,
-                        isSelected ? tw`text-white` : tw`text-gray-700`
+                        isSelected ? tw`text-white` : { color: textPrimary }
                     ]}>
                         {i}
                     </Text>
@@ -82,7 +88,7 @@ export const DatePickerModal = ({ isVisible, onClose, onSelect, selectedDate, th
             onRequestClose={onClose}
         >
             <View style={tw`flex-1 justify-center items-center bg-black/50 p-4`}>
-                <View style={tw`bg-white w-full max-w-sm rounded-3xl border-[3px] border-black overflow-hidden shadow-xl`}>
+                <View style={[tw`w-full max-w-sm rounded-3xl border-[3px] overflow-hidden shadow-xl`, { backgroundColor: panelBg, borderColor: panelBorder }]}>
                     {/* Header */}
                     <View style={[tw`p-4 flex-row items-center justify-between border-b-[3px] border-black`, { backgroundColor: theme.primary }]}>
                         <Text style={tw`text-white font-black uppercase text-lg tracking-widest`}>Select Date</Text>
@@ -94,20 +100,20 @@ export const DatePickerModal = ({ isVisible, onClose, onSelect, selectedDate, th
                     <View style={tw`p-4`}>
                         {/* Month Nav */}
                         <View style={tw`flex-row items-center justify-between mb-4`}>
-                            <TouchableOpacity onPress={handlePrevMonth} style={tw`p-2 bg-gray-100 rounded-lg border-2 border-gray-200`}>
-                                <ChevronLeft size={20} color="#57534e" />
+                            <TouchableOpacity onPress={handlePrevMonth} style={[tw`p-2 rounded-lg border-2`, { backgroundColor: subtleBg, borderColor: isDark ? '#ffffff' : '#d1d5db' }]}>
+                                <ChevronLeft size={20} color={isDark ? '#e5e7eb' : '#57534e'} />
                             </TouchableOpacity>
-                            <Text style={tw`text-lg font-black text-gray-800 uppercase`}>{monthName}</Text>
-                            <TouchableOpacity onPress={handleNextMonth} style={tw`p-2 bg-gray-100 rounded-lg border-2 border-gray-200`}>
-                                <ChevronRight size={20} color="#57534e" />
+                            <Text style={[tw`text-lg font-black uppercase`, { color: textPrimary }]}>{monthName}</Text>
+                            <TouchableOpacity onPress={handleNextMonth} style={[tw`p-2 rounded-lg border-2`, { backgroundColor: subtleBg, borderColor: isDark ? '#ffffff' : '#d1d5db' }]}>
+                                <ChevronRight size={20} color={isDark ? '#e5e7eb' : '#57534e'} />
                             </TouchableOpacity>
                         </View>
 
                         {/* Weekday Headers */}
-                        <View style={tw`flex-row mb-2 border-b border-gray-200 pb-2`}>
+                        <View style={[tw`flex-row mb-2 border-b pb-2`, { borderColor: isDark ? '#ffffff' : '#e5e7eb' }]}>
                             {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
                                 <View key={i} style={tw`w-[14.28%] items-center`}>
-                                    <Text style={tw`text-xs font-black text-gray-400`}>{day}</Text>
+                                    <Text style={[tw`text-xs font-black`, { color: textMuted }]}>{day}</Text>
                                 </View>
                             ))}
                         </View>

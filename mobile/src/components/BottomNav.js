@@ -1,16 +1,17 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { Home, BarChart2, Cookie, Sparkles } from 'lucide-react-native';
+import { Home, BarChart2, BookOpen, Sparkles } from 'lucide-react-native';
 import tw from 'twrnc';
 
-export const BottomNav = ({ view, setView, resetWeekOffset, theme }) => {
+export const BottomNav = ({ view, setView, resetWeekOffset, theme, colorMode = 'light' }) => {
     const { t } = useTranslation();
+    const isDark = colorMode === 'dark';
 
     // Color palette matching the image
     // Color palette matching the image
     const activeColor = theme?.primary || '#a18e78'; // Use theme primary or fallback to Brownish/Taupe
-    const inactiveColor = '#78716c'; // Stone 500 equivalent
+    const inactiveColor = isDark ? '#9ca3af' : '#78716c'; // Stone 500 equivalent
 
     const NavItem = ({ label, icon: Icon, targetView, onPress }) => {
         const isActive = view === targetView;
@@ -23,9 +24,7 @@ export const BottomNav = ({ view, setView, resetWeekOffset, theme }) => {
                     size={24}
                     color={isActive ? activeColor : inactiveColor}
                     strokeWidth={isActive ? 2.5 : 2}
-                    fill={isActive ? activeColor : 'transparent'} // Filled icon check? Image icons look slightly filled or thick. 
-                // Actually image icons look like solid glyphs or thick lines. 
-                // Let's use standard stroke for now.
+                    fill="transparent"
                 />
                 <Text style={[
                     tw`text-[10px] mt-1`,
@@ -38,7 +37,7 @@ export const BottomNav = ({ view, setView, resetWeekOffset, theme }) => {
     };
 
     return (
-        <View style={tw`absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-2 pb-8 flex-row justify-between items-center z-50 rounded-t-3xl shadow-lg`}>
+        <View style={[tw`absolute bottom-0 left-0 right-0 p-2 pb-8 flex-row justify-between items-center z-50 rounded-t-3xl`, { backgroundColor: isDark ? '#000000' : '#ffffff', borderTopWidth: 1, borderColor: isDark ? '#ffffff' : '#f3f4f6' }]}>
 
             <NavItem
                 label={t('bottomNav.today')}
@@ -55,7 +54,7 @@ export const BottomNav = ({ view, setView, resetWeekOffset, theme }) => {
 
             <NavItem
                 label={t('bottomNav.logs')}
-                icon={Cookie}
+                icon={BookOpen}
                 targetView="monthly"
             />
 

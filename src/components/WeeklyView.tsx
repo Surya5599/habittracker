@@ -49,9 +49,8 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
     // Mobile navigation state
     const [mobileDayIndex, setMobileDayIndex] = useState(0);
 
-    // Task view toggle state (applies to all weekly cards)
-    const [showTasksForWeek, setShowTasksForWeek] = useState(false);
-    const [showJournalForWeek, setShowJournalForWeek] = useState(false);
+    // Shared card mode state (applies to all weekly cards)
+    const [weekViewMode, setWeekViewMode] = useState<'habits' | 'tasks' | 'journal'>('habits');
 
     // To detect mobile view and set initial day
     useEffect(() => {
@@ -146,22 +145,6 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
         // setMobileDayIndex(prev => (prev + 1) % 7);
     };
 
-    const toggleTasksForWeek = () => {
-        setShowTasksForWeek(prev => {
-            const next = !prev;
-            if (next) setShowJournalForWeek(false);
-            return next;
-        });
-    };
-
-    const toggleJournalForWeek = () => {
-        setShowJournalForWeek(prev => {
-            const next = !prev;
-            if (next) setShowTasksForWeek(false);
-            return next;
-        });
-    };
-
     return (
         <div className="h-full min-h-0 p-1">
             {/* Desktop View (Grid) */}
@@ -182,11 +165,8 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                                 updateNote={updateNote}
                                 onShareClick={handleShareClick}
                                 onDateClick={(selectedDate) => setSelectedDateForCard(selectedDate, false)}
-                                defaultFlipped={showJournalForWeek}
-                                onJournalClick={toggleJournalForWeek}
-                                useGlobalTaskToggle={true}
-                                globalTaskMode={showTasksForWeek}
-                                onGlobalTaskModeToggle={toggleTasksForWeek}
+                                globalViewMode={weekViewMode}
+                                onGlobalViewModeChange={setWeekViewMode}
                                 startOfWeek={startOfWeek}
                                 fitParentHeight={true}
                             />
@@ -213,11 +193,8 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                         onDateClick={(selectedDate) => setSelectedDateForCard(selectedDate, false)}
                         onPrev={handlePrevDay}
                         onNext={handleNextDay}
-                        defaultFlipped={showJournalForWeek}
-                        onJournalClick={toggleJournalForWeek}
-                        useGlobalTaskToggle={true}
-                        globalTaskMode={showTasksForWeek}
-                        onGlobalTaskModeToggle={toggleTasksForWeek}
+                        globalViewMode={weekViewMode}
+                        onGlobalViewModeChange={setWeekViewMode}
                         startOfWeek={startOfWeek}
                         fitParentHeight={false}
                     />

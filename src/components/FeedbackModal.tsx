@@ -16,6 +16,7 @@ interface FeedbackModalProps {
 }
 
 export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, userId, userEmail, hasUnreadFeedback }) => {
+    const donationUrl = ((import.meta.env.VITE_DONATION_URL as string | undefined)?.trim() || 'https://ko-fi.com/B0B31VLYXB');
     const [activeTab, setActiveTab] = useState<'new' | 'history' | 'admin'>('new');
     const [type, setType] = useState<'bug' | 'suggestion'>('bug');
     const [content, setContent] = useState('');
@@ -365,6 +366,18 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                                     placeholder={type === 'bug' ? "Describe clinical details of the bug..." : "Tell us what feature you'd like to see!"}
                                     className="w-full flex-1 p-3 neo-border focus:ring-0 focus:outline-none text-sm font-medium resize-none placeholder:text-stone-300 min-h-[100px]"
                                 />
+                            </div>
+
+                            <div className="p-3 bg-rose-50 border border-rose-200 rounded-md">
+                                <p className="text-[10px] font-black uppercase tracking-wide text-rose-700 mb-2">Support Development</p>
+                                <a href={donationUrl} target="_blank" rel="noopener noreferrer" className="inline-block">
+                                    <img
+                                        height={36}
+                                        style={{ border: 0, height: 36 }}
+                                        src="https://storage.ko-fi.com/cdn/kofi6.png?v=6"
+                                        alt="Buy Me a Coffee at ko-fi.com"
+                                    />
+                                </a>
                             </div>
 
                             <button

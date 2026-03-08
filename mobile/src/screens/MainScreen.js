@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, TouchableOpacity, Modal, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, ScrollView, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WeeklyScreen } from './WeeklyView';
 import { MonthlyView } from './MonthlyView';
 import { DashboardView } from './DashboardView';
 import { AIAnalysisView } from './AIAnalysisView';
 import { BottomNav } from '../components/BottomNav';
-import { Settings, X, Check, Plus } from 'lucide-react-native';
+import { Settings, X, Check, Plus, MessageSquare, Sun, Moon, Shield } from 'lucide-react-native';
 import tw from 'twrnc';
 import { THEMES } from '../constants';
 import { HabitManager } from '../components/HabitManager';
+import { supabase } from '../lib/supabase';
+import { FeedbackModal } from '../components/FeedbackModal';
+import { PrivacyPolicyModal } from '../components/PrivacyPolicyModal';
 
 export const MainScreen = ({
     view,
@@ -21,7 +24,7 @@ export const MainScreen = ({
     setWeekOffset,
     theme,
     setTheme,
-    toggleCompletion,
+    toggleCompletion: baseToggleCompletion,
     weekProgress,
     resetWeekOffset,
     notes,
@@ -38,14 +41,22 @@ export const MainScreen = ({
     aiAnalysis,
     language,
     setLanguage,
-    toggleArchiveHabit
+    toggleArchiveHabit,
+    colorMode,
+    setColorMode,
+    userId,
+    userEmail
 }) => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isHabitManagerOpen, setIsHabitManagerOpen] = useState(false);
     const [isThemePickerOpen, setIsThemePickerOpen] = useState(false);
     const [isLanguagePickerOpen, setIsLanguagePickerOpen] = useState(false);
+    const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+    const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState(null);
     const { t } = useTranslation();
+    const isDark = colorMode === 'dark';
+    const outlineColor = isDark ? '#ffffff' : '#000000';
 
     const LANGUAGES = [
         { code: 'en', label: 'English' },
@@ -91,14 +102,84 @@ export const MainScreen = ({
         setView('weekly');
     };
 
+    const handleAuthAction = async () => {
+        try {
+            if (isGuest) {
+                onOpenSignIn();
+            } else {
+                const { error } = await supabase.auth.signOut();
+                if (error) throw error;
+            }
+            setIsSettingsOpen(false);
+        } catch (error) {
+            Alert.alert('Error', error?.message || 'Unable to sign out');
+        }
+    };
+
+    const getInactiveHabitsForDate = (dateKey) => {
+        const dayData = notes?.[dateKey];
+        if (!dayData || Array.isArray(dayData)) return [];
+        return Array.isArray(dayData.inactiveHabits) ? dayData.inactiveHabits : [];
+    };
+
+    const isHabitInactive = (habitId, dateKey) => {
+        const habit = habits.find((h) => h.id === habitId);
+        if (!habit) return false;
+
+        const [y, m, d] = dateKey.split('-').map(Number);
+        const targetDate = new Date(y, m - 1, d);
+        targetDate.setHours(0, 0, 0, 0);
+
+        let autoInactive = false;
+        if (habit.createdAt) {
+            const start = new Date(habit.createdAt);
+            start.setHours(0, 0, 0, 0);
+            if (targetDate < start) autoInactive = true;
+        }
+        if (habit.archivedAt) {
+            const archived = new Date(habit.archivedAt);
+            archived.setHours(0, 0, 0, 0);
+            if (targetDate > archived) autoInactive = true;
+        }
+
+        const manualInactive = getInactiveHabitsForDate(dateKey).includes(habitId);
+        return autoInactive || manualInactive;
+    };
+
+    const toggleHabitInactive = async (habitId, dateKey) => {
+        const existing = getInactiveHabitsForDate(dateKey);
+        const currentlyInactive = existing.includes(habitId);
+        const next = currentlyInactive
+            ? existing.filter((id) => id !== habitId)
+            : Array.from(new Set([...existing, habitId]));
+
+        await updateNote(dateKey, { inactiveHabits: next });
+
+        if (!currentlyInactive && completions[habitId]?.[dateKey]) {
+            await baseToggleCompletion(habitId, dateKey);
+        }
+    };
+
+    const handleToggleCompletion = async (habitId, dateKey) => {
+        if (isHabitInactive(habitId, dateKey)) {
+            const existing = getInactiveHabitsForDate(dateKey);
+            if (existing.includes(habitId)) {
+                await updateNote(dateKey, { inactiveHabits: existing.filter((id) => id !== habitId) });
+            } else {
+                return;
+            }
+        }
+        await baseToggleCompletion(habitId, dateKey);
+    };
+
     return (
-        <View style={{ flex: 1, backgroundColor: '#f5f5f4' }}>
+        <View style={{ flex: 1, backgroundColor: isDark ? '#000000' : '#f5f5f4' }}>
             <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
-                <View style={tw`flex-row items-center justify-between px-4 py-3 bg-[#f5f5f4]`}>
+                <View style={[tw`flex-row items-center justify-between px-4 py-3`, { backgroundColor: isDark ? '#000000' : '#f5f5f4' }]}>
                     <TouchableOpacity onPress={() => setIsHabitManagerOpen(true)}>
-                        <Plus size={24} color="#57534e" strokeWidth={2.5} />
+                        <Plus size={24} color={isDark ? '#e5e7eb' : '#57534e'} strokeWidth={2.5} />
                     </TouchableOpacity>
-                    <Text style={tw`text-xl font-black uppercase tracking-widest text-[#57534e]`}>
+                    <Text style={[tw`text-xl font-black uppercase tracking-widest`, { color: isDark ? '#e5e7eb' : '#57534e' }]}>
                         Habi<Text style={tw`text-[#C19A9A]`}>Card</Text>
                     </Text>
                     <View style={tw`flex-row items-center gap-3`}>
@@ -111,7 +192,7 @@ export const MainScreen = ({
                             </TouchableOpacity>
                         )}
                         <TouchableOpacity onPress={() => setIsSettingsOpen(true)}>
-                            <Settings size={24} color="#57534e" strokeWidth={2.5} />
+                            <Settings size={24} color={isDark ? '#e5e7eb' : '#57534e'} strokeWidth={2.5} />
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -124,29 +205,29 @@ export const MainScreen = ({
                     onRequestClose={() => setIsSettingsOpen(false)}
                 >
                     <View style={tw`flex-1 justify-end bg-black/50`}>
-                        <View style={tw`bg-[#f5f5f4] rounded-t-3xl h-[85%] overflow-hidden`}>
+                        <View style={[tw`rounded-t-3xl h-[85%] overflow-hidden`, { backgroundColor: isDark ? '#000000' : '#f5f5f4' }]}>
                             {/* Modal Header */}
-                            <View style={tw`p-5 border-b border-gray-200 flex-row items-center justify-between bg-white`}>
-                                <Text style={tw`text-xl font-black uppercase tracking-widest text-gray-700`}>{t('settings.title')}</Text>
+                            <View style={[tw`p-5 border-b flex-row items-center justify-between`, { backgroundColor: isDark ? '#0b0b0b' : '#ffffff', borderColor: isDark ? '#2a2a2a' : '#e5e7eb' }]}>
+                                <Text style={[tw`text-xl font-black uppercase tracking-widest`, { color: isDark ? '#e5e7eb' : '#2a2a2a' }]}>{t('settings.title')}</Text>
                                 <TouchableOpacity
                                     onPress={() => setIsSettingsOpen(false)}
-                                    style={tw`p-2 bg-gray-100 rounded-full`}
+                                    style={[tw`p-2 rounded-full`, { backgroundColor: isDark ? '#161616' : '#f3f4f6' }]}
                                 >
-                                    <X size={20} color="#57534e" />
+                                    <X size={20} color={isDark ? '#e5e7eb' : '#57534e'} />
                                 </TouchableOpacity>
                             </View>
 
                             <ScrollView style={tw`p-5`} showsVerticalScrollIndicator={false}>
-                                <Text style={tw`text-xs font-black uppercase text-gray-400 tracking-widest mb-3`}>{t('settings.general.title') || 'Preferences'}</Text>
+                                <Text style={[tw`text-xs font-black uppercase tracking-widest mb-3`, { color: isDark ? '#9ca3af' : '#9ca3af' }]}>{t('settings.general.title') || 'Preferences'}</Text>
                                 <View style={tw`mb-6`}>
                                     <View style={[tw`absolute bg-black rounded-3xl`, { top: 6, left: 6, right: -6, bottom: -6, zIndex: -1 }]} />
-                                    <View style={tw`bg-white rounded-3xl overflow-hidden border-[3px] border-black`}>
+                                    <View style={[tw`rounded-3xl overflow-hidden border-[3px] border-black`, { backgroundColor: isDark ? '#0b0b0b' : '#ffffff', borderColor: outlineColor }]}>
                                         {/* Theme Setting */}
                                         <TouchableOpacity
-                                            style={tw`flex-row items-center justify-between p-4 border-b-[3px] border-black`}
+                                            style={[tw`flex-row items-center justify-between p-4 border-b-[3px] border-black`, { borderBottomColor: outlineColor }]}
                                             onPress={() => setIsThemePickerOpen(true)}
                                         >
-                                            <Text style={tw`text-sm font-black text-gray-800 uppercase tracking-tight`}>{t('settings.theme.title')}</Text>
+                                            <Text style={[tw`text-sm font-black uppercase tracking-tight`, { color: isDark ? '#e5e7eb' : '#161616' }]}>{t('settings.theme.title')}</Text>
                                             <View style={tw`flex-row items-center`}>
                                                 <Text style={[tw`text-xs font-black uppercase mr-3`, { color: theme.primary }]}>{theme.name}</Text>
                                                 <View style={tw`flex-row`}>
@@ -158,10 +239,10 @@ export const MainScreen = ({
 
                                         {/* Language Setting */}
                                         <TouchableOpacity
-                                            style={tw`flex-row items-center justify-between p-4 border-b-[3px] border-black`}
+                                            style={[tw`flex-row items-center justify-between p-4 border-b-[3px] border-black`, { borderBottomColor: outlineColor }]}
                                             onPress={() => setIsLanguagePickerOpen(true)}
                                         >
-                                            <Text style={tw`text-sm font-black text-gray-800 uppercase tracking-tight`}>{t('settings.language.title')}</Text>
+                                            <Text style={[tw`text-sm font-black uppercase tracking-tight`, { color: isDark ? '#e5e7eb' : '#161616' }]}>{t('settings.language.title')}</Text>
                                             <View style={tw`flex-row items-center`}>
                                                 <Text style={tw`text-xs font-black uppercase mr-2 text-gray-500`}>
                                                     {LANGUAGES.find(l => l.code === language)?.label || language.toUpperCase()}
@@ -169,9 +250,9 @@ export const MainScreen = ({
                                             </View>
                                         </TouchableOpacity>
 
-                                        <View style={tw`flex-row items-center justify-between p-4 border-b-[3px] border-black`}>
-                                            <Text style={tw`text-sm font-black text-gray-800 uppercase tracking-tight`}>{t('settings.general.startOfWeek')}</Text>
-                                            <View style={tw`flex-row bg-gray-100 p-1 rounded-xl border-2 border-black`}>
+                                        <View style={[tw`flex-row items-center justify-between p-4 border-b-[3px] border-black`, { borderBottomColor: outlineColor }]}>
+                                            <Text style={[tw`text-sm font-black uppercase tracking-tight`, { color: isDark ? '#e5e7eb' : '#161616' }]}>{t('settings.general.startOfWeek')}</Text>
+                                            <View style={[tw`flex-row p-1 rounded-xl border-2 border-black`, { backgroundColor: isDark ? '#161616' : '#f3f4f6', borderColor: outlineColor }]}>
                                                 <TouchableOpacity
                                                     onPress={() => setWeekStart('SUN')}
                                                     style={[tw`px-3 py-1.5 rounded-lg`, weekStart === 'SUN' && { backgroundColor: theme.primary }]}
@@ -187,17 +268,64 @@ export const MainScreen = ({
                                             </View>
                                         </View>
 
+                                        <View style={[tw`flex-row items-center justify-between p-4 border-b-[3px] border-black`, { borderBottomColor: outlineColor }]}>
+                                            <Text style={[tw`text-sm font-black uppercase tracking-tight`, { color: isDark ? '#e5e7eb' : '#161616' }]}>Appearance</Text>
+                                            <View style={[tw`flex-row p-1 rounded-xl border-2 border-black`, { backgroundColor: isDark ? '#161616' : '#f3f4f6', borderColor: outlineColor }]}>
+                                                <TouchableOpacity
+                                                    onPress={() => setColorMode('light')}
+                                                    style={[tw`px-3 py-1.5 rounded-lg flex-row items-center`, colorMode === 'light' && { backgroundColor: theme.primary }]}
+                                                >
+                                                    <Sun size={12} color={colorMode === 'light' ? '#ffffff' : (isDark ? '#9ca3af' : '#6b7280')} />
+                                                </TouchableOpacity>
+                                                <TouchableOpacity
+                                                    onPress={() => setColorMode('dark')}
+                                                    style={[tw`px-3 py-1.5 rounded-lg flex-row items-center`, colorMode === 'dark' && { backgroundColor: theme.primary }]}
+                                                >
+                                                    <Moon size={12} color={colorMode === 'dark' ? '#ffffff' : (isDark ? '#9ca3af' : '#6b7280')} />
+                                                </TouchableOpacity>
+                                            </View>
+                                        </View>
+
+                                        <TouchableOpacity
+                                            style={[tw`flex-row items-center justify-between p-4 border-b-[3px] border-black`, { borderBottomColor: outlineColor }]}
+                                            onPress={() => {
+                                                setIsSettingsOpen(false);
+                                                setIsFeedbackOpen(true);
+                                            }}
+                                        >
+                                            <Text style={tw`text-sm font-black text-gray-800 uppercase tracking-tight`}>
+                                                {t('settings.support.title')}
+                                            </Text>
+                                            <View style={tw`flex-row items-center`}>
+                                                <Text style={tw`text-xs font-black uppercase mr-2 text-gray-500`}>
+                                                    {t('settings.support.reportBug')}
+                                                </Text>
+                                                <MessageSquare size={16} color="#57534e" />
+                                            </View>
+                                        </TouchableOpacity>
+
+                                        <TouchableOpacity
+                                            style={[tw`flex-row items-center justify-between p-4 border-b-[3px] border-black`, { borderBottomColor: outlineColor }]}
+                                            onPress={() => {
+                                                setIsSettingsOpen(false);
+                                                setIsPrivacyOpen(true);
+                                            }}
+                                        >
+                                            <Text style={[tw`text-sm font-black uppercase tracking-tight`, { color: isDark ? '#e5e7eb' : '#1f2937' }]}>
+                                                Privacy
+                                            </Text>
+                                            <View style={tw`flex-row items-center`}>
+                                                <Text style={[tw`text-xs font-black uppercase mr-2`, { color: isDark ? '#9ca3af' : '#6b7280' }]}>
+                                                    Policy
+                                                </Text>
+                                                <Shield size={16} color={isDark ? '#a3a3a3' : '#57534e'} />
+                                            </View>
+                                        </TouchableOpacity>
+
                                         {/* Sign Out Setting */}
                                         <TouchableOpacity
-                                            style={tw`p-4 bg-gray-50`}
-                                            onPress={async () => {
-                                                if (isGuest) {
-                                                    onOpenSignIn();
-                                                } else {
-                                                    await supabase.auth.signOut();
-                                                }
-                                                setIsSettingsOpen(false);
-                                            }}
+                                            style={[tw`p-4`, { backgroundColor: isDark ? '#161616' : '#f9fafb' }]}
+                                            onPress={handleAuthAction}
                                         >
                                             <Text style={tw`text-sm font-black text-red-500 uppercase tracking-tight`}>
                                                 {isGuest ? t('header.signIn') : t('header.logout')}
@@ -213,8 +341,8 @@ export const MainScreen = ({
                             <View style={[StyleSheet.absoluteFill, tw`items-center justify-center bg-black/80 px-6`, { zIndex: 1000 }]}>
                                 <View style={tw`w-full`}>
                                     <View style={[tw`absolute bg-black rounded-3xl`, { top: 8, left: 8, right: -8, bottom: -8, zIndex: -1 }]} />
-                                    <View style={tw`bg-white rounded-3xl w-full border-[3px] border-black overflow-hidden`}>
-                                        <View style={[tw`p-4 border-b-[3px] border-black flex-row justify-between items-center`, { backgroundColor: theme.primary }]}>
+                                    <View style={[tw`bg-white rounded-3xl w-full border-[3px] border-black overflow-hidden`, { borderColor: outlineColor }]}>
+                                        <View style={[tw`p-4 border-b-[3px] border-black flex-row justify-between items-center`, { backgroundColor: theme.primary, borderBottomColor: outlineColor }]}>
                                             <Text style={tw`text-lg font-black uppercase text-white tracking-widest`}>{t('settings.theme.select')}</Text>
                                             <TouchableOpacity onPress={() => setIsThemePickerOpen(false)}>
                                                 <X size={24} color="white" strokeWidth={3} />
@@ -259,8 +387,8 @@ export const MainScreen = ({
                             <View style={[StyleSheet.absoluteFill, tw`items-center justify-center bg-black/80 px-6`, { zIndex: 1000 }]}>
                                 <View style={tw`w-full`}>
                                     <View style={[tw`absolute bg-black rounded-3xl`, { top: 8, left: 8, right: -8, bottom: -8, zIndex: -1 }]} />
-                                    <View style={tw`bg-white rounded-3xl w-full border-[3px] border-black overflow-hidden`}>
-                                        <View style={[tw`p-4 border-b-[3px] border-black flex-row justify-between items-center`, { backgroundColor: theme.primary }]}>
+                                    <View style={[tw`bg-white rounded-3xl w-full border-[3px] border-black overflow-hidden`, { borderColor: outlineColor }]}>
+                                        <View style={[tw`p-4 border-b-[3px] border-black flex-row justify-between items-center`, { backgroundColor: theme.primary, borderBottomColor: outlineColor }]}>
                                             <Text style={tw`text-lg font-black uppercase text-white tracking-widest`}>{t('settings.language.title')}</Text>
                                             <TouchableOpacity onPress={() => setIsLanguagePickerOpen(false)}>
                                                 <X size={24} color="white" strokeWidth={3} />
@@ -309,6 +437,22 @@ export const MainScreen = ({
                     reorderHabits={reorderHabits}
                     theme={theme}
                     toggleArchiveHabit={toggleArchiveHabit}
+                    colorMode={colorMode}
+                />
+                <FeedbackModal
+                    isOpen={isFeedbackOpen}
+                    onClose={() => setIsFeedbackOpen(false)}
+                    userId={userId}
+                    userEmail={userEmail}
+                    isGuest={isGuest}
+                    colorMode={colorMode}
+                />
+                <PrivacyPolicyModal
+                    isVisible={isPrivacyOpen}
+                    onClose={() => setIsPrivacyOpen(false)}
+                    onOpenFeedback={() => setIsFeedbackOpen(true)}
+                    colorMode={colorMode}
+                    theme={theme}
                 />
 
                 {view === 'weekly' && (
@@ -318,12 +462,15 @@ export const MainScreen = ({
                         weekOffset={weekOffset}
                         setWeekOffset={setWeekOffset}
                         theme={theme}
-                        toggleCompletion={toggleCompletion}
+                        toggleCompletion={handleToggleCompletion}
+                        toggleHabitInactive={toggleHabitInactive}
+                        isHabitInactive={isHabitInactive}
                         weekProgress={weekProgress}
                         notes={notes}
                         updateNote={updateNote}
                         initialDate={selectedDate}
                         weekStart={weekStart}
+                        colorMode={colorMode}
                     />
                 )}
                 {view === 'monthly' && (
@@ -332,8 +479,11 @@ export const MainScreen = ({
                         completions={completions}
                         notes={notes}
                         theme={theme}
-                        toggleCompletion={toggleCompletion}
+                        toggleCompletion={handleToggleCompletion}
+                        toggleHabitInactive={toggleHabitInactive}
+                        isHabitInactive={isHabitInactive}
                         updateNote={updateNote}
+                        colorMode={colorMode}
                     />
                 )}
                 {view === 'dashboard' && (
@@ -347,12 +497,14 @@ export const MainScreen = ({
                         theme={theme}
                         notes={notes}
                         weekStart={weekStart}
-                        toggleCompletion={toggleCompletion}
+                        toggleCompletion={handleToggleCompletion}
+                        colorMode={colorMode}
                     />
                 )}
                 {view === 'analysis' && (
                     <AIAnalysisView
                         theme={theme}
+                        colorMode={colorMode}
                         {...aiAnalysis}
                     />
                 )}
@@ -362,6 +514,7 @@ export const MainScreen = ({
                 setView={setView}
                 resetWeekOffset={resetWeekOffset}
                 theme={theme}
+                colorMode={colorMode}
             />
         </View>
     );

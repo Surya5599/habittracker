@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AppState, Linking } from 'react-native';
 import { supabase } from '../lib/supabase';
 
 const LOCAL_AI_KEY = 'habit_tracker_ai_usage';
@@ -9,6 +10,7 @@ export const useAIAnalysis = (session, guestMode) => {
     const [analysisCount, setAnalysisCount] = useState(0);
     const [isPremium, setIsPremium] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [checkoutLoading, setCheckoutLoading] = useState(false);
 
     const getWeekKey = () => {
         const d = new Date();
@@ -65,6 +67,16 @@ export const useAIAnalysis = (session, guestMode) => {
     }, [session]);
 
     useEffect(() => {
+        if (!session?.user?.id) return;
+        const sub = AppState.addEventListener('change', (state) => {
+            if (state === 'active') {
+                fetchProfile();
+            }
+        });
+        return () => sub.remove();
+    }, [session?.user?.id, fetchProfile]);
+
+    useEffect(() => {
         if (session) {
             fetchProfile();
         } else if (guestMode) {
@@ -109,14 +121,28 @@ export const useAIAnalysis = (session, guestMode) => {
         }
     };
 
-    const togglePremiumMock = async () => {
-        const nextState = !isPremium;
-        setIsPremium(nextState);
-        if (session) {
-            await supabase
-                .from('profiles')
-                .update({ is_premium: nextState })
-                .eq('id', session.user.id);
+    const startPremiumCheckout = async () => {
+        if (!session?.user?.id) {
+            throw new Error('Please sign in before upgrading.');
+        }
+
+        setCheckoutLoading(true);
+        try {
+            const { data, error } = await supabase.functions.invoke('create-premium-checkout', {
+                body: { source: 'mobile' }
+            });
+
+            if (error) {
+                throw new Error(error.message || 'Unable to start checkout.');
+            }
+
+            if (!data?.url) {
+                throw new Error('Checkout URL was not returned.');
+            }
+
+            await Linking.openURL(data.url);
+        } finally {
+            setCheckoutLoading(false);
         }
     };
 
@@ -124,8 +150,9 @@ export const useAIAnalysis = (session, guestMode) => {
         isPremium,
         analysisCount,
         loading,
+        checkoutLoading,
         incrementAnalysis,
-        togglePremiumMock,
+        startPremiumCheckout,
         maxAnalyses: 3
     };
 };

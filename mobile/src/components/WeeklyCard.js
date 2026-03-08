@@ -5,7 +5,7 @@ import { Check, Target } from 'lucide-react-native';
 import tw from 'twrnc';
 import { isCompleted as checkCompleted } from '../utils/stats';
 
-const HardShadowCardLocal = ({ children, bgColor = 'white', borderSize = 3 }) => (
+const HardShadowCardLocal = ({ children, bgColor = 'white', borderSize = 3, colorMode = 'light' }) => (
     <View style={tw`mb-6 mx-1`}>
         <View style={[
             tw`absolute bg-black rounded-3xl`,
@@ -13,7 +13,7 @@ const HardShadowCardLocal = ({ children, bgColor = 'white', borderSize = 3 }) =>
         ]} />
         <View style={[
             tw`border-[${borderSize}px] border-black rounded-3xl overflow-hidden`,
-            { backgroundColor: bgColor }
+            { backgroundColor: colorMode === 'dark' ? '#0b0b0b' : bgColor, borderColor: colorMode === 'dark' ? '#ffffff' : '#000000' }
         ]}>
             {children}
         </View>
@@ -27,7 +27,8 @@ export const WeeklyCard = ({
     toggleCompletion,
     date, // Reference date (usually today)
     weekOffset,
-    weekStart = 'MON'
+    weekStart = 'MON',
+    colorMode = 'light'
 }) => {
     const { t } = useTranslation();
     // Filter for flexible habits
@@ -53,9 +54,11 @@ export const WeeklyCard = ({
 
     const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
+    const isDark = colorMode === 'dark';
+
     return (
-        <HardShadowCardLocal borderSize={3}>
-            <View style={[tw`p-4 border-b-[3px] border-black`, { backgroundColor: theme.primary }]}>
+        <HardShadowCardLocal borderSize={3} colorMode={colorMode}>
+            <View style={[tw`p-4 border-b-[3px] border-black`, { backgroundColor: theme.primary, borderBottomColor: isDark ? '#ffffff' : '#000000' }]}>
                 <View style={tw`flex-row items-center justify-between`}>
                     <View style={tw`flex-row items-center gap-2`}>
                         <Target size={20} color="white" strokeWidth={3} />
@@ -64,7 +67,7 @@ export const WeeklyCard = ({
                 </View>
             </View>
 
-            <View style={tw`p-5 bg-white`}>
+            <View style={[tw`p-5`, { backgroundColor: isDark ? '#0b0b0b' : '#ffffff' }]}>
                 {flexibleHabits.map((habit) => {
                     // Count completions for this habit in the current week
                     let weekCount = 0;
@@ -79,18 +82,18 @@ export const WeeklyCard = ({
                         <View key={habit.id} style={tw`mb-5 last:mb-0`}>
                             <View style={tw`flex-row items-center justify-between mb-2`}>
                                 <View style={tw`flex-1`}>
-                                    <Text style={[tw`text-base font-black`, isGoalReached ? tw`text-gray-300` : tw`text-gray-800`]}>
+                                    <Text style={[tw`text-base font-black`, isGoalReached ? (isDark ? tw`text-gray-500` : tw`text-gray-300`) : (isDark ? tw`text-gray-100` : tw`text-gray-800`)]}>
                                         {habit.name}
                                     </Text>
-                                    <Text style={tw`text-[10px] font-black uppercase text-gray-400`}>
+                                    <Text style={[tw`text-[10px] font-black uppercase`, isDark ? tw`text-gray-400` : tw`text-gray-400`]}>
                                         {t('weeklyCard.target', { count: habit.weekly_target })}
                                     </Text>
                                 </View>
 
                                 <View style={tw`flex-row items-center gap-3`}>
                                     <View style={tw`items-end`}>
-                                        <Text style={[tw`text-lg font-black`, isGoalReached ? { color: theme.primary } : tw`text-black`]}>
-                                            {weekCount}<Text style={tw`text-gray-300`}>/{habit.weekly_target}</Text>
+                                        <Text style={[tw`text-lg font-black`, isGoalReached ? { color: theme.primary } : (isDark ? tw`text-gray-100` : tw`text-black`)]}>
+                                            {weekCount}<Text style={isDark ? tw`text-gray-500` : tw`text-gray-300`}>/{habit.weekly_target}</Text>
                                         </Text>
                                     </View>
 
@@ -98,7 +101,8 @@ export const WeeklyCard = ({
                                         onPress={() => toggleCompletion(habit.id, todayKey)}
                                         style={[
                                             tw`w-10 h-10 border-[3px] border-black items-center justify-center rounded-xl`,
-                                            isDoneToday ? tw`bg-black` : tw`bg-white`
+                                            isDoneToday ? tw`bg-black` : (isDark ? tw`bg-[#161616]` : tw`bg-white`),
+                                            { borderColor: isDark ? '#ffffff' : '#000000' }
                                         ]}
                                     >
                                         {isDoneToday && <Check size={20} color="white" strokeWidth={4} />}
@@ -107,7 +111,7 @@ export const WeeklyCard = ({
                             </View>
 
                             {/* Progress Bar */}
-                            <View style={tw`h-3 bg-gray-100 rounded-full border-2 border-black overflow-hidden`}>
+                            <View style={[tw`h-3 rounded-full border-2 border-black overflow-hidden`, { backgroundColor: isDark ? '#161616' : '#f3f4f6', borderColor: isDark ? '#ffffff' : '#000000' }]}>
                                 <View
                                     style={[
                                         tw`h-full rounded-full`,

@@ -96,7 +96,11 @@ export const useDailyNotes = (session, guestMode) => {
         if (session?.user?.id) {
             setNotes(prev => {
                 const updatedNote = prev[dateKey];
-                const isEmpty = (!updatedNote.tasks || updatedNote.tasks.length === 0) && !updatedNote.mood && !updatedNote.journal;
+                const isEmpty =
+                    (!updatedNote.tasks || updatedNote.tasks.length === 0) &&
+                    !updatedNote.mood &&
+                    !updatedNote.journal &&
+                    (!updatedNote.inactiveHabits || updatedNote.inactiveHabits.length === 0);
 
                 const runSync = async () => {
                     try {

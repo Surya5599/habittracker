@@ -14,11 +14,14 @@ export const WeeklyScreen = ({
     setWeekOffset,
     theme,
     toggleCompletion,
+    toggleHabitInactive,
+    isHabitInactive,
     weekProgress,
     notes,
     updateNote,
     initialDate,
-    weekStart = 'MON'
+    weekStart = 'MON',
+    colorMode = 'light'
 }) => {
     const [mobileDayIndex, setMobileDayIndex] = useState(0);
 
@@ -113,7 +116,7 @@ export const WeeklyScreen = ({
     const progressOffset = circumference - (weekProgress.percentage / 100) * circumference;
 
     return (
-        <View style={tw`flex-1 bg-gray-100`}>
+        <View style={[tw`flex-1`, { backgroundColor: colorMode === 'dark' ? '#000000' : '#f3f4f6' }]}>
             {/* Daily Card and Weekly Card container */}
             <View style={tw`px-4 flex-1 pt-2`}>
                 <DailyCard
@@ -121,7 +124,10 @@ export const WeeklyScreen = ({
                     habits={habits}
                     completions={completions}
                     theme={theme}
+                    colorMode={colorMode}
                     toggleCompletion={toggleCompletion}
+                    toggleHabitInactive={toggleHabitInactive}
+                    isHabitInactive={isHabitInactive}
                     onPrev={handlePrevDay}
                     onNext={handleNextDay}
                     onDateSelect={handleDateSelect}
@@ -142,6 +148,7 @@ export const WeeklyScreen = ({
                     date={currentDate}
                     weekOffset={weekOffset}
                     weekStart={weekStart}
+                    colorMode={colorMode}
                 />
             </View>
         </View>

@@ -27,6 +27,7 @@ export default function App() {
   const [currentMonthIndex, setCurrentMonthIndex] = useState(new Date().getMonth());
   const [weekOffset, setWeekOffset] = useState(0);
   const [weekStart, setWeekStart] = useState('MON'); // 'MON' or 'SUN'
+  const [colorMode, setColorMode] = useState('light'); // 'light' or 'dark'
   // const { i18n } = useTranslation(); // Use imported instance instead
   const [language, setLanguage] = useState('en');
 
@@ -59,6 +60,11 @@ export default function App() {
     }
   };
 
+  const handleColorModeChange = async (mode) => {
+    setColorMode(mode);
+    await AsyncStorage.setItem('habit_tracker_color_mode', mode);
+  };
+
   // Initialize Session
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -88,6 +94,11 @@ export default function App() {
       if (savedLanguage) {
         setLanguage(savedLanguage);
         i18n.changeLanguage(savedLanguage);
+      }
+
+      const savedColorMode = await AsyncStorage.getItem('habit_tracker_color_mode');
+      if (savedColorMode === 'light' || savedColorMode === 'dark') {
+        setColorMode(savedColorMode);
       }
     };
     checkGuest();
@@ -176,6 +187,10 @@ export default function App() {
                   aiAnalysis={aiAnalysis}
                   language={language}
                   setLanguage={handleLanguageChange}
+                  colorMode={colorMode}
+                  setColorMode={handleColorModeChange}
+                  userId={session?.user?.id}
+                  userEmail={session?.user?.email}
                 />
               )}
             </Stack.Screen>

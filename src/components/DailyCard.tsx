@@ -34,6 +34,8 @@ interface DailyCardProps {
     useGlobalTaskToggle?: boolean;
     globalTaskMode?: boolean;
     onGlobalTaskModeToggle?: () => void;
+    globalViewMode?: 'habits' | 'tasks' | 'journal';
+    onGlobalViewModeChange?: (mode: 'habits' | 'tasks' | 'journal') => void;
     fitParentHeight?: boolean;
 }
 
@@ -58,6 +60,8 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
     useGlobalTaskToggle = false,
     globalTaskMode,
     onGlobalTaskModeToggle,
+    globalViewMode,
+    onGlobalViewModeChange,
     fitParentHeight = false,
 }) => {
     const { t, i18n } = useTranslation();
@@ -146,17 +150,32 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
     }, [defaultFlipped]);
 
     const dayName = date.toLocaleDateString(i18n.language, { weekday: 'long' });
+    const dayNameShort = date.toLocaleDateString(i18n.language, { weekday: 'short' });
     const dateString = date.toLocaleDateString(i18n.language, { month: 'short', day: 'numeric', year: 'numeric' });
     const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     const isToday = date.toDateString() === new Date().toDateString();
+    const hasDayNav = Boolean(onPrev || onNext);
 
     useEffect(() => {
+        if (globalViewMode) {
+            if (globalViewMode === 'tasks') {
+                setShowTasksView(true);
+                setIsFlipped(false);
+            } else if (globalViewMode === 'journal') {
+                setShowTasksView(false);
+                setIsFlipped(true);
+            } else {
+                setShowTasksView(false);
+                setIsFlipped(false);
+            }
+            return;
+        }
         if (typeof globalTaskMode === 'boolean') {
             setShowTasksView(globalTaskMode);
             return;
         }
         setShowTasksView(false);
-    }, [dateKey, globalTaskMode]);
+    }, [dateKey, globalTaskMode, globalViewMode]);
 
     useEffect(() => {
         // Prevent journal face from flashing when exiting tasks view.
@@ -200,17 +219,13 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
 
     const handleSaveJournal = () => {
         updateNote(dateKey, { mood, journal });
-        setShowTasksView(false);
-        if (!combinedView) {
-            if (onJournalClick) {
-                onJournalClick();
-            } else {
-                setIsFlipped(false);
-            }
-        }
     };
 
     const openTasksView = () => {
+        if (onGlobalViewModeChange) {
+            onGlobalViewModeChange('tasks');
+            return;
+        }
         if (useGlobalTaskToggle && onGlobalTaskModeToggle) {
             if (!showTasksView) onGlobalTaskModeToggle();
             return;
@@ -219,6 +234,10 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
     };
 
     const openJournalView = () => {
+        if (onGlobalViewModeChange) {
+            onGlobalViewModeChange('journal');
+            return;
+        }
         setShowTasksView(false);
         if (onJournalClick) {
             onJournalClick();
@@ -335,6 +354,47 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
     ];
     const selectedMood = MOODS.find(m => m.value === mood);
     const MoodStatusIcon = selectedMood?.icon || Meh;
+    const StatusBar = (
+        <div className="flex border-y-2 border-black bg-stone-50">
+            <button
+                onClick={() => {
+                    if (onGlobalViewModeChange) {
+                        onGlobalViewModeChange('habits');
+                        return;
+                    }
+                    setShowTasksView(false);
+                    setIsFlipped(false);
+                }}
+                className="flex-1 py-2 px-1 border-r border-black flex flex-col items-center justify-center"
+                title="Show habits"
+            >
+                <span className="text-[9px] font-black uppercase tracking-wider text-stone-500">Habits</span>
+                <span className="text-[10px] font-black text-stone-700 mt-1">{completedHabitsCount}/{totalHabitsCount}</span>
+            </button>
+            <button
+                onClick={openTasksView}
+                className="flex-1 py-2 px-1 border-r border-black flex flex-col items-center justify-center"
+                title="Open tasks"
+            >
+                <span className="text-[9px] font-black uppercase tracking-wider text-stone-500">{t('dailyCard.tasks')}</span>
+                <span className="text-[10px] font-black text-stone-700 mt-1">
+                    {totalTasksCount > 0 ? `${completedTasksCount}/${totalTasksCount}` : '+'}
+                </span>
+            </button>
+            <button
+                onClick={openJournalView}
+                className="flex-1 py-2 px-1 flex flex-col items-center justify-center"
+                title="Open journal"
+            >
+                <span className="text-[9px] font-black uppercase tracking-wider text-stone-500">{t('dailyCard.journal')}</span>
+                {hasMoodTracked ? (
+                    <MoodStatusIcon size={16} strokeWidth={2.8} color={selectedMood?.color} />
+                ) : (
+                    <BookOpen size={16} strokeWidth={2.8} className={hasJournalEntry ? 'text-green-700' : 'text-stone-400'} />
+                )}
+            </button>
+        </div>
+    );
 
     const FrontFace = (
         <div
@@ -342,70 +402,77 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
         >
             {/* Header */}
             <div
-                className={`p-3 text-center border-b-[2px] border-black relative ${onDateClick && !combinedView ? 'cursor-pointer' : ''}`}
+                className={`py-2 px-0 text-center border-b-[2px] border-black relative ${onDateClick && !combinedView ? 'cursor-pointer' : ''}`}
                 style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}
                 onClick={() => {
                     if (onDateClick && !combinedView) onDateClick(date);
                 }}
             >
-                {onPrev && (
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onPrev();
-                        }}
-                        className="absolute left-2 top-1/2 -translate-y-1/2 p-1 text-white hover:bg-white/20 rounded transition-colors"
-                    >
-                        <ChevronLeft size={20} strokeWidth={3} />
-                    </button>
-                )}
-
-                <h3 className="text-white font-black uppercase tracking-tighter text-lg leading-tight">{dayName}</h3>
-                <p className="text-white/80 font-bold text-[10px] tracking-widest">{dateString}</p>
-
-                {onNext && (
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onNext();
-                        }}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-white hover:bg-white/20 rounded transition-colors"
-                    >
-                        <ChevronRight size={20} strokeWidth={3} />
-                    </button>
-                )}
-            </div>
-
-            {/* Progress Circle */}
-            <div className="py-1.5 px-4 flex flex-col items-center justify-center border-b border-stone-100">
-                <div className="relative w-24 h-24">
-                    <svg className="w-full h-full transform -rotate-90">
-                        <circle
-                            cx="48"
-                            cy="48"
-                            r="40"
-                            stroke="currentColor"
-                            strokeWidth="8"
-                            fill="transparent"
-                            className="text-stone-100"
-                        />
-                        <circle
-                            cx="48"
-                            cy="48"
-                            r="40"
-                            stroke="currentColor"
-                            strokeWidth="8"
-                            fill="transparent"
-                            strokeDasharray={2 * Math.PI * 40}
-                            strokeDashoffset={2 * Math.PI * 40 * (1 - progress / 100)}
-                            strokeLinecap="round"
-                            className="transition-all duration-1000 ease-out"
-                            style={{ color: isToday ? theme.primary : theme.secondary }}
-                        />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-xl font-black">{Math.round(progress)}%</span>
+                <div className={`mx-auto w-full grid items-center gap-0 ${hasDayNav ? 'grid-cols-[28px_minmax(0,1fr)_48px_28px]' : 'grid-cols-[minmax(0,1fr)_48px]'}`}>
+                    {hasDayNav ? (
+                    <div className="flex items-center justify-center">
+                        {onPrev ? (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onPrev();
+                                }}
+                                className="p-1 text-white hover:bg-white/20 rounded transition-colors"
+                            >
+                                <ChevronLeft size={18} strokeWidth={3} />
+                            </button>
+                        ) : null}
                     </div>
+                    ) : null}
+                    <div className="min-w-0 overflow-hidden text-left pl-4 pr-1">
+                        <h3 className="text-white font-black tracking-tight text-sm sm:text-base leading-tight truncate">
+                            <span className="sm:hidden">{dayNameShort}</span>
+                            <span className="hidden sm:inline">{dayName}</span>
+                        </h3>
+                        <p className="text-white/80 font-bold text-[9px] sm:text-[10px] tracking-wide whitespace-nowrap truncate">{dateString}</p>
+                    </div>
+                    <div className="relative w-11 h-11 flex-shrink-0 justify-self-end">
+                        <svg className="w-full h-full transform -rotate-90">
+                            <circle
+                                cx="22"
+                                cy="22"
+                                r="17"
+                                stroke="rgba(255,255,255,0.25)"
+                                strokeWidth="4"
+                                fill="transparent"
+                            />
+                            <circle
+                                cx="22"
+                                cy="22"
+                                r="17"
+                                stroke="white"
+                                strokeWidth="4"
+                                fill="transparent"
+                                strokeDasharray={2 * Math.PI * 17}
+                                strokeDashoffset={2 * Math.PI * 17 * (1 - progress / 100)}
+                                strokeLinecap="round"
+                                className="transition-all duration-1000 ease-out"
+                            />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-[10px] font-black text-white">{Math.round(progress)}%</span>
+                        </div>
+                    </div>
+                    {hasDayNav ? (
+                    <div className="flex items-center justify-center">
+                        {onNext ? (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onNext();
+                                }}
+                                className="p-1 text-white hover:bg-white/20 rounded transition-colors"
+                            >
+                                <ChevronRight size={18} strokeWidth={3} />
+                            </button>
+                        ) : null}
+                    </div>
+                    ) : null}
                 </div>
             </div>
 
@@ -415,10 +482,6 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
             >
             {/* Habits List */}
             <div className="py-1 px-3 bg-stone-50/50 flex flex-col border-b border-stone-100">
-                <div className="flex items-center justify-between mb-1 pb-1 border-b border-black/5 flex-shrink-0">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">Habits</span>
-                    <span className="text-[10px] font-black text-stone-400">{completedHabitsCount}/{totalHabitsCount}</span>
-                </div>
                 <div
                     ref={dailyHabitsRef}
                     className={`space-y-1 pr-1 touch-pan-y ${combinedView ? '' : 'md:scroll-container'}`}
@@ -528,43 +591,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                         updateNote(dateKey, { tasks: [...targetTasks, taskToMove] });
                     }}
                 >
-                <div
-                    ref={tasksRef}
-                    className="p-2 md:overflow-y-auto md:max-h-[88px] pr-1 md:scroll-container touch-pan-y"
-                    style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
-                >
-                    <div className="grid grid-cols-3 gap-1">
-                        <button
-                            onClick={openTasksView}
-                            className={`text-[8px] font-black uppercase tracking-wide py-1 px-1 rounded border transition-colors ${totalTasksCount > 0 ? 'bg-white border-stone-300 text-stone-700 hover:bg-stone-50' : 'bg-stone-100 border-stone-300 text-stone-500 hover:bg-stone-200'}`}
-                            title="Open tasks"
-                        >
-                            {totalTasksCount > 0
-                                ? t('dailyCard.tasksStatus', { completed: completedTasksCount, total: totalTasksCount })
-                                : t('dailyCard.addTasks')}
-                        </button>
-                        <button
-                            onClick={openJournalView}
-                            className={`py-1 px-1 rounded border text-center transition-colors flex items-center justify-center ${hasJournalEntry ? 'bg-green-100 text-green-800 border-green-400 hover:bg-green-200' : 'bg-stone-100 text-stone-400 border-stone-300 hover:bg-stone-200'}`}
-                            title="Open journal"
-                        >
-                            <BookOpen size={14} strokeWidth={2.8} />
-                        </button>
-                        <button
-                            onClick={openJournalView}
-                            className={`${hasMoodTracked ? 'p-0 border-0 bg-transparent text-black hover:opacity-80' : 'py-1 px-1 rounded border text-center bg-stone-100 text-stone-400 border-stone-300 hover:bg-stone-200'} transition-colors flex items-center justify-center`}
-                            title="Open mood/journal"
-                        >
-                            {hasMoodTracked ? (
-                                <span className="flex items-center justify-center">
-                                    <MoodStatusIcon size={18} strokeWidth={2.8} className="text-black" fill={selectedMood?.color} />
-                                </span>
-                            ) : (
-                                <Meh size={16} strokeWidth={2.8} />
-                            )}
-                        </button>
-                    </div>
-                </div>
+                {StatusBar}
                 </div>
             )}
         </div>
@@ -598,41 +625,53 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
             }}
         >
             <div className="p-3 text-center border-b-[2px] border-black relative" style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}>
-                {!combinedView && (
+                {onPrev && (
                     <button
-                        onClick={() => {
-                            if (useGlobalTaskToggle && onGlobalTaskModeToggle) {
-                                onGlobalTaskModeToggle();
-                            } else {
-                                setShowTasksView(false);
-                            }
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onPrev();
                         }}
                         className="absolute left-2 top-1/2 -translate-y-1/2 p-1 text-white hover:bg-white/20 rounded transition-colors"
-                        title="Back"
+                        title="Previous day"
                     >
                         <ChevronLeft size={20} strokeWidth={3} />
                     </button>
                 )}
-                <h3 className="text-white font-black uppercase tracking-tighter text-lg leading-tight">{t('dailyCard.tasks')}</h3>
-                <p className="text-white/80 font-bold text-[10px] tracking-widest">{dateString}</p>
+                <h3 className="text-white font-black uppercase tracking-tighter text-base sm:text-lg leading-tight">
+                    <span className="sm:hidden">{dayNameShort}</span>
+                    <span className="hidden sm:inline">{dayName}</span>
+                </h3>
+                <p className="text-white/80 font-bold text-[9px] sm:text-[10px] tracking-widest whitespace-nowrap">{dateString}</p>
+                {onNext && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onNext();
+                        }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-white hover:bg-white/20 rounded transition-colors"
+                        title="Next day"
+                    >
+                        <ChevronRight size={20} strokeWidth={3} />
+                    </button>
+                )}
             </div>
 
-            <div className="p-3 border-b border-stone-200 bg-stone-50 flex items-center justify-between gap-2">
-                <div className="text-[10px] font-black uppercase tracking-widest text-stone-600">
+            <div className="p-2 border-b border-stone-200 bg-stone-50 flex items-center justify-between gap-1.5">
+                <div className="text-[9px] font-black uppercase tracking-wider text-stone-600 px-1.5 py-0.5 border border-stone-300 rounded">
                     {(dayData.tasks || []).length} tasks
                 </div>
                 <button
                     onClick={() => addNewTask(false)}
-                    className="inline-flex items-center gap-1 px-2 py-1 border border-black bg-white text-[10px] font-black uppercase tracking-widest hover:bg-stone-100 transition-colors"
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 border border-black bg-white text-[9px] font-black uppercase tracking-wide hover:bg-stone-100 transition-colors"
                 >
-                    <Plus size={10} strokeWidth={3} />
+                    <Plus size={9} strokeWidth={3} />
                     Add
                 </button>
             </div>
 
             <div
                 ref={tasksRef}
-                className="p-3 space-y-2 flex-1 overflow-y-auto scroll-container touch-pan-y"
+                className="p-2 space-y-1.5 flex-1 overflow-y-auto scroll-container touch-pan-y"
                 style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
             >
                 {(dayData.tasks || []).map((task) => (
@@ -643,7 +682,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                             e.dataTransfer.setData('application/json', JSON.stringify({ taskId: task.id, sourceDateKey: dateKey }));
                             e.dataTransfer.effectAllowed = 'move';
                         }}
-                        className={`flex items-start gap-2 group bg-white border border-transparent hover:border-stone-200 p-2 rounded shadow-sm hover:shadow-md transition-all ${editingTaskId === task.id ? 'ring-2 ring-black' : 'cursor-move'}`}
+                        className={`flex items-start gap-1.5 group bg-white border border-transparent hover:border-stone-200 p-1.5 rounded shadow-sm hover:shadow-md transition-all ${editingTaskId === task.id ? 'ring-2 ring-black' : 'cursor-move'}`}
                     >
                         <button
                             onClick={(e) => {
@@ -652,9 +691,9 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                 const newTasks = currentTasks.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t);
                                 updateNote(dateKey, { tasks: newTasks });
                             }}
-                            className="p-2 -m-2 flex-shrink-0 flex items-center justify-center focus:outline-none"
+                            className="p-1 -m-1 flex-shrink-0 flex items-center justify-center focus:outline-none"
                         >
-                            <div className={`w-3 h-3 border border-black flex items-center justify-center transition-all ${task.completed ? 'bg-black text-white' : 'bg-white hover:bg-stone-100'}`}>
+                            <div className={`w-2.5 h-2.5 border border-black flex items-center justify-center transition-all ${task.completed ? 'bg-black text-white' : 'bg-white hover:bg-stone-100'}`}>
                                 {task.completed && <Check size={8} strokeWidth={4} />}
                             </div>
                         </button>
@@ -669,12 +708,12 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter') handleFinishEditing(task.id);
                                 }}
-                                className="w-full text-[11px] font-medium bg-transparent outline-none leading-tight border-none p-0 focus:ring-0 text-stone-800"
+                                className="w-full text-[10px] font-medium bg-transparent outline-none leading-tight border-none p-0 focus:ring-0 text-stone-800"
                                 autoFocus
                             />
                         ) : (
                             <span
-                                className={`flex-1 text-[11px] font-medium leading-tight break-all ${task.completed ? 'text-stone-400 line-through' : 'text-stone-800'}`}
+                                className={`flex-1 text-[10px] font-medium leading-tight break-all ${task.completed ? 'text-stone-400 line-through' : 'text-stone-800'}`}
                                 onDoubleClick={() => {
                                     setEditingTaskId(task.id);
                                     setEditingTaskText(task.text);
@@ -693,7 +732,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                 className="text-stone-400 hover:text-black transition-colors"
                                 title={t('dailyCard.editTask')}
                             >
-                                <Pencil size={10} />
+                                <Pencil size={9} />
                             </button>
                             <button
                                 onClick={() => {
@@ -704,7 +743,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                 className="text-stone-400 hover:text-red-500 transition-colors"
                                 title={t('dailyCard.deleteTask')}
                             >
-                                <Trash2 size={10} />
+                                <Trash2 size={9} />
                             </button>
                         </div>
                     </div>
@@ -715,6 +754,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                     </div>
                 )}
             </div>
+            {!combinedView && StatusBar}
         </div>
     );
 
@@ -722,31 +762,48 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
         <div
             className={`relative w-full h-full bg-white neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans ${isToday && !combinedView ? 'ring-2 ring-black ring-offset-0' : ''}`}
         >
-            {/* Header (Matching style) */}
+            {/* Header */}
             <div className="p-3 text-center border-b-[2px] border-black relative" style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}>
-                {!combinedView && (
+                {onPrev && (
                     <button
-                        onClick={handleSaveJournal}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onPrev();
+                        }}
                         className="absolute left-2 top-1/2 -translate-y-1/2 p-1 text-white hover:bg-white/20 rounded transition-colors"
-                        title="Save & Back"
+                        title="Previous day"
                     >
                         <ChevronLeft size={20} strokeWidth={3} />
                     </button>
                 )}
-
-                <h3 className="text-white font-black uppercase tracking-tighter text-lg leading-tight">{t('dailyCard.journal')}</h3>
-                <p className="text-white/80 font-bold text-[10px] tracking-widest">{dateString}</p>
+                <h3 className="text-white font-black uppercase tracking-tighter text-base sm:text-lg leading-tight">
+                    <span className="sm:hidden">{dayNameShort}</span>
+                    <span className="hidden sm:inline">{dayName}</span>
+                </h3>
+                <p className="text-white/80 font-bold text-[9px] sm:text-[10px] tracking-widest whitespace-nowrap">{dateString}</p>
+                {onNext && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onNext();
+                        }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-white hover:bg-white/20 rounded transition-colors"
+                        title="Next day"
+                    >
+                        <ChevronRight size={20} strokeWidth={3} />
+                    </button>
+                )}
             </div>
 
             <div
                 ref={journalRef}
-                className="p-4 flex-1 flex flex-col gap-4 overflow-y-auto scroll-container touch-pan-y"
+                className="p-3 pb-4 flex-1 flex flex-col gap-1 overflow-y-auto scroll-container touch-pan-y"
                 style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
             >
                 {/* Mood Selector */}
-                <div className="space-y-2">
+                <div className="space-y-0">
                     <label className="text-[10px] font-black uppercase tracking-widest text-stone-600 block text-center">{t('dailyCard.mood')}</label>
-                    <div className="grid grid-cols-5 gap-1 px-2">
+                    <div className="grid grid-cols-5 gap-1 px-1">
                         {MOODS.map((m) => {
                             const isSelected = mood === m.value;
                             const Icon = m.icon;
@@ -755,14 +812,18 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                     key={m.value}
                                     onClick={() => setMood(m.value)}
                                     title={m.tooltip}
-                                    className={`flex flex-col items-center justify-center gap-1 p-2 rounded-lg transition-all ${isSelected ? 'bg-stone-100 scale-105 shadow-inner' : 'hover:bg-stone-50 hover:scale-105'
-                                        }`}
+                                    className="flex flex-col items-center justify-center p-1.5 rounded-lg"
                                 >
                                     <div
-                                        className="p-1.5 rounded-full transition-all"
+                                        className="p-1 rounded-full transition-all"
                                         style={{ opacity: isSelected ? 1 : 0.55 }}
                                     >
-                                        <Icon size={18} strokeWidth={isSelected ? 2.8 : 2} className="text-black" fill={m.color} />
+                                        <Icon
+                                            size={18}
+                                            strokeWidth={isSelected ? 2.8 : 2}
+                                            className="text-black"
+                                            fill={isSelected ? m.color : 'none'}
+                                        />
                                     </div>
                                 </button>
                             );
@@ -771,27 +832,26 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 </div>
 
                 {/* Journal Textarea */}
-                <div className="flex-1 flex flex-col gap-2 min-h-0">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-stone-600 block text-center">{t('dailyCard.notes')}</label>
+                <div className="flex-1 flex flex-col gap-1 min-h-0">
+                    <div className="flex items-center justify-between">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-stone-600">{t('dailyCard.notes')}</label>
+                        <button
+                            onClick={handleSaveJournal}
+                            className="px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide rounded border border-stone-300 bg-stone-50 text-stone-500 hover:bg-stone-100 hover:text-stone-700 transition-colors inline-flex items-center gap-1"
+                        >
+                            <Save size={9} strokeWidth={2.5} />
+                            Save
+                        </button>
+                    </div>
                     <textarea
                         value={journal}
                         onChange={(e) => setJournal(e.target.value)}
                         placeholder={t('dailyCard.journalPlaceholder')}
-                        className="w-full flex-1 p-3 bg-stone-50 border-2 border-transparent focus:border-black rounded-xl resize-none text-xs leading-relaxed text-stone-900 placeholder:text-stone-300 outline-none transition-all font-medium"
+                        className="w-full flex-1 p-3 bg-stone-50 border-2 border-transparent focus:border-black rounded-xl resize-none text-xs leading-relaxed text-stone-900 placeholder:text-stone-300 outline-none transition-all font-medium min-h-[120px]"
                     />
                 </div>
-
-                <div className="flex-shrink-0">
-                    <button
-                        onClick={handleSaveJournal}
-                        className="w-full py-2 bg-black text-white text-xs font-black uppercase tracking-widest rounded-lg hover:bg-stone-800 transition-transform active:scale-95 flex items-center justify-center gap-2"
-                        style={{ backgroundColor: theme.primary }}
-                    >
-                        <Save size={12} />
-                        {combinedView ? 'Save' : t('dailyCard.saveEntry')}
-                    </button>
-                </div>
             </div>
+            {!combinedView && StatusBar}
         </div>
     );
 

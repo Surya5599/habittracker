@@ -19,7 +19,12 @@
         },
         "support": {
             "title": "Support",
-            "reportBug": "Report Bug or Suggestion"
+            "reportBug": "Report Bug or Suggestion",
+            "donateTitle": "Support Project",
+            "donateDescription": "If this app helps you stay consistent, a small donation helps keep it improving.",
+            "donateCta": "Donate",
+            "copyDonationLink": "Copy donation link",
+            "donateMissing": "Set VITE_DONATION_URL in your environment to enable donations."
         }
     },
     "header": {

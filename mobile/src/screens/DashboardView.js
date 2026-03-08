@@ -23,7 +23,8 @@ export const DashboardView = ({
     completions,
     notes,
     toggleCompletion,
-    weekStart = 'MON'
+    weekStart = 'MON',
+    colorMode = 'light'
 }) => {
     const { t, i18n } = useTranslation();
     const [analyticsView, setAnalyticsView] = React.useState('WEEK'); // WEEK, MONTH, YEAR
@@ -52,7 +53,7 @@ export const DashboardView = ({
                 mood: notes[dateKey]?.mood || null
             };
         });
-    }, [notes, weekOffset]);
+    }, [notes, weekOffset, weekStart, i18n.language]);
 
     const monthlyMoodData = React.useMemo(() => {
         const baseDate = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
@@ -103,7 +104,7 @@ export const DashboardView = ({
                 mood: dominantMood
             };
         });
-    }, [notes, yearOffset]);
+    }, [notes, yearOffset, i18n.language]);
 
     // Annual Data Calculation
     const annualData = React.useMemo(() => {
@@ -137,7 +138,7 @@ export const DashboardView = ({
         const annualPercentage = totalPossible > 0 ? Math.round((totalCompleted / totalPossible) * 100) : 0;
 
         return { monthlyStats, annualPercentage, currentYear };
-    }, [habits, completions]);
+    }, [habits, completions, i18n.language]);
 
     // Monthly Data Calculation
     const monthlyData = React.useMemo(() => {
@@ -194,6 +195,7 @@ export const DashboardView = ({
             { completed: totalCompletedInMonth, percentage: Math.round(totalCompletedInMonth / totalPossibleInMonth * 100) || 0 },
             habitStats,
             0, // delta placeholder
+            t,
             storyDaysElapsed
         );
 
@@ -218,7 +220,7 @@ export const DashboardView = ({
             year: currentYear,
             totalPossible: totalPossibleInMonth
         };
-    }, [habits, completions, monthOffset]);
+    }, [habits, completions, monthOffset, weekStart, i18n.language, t]);
 
 
     // Annual Data Refined for Dashboard
@@ -272,7 +274,7 @@ export const DashboardView = ({
             storyVariant: 'reflection',
             momentum: 'stable',
             longestHabitStreak: 0
-        }, yearOffset === 0 ? today.getMonth() + 1 : 12);
+        }, t, yearOffset === 0 ? today.getMonth() + 1 : 12);
 
         const habitAnnualStats = habits.map(h => {
             let total = 0;
@@ -299,7 +301,7 @@ export const DashboardView = ({
             monthlyStats // Add this for retrospective grid
         };
 
-    }, [habits, completions, yearOffset]);
+    }, [habits, completions, yearOffset, i18n.language, t]);
     const [showDatePicker, setShowDatePicker] = React.useState(false);
 
     const onDateSelect = (selectedDate) => {
@@ -386,7 +388,7 @@ export const DashboardView = ({
                 isToday: d.toDateString() === today.toDateString()
             };
         });
-    }, [habits, completions, weekOffset]);
+    }, [habits, completions, weekOffset, weekStart, i18n.language]);
 
 
     // Calculate days elapsed in the current view's week
@@ -401,7 +403,14 @@ export const DashboardView = ({
     }
 
     // Pass daysElapsed to buildWeeklyStory
-    const story = buildWeeklyStory(weekProgress, weeklyStats, habits, daysElapsed);
+    const story = buildWeeklyStory(weekProgress, weeklyStats, habits, t, daysElapsed);
+    const weeklyPerformance = weekProgress?.habitPerformance || [];
+    const weeklyBestHabit = weeklyPerformance.length > 0
+        ? [...weeklyPerformance].sort((a, b) => b.completed - a.completed)[0]
+        : null;
+    const weeklyLowHabit = weeklyPerformance.length > 0
+        ? [...weeklyPerformance].sort((a, b) => a.completed - b.completed)[0]
+        : null;
 
     // Date Logic
     const currentWeekStart = new Date(today);
@@ -444,14 +453,17 @@ export const DashboardView = ({
     const activeColor = theme.primary;
     const secondaryColor = theme.secondary;
 
+    const isDark = colorMode === 'dark';
+
     return (
-        <View style={tw`flex-1 bg-gray-100`}>
+        <View style={[tw`flex-1`, { backgroundColor: isDark ? '#000000' : '#f3f4f6' }]}>
             <DatePickerModal
                 isVisible={showDatePicker}
                 onClose={() => setShowDatePicker(false)}
                 onSelect={onDateSelect}
                 selectedDate={currentWeekStart} // Pass start of week as current selection context
                 theme={theme}
+                colorMode={colorMode}
             />
 
             <MonthYearPickerModal
@@ -462,6 +474,7 @@ export const DashboardView = ({
                 currentYear={analyticsView === 'YEAR' ? (today.getFullYear() + yearOffset) : monthlyData.year}
                 theme={theme}
                 mode={pickerMode}
+                colorMode={colorMode}
             />
 
             <ScrollView
@@ -472,7 +485,7 @@ export const DashboardView = ({
             >
                 {/* Non-sticky View Toggle */}
                 <View style={tw`px-3 mb-4 pt-2`}>
-                    <View style={tw`flex-row bg-gray-200 p-1 rounded-2xl`}>
+                    <View style={[tw`flex-row p-1 rounded-2xl`, { backgroundColor: isDark ? '#111111' : '#e5e7eb', borderWidth: 1, borderColor: isDark ? '#ffffff' : 'transparent' }]}>
                         {['WEEK', 'MONTH', 'YEAR'].map((viewName) => {
                             const isActive = analyticsView === viewName;
                             return (
@@ -486,7 +499,7 @@ export const DashboardView = ({
                                 >
                                     <Text style={[
                                         tw`text-xs font-black tracking-widest`,
-                                        isActive ? tw`text-white` : tw`text-gray-500`
+                                        isActive ? tw`text-white` : (isDark ? tw`text-gray-300` : tw`text-gray-500`)
                                     ]}>
                                         {t(`dashboard.${viewName.toLowerCase()}Tab`)}
                                     </Text>
@@ -497,7 +510,7 @@ export const DashboardView = ({
                 </View>
 
                 {/* STICKY PERIOD NAVIGATION - Only this row sticks */}
-                <View style={[tw`pb-3 px-3 pt-1`, { backgroundColor: '#f3f4f6' }]}>
+                <View style={[tw`pb-3 px-3 pt-1`, { backgroundColor: isDark ? '#000000' : '#f3f4f6' }]}>
                     {analyticsView === 'WEEK' && (
                         <View>
                             <HardShadowCardLocal bgColor={theme.primary}>
@@ -557,6 +570,7 @@ export const DashboardView = ({
                     <View style={tw`px-3`}>
                         <AnalyticsDashboard
                             periodLabel={t('dashboard.month')}
+                            periodType="MONTH"
                             story={monthlyData.story}
                             chartData={monthlyData.chartData}
                             stats={monthlyData.stats}
@@ -571,6 +585,7 @@ export const DashboardView = ({
                             periodLabelSecondary={`${monthlyData.monthName} ${monthlyData.year}`}
                             moodData={monthlyMoodData}
                             weekStart={weekStart}
+                            colorMode={colorMode}
                         />
                     </View>
                 )}
@@ -579,6 +594,7 @@ export const DashboardView = ({
                     <View style={tw`px-3`}>
                         <AnalyticsDashboard
                             periodLabel={t('dashboard.year')}
+                            periodType="YEAR"
                             story={annualDashboardData.story}
                             chartData={annualDashboardData.chartData}
                             stats={annualDashboardData.stats}
@@ -592,6 +608,7 @@ export const DashboardView = ({
                             periodLabelSecondary={annualDashboardData.yearLabel}
                             moodData={annualMoodData}
                             weekStart={weekStart}
+                            colorMode={colorMode}
                         />
                     </View>
                 )}
@@ -602,6 +619,7 @@ export const DashboardView = ({
                             habits={habits}
                             completions={completions}
                             theme={theme}
+                            colorMode={colorMode}
                             toggleCompletion={toggleCompletion}
                             date={today}
                             weekOffset={weekOffset}
@@ -609,11 +627,12 @@ export const DashboardView = ({
                         />
                         <AnalyticsDashboard
                             periodLabel={t('dashboard.week')}
+                            periodType="WEEK"
                             story={story}
                             chartData={weeklyStats.map(d => ({ label: d.displayDay, value: d.count }))}
                             stats={{
-                                best: { name: story.highlights.best?.name, value: story.highlights.best?.completed },
-                                worst: { name: story.highlights.neglected?.name, value: 0 }
+                                best: weeklyBestHabit ? { name: weeklyBestHabit.name, value: weeklyBestHabit.completed } : null,
+                                worst: weeklyLowHabit ? { name: weeklyLowHabit.name, value: weeklyLowHabit.completed } : null
                             }}
                             theme={theme}
                             completionStats={{
@@ -625,6 +644,7 @@ export const DashboardView = ({
                             periodLabelSecondary={fullDateString}
                             moodData={weeklyMoodData}
                             weekStart={weekStart}
+                            colorMode={colorMode}
                         />
                     </View>
                 )}
@@ -632,4 +652,3 @@ export const DashboardView = ({
         </View>
     );
 };
-

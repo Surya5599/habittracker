@@ -37,7 +37,12 @@ const AnimatedRetrospectiveBar = ({ percentage, color }) => {
     );
 };
 
-export const HardShadowCardLocal = ({ children, style, bgColor }) => (
+export const HardShadowCardLocal = ({ children, style, bgColor, colorMode = 'light' }) => (
+    (() => {
+        const isDark = colorMode === 'dark';
+        const resolvedBg = bgColor || (isDark ? '#0b0b0b' : 'white');
+        const resolvedBorder = isDark ? '#ffffff' : '#000000';
+        return (
     <View style={style}>
         <View style={[
             tw`absolute bg-black rounded-3xl`,
@@ -45,18 +50,21 @@ export const HardShadowCardLocal = ({ children, style, bgColor }) => (
         ]} />
         <View style={[
             tw`border-[3px] border-black rounded-3xl overflow-hidden flex-1`,
-            { backgroundColor: bgColor || 'white' }
+            { backgroundColor: resolvedBg, borderColor: resolvedBorder }
         ]}>
             {children}
         </View>
     </View>
+        );
+    })()
 );
 
 // A simple component to render text with [[highlights]]
-const FormattedText = ({ text, highlightColor }) => {
+const FormattedText = ({ text, highlightColor, colorMode = 'light' }) => {
+    const isDark = colorMode === 'dark';
     const parts = text.split(/(\[\[.*?\]\])/g);
     return (
-        <Text style={tw`text-gray-600 font-medium leading-relaxed text-sm`}>
+        <Text style={[tw`font-medium leading-relaxed text-sm`, { color: isDark ? '#cfcfcf' : '#4b5563' }]}>
             {parts.map((part, i) => {
                 if (part.startsWith('[[') && part.endsWith(']]')) {
                     const content = part.slice(2, -2);
@@ -74,6 +82,7 @@ const FormattedText = ({ text, highlightColor }) => {
 
 export const AnalyticsDashboard = ({
     periodLabel,
+    periodType,
     story,
     chartData,
     stats,
@@ -85,8 +94,23 @@ export const AnalyticsDashboard = ({
     periodLabelSecondary = "", // e.g. "January 2026"
     moodData, // Mood aggregation
     weekStart = 'MON', // Start of week preference
+    colorMode = 'light',
 }) => {
     const { t } = useTranslation();
+    const normalizedPeriod = periodType || ({
+        Week: 'WEEK',
+        Month: 'MONTH',
+        Year: 'YEAR'
+    }[periodLabel]) || 'WEEK';
+    const masteryLabel = normalizedPeriod === 'MONTH'
+        ? t('header.monthMastery', { defaultValue: 'Month Mastery' })
+        : t('analytics.mastery', { period: periodLabel, defaultValue: `${periodLabel} Mastery` });
+    const isDark = colorMode === 'dark';
+    const textPrimary = isDark ? '#f5f5f5' : '#1f2937';
+    const textMuted = isDark ? '#a3a3a3' : '#9ca3af';
+    const textFaint = isDark ? '#737373' : '#d1d5db';
+    const surfaceSoft = isDark ? '#111111' : '#f9fafb';
+    const borderSoft = isDark ? '#ffffff' : '#e5e7eb';
     const screenWidth = Dimensions.get('window').width;
     const chartWidth = screenWidth - 64;
     const chartHeight = 100;
@@ -117,7 +141,7 @@ export const AnalyticsDashboard = ({
                 useNativeDriver: false,
             })
         ]).start();
-    }, [periodLabel, completionStats.percentage, chartData]);
+    }, [normalizedPeriod, completionStats.percentage, chartData]);
 
     // PanResponder for Tooltip
     const panResponder = useRef(
@@ -148,7 +172,7 @@ export const AnalyticsDashboard = ({
     const renderRetrospectiveGrid = () => {
         if (!retrospectiveData) return null;
 
-        if (periodLabel === 'Week') {
+        if (normalizedPeriod === 'WEEK') {
             return (
                 <View>
                     <View style={tw`flex-row justify-between gap-1`}>
@@ -160,34 +184,44 @@ export const AnalyticsDashboard = ({
                                     {d.percentage > 0 && (
                                         <AnimatedRetrospectiveBar percentage={d.percentage} color={theme.secondary} />
                                     )}
-                                    <Text style={[tw`text-[10px] font-black leading-none text-black`]}>{d.percentage}%</Text>
+                                    <Text style={[tw`text-[10px] font-black leading-none`, { color: textPrimary }]}>{d.percentage}%</Text>
                                     {d.percentage >= 100 && (
                                         <View style={[tw`absolute inset-0`, { backgroundColor: theme.primary, zIndex: -2 }]} />
                                     )}
                                 </View>
-                                <Text style={tw`text-[10px] font-black text-black mt-1`}>{d.day}</Text>
+                                <Text style={[tw`text-[10px] font-black mt-1`, { color: textPrimary }]}>{d.day}</Text>
                             </View>
                         ))}
                     </View>
                     {periodLabelSecondary ? (
                         <View style={tw`mt-4 items-center`}>
-                            <Text style={tw`text-[10px] font-black text-gray-300 uppercase tracking-widest leading-none`}>{periodLabelSecondary}</Text>
+                            <Text style={[tw`text-[10px] font-black uppercase tracking-widest leading-none`, { color: textFaint }]}>{periodLabelSecondary}</Text>
                         </View>
                     ) : null}
                 </View>
             );
         }
 
-        if (periodLabel === 'Month') {
-            const daysOfWeek = [
-                t('common.daysShort.mon'),
-                t('common.daysShort.tue'),
-                t('common.daysShort.wed'),
-                t('common.daysShort.thu'),
-                t('common.daysShort.fri'),
-                t('common.daysShort.sat'),
-                t('common.daysShort.sun')
-            ];
+        if (normalizedPeriod === 'MONTH') {
+            const daysOfWeek = weekStart === 'SUN'
+                ? [
+                    t('common.daysShort.sun'),
+                    t('common.daysShort.mon'),
+                    t('common.daysShort.tue'),
+                    t('common.daysShort.wed'),
+                    t('common.daysShort.thu'),
+                    t('common.daysShort.fri'),
+                    t('common.daysShort.sat')
+                ]
+                : [
+                    t('common.daysShort.mon'),
+                    t('common.daysShort.tue'),
+                    t('common.daysShort.wed'),
+                    t('common.daysShort.thu'),
+                    t('common.daysShort.fri'),
+                    t('common.daysShort.sat'),
+                    t('common.daysShort.sun')
+                ];
             const emptySlotsStart = Array.from({ length: gridPadding || 0 });
             const totalItemsSoFar = emptySlotsStart.length + retrospectiveData.length;
             const emptySlotsEnd = Array.from({ length: (7 - (totalItemsSoFar % 7)) % 7 });
@@ -198,7 +232,7 @@ export const AnalyticsDashboard = ({
                     <View style={tw`flex-row justify-between mb-2 px-1`}>
                         {daysOfWeek.map((day, i) => (
                             <View key={i} style={tw`w-[13.2%] items-center`}>
-                                <Text style={tw`text-[10px] font-black text-black`}>{day}</Text>
+                                <Text style={[tw`text-[10px] font-black`, { color: textPrimary }]}>{day}</Text>
                             </View>
                         ))}
                     </View>
@@ -213,18 +247,18 @@ export const AnalyticsDashboard = ({
                         {retrospectiveData.map((d, i) => (
                             <View key={i} style={[
                                 tw`w-[13.2%] h-[15.2%] aspect-square rounded-md border-2 border-black items-center justify-center overflow-hidden mb-1`,
-                                tw`bg-gray-50`
+                                { backgroundColor: surfaceSoft, borderColor: isDark ? '#ffffff' : '#000000' }
                             ]}>
                                 {d.percentage > 0 && (
                                     <AnimatedRetrospectiveBar percentage={d.percentage} color={theme.secondary} />
                                 )}
 
                                 <View style={tw`absolute top-1 left-1`}>
-                                    <Text style={[tw`text-[7px] font-black text-black opacity-30`]}>{d.label}</Text>
+                                    <Text style={[tw`text-[7px] font-black`, { color: isDark ? '#a3a3a3' : '#000000', opacity: 0.4 }]}>{d.label}</Text>
                                 </View>
 
                                 <View style={tw`items-center`}>
-                                    <Text style={[tw`text-[10px] font-black leading-none text-black`]}>{d.percentage}%</Text>
+                                    <Text style={[tw`text-[10px] font-black leading-none`, { color: textPrimary }]}>{d.percentage}%</Text>
                                 </View>
 
                                 {d.percentage >= 100 && (
@@ -235,7 +269,7 @@ export const AnalyticsDashboard = ({
                                         <View style={tw`absolute top-1 left-1`}>
                                             <Text style={[tw`text-[7px] font-black text-white/50`]}>{d.label}</Text>
                                         </View>
-                                        <Text style={[tw`text-[10px] font-black text-black leading-none`]}>{d.percentage}%</Text>
+                                        <Text style={[tw`text-[10px] font-black leading-none`, { color: textPrimary }]}>{d.percentage}%</Text>
                                     </View>
                                 )}
                             </View>
@@ -248,14 +282,14 @@ export const AnalyticsDashboard = ({
                     </View>
                     {periodLabelSecondary ? (
                         <View style={tw`mt-4 items-center`}>
-                            <Text style={tw`text-[10px] font-black text-gray-400 uppercase tracking-widest`}>{periodLabelSecondary}</Text>
+                            <Text style={[tw`text-[10px] font-black uppercase tracking-widest`, { color: textMuted }]}>{periodLabelSecondary}</Text>
                         </View>
                     ) : null}
                 </View>
             );
         }
 
-        if (periodLabel === 'Year') {
+        if (normalizedPeriod === 'YEAR') {
             return (
                 <View>
                     <View style={tw`flex-row flex-wrap justify-between gap-y-4`}>
@@ -263,9 +297,9 @@ export const AnalyticsDashboard = ({
                             <View key={i} style={tw`w-[23%] items-center`}>
                                 <View style={[
                                     tw`w-full aspect-square border-2 border-black rounded-xl items-center justify-center overflow-hidden`,
-                                    tw`bg-gray-50`
+                                    { backgroundColor: surfaceSoft, borderColor: isDark ? '#ffffff' : '#000000' }
                                 ]}>
-                                    <Text style={tw`text-xs font-black text-black leading-none`}>{m.percentage}%</Text>
+                                    <Text style={[tw`text-xs font-black leading-none`, { color: textPrimary }]}>{m.percentage}%</Text>
                                     {m.percentage > 0 && (
                                         <AnimatedRetrospectiveBar percentage={m.percentage} color={theme.secondary} />
                                     )}
@@ -276,13 +310,13 @@ export const AnalyticsDashboard = ({
                                         ]} />
                                     )}
                                 </View>
-                                <Text style={tw`text-[10px] font-black text-black mt-2 uppercase leading-none`}>{m.name.substring(0, 3)}</Text>
+                                <Text style={[tw`text-[10px] font-black mt-2 uppercase leading-none`, { color: textPrimary }]}>{m.name.substring(0, 3)}</Text>
                             </View>
                         ))}
                     </View>
                     {periodLabelSecondary ? (
                         <View style={tw`mt-6 items-center`}>
-                            <Text style={tw`text-[10px] font-black text-gray-300 uppercase tracking-widest leading-none`}>{periodLabelSecondary}</Text>
+                            <Text style={[tw`text-[10px] font-black uppercase tracking-widest leading-none`, { color: textFaint }]}>{periodLabelSecondary}</Text>
                         </View>
                     ) : null}
                 </View>
@@ -293,7 +327,7 @@ export const AnalyticsDashboard = ({
     const renderMoodAnalysis = () => {
         if (!moodData) return null;
 
-        if (periodLabel === 'Week') {
+        if (normalizedPeriod === 'WEEK') {
             return (
                 <View style={tw`flex-row justify-between`}>
                     {moodData.map((d, i) => {
@@ -303,15 +337,15 @@ export const AnalyticsDashboard = ({
                             <View key={i} style={tw`items-center`}>
                                 <View style={[
                                     tw`w-10 h-10 rounded-xl border-2 border-black items-center justify-center mb-1.5`,
-                                    moodObj ? { backgroundColor: moodObj.color + '20', borderColor: moodObj.color } : tw`bg-gray-50 border-gray-100`
+                                    moodObj ? { backgroundColor: moodObj.color + '20', borderColor: moodObj.color } : { backgroundColor: surfaceSoft, borderColor: borderSoft }
                                 ]}>
                                     {Icon ? (
                                         <Icon size={22} color={moodObj.color} strokeWidth={3} />
                                     ) : (
-                                        <View style={tw`w-1.5 h-1.5 rounded-full bg-gray-200`} />
+                                        <View style={[tw`w-1.5 h-1.5 rounded-full`, { backgroundColor: isDark ? '#737373' : '#e5e7eb' }]} />
                                     )}
                                 </View>
-                                <Text style={tw`text-[10px] font-black text-gray-400`}>{d.label.substring(0, 1)}</Text>
+                                <Text style={[tw`text-[10px] font-black`, { color: textMuted }]}>{d.label.substring(0, 1)}</Text>
                             </View>
                         );
                     })}
@@ -319,7 +353,7 @@ export const AnalyticsDashboard = ({
             );
         }
 
-        if (periodLabel === 'Month') {
+        if (normalizedPeriod === 'MONTH') {
             const daysOfWeek = weekStart === 'SUN'
                 ? [
                     t('common.daysShort.sun'),
@@ -349,7 +383,7 @@ export const AnalyticsDashboard = ({
                     <View style={tw`flex-row justify-between mb-2 px-1`}>
                         {daysOfWeek.map((day, i) => (
                             <View key={i} style={tw`w-[13.2%] items-center`}>
-                                <Text style={tw`text-[10px] font-black text-black`}>{day}</Text>
+                                <Text style={[tw`text-[10px] font-black`, { color: textPrimary }]}>{day}</Text>
                             </View>
                         ))}
                     </View>
@@ -368,11 +402,11 @@ export const AnalyticsDashboard = ({
                                     key={i}
                                     style={[
                                         tw`w-[13.2%] h-[15.2%] aspect-square rounded-md border-2 border-black items-center justify-center overflow-hidden mb-1`,
-                                        moodObj ? { backgroundColor: moodObj.color } : tw`bg-gray-50`
+                                        moodObj ? { backgroundColor: moodObj.color } : { backgroundColor: surfaceSoft }
                                     ]}
                                 >
                                     <View style={tw`absolute top-1 left-1`}>
-                                        <Text style={[tw`text-[7px] font-black`, moodObj ? tw`text-white/50` : tw`text-black opacity-30`]}>{d.label}</Text>
+                                        <Text style={[tw`text-[7px] font-black`, moodObj ? tw`text-white/50` : { color: textMuted, opacity: 0.4 }]}>{d.label}</Text>
                                     </View>
                                     {moodObj && moodObj.icon && (
                                         <moodObj.icon size={14} color="white" strokeWidth={3} />
@@ -390,7 +424,7 @@ export const AnalyticsDashboard = ({
             );
         }
 
-        if (periodLabel === 'Year') {
+        if (normalizedPeriod === 'YEAR') {
             return (
                 <View style={tw`flex-row flex-wrap justify-between gap-y-4`}>
                     {moodData.map((m, i) => {
@@ -400,15 +434,15 @@ export const AnalyticsDashboard = ({
                             <View key={i} style={tw`w-[23%] items-center`}>
                                 <View style={[
                                     tw`w-full aspect-square border-2 border-black rounded-xl items-center justify-center`,
-                                    moodObj ? { backgroundColor: moodObj.color + '20', borderColor: moodObj.color } : tw`bg-gray-50 border-gray-100`
+                                    moodObj ? { backgroundColor: moodObj.color + '20', borderColor: moodObj.color } : { backgroundColor: surfaceSoft, borderColor: borderSoft }
                                 ]}>
                                     {Icon ? (
                                         <Icon size={24} color={moodObj.color} strokeWidth={3} />
                                     ) : (
-                                        <Text style={tw`text-gray-200 font-extrabold`}>-</Text>
+                                        <Text style={[tw`font-extrabold`, { color: textFaint }]}>-</Text>
                                     )}
                                 </View>
-                                <Text style={tw`text-[10px] font-black text-black mt-2 uppercase leading-none`}>{m.label}</Text>
+                                <Text style={[tw`text-[10px] font-black mt-2 uppercase leading-none`, { color: textPrimary }]}>{m.label}</Text>
                             </View>
                         );
                     })}
@@ -445,7 +479,7 @@ export const AnalyticsDashboard = ({
 
             {/* Story Card */}
             <View style={tw`mb-6`}>
-                <HardShadowCardLocal style={{ height: 280 }}>
+                <HardShadowCardLocal style={{ height: 280 }} colorMode={colorMode}>
                     {/* Header bar from image */}
                     <View style={[tw`py-1.5 px-4 items-center`, { backgroundColor: theme.primary }]}>
                         <Text style={tw`text-[10px] font-black uppercase text-white tracking-widest leading-none`}>{t('analytics.success', { period: periodLabel })}</Text>
@@ -454,18 +488,18 @@ export const AnalyticsDashboard = ({
                     <View style={tw`p-5 flex-1`}>
                         <View style={tw`flex-row items-center justify-between mb-6`}>
                             <View>
-                                <Text style={tw`text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 leading-none`}>{t('analytics.mastery', { period: periodLabel })}</Text>
+                                <Text style={[tw`text-[10px] font-black uppercase tracking-widest mb-2 leading-none`, { color: textMuted }]}>{masteryLabel}</Text>
                                 <View style={tw`flex-row items-baseline gap-1`}>
                                     <View style={tw`flex-row items-baseline`}>
-                                        <Text style={tw`text-4xl font-black text-gray-800`}>{completionStats.completed}</Text>
-                                        <Text style={tw`text-2xl font-black text-gray-200 ml-1`}>/ {completionStats.total}</Text>
+                                        <Text style={[tw`text-4xl font-black`, { color: textPrimary }]}>{completionStats.completed}</Text>
+                                        <Text style={[tw`text-2xl font-black ml-1`, { color: textFaint }]}>/ {completionStats.total}</Text>
                                     </View>
                                 </View>
                             </View>
                             <View style={tw`items-center justify-center`}>
                                 {/* Mini Circular Progress */}
                                 <Svg width={70} height={70}>
-                                    <Circle cx={35} cy={35} r={radius} stroke="#f5f5f4" strokeWidth={8} fill="none" />
+                                    <Circle cx={35} cy={35} r={radius} stroke={isDark ? '#262626' : '#f5f5f4'} strokeWidth={8} fill="none" />
                                     <AnimatedCircle
                                         cx={35}
                                         cy={35}
@@ -493,13 +527,13 @@ export const AnalyticsDashboard = ({
                                 {story.sections.map((section, idx) => (
                                     <View key={idx}>
                                         <Text style={[tw`text-[10px] font-black uppercase mb-1 leading-none`,
-                                        section.type === 'neglected' ? tw`text-rose-400` : tw`text-gray-400`
+                                        section.type === 'neglected' ? tw`text-rose-400` : { color: textMuted }
                                         ]}>{section.type}</Text>
-                                        <FormattedText text={section.text} highlightColor={theme.secondary} />
+                                        <FormattedText text={section.text} highlightColor={theme.secondary} colorMode={colorMode} />
                                     </View>
                                 ))}
                                 {story.sections.length === 0 && (
-                                    <Text style={tw`text-gray-400 italic font-bold text-center py-4`}>{t('analytics.notEnoughData')}</Text>
+                                    <Text style={[tw`italic font-bold text-center py-4`, { color: textMuted }]}>{t('analytics.notEnoughData')}</Text>
                                 )}
                             </View>
                         </ScrollView>
@@ -509,10 +543,10 @@ export const AnalyticsDashboard = ({
 
             {/* Retrospective Card (New) */}
             <View style={tw`mb-6`}>
-                <HardShadowCardLocal>
+                <HardShadowCardLocal colorMode={colorMode}>
                     <View style={tw`p-5`}>
                         <View style={tw`flex-row justify-between items-center mb-6`}>
-                            <Text style={tw`text-xs font-black uppercase text-gray-400 tracking-widest leading-none`}>{t('analytics.retrospectiveGrid')}</Text>
+                            <Text style={[tw`text-xs font-black uppercase tracking-widest leading-none`, { color: textMuted }]}>{t('analytics.retrospectiveGrid')}</Text>
                             <Text style={[tw`text-xs font-black uppercase tracking-widest leading-none`, { color: theme.primary }]}>{Math.round(completionStats.percentage)}% {t('analytics.done')}</Text>
                         </View>
                         {renderRetrospectiveGrid()}
@@ -521,10 +555,10 @@ export const AnalyticsDashboard = ({
             </View>
             {/* Mood Analysis Card */}
             <View style={tw`mb-6`}>
-                <HardShadowCardLocal>
+                <HardShadowCardLocal colorMode={colorMode}>
                     <View style={tw`p-5`}>
                         <View style={tw`flex-row justify-between items-center mb-6`}>
-                            <Text style={tw`text-xs font-black uppercase text-gray-400 tracking-widest leading-none`}>{t('analytics.moodAnalysis')}</Text>
+                            <Text style={[tw`text-xs font-black uppercase tracking-widest leading-none`, { color: textMuted }]}>{t('analytics.moodAnalysis')}</Text>
                             <Text style={[tw`text-[10px] font-black uppercase tracking-widest leading-none`, { color: theme.primary }]}>{t('analytics.vibe', { period: periodLabel })}</Text>
                         </View>
                         {renderMoodAnalysis()}
@@ -534,10 +568,10 @@ export const AnalyticsDashboard = ({
 
             {/* Area Chart Card */}
             <View style={tw`mb-6`}>
-                <HardShadowCardLocal>
+                <HardShadowCardLocal colorMode={colorMode}>
                     <View style={tw`p-5`}>
                         <View style={tw`flex-row justify-between items-center mb-6`}>
-                            <Text style={tw`text-xs font-black uppercase text-gray-400 tracking-widest leading-none`}>{t('analytics.activityMomentum')}</Text>
+                            <Text style={[tw`text-xs font-black uppercase tracking-widest leading-none`, { color: textMuted }]}>{t('analytics.activityMomentum')}</Text>
                             {activePoint && (
                                 <Text style={[tw`text-[10px] font-black uppercase tracking-widest leading-none`, { color: theme.primary }]}>
                                     {activePoint.label}: {activePoint.value} {t('analytics.done')}
@@ -621,13 +655,13 @@ export const AnalyticsDashboard = ({
                         {/* X-Axis labels */}
                         <View style={tw`flex-row justify-between px-1`}>
                             {chartData.filter((_, i) => {
-                                if (periodLabel === 'Week') return true;
-                                if (periodLabel === 'Year') return true;
-                                if (periodLabel === 'Month') return i % 5 === 0 || i === chartData.length - 1;
+                                if (normalizedPeriod === 'WEEK') return true;
+                                if (normalizedPeriod === 'YEAR') return true;
+                                if (normalizedPeriod === 'MONTH') return i % 5 === 0 || i === chartData.length - 1;
                                 return true;
                             }).map((d, i) => (
-                                <Text key={i} style={tw`text-[9px] font-black text-gray-400 leading-none uppercase`}>
-                                    {periodLabel === 'Month' ? (i === 0 ? '1' : d.label) : d.label.substring(0, 3)}
+                                <Text key={i} style={[tw`text-[9px] font-black leading-none uppercase`, { color: textMuted }]}>
+                                    {normalizedPeriod === 'MONTH' ? (i === 0 ? '1' : d.label) : d.label.substring(0, 3)}
                                 </Text>
                             ))}
                         </View>
@@ -637,27 +671,27 @@ export const AnalyticsDashboard = ({
 
             {/* Stats Grid */}
             <View style={tw`gap-3 mb-6`}>
-                <HardShadowCardLocal>
+                <HardShadowCardLocal colorMode={colorMode}>
                     <View style={tw`p-4 flex-row items-center justify-between`}>
                         <View style={tw`flex-1 pr-4`}>
-                            <Text style={tw`text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1 leading-none`}>{t('analytics.bestHabit', { period: periodLabel })}</Text>
-                            <Text style={tw`text-lg font-black text-gray-800`} numberOfLines={1}>{stats.best?.name || t('analytics.noData')}</Text>
+                            <Text style={[tw`text-[10px] font-black uppercase tracking-widest mb-1 leading-none`, { color: textMuted }]}>{t('analytics.bestHabit', { period: periodLabel })}</Text>
+                            <Text style={[tw`text-lg font-black`, { color: textPrimary }]} numberOfLines={1}>{stats.best?.name || t('analytics.noData')}</Text>
                         </View>
                         <View style={tw`items-end`}>
-                            <Text style={tw`text-xl font-black text-gray-800`}>{stats.best?.value || "-"}</Text>
+                            <Text style={[tw`text-xl font-black`, { color: textPrimary }]}>{stats.best?.value || "-"}</Text>
                             <View style={[tw`mt-1 w-8 h-1.5 rounded-full`, { backgroundColor: theme.primary }]} />
                         </View>
                     </View>
                 </HardShadowCardLocal>
 
-                <HardShadowCardLocal>
+                <HardShadowCardLocal colorMode={colorMode}>
                     <View style={tw`p-4 flex-row items-center justify-between`}>
                         <View style={tw`flex-1 pr-4`}>
                             <Text style={tw`text-[10px] font-black uppercase text-red-300 tracking-widest mb-1 leading-none`}>{t('analytics.needsFocus', { period: periodLabel })}</Text>
-                            <Text style={tw`text-lg font-black text-gray-800`} numberOfLines={1}>{stats.worst?.name || t('analytics.onTrack')}</Text>
+                            <Text style={[tw`text-lg font-black`, { color: textPrimary }]} numberOfLines={1}>{stats.worst?.name || t('analytics.onTrack')}</Text>
                         </View>
                         <View style={tw`items-end`}>
-                            <Text style={tw`text-xl font-black text-gray-800`}>{stats.worst?.value || "-"}</Text>
+                            <Text style={[tw`text-xl font-black`, { color: textPrimary }]}>{stats.worst?.value || "-"}</Text>
                             <View style={[tw`mt-1 w-8 h-1.5 rounded-full`, { backgroundColor: '#fca5a5' }]} />
                         </View>
                     </View>

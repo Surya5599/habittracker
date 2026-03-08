@@ -103,6 +103,9 @@
     },
     "common": {
         "done": "Done",
+        "reorder": "Reorder",
+        "delete": "Delete",
+        "week": "Week",
         "rate": "Rate",
         "days": "DAYS",
         "myHabits": "My Habits",
@@ -178,6 +181,14 @@
     "habitManager": {
         "title": "My Habits",
         "addHabit": "Add New Habit",
+        "showActive": "Active",
+        "showArchived": "Archived",
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "weeklyGoal": "Weekly goal",
+        "goal": "Goal",
+        "dailyGoal": "Daily",
+        "days": "Days",
         "noHabits": "No habits yet. Start by adding one!",
         "dragToReorder": "Drag habits to reorder them.",
         "fixed": "Fixed",
@@ -185,6 +196,7 @@
         "timesPerWeek": "Times per week",
         "habitNamePlaceholder": "Habit name",
         "untitled": "Untitled Habit",
+        "deleteTitle": "Delete Habit",
         "deleteConfirm": "Are you sure you want to delete this habit? You will lose all its historical data."
     },
     "weeklyCard": {

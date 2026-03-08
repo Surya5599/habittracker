@@ -1,0 +1,171 @@
+:root {
+  --dark-bg: #05080f;
+  --dark-bg-soft: #0a0f18;
+  --dark-surface: #0d1420;
+  --dark-surface-2: #111a28;
+  --dark-border: #2a3446;
+  --dark-border-strong: #3b4960;
+  --dark-text: #e7edf7;
+  --dark-muted: #99a6bb;
+  --dark-dim: #708099;
+  --dark-glow: rgba(151, 205, 189, 0.2);
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+html[data-color-mode='light'] {
+  color-scheme: light;
+}
+
+html[data-color-mode='light'] body {
+  background-color: #f0f0f0;
+  color: #444;
+}
+
+html[data-color-mode='dark'] {
+  color-scheme: dark;
+}
+
+html[data-color-mode='dark'] body {
+  color: var(--dark-text);
+  background:
+    radial-gradient(1200px 600px at 18% 0%, rgba(74, 107, 170, 0.14), transparent 60%),
+    radial-gradient(1000px 540px at 85% 8%, rgba(93, 149, 134, 0.1), transparent 62%),
+    linear-gradient(180deg, var(--dark-bg-soft), var(--dark-bg));
+  background-attachment: fixed;
+}
+
+/* Main app wrappers in App.tsx */
+html[data-color-mode='dark'] .bg-\[\#e5e5e5\] {
+  background: transparent !important;
+}
+
+html[data-color-mode='dark'] .text-\[\#444\] {
+  color: var(--dark-text) !important;
+}
+
+/* Shared card and panel language */
+html[data-color-mode='dark'] .neo-border {
+  border: 1px solid var(--dark-border) !important;
+}
+
+html[data-color-mode='dark'] .neo-shadow,
+html[data-color-mode='dark'] .neo-shadow-lg,
+html[data-color-mode='dark'] [class*='shadow-['] {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 14px 36px rgba(0, 0, 0, 0.55),
+    0 0 32px var(--dark-glow) !important;
+}
+
+html[data-color-mode='dark'] .bg-white,
+html[data-color-mode='dark'] .bg-stone-50,
+html[data-color-mode='dark'] .bg-stone-100,
+html[data-color-mode='dark'] .bg-stone-200,
+html[data-color-mode='dark'] .bg-amber-50,
+html[data-color-mode='dark'] .bg-amber-100,
+html[data-color-mode='dark'] .bg-orange-50,
+html[data-color-mode='dark'] .bg-green-100,
+html[data-color-mode='dark'] .bg-sky-100,
+html[data-color-mode='dark'] .bg-rose-100 {
+  background-color: var(--dark-surface) !important;
+}
+
+html[data-color-mode='dark'] [class*='bg-[#fcfcfc]'],
+html[data-color-mode='dark'] [class*='bg-[#f0f0f0]'],
+html[data-color-mode='dark'] [class*='bg-[#e5e5e5]'],
+html[data-color-mode='dark'] [class*='bg-[#f9f2f2]'],
+html[data-color-mode='dark'] [class*='bg-[#f9f9f9]'] {
+  background-color: var(--dark-surface-2) !important;
+}
+
+html[data-color-mode='dark'] [class*='bg-[#e5e5e5]/30'] {
+  background-color: rgba(24, 35, 52, 0.42) !important;
+}
+
+html[data-color-mode='dark'] .bg-\[\#f9f2f2\],
+html[data-color-mode='dark'] .bg-\[\#f9f9f9\],
+html[data-color-mode='dark'] .bg-\[\#fcfcfc\],
+html[data-color-mode='dark'] .bg-\[\#f0f0f0\] {
+  background-color: var(--dark-surface-2) !important;
+}
+
+html[data-color-mode='dark'] [class*='!bg-white'],
+html[data-color-mode='dark'] [class*='!bg-stone-50'] {
+  background-color: var(--dark-surface-2) !important;
+}
+
+html[data-color-mode='dark'] [class*='bg-stone-50/'],
+html[data-color-mode='dark'] [class*='bg-black/'] {
+  background-color: rgba(18, 27, 41, 0.78) !important;
+}
+
+html[data-color-mode='dark'] .bg-black {
+  background: linear-gradient(180deg, #111b2b, #0c1422) !important;
+}
+
+html[data-color-mode='dark'] .text-black,
+html[data-color-mode='dark'] .text-stone-900,
+html[data-color-mode='dark'] .text-stone-800,
+html[data-color-mode='dark'] .text-stone-700,
+html[data-color-mode='dark'] .text-stone-600 {
+  color: var(--dark-text) !important;
+}
+
+html[data-color-mode='dark'] .text-stone-500,
+html[data-color-mode='dark'] .text-stone-400,
+html[data-color-mode='dark'] .text-stone-300,
+html[data-color-mode='dark'] .text-amber-900,
+html[data-color-mode='dark'] .text-amber-800,
+html[data-color-mode='dark'] .text-amber-700 {
+  color: var(--dark-muted) !important;
+}
+
+html[data-color-mode='dark'] .border-black,
+html[data-color-mode='dark'] .border-stone-100,
+html[data-color-mode='dark'] .border-stone-200,
+html[data-color-mode='dark'] .border-stone-300,
+html[data-color-mode='dark'] .border-stone-400,
+html[data-color-mode='dark'] .border-amber-300,
+html[data-color-mode='dark'] .border-amber-700,
+html[data-color-mode='dark'] .border-green-500 {
+  border-color: var(--dark-border) !important;
+}
+
+html[data-color-mode='dark'] .ring-black {
+  --tw-ring-color: var(--dark-border-strong) !important;
+}
+
+html[data-color-mode='dark'] input,
+html[data-color-mode='dark'] textarea,
+html[data-color-mode='dark'] select,
+html[data-color-mode='dark'] kbd {
+  background-color: var(--dark-surface-2) !important;
+  color: var(--dark-text) !important;
+  border-color: var(--dark-border) !important;
+}
+
+html[data-color-mode='dark'] ::placeholder {
+  color: var(--dark-dim) !important;
+}
+
+html[data-color-mode='dark'] ::-webkit-scrollbar-track {
+  background: #09111e;
+}
+
+html[data-color-mode='dark'] ::-webkit-scrollbar-thumb {
+  background: #2a3b55;
+  border-radius: 999px;
+}
+
+html[data-color-mode='dark'] ::-webkit-scrollbar-thumb:hover {
+  background: #395173;
+}

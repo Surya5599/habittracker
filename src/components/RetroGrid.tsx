@@ -47,9 +47,11 @@ export const RetroGrid: React.FC<RetroGridProps> = ({
         let bgColor = '#ffffff';
         let content = null;
         let textColor = 'black';
+        let badgeBg = 'rgba(255,255,255,0.42)';
 
         if (viewMode === 'habits') {
             const rate = day.totalPossible > 0 ? (day.habitsCompleted / day.totalPossible) : 0;
+            const percent = Math.round(rate * 100);
             if (day.habitsCompleted > 0) {
                 // Using olive/green shades consistent with retro aesthetics
                 if (rate >= 1) bgColor = '#4d614d'; // Dark Olive for 100%
@@ -57,12 +59,23 @@ export const RetroGrid: React.FC<RetroGridProps> = ({
                 else if (rate >= 0.4) bgColor = '#a8c9a8'; // Light Sage for 40%+
                 else bgColor = '#c9d9c9'; // Very light for low completion
 
-                if (rate >= 0.7) textColor = 'white';
+                if (rate >= 0.7) {
+                    textColor = 'white';
+                    badgeBg = 'rgba(15,23,42,0.22)';
+                } else {
+                    textColor = '#111827';
+                    badgeBg = 'rgba(255,255,255,0.55)';
+                }
             }
-            content = (
-                <span className="text-[10px] font-black leading-none drop-shadow-sm" style={{ color: textColor }}>
-                    {day.totalPossible > 0 ? `${Math.round(rate * 100)}%` : '0%'}
-                </span>
+            content = day.habitsCompleted > 0 ? (
+                <div className="px-[2px] py-[1px] rounded-[4px] leading-none" style={{ backgroundColor: badgeBg }}>
+                    <span className={`font-black leading-none drop-shadow-sm tabular-nums ${percent >= 100 ? 'text-[6px]' : 'text-[7px]'}`} style={{ color: textColor }}>
+                        {percent}
+                    </span>
+                    <span className="text-[5px] font-black leading-none ml-[1px] opacity-85" style={{ color: textColor }}>%</span>
+                </div>
+            ) : (
+                <span className="w-1.5 h-1.5 rounded-full bg-stone-300/70 block" />
             );
         } else {
             if (day.mood) {

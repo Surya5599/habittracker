@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Plus, Trash2, Save, Check, Minus, Laugh, Smile, Meh, Frown, Angry, BookOpen, X } from 'lucide-react';
+import { Trash2, Save, Check, Minus, Laugh, Smile, Meh, Frown, Angry, BookOpen, X } from 'lucide-react';
 import { CircularProgress } from './CircularProgress';
 import { Habit, HabitCompletion, Theme, DailyNote, DayData } from '../types';
 import { DAYS_OF_WEEK_SHORT } from '../constants';
@@ -20,7 +20,6 @@ interface MonthlyViewProps {
     editingGoalId: string | null;
     inputRef: React.RefObject<HTMLInputElement>;
     goalInputRef: React.RefObject<HTMLInputElement>;
-    addHabit: () => void;
     toggleCompletion: (habitId: string, dateKey: string) => void;
     toggleHabitInactive: (habitId: string, dateKey: string) => void;
     isHabitInactive: (habitId: string, dateKey: string) => boolean;
@@ -50,7 +49,6 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
     editingGoalId,
     inputRef,
     goalInputRef,
-    addHabit,
     toggleCompletion,
     toggleHabitInactive,
     isHabitInactive,
@@ -132,24 +130,55 @@ total possible">
                             {weeks.map((week, wIndex) => {
                                 const weekTotal = habits.reduce((acc, h) => {
                                     let hWeekDone = 0;
+                                    let activeDays = 0;
+
                                     week.forEach(day => {
-                                        if (checkCompleted(h.id, day, completions, currentMonthIndex, currentYear)) hWeekDone++;
+                                        const dayDate = new Date(currentYear, currentMonthIndex, day);
+                                        const dateKey = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                                        const inactive = !isHabitActiveOnDate(h, dayDate) || isHabitManuallyInactive(notes, dateKey, h.id);
+                                        if (inactive) return;
+
+                                        activeDays++;
+                                        if (h.weeklyTarget) {
+                                            if (checkCompleted(h.id, day, completions, currentMonthIndex, currentYear)) hWeekDone++;
+                                        } else {
+                                            const isDue = !h.frequency || h.frequency.includes(dayDate.getDay());
+                                            if (isDue && checkCompleted(h.id, day, completions, currentMonthIndex, currentYear)) hWeekDone++;
+                                        }
                                     });
-                                    if (h.weeklyTarget) return acc + Math.min(hWeekDone, h.weeklyTarget);
+
+                                    if (h.weeklyTarget) {
+                                        const activeCap = (h.weeklyTarget / 7) * activeDays;
+                                        return acc + Math.min(hWeekDone, activeCap);
+                                    }
+
                                     return acc + hWeekDone;
                                 }, 0);
 
                                 const weekMax = habits.reduce((acc, h) => {
-                                    if (h.weeklyTarget) return acc + h.weeklyTarget;
+                                    let activeDays = 0;
                                     let hPossible = 0;
+
                                     week.forEach(day => {
                                         const dayDate = new Date(currentYear, currentMonthIndex, day);
-                                        if (!h.frequency || h.frequency.includes(dayDate.getDay())) hPossible++;
+                                        const dateKey = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                                        const inactive = !isHabitActiveOnDate(h, dayDate) || isHabitManuallyInactive(notes, dateKey, h.id);
+                                        if (inactive) return;
+
+                                        activeDays++;
+                                        if (!h.weeklyTarget && (!h.frequency || h.frequency.includes(dayDate.getDay()))) hPossible++;
                                     });
+
+                                    if (h.weeklyTarget) {
+                                        return acc + ((h.weeklyTarget / 7) * activeDays);
+                                    }
+
                                     return acc + hPossible;
                                 }, 0);
 
                                 const weekPerc = weekMax > 0 ? (weekTotal / weekMax) * 100 : 0;
+                                const weekTotalLabel = Number.isInteger(weekTotal) ? String(weekTotal) : weekTotal.toFixed(1);
+                                const weekMaxLabel = Number.isInteger(weekMax) ? String(weekMax) : weekMax.toFixed(1);
                                 const isCurrentWeek = week.includes(new Date().getDate()) && currentMonthIndex === new Date().getMonth() && currentYear === new Date().getFullYear();
                                 return (
                                     <div key={wIndex} ref={isCurrentWeek ? currentWeekRef : null} className="flex-1 min-w-[80px] border-r border-stone-100 flex flex-col snap-center">
@@ -163,7 +192,7 @@ total possible">
                                                 textClassName="text-xl"
                                             />
                                         </div>
-                                        <div className="flex-none h-10 flex items-center justify-center border-b border-stone-50 py-0.5"><span className="text-xl font-black">{weekTotal}/{weekMax}</span></div>
+                                        <div className="flex-none h-10 flex items-center justify-center border-b border-stone-50 py-0.5"><span className="text-xl font-black">{weekTotalLabel}/{weekMaxLabel}</span></div>
                                         <div className="flex-1 p-2 flex items-end justify-between gap-0.5 h-20 md:h-auto group/week">
                                             {week.map(day => {
                                                 const dayDate = new Date(currentYear, currentMonthIndex, day);
@@ -231,11 +260,8 @@ total possible">
                     <table className="w-full border-separate border-spacing-0">
                         <thead>
                             <tr className="text-[10px] font-black uppercase tracking-widest text-stone-700" style={{ backgroundColor: theme.secondary + '40' }}>
-                                <th className="p-2 border-r border-stone-200 text-left min-w-[100px] sm:min-w-[180px] sticky left-0 z-50" style={{ backgroundColor: 'white', backgroundImage: isModalOpen ? 'none' : `linear-gradient(${theme.secondary}40, ${theme.secondary}40)` }}>
-                                    <div className="flex items-center gap-2">
-                                        <button onClick={(e) => { e.preventDefault(); addHabit(); }} className="p-0.5 px-1 bg-white hover:bg-stone-100 rounded shadow-sm border border-stone-200 font-black flex items-center transition-all active:scale-95" style={{ color: theme.secondary }} title="Add new habit">
-                                            <Plus size={10} strokeWidth={4} />
-                                        </button>
+                                <th className="p-2 border-r border-stone-200 text-left min-w-[100px] sm:min-w-[180px] sticky left-0 z-20 bg-stone-50" style={{ backgroundImage: isModalOpen ? 'none' : `linear-gradient(${theme.secondary}40, ${theme.secondary}40)` }}>
+                                    <div className="flex items-center">
                                         <span className="text-[10px] font-black uppercase tracking-widest text-stone-700">Habits</span>
                                     </div>
                                 </th>
@@ -243,8 +269,8 @@ total possible">
                                 {weeks.map((week, i) => (<th key={i} colSpan={week.length} className="p-1 border-r border-stone-200 text-center font-black">Week {i + 1}</th>))}
                                 <th colSpan={2} className="p-1 text-center bg-[#f0f0f0] border-l border-stone-200 font-black">Monthly Summary</th>
                             </tr>
-                            <tr className="bg-[#f9f2f2] text-[9px] font-black uppercase text-stone-500">
-                                <th className="p-1 border-r border-stone-200 sticky left-0 z-40 bg-[#f9f2f2]"></th><th className="p-1 border-r border-stone-200"></th>
+                            <tr className="bg-stone-100 text-[9px] font-black uppercase text-stone-500">
+                                <th className="p-1 border-r border-stone-200 sticky left-0 z-40 bg-stone-100"></th><th className="p-1 border-r border-stone-200"></th>
                                 {monthDates.map(day => {
                                     const isToday = day === new Date().getDate() && currentMonthIndex === new Date().getMonth() && currentYear === new Date().getFullYear();
                                     const isFull = isDayFullyCompleted(day);
@@ -271,7 +297,7 @@ total possible">
                         <tbody className="divide-y divide-stone-100">
                             {/* Daily Mood Row */}
                             <tr className="group hover:bg-stone-50 transition-colors" style={{ height: '32px' }}>
-                                <td className="p-0 pl-3 sticky left-0 z-10 bg-white border-r border-[#e5e5e5] group-hover:bg-stone-50 transition-colors h-[32px]">
+                                <td className="p-0 pl-3 sticky left-0 z-10 bg-stone-50 border-r border-[#e5e5e5] group-hover:bg-stone-100 transition-colors h-[32px]">
                                     <div className="flex items-center h-full">
                                         <span className="text-[10px] font-bold text-stone-900 truncate pl-2">Mood</span>
                                     </div>
@@ -341,7 +367,7 @@ total possible">
                                 const isEditingGoal = editingGoalId === habit.id;
                                 return (
                                     <tr key={habit.id} className="hover:bg-stone-50 transition-colors group">
-                                        <td className="p-0 border-r border-stone-200 text-[11px] font-bold text-stone-700 sticky left-0 z-30 !bg-white group-hover:!bg-stone-50 transition-colors">
+                                        <td className="p-0 border-r border-stone-200 text-[11px] font-bold text-stone-700 sticky left-0 z-30 bg-stone-50 group-hover:bg-stone-100 transition-colors">
                                             <div className="flex items-center justify-between gap-2 p-1.5 px-3 h-full transition-colors">
                                                 {isEditingName ? (
                                                     <div className="flex items-center gap-2 flex-1">

@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings, LayoutDashboard, Calendar, Clock, MessageSquare, ChevronRight, ChevronDown, Check, Shield } from 'lucide-react';
+import { Settings, LayoutDashboard, Calendar, Clock, MessageSquare, ChevronRight, ChevronDown, Check, Shield, Moon, Sun } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Theme } from '../types';
 
@@ -17,6 +17,8 @@ interface SettingsMenuProps {
     setStartOfWeek: (start: 'monday' | 'sunday') => void;
     defaultView: 'daily' | 'monthly' | 'dashboard';
     setDefaultView: (view: 'daily' | 'monthly' | 'dashboard') => void;
+    colorMode: 'light' | 'dark';
+    setColorMode: (mode: 'light' | 'dark') => void;
     onReportBug: () => void;
     hasUnreadFeedback?: boolean;
 }
@@ -34,6 +36,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     setStartOfWeek,
     defaultView,
     setDefaultView,
+    colorMode,
+    setColorMode,
     onReportBug,
     hasUnreadFeedback = false,
 }) => {
@@ -167,6 +171,27 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                                 ))}
                             </div>
                         )}
+                    </div>
+
+                    {/* Appearance */}
+                    <div className="flex items-center justify-between p-2 rounded-lg hover:bg-stone-50 transition-colors">
+                        <span className="text-[10px] font-bold uppercase text-stone-500">Appearance</span>
+                        <div className="flex bg-stone-100 p-0.5 rounded-md">
+                            <button
+                                onClick={() => setColorMode('light')}
+                                className={`p-1.5 rounded flex items-center justify-center transition-all ${colorMode === 'light' ? 'bg-white shadow-sm text-black' : 'text-stone-400 hover:text-stone-600'}`}
+                                title="Light"
+                            >
+                                <Sun size={10} />
+                            </button>
+                            <button
+                                onClick={() => setColorMode('dark')}
+                                className={`p-1.5 rounded flex items-center justify-center transition-all ${colorMode === 'dark' ? 'bg-white shadow-sm text-black' : 'text-stone-400 hover:text-stone-600'}`}
+                                title="Dark"
+                            >
+                                <Moon size={10} />
+                            </button>
+                        </div>
                     </div>
 
                     <div className="h-px bg-stone-100 my-1" />

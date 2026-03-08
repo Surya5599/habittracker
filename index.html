@@ -6,6 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HabiCard</title>
     <link rel="icon" type="image/png" href="/habicard_favicon.png" />
+    <script>
+        (function () {
+            try {
+                var mode = localStorage.getItem('habit_color_mode') || 'dark';
+                document.documentElement.setAttribute('data-color-mode', mode);
+                document.documentElement.style.colorScheme = mode;
+            } catch (e) { }
+        })();
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Playfair+Display:wght@700;900&display=swap"
@@ -64,7 +73,6 @@
   }
 }
 </script>
-    <link rel="stylesheet" href="/index.css">
 </head>
 
 <body>

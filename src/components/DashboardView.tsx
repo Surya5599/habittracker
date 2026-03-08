@@ -296,9 +296,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">
                                         {viewMode === 'habits' ? 'Retrospective Grid' : 'Mood Analysis'}
                                     </span>
-                                    <span className="text-[10px] font-black uppercase" style={{ color: headerColor }}>
-                                        {viewMode === 'habits' ? `${Math.round(rate)}% Done` : 'Month Vibe'}
-                                    </span>
+                                    {viewMode === 'habits' ? (
+                                        <div
+                                            className="inline-flex items-end gap-1 px-2 py-1 rounded-md border border-black/10"
+                                            style={{ backgroundColor: `${headerColor}22` }}
+                                        >
+                                            <span className="text-base font-black leading-none" style={{ color: headerColor }}>
+                                                {Math.round(rate)}
+                                            </span>
+                                            <span className="text-[10px] font-black leading-none mb-[1px]" style={{ color: headerColor }}>%</span>
+                                            <span className="text-[8px] font-black uppercase tracking-wider text-stone-500">Done</span>
+                                        </div>
+                                    ) : (
+                                        <span className="text-[10px] font-black uppercase" style={{ color: headerColor }}>
+                                            Month Vibe
+                                        </span>
+                                    )}
                                 </div>
 
                                 <RetroGrid

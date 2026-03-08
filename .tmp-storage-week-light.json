@@ -1,0 +1,15 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://127.0.0.1:4173",
+      "localStorage": [
+        { "name": "habit_guest_mode", "value": "true" },
+        { "name": "habit_onboarding_completed", "value": "true" },
+        { "name": "seen_archive_skip_update_2026", "value": "true" },
+        { "name": "habit_default_view", "value": "weekly" },
+        { "name": "habit_color_mode", "value": "light" }
+      ]
+    }
+  ]
+}

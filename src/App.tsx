@@ -84,6 +84,10 @@ const AppContent: React.FC = () => {
   const [startOfWeek, setStartOfWeek] = useState<'monday' | 'sunday'>(() => {
     return (localStorage.getItem('habit_start_of_week') as 'monday' | 'sunday') || 'monday';
   });
+  const [colorMode, setColorMode] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('habit_color_mode');
+    return saved === 'light' ? 'light' : 'dark';
+  });
 
   // Sync i18n with state
   useEffect(() => {
@@ -91,6 +95,12 @@ const AppContent: React.FC = () => {
       i18n.changeLanguage(language);
     }
   }, [language]);
+
+  useEffect(() => {
+    localStorage.setItem('habit_color_mode', colorMode);
+    document.documentElement.setAttribute('data-color-mode', colorMode);
+    document.documentElement.style.colorScheme = colorMode;
+  }, [colorMode]);
   const [view, setView] = useState<'monthly' | 'dashboard' | 'weekly'>(defaultView);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
@@ -960,6 +970,8 @@ const AppContent: React.FC = () => {
           habits={habits}
           defaultView={defaultView}
           setDefaultView={updateDefaultView}
+          colorMode={colorMode}
+          setColorMode={setColorMode}
           addHabit={addHabit}
           updateHabit={updateHabit}
           removeHabit={removeHabit}
@@ -1084,7 +1096,6 @@ const AppContent: React.FC = () => {
               editingGoalId={editingGoalId}
               inputRef={inputRef}
               goalInputRef={goalInputRef}
-              addHabit={() => addHabit(theme.primary).then(id => setEditingHabitId(id))}
               toggleCompletion={toggleCompletion}
               toggleHabitInactive={toggleHabitInactive}
               isHabitInactive={isHabitInactive}
@@ -1195,8 +1206,17 @@ const AppContent: React.FC = () => {
 const SignInPage: React.FC = () => {
   const navigate = useNavigate();
   const { theme, THEMES } = useTheme();
+  const [colorMode, setColorMode] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('habit_color_mode');
+    return saved === 'light' ? 'light' : 'dark';
+  });
   const [currentYear] = useState(new Date().getFullYear());
   const [currentMonthIndex] = useState(new Date().getMonth());
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-color-mode', colorMode);
+    document.documentElement.style.colorScheme = colorMode;
+  }, [colorMode]);
 
   const handleContinueAsGuest = () => {
     localStorage.setItem('habit_guest_mode', 'true');
@@ -1222,6 +1242,7 @@ const SignInPage: React.FC = () => {
             annualStats={DEMO_ANNUAL_STATS}
             dailyStats={[]} weeklyStats={[]} weekProgress={{ completed: 25, total: 28, percentage: 89 }}
             habits={DEMO_HABITS} defaultView="dashboard" setDefaultView={() => { }}
+            colorMode={colorMode} setColorMode={setColorMode}
             addHabit={async () => ''} updateHabit={async () => { }} removeHabit={async () => { }}
             weekDelta={12} monthDelta={5} monthlyGoals={{}} updateMonthlyGoals={() => { }}
             topHabitsThisMonth={[]} weekOffset={0}

@@ -46,6 +46,8 @@ interface HeaderProps {
     habits: Habit[];
     defaultView: 'daily' | 'monthly' | 'dashboard';
     setDefaultView: (view: 'daily' | 'monthly' | 'dashboard') => void;
+    colorMode: 'light' | 'dark';
+    setColorMode: (mode: 'light' | 'dark') => void;
     addHabit: (themePrimary: string) => Promise<string>;
     updateHabit: (id: string, updates: Partial<Habit>) => Promise<void>;
     removeHabit: (id: string) => Promise<void>;
@@ -103,6 +105,8 @@ export const Header: React.FC<HeaderProps> = ({
     habits,
     defaultView,
     setDefaultView,
+    colorMode,
+    setColorMode,
     addHabit,
     updateHabit,
     removeHabit,
@@ -128,6 +132,7 @@ export const Header: React.FC<HeaderProps> = ({
     onSearch
 }) => {
     const { t } = useTranslation();
+    const isDarkMode = colorMode === 'dark';
     const today = new Date();
     const currentDayOfWeek = today.getDay() === 0 ? 7 : today.getDay();
     const currentDayOfMonth = today.getDate();
@@ -318,6 +323,8 @@ export const Header: React.FC<HeaderProps> = ({
                                 setStartOfWeek={setStartOfWeek}
                                 defaultView={defaultView}
                                 setDefaultView={setDefaultView}
+                                colorMode={colorMode}
+                                setColorMode={setColorMode}
                                 onReportBug={onReportBug}
                                 hasUnreadFeedback={hasUnreadFeedback}
                             />
@@ -522,7 +529,7 @@ export const Header: React.FC<HeaderProps> = ({
                 )}
             </div>
 
-            <div className="md:col-span-6 bg-[#f9f9f9] neo-border neo-shadow rounded-2xl p-2 min-h-[160px] h-auto relative overflow-hidden flex flex-col">
+            <div className={`md:col-span-6 neo-border neo-shadow rounded-2xl p-2 min-h-[160px] h-auto relative overflow-hidden flex flex-col ${isDarkMode ? 'bg-[#0d1420]' : 'bg-[#f9f9f9]'}`}>
                 <div className="flex justify-between items-center mb-6">
                     <h4 className="font-black uppercase text-sm tracking-widest">
                         {view === 'monthly' ? t('header.monthlyTrends') : (view === 'weekly' ? t('header.weeklyTrends') : t('header.annualTrends'))}
@@ -554,36 +561,42 @@ export const Header: React.FC<HeaderProps> = ({
                                     <stop offset="95%" stopColor={theme.primary} stopOpacity={0} />
                                 </linearGradient>
                             </defs>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? "rgba(121, 137, 163, 0.28)" : "#ddd"} />
                             <XAxis
                                 dataKey={view === 'monthly' ? "day" : (view === 'weekly' ? "displayDay" : "month")}
                                 axisLine={false}
                                 tickLine={false}
-                                tick={{ fontSize: 10, fontWeight: 'bold' }}
+                                tick={{ fontSize: 10, fontWeight: 'bold', fill: isDarkMode ? '#95a2b8' : '#666' }}
                                 interval={view === 'monthly' ? 'preserveStartEnd' : 0}
                                 minTickGap={0}
                                 padding={{ left: 10, right: 10 }}
                             />
                             <Tooltip
-                                contentStyle={{ border: '2px solid black', borderRadius: '0', fontWeight: 'bold' }}
+                                contentStyle={{
+                                    backgroundColor: isDarkMode ? '#101928' : '#fff',
+                                    border: isDarkMode ? '1px solid #2a3446' : '2px solid black',
+                                    borderRadius: isDarkMode ? '6px' : '0',
+                                    color: isDarkMode ? '#e7edf7' : '#111',
+                                    fontWeight: 'bold'
+                                }}
                                 formatter={(value: any) => [`${value} completed`, view === 'dashboard' ? 'Total' : 'Habits']}
                             />
                             <Area
                                 type="monotone"
                                 dataKey={view === 'dashboard' ? "completed" : "count"}
-                                stroke="#000"
-                                strokeWidth={3}
+                                stroke={isDarkMode ? "#9ac6b8" : "#000"}
+                                strokeWidth={2.5}
                                 fillOpacity={1}
                                 fill="url(#colorVal)"
                             />
                         </AreaChart>
                     ) : (
                         <BarChart data={view === 'monthly' ? dailyStats : (view === 'weekly' ? weeklyStats : annualStats.monthlySummaries)} margin={{ right: 20, left: 20, bottom: 20, top: 10 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ddd" />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? "rgba(121, 137, 163, 0.28)" : "#ddd"} />
                             <XAxis
                                 dataKey={view === 'monthly' ? "day" : (view === 'weekly' ? "displayDay" : "month")}
-                                tick={{ fontSize: 9, fontWeight: 'bold' }}
-                                stroke="#999"
+                                tick={{ fontSize: 9, fontWeight: 'bold', fill: isDarkMode ? '#95a2b8' : '#666' }}
+                                stroke={isDarkMode ? "#95a2b8" : "#999"}
                                 tickLine={false}
                                 interval={view === 'monthly' ? 'preserveStartEnd' : 0}
                                 minTickGap={0}
@@ -592,12 +605,12 @@ export const Header: React.FC<HeaderProps> = ({
                                     value: view === 'monthly' ? 'Day of Month' : (view === 'weekly' ? 'Day of Week' : 'Month'),
                                     position: 'insideBottom',
                                     offset: -5,
-                                    style: { fontSize: 8, fontWeight: 'bold', fill: '#999', textTransform: 'uppercase' }
+                                    style: { fontSize: 8, fontWeight: 'bold', fill: isDarkMode ? '#95a2b8' : '#999', textTransform: 'uppercase' }
                                 }}
                             />
                             <YAxis
-                                tick={{ fontSize: 9, fontWeight: 'bold' }}
-                                stroke="#999"
+                                tick={{ fontSize: 9, fontWeight: 'bold', fill: isDarkMode ? '#95a2b8' : '#666' }}
+                                stroke={isDarkMode ? "#95a2b8" : "#999"}
                                 tickLine={false}
                                 width={25}
                                 domain={[0, habits.length || 1]}
@@ -607,11 +620,12 @@ export const Header: React.FC<HeaderProps> = ({
                             <Tooltip
                                 cursor={{ fill: 'rgba(0,0,0,0.05)' }}
                                 contentStyle={{
-                                    backgroundColor: '#fff',
-                                    border: '2px solid black',
-                                    borderRadius: '0',
+                                    backgroundColor: isDarkMode ? '#101928' : '#fff',
+                                    border: isDarkMode ? '1px solid #2a3446' : '2px solid black',
+                                    borderRadius: isDarkMode ? '6px' : '0',
+                                    color: isDarkMode ? '#e7edf7' : '#111',
                                     fontWeight: 'bold',
-                                    boxShadow: '4px 4px 0px rgba(0,0,0,0.1)'
+                                    boxShadow: isDarkMode ? '0 10px 30px rgba(0,0,0,0.45)' : '4px 4px 0px rgba(0,0,0,0.1)'
                                 }}
                                 formatter={(value: any) => [`${value} completed`, view === 'dashboard' ? 'Total' : 'Habits']}
                             />
@@ -619,8 +633,8 @@ export const Header: React.FC<HeaderProps> = ({
                                 dataKey={view === 'dashboard' ? "completed" : "count"}
                                 fill={theme.primary}
                                 radius={[4, 4, 0, 0]}
-                                stroke="#000"
-                                strokeWidth={2}
+                                stroke={isDarkMode ? "#2a3446" : "#000"}
+                                strokeWidth={1}
                                 animationDuration={1000}
                                 animationBegin={0}
                                 isAnimationActive={true}
@@ -658,7 +672,7 @@ export const Header: React.FC<HeaderProps> = ({
                                                 animationDuration={1000}
                                                 animationBegin={0}
                                             >
-                                                <Cell fill={theme.primary} /><Cell fill="#f0f0f0" />
+                                                <Cell fill={theme.primary} /><Cell fill={isDarkMode ? "#2b3447" : "#f0f0f0"} />
                                             </Pie>
                                         </PieChart>
                                     </ResponsiveContainer>
@@ -715,7 +729,7 @@ export const Header: React.FC<HeaderProps> = ({
                                                 animationDuration={1000}
                                                 animationBegin={0}
                                             >
-                                                <Cell fill={theme.primary} /><Cell fill="#f0f0f0" />
+                                                <Cell fill={theme.primary} /><Cell fill={isDarkMode ? "#2b3447" : "#f0f0f0"} />
                                             </Pie>
                                         </PieChart>
                                     </ResponsiveContainer>
@@ -765,7 +779,7 @@ export const Header: React.FC<HeaderProps> = ({
                                             animationDuration={1000}
                                             animationBegin={0}
                                         >
-                                            <Cell fill={theme.primary} /><Cell fill="#f0f0f0" />
+                                            <Cell fill={theme.primary} /><Cell fill={isDarkMode ? "#2b3447" : "#f0f0f0"} />
                                         </Pie>
                                     </PieChart>
                                 </ResponsiveContainer>

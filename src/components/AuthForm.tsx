@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Check } from 'lucide-react';
+import { User } from 'lucide-react';
 import { supabase } from '../supabase';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
@@ -90,7 +90,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest }) => {
     const handleSignUp = (e: React.FormEvent) => handleSubmit(e);
 
     return (
-        <div className="flex items-center justify-center p-4 overflow-hidden relative">
+        <div className="flex items-center justify-center p-4 relative w-full">
             <div className="relative z-10 flex flex-col items-center gap-8 w-full max-w-md">
                 <motion.div
                     animate={{
@@ -102,7 +102,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest }) => {
                         repeat: Infinity,
                         ease: "easeInOut"
                     }}
-                    className="w-full max-w-[340px] md:max-w-[360px] bg-white/60 backdrop-blur-xl neo-border neo-shadow rounded-2xl p-6 md:p-8 relative perspective-1000 transform-gpu"
+                    className="w-full max-w-[340px] md:max-w-[360px] max-h-[calc(100svh-2rem)] overflow-y-auto bg-white/60 backdrop-blur-xl neo-border neo-shadow rounded-2xl p-6 md:p-8 relative perspective-1000 transform-gpu"
                     style={{ transformStyle: 'preserve-3d' }}
                 >
                     <div className="h-full flex flex-col space-y-6">

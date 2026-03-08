@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, Minus, Plus, Trash2, Pencil, ChevronLeft, ChevronRight, Save, Meh, Frown, Smile, Laugh, Angry } from 'lucide-react';
+import { BookOpen, Check, Minus, Plus, Trash2, Pencil, ChevronLeft, ChevronRight, Save, Meh, Frown, Smile, Laugh, Angry } from 'lucide-react';
 import { Habit, HabitCompletion, Theme, DailyNote, Task, DayData } from '../types';
 import { isCompleted as checkCompleted } from '../utils/stats';
 import { generateUUID } from '../utils/uuid';
@@ -543,14 +543,14 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                         </button>
                         <button
                             onClick={openJournalView}
-                            className={`text-[8px] font-black uppercase tracking-wide py-1 px-1 rounded border text-center transition-colors ${hasJournalEntry ? 'bg-green-100 text-green-800 border-green-400 hover:bg-green-200' : 'bg-stone-100 text-stone-500 border-stone-300 hover:bg-stone-200'}`}
+                            className={`py-1 px-1 rounded border text-center transition-colors flex items-center justify-center ${hasJournalEntry ? 'bg-green-100 text-green-800 border-green-400 hover:bg-green-200' : 'bg-stone-100 text-stone-400 border-stone-300 hover:bg-stone-200'}`}
                             title="Open journal"
                         >
-                            {hasJournalEntry ? 'Journal Added' : 'No Journal'}
+                            <BookOpen size={14} strokeWidth={2.8} />
                         </button>
                         <button
                             onClick={openJournalView}
-                            className={`${hasMoodTracked ? 'p-0 border-0 bg-transparent text-black hover:opacity-80' : 'text-[8px] font-black uppercase tracking-wide py-1 px-1 rounded border text-center bg-stone-100 text-stone-500 border-stone-300 hover:bg-stone-200'} transition-colors`}
+                            className={`${hasMoodTracked ? 'p-0 border-0 bg-transparent text-black hover:opacity-80' : 'py-1 px-1 rounded border text-center bg-stone-100 text-stone-400 border-stone-300 hover:bg-stone-200'} transition-colors flex items-center justify-center`}
                             title="Open mood/journal"
                         >
                             {hasMoodTracked ? (
@@ -558,7 +558,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                     <MoodStatusIcon size={18} strokeWidth={2.8} className="text-black" fill={selectedMood?.color} />
                                 </span>
                             ) : (
-                                'Add Mood'
+                                <Meh size={16} strokeWidth={2.8} />
                             )}
                         </button>
                     </div>

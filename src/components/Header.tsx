@@ -322,15 +322,7 @@ export const Header: React.FC<HeaderProps> = ({
                                 hasUnreadFeedback={hasUnreadFeedback}
                             />
 
-                            {guestMode ? (
-                                <button
-                                    onClick={() => window.location.href = '/signin'}
-                                    className="flex items-center gap-1.5 px-2 py-1 border-[2px] border-emerald-600 text-[10px] font-black uppercase tracking-widest bg-emerald-500 text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all"
-                                >
-                                    <LogIn size={12} />
-                                    Sign In
-                                </button>
-                            ) : (
+                            {!guestMode && (
                                 <button
                                     onClick={handleLogout}
                                     className="p-1.5 rounded-full border border-stone-200 text-stone-300 hover:text-rose-500 transition-colors"
@@ -384,26 +376,36 @@ export const Header: React.FC<HeaderProps> = ({
 
                 {view === 'monthly' ? (
                     <div className="flex flex-col gap-2 mt-2 h-full">
-                        <div className="grid grid-cols-2 gap-2">
-                            <div className="bg-stone-50 border border-stone-200 p-2 rounded-sm" title="Total habits completed this month">
-                                <div className="flex flex-col items-center justify-center mb-1">
-                                    <span className="text-[8px] font-black uppercase text-stone-500 tracking-wider">{t('common.done')}</span>
-                                    <span className="text-lg font-black leading-none" style={{ color: theme.primary }}>{monthProgress.completed}</span>
+                        {guestMode ? (
+                            <button
+                                onClick={() => window.location.href = '/signin'}
+                                className="w-full min-h-[60px] flex items-center justify-center gap-2 text-[12px] font-black uppercase tracking-wider bg-black text-white px-2 py-2 rounded-xl hover:bg-stone-800 transition-colors shadow-sm"
+                            >
+                                <LogIn size={14} />
+                                Sign up / Sign in
+                            </button>
+                        ) : (
+                            <div className="grid grid-cols-2 gap-2">
+                                <div className="bg-stone-50 border border-stone-200 p-2 rounded-sm" title="Total habits completed this month">
+                                    <div className="flex flex-col items-center justify-center mb-1">
+                                        <span className="text-[8px] font-black uppercase text-stone-500 tracking-wider">{t('common.done')}</span>
+                                        <span className="text-lg font-black leading-none" style={{ color: theme.primary }}>{monthProgress.completed}</span>
+                                    </div>
+                                    <div className="w-full bg-stone-200 h-1 rounded-full overflow-hidden">
+                                        <div className="h-full transition-all duration-300" style={{ width: `${monthProgress.percentage}%`, backgroundColor: theme.primary }} />
+                                    </div>
                                 </div>
-                                <div className="w-full bg-stone-200 h-1 rounded-full overflow-hidden">
-                                    <div className="h-full transition-all duration-300" style={{ width: `${monthProgress.percentage}%`, backgroundColor: theme.primary }} />
+                                <div className="bg-stone-50 border border-stone-200 p-2 rounded-sm" title="Percentage of monthly habits completed">
+                                    <div className="flex flex-col items-center justify-center mb-1">
+                                        <span className="text-[8px] font-black uppercase text-stone-500 tracking-wider">{t('common.rate')}</span>
+                                        <span className="text-lg font-black leading-none" style={{ color: theme.secondary }}>{monthProgress.percentage.toFixed(0)}%</span>
+                                    </div>
+                                    <div className="w-full bg-stone-200 h-1 rounded-full overflow-hidden">
+                                        <div className="h-full transition-all duration-300" style={{ width: `${monthProgress.percentage}%`, backgroundColor: theme.secondary }} />
+                                    </div>
                                 </div>
                             </div>
-                            <div className="bg-stone-50 border border-stone-200 p-2 rounded-sm" title="Percentage of monthly habits completed">
-                                <div className="flex flex-col items-center justify-center mb-1">
-                                    <span className="text-[8px] font-black uppercase text-stone-500 tracking-wider">{t('common.rate')}</span>
-                                    <span className="text-lg font-black leading-none" style={{ color: theme.secondary }}>{monthProgress.percentage.toFixed(0)}%</span>
-                                </div>
-                                <div className="w-full bg-stone-200 h-1 rounded-full overflow-hidden">
-                                    <div className="h-full transition-all duration-300" style={{ width: `${monthProgress.percentage}%`, backgroundColor: theme.secondary }} />
-                                </div>
-                            </div>
-                        </div>
+                        )}
 
                         <div className="grid grid-cols-2 gap-2 flex-grow">
                             <button
@@ -426,26 +428,36 @@ export const Header: React.FC<HeaderProps> = ({
                     </div>
                 ) : view === 'weekly' ? (
                     <div className="flex flex-col gap-2 mt-2 h-full">
-                        <div className="grid grid-cols-2 gap-2">
-                            <div className="bg-stone-50 border border-stone-200 p-2 rounded-sm" title="Total habits completed this week">
-                                <div className="flex flex-col items-center justify-center mb-1">
-                                    <span className="text-[8px] font-black uppercase text-stone-500 tracking-wider">{t('common.done')}</span>
-                                    <span className="text-lg font-black leading-none" style={{ color: theme.primary }}>{weekProgress.completed}</span>
+                        {guestMode ? (
+                            <button
+                                onClick={() => window.location.href = '/signin'}
+                                className="w-full min-h-[60px] flex items-center justify-center gap-2 text-[12px] font-black uppercase tracking-wider bg-black text-white px-2 py-2 rounded-xl hover:bg-stone-800 transition-colors shadow-sm"
+                            >
+                                <LogIn size={14} />
+                                Sign up / Sign in
+                            </button>
+                        ) : (
+                            <div className="grid grid-cols-2 gap-2">
+                                <div className="bg-stone-50 border border-stone-200 p-2 rounded-sm" title="Total habits completed this week">
+                                    <div className="flex flex-col items-center justify-center mb-1">
+                                        <span className="text-[8px] font-black uppercase text-stone-500 tracking-wider">{t('common.done')}</span>
+                                        <span className="text-lg font-black leading-none" style={{ color: theme.primary }}>{weekProgress.completed}</span>
+                                    </div>
+                                    <div className="w-full bg-stone-200 h-1 rounded-full overflow-hidden">
+                                        <div className="h-full transition-all duration-300" style={{ width: `${weekProgress.percentage}%`, backgroundColor: theme.primary }} />
+                                    </div>
                                 </div>
-                                <div className="w-full bg-stone-200 h-1 rounded-full overflow-hidden">
-                                    <div className="h-full transition-all duration-300" style={{ width: `${weekProgress.percentage}%`, backgroundColor: theme.primary }} />
+                                <div className="bg-stone-50 border border-stone-200 p-2 rounded-sm" title="Percentage of weekly habits completed">
+                                    <div className="flex flex-col items-center justify-center mb-1">
+                                        <span className="text-[8px] font-black uppercase text-stone-500 tracking-wider">{t('common.rate')}</span>
+                                        <span className="text-lg font-black leading-none" style={{ color: theme.secondary }}>{weekProgress.percentage.toFixed(0)}%</span>
+                                    </div>
+                                    <div className="w-full bg-stone-200 h-1 rounded-full overflow-hidden">
+                                        <div className="h-full transition-all duration-300" style={{ width: `${weekProgress.percentage}%`, backgroundColor: theme.secondary }} />
+                                    </div>
                                 </div>
                             </div>
-                            <div className="bg-stone-50 border border-stone-200 p-2 rounded-sm" title="Percentage of weekly habits completed">
-                                <div className="flex flex-col items-center justify-center mb-1">
-                                    <span className="text-[8px] font-black uppercase text-stone-500 tracking-wider">{t('common.rate')}</span>
-                                    <span className="text-lg font-black leading-none" style={{ color: theme.secondary }}>{weekProgress.percentage.toFixed(0)}%</span>
-                                </div>
-                                <div className="w-full bg-stone-200 h-1 rounded-full overflow-hidden">
-                                    <div className="h-full transition-all duration-300" style={{ width: `${weekProgress.percentage}%`, backgroundColor: theme.secondary }} />
-                                </div>
-                            </div>
-                        </div>
+                        )}
 
                         <div className="grid grid-cols-2 gap-2 flex-grow">
                             <button
@@ -468,41 +480,25 @@ export const Header: React.FC<HeaderProps> = ({
                     </div>
                 ) : (
                     <div className="flex flex-col gap-2 mt-2 h-full">
-                        {/* Resolutions Section */}
-                        <div className="relative">
-                            <div className="grid grid-cols-2 gap-2 invisible">
-                                <div className="bg-stone-50 border border-stone-200 p-2 rounded-sm">
-                                    <div className="flex flex-col items-center justify-center mb-1">
-                                        <span className="text-[8px] font-black uppercase text-stone-500 tracking-wider">Done</span>
-                                        <span className="text-lg font-black leading-none">0</span>
-                                    </div>
-                                    <div className="w-full bg-stone-200 h-1 rounded-full overflow-hidden">
-                                        <div className="h-full" />
-                                    </div>
-                                </div>
-                                <div className="bg-stone-50 border border-stone-200 p-2 rounded-sm">
-                                    <div className="flex flex-col items-center justify-center mb-1">
-                                        <span className="text-[8px] font-black uppercase text-stone-500 tracking-wider">Rate</span>
-                                        <span className="text-lg font-black leading-none">0%</span>
-                                    </div>
-                                    <div className="w-full bg-stone-200 h-1 rounded-full overflow-hidden">
-                                        <div className="h-full" />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {currentYear === new Date().getFullYear() && (
-                                <div className="absolute inset-0">
-                                    <button
-                                        onClick={() => setIsResolutionsModalOpen(true)}
-                                        className="w-full h-full flex items-center justify-center gap-1.5 text-[12px] font-black uppercase tracking-wider bg-black text-white px-2 py-2 rounded-xl hover:bg-stone-800 transition-colors shadow-sm"
-                                    >
-                                        <Sparkles size={14} />
-                                        This Year Resolutions
-                                    </button>
-                                </div>
-                            )}
-                        </div>
+                        {guestMode ? (
+                            <button
+                                onClick={() => window.location.href = '/signin'}
+                                className="w-full min-h-[60px] flex items-center justify-center gap-2 text-[12px] font-black uppercase tracking-wider bg-black text-white px-2 py-2 rounded-xl hover:bg-stone-800 transition-colors shadow-sm"
+                            >
+                                <LogIn size={14} />
+                                Sign up / Sign in
+                            </button>
+                        ) : (
+                            currentYear === new Date().getFullYear() && (
+                                <button
+                                    onClick={() => setIsResolutionsModalOpen(true)}
+                                    className="w-full min-h-[60px] flex items-center justify-center gap-1.5 text-[12px] font-black uppercase tracking-wider bg-black text-white px-2 py-2 rounded-xl hover:bg-stone-800 transition-colors shadow-sm"
+                                >
+                                    <Sparkles size={14} />
+                                    This Year Resolutions
+                                </button>
+                            )
+                        )}
 
                         <div className="grid grid-cols-2 gap-2 flex-grow">
                             <button

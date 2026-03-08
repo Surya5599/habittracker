@@ -1069,7 +1069,7 @@ const AppContent: React.FC = () => {
           document.body
         )}
 
-        <div className={`flex-1 min-h-0 ${view === 'weekly' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+        <div className={`flex-1 min-h-0 ${view === 'weekly' ? 'overflow-y-auto md:overflow-hidden' : 'overflow-y-auto'}`}>
           {view === 'monthly' ? (
             <MonthlyView
               habits={habits}
@@ -1204,7 +1204,7 @@ const SignInPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-[#e5e5e5]">
+    <div className="min-h-screen relative overflow-x-hidden overflow-y-auto bg-[#e5e5e5]">
       <Toaster position="top-center" reverseOrder={false} />
 
       {/* Showcase Background */}
@@ -1244,7 +1244,7 @@ const SignInPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="relative z-10 w-full min-h-screen flex items-center justify-center p-4">
+      <div className="relative z-10 w-full min-h-screen flex items-start sm:items-center justify-center p-4 sm:py-6">
         <div className="absolute inset-0 bg-transparent"></div>
         <AuthForm onContinueAsGuest={handleContinueAsGuest} />
       </div>

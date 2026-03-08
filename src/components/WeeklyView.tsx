@@ -165,35 +165,39 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
     return (
         <div className="h-full min-h-0 p-1">
             {/* Desktop View (Grid) */}
-            <div className="hidden md:grid md:grid-cols-4 lg:grid-cols-7 gap-4 h-full auto-rows-fr">
-                {weekDates.map((date) => (
-                    <DailyCard
-                        key={date.toISOString()}
-                        date={date}
-                        habits={habits.filter(h => h.weeklyTarget || !h.frequency || h.frequency.includes(date.getDay()))}
-                        completions={completions}
-                        theme={theme}
-                        toggleCompletion={toggleCompletion}
-                        toggleHabitInactive={toggleHabitInactive}
-                        isHabitInactive={isHabitInactive}
-                        notes={notes}
-                        updateNote={updateNote}
-                        onShareClick={handleShareClick}
-                        onDateClick={(selectedDate) => setSelectedDateForCard(selectedDate, false)}
-                        defaultFlipped={showJournalForWeek}
-                        onJournalClick={toggleJournalForWeek}
-                        useGlobalTaskToggle={true}
-                        globalTaskMode={showTasksForWeek}
-                        onGlobalTaskModeToggle={toggleTasksForWeek}
-                        startOfWeek={startOfWeek}
-                        fitParentHeight={true}
-                    />
-                ))}
+            <div className="hidden md:block h-full min-h-0">
+                <div className="h-full min-h-0 overflow-x-auto overflow-y-hidden pb-1">
+                    <div className="grid grid-cols-7 gap-4 h-full min-h-0 auto-rows-fr min-w-[1120px]">
+                        {weekDates.map((date) => (
+                            <DailyCard
+                                key={date.toISOString()}
+                                date={date}
+                                habits={habits.filter(h => h.weeklyTarget || !h.frequency || h.frequency.includes(date.getDay()))}
+                                completions={completions}
+                                theme={theme}
+                                toggleCompletion={toggleCompletion}
+                                toggleHabitInactive={toggleHabitInactive}
+                                isHabitInactive={isHabitInactive}
+                                notes={notes}
+                                updateNote={updateNote}
+                                onShareClick={handleShareClick}
+                                onDateClick={(selectedDate) => setSelectedDateForCard(selectedDate, false)}
+                                defaultFlipped={showJournalForWeek}
+                                onJournalClick={toggleJournalForWeek}
+                                useGlobalTaskToggle={true}
+                                globalTaskMode={showTasksForWeek}
+                                onGlobalTaskModeToggle={toggleTasksForWeek}
+                                startOfWeek={startOfWeek}
+                                fitParentHeight={true}
+                            />
+                        ))}
+                    </div>
+                </div>
             </div>
 
             {/* Mobile View (Day Switcher) */}
-            <div className="md:hidden flex flex-col gap-4 h-full min-h-0">
-                <div className="w-full flex-1 min-h-0">
+            <div className="md:hidden flex flex-col gap-4 pb-2">
+                <div className="w-full">
                     <DailyCard
                         key={weekDates[mobileDayIndex].toISOString()}
                         date={weekDates[mobileDayIndex]}
@@ -215,7 +219,7 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                         globalTaskMode={showTasksForWeek}
                         onGlobalTaskModeToggle={toggleTasksForWeek}
                         startOfWeek={startOfWeek}
-                        fitParentHeight={true}
+                        fitParentHeight={false}
                     />
                 </div>
             </div>

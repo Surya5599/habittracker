@@ -49,54 +49,54 @@
     "story": {
         "annual": {
             "momentum": {
-                "ascending": "Du hast in letzter Zeit ernsthaften Schwung aufgebaut und beendest das Jahr stärker, als du es begonnen hast.",
-                "descending": "Dein Rhythmus hat sich gegen Ende des Jahres etwas verlangsamt. Das ist oft ein Signal zur Neuausrichtung – kein Scheitern.",
-                "stable": "Deine Beständigkeit ist trotz der Übergänge im Jahr bemerkenswert stabil geblieben.",
-                "main": "Dieses Jahr drehte sich deine Identität um [[{{habitName}}]]. {{momentumMsg}}"
+                "ascending": "Deine Konstanz hat sich im Jahresverlauf verbessert, du beendest das Jahr also stärker als du gestartet bist.",
+                "descending": "Dein Tempo hat in den letzten Monaten nachgelassen. Nimm das als Signal, die Kernroutine zu vereinfachen und neu zu starten.",
+                "stable": "Du hast trotz wechselnder Wochen einen stabilen Rhythmus gehalten, eine starke Grundlage für den nächsten Schritt.",
+                "main": "In diesem Jahr wurde [[{{habitName}}]] zu einer zentralen Identitätsgewohnheit. {{momentumMsg}}"
             },
             "rhythm": {
-                "weekend": "Du findest deinen besten Rhythmus am Wochenende – dann strahlt deine Identität wirklich.",
-                "weekday": "Du bist ein Wochentagskrieger, aber die Wochenenden neigen dazu, ein 'toter Winkel' für deine Gewohnheiten zu sein.",
-                "consistent": "Du behältst einen konstanten Rhythmus die ganze Woche über bei, von Montag bis Sonntag."
+                "weekend": "Dein stärkster Rhythmus liegt am Wochenende. Schütze dieses Zeitfenster und übertrage einen Teil davon in die Woche.",
+                "weekday": "Unter der Woche bist du stark strukturiert, am Wochenende weniger konstant. Eine leichtere Wochenend-Version kann die Lücke schließen.",
+                "consistent": "Deine Ausführung blieb zwischen Wochentagen und Wochenende ausgeglichen, ein Zeichen guter Routinenkontrolle."
             },
             "consistency": {
-                "high": "Du warst an [[{{activeDays}}]] Tagen in diesem Jahr dabei – genug, um echten Identitätsschwung aufzubauen.",
-                "medium": "Du hast den Funken. Mit etwas mehr Rhythmus könnte das automatisch werden.",
-                "low": "Du legst die Grundlagen. Frühe Beständigkeit zählt mehr als Volumen."
+                "high": "Du warst in diesem Jahr an [[{{activeDays}}]] Tagen dran. Das ist ein klares Signal für belastbare Gewohnheitsidentität.",
+                "medium": "Die Basis ist solide. Ein klarerer Trigger oder festeres Zeitfenster kann das deutlich automatischer machen.",
+                "low": "Du bist noch in der Aufbauphase. Kleine, wiederholbare Erfolge sind jetzt wichtiger als Intensität."
             },
-            "experimental": "Du hast dieses Jahr breit experimentiert. Diese Neugier ist eine Stärke – den Fokus zu verengen, kann Beständigkeit freisetzen.",
-            "fading": "Deine Beständigkeit bei [[{{habitName}}]] ist in letzter Zeit deutlich gesunken. Wenn das Absicht war, ist es Klarheit. Wenn nicht, könnte ein kleiner Neustart den Fokus zurückbringen.",
-            "neglected": "Du hast [[{{habitName}}]] seit [[{{days}}]] Tagen nicht protokolliert. Wenn es Sinn macht, reicht ein kleiner erneuter Besuch."
+            "experimental": "Du hast dieses Jahr viele Gewohnheiten ausprobiert. Weniger Prioritäten im nächsten Zyklus lassen Konstanz besser wachsen.",
+            "fading": "[[{{habitName}}]] ist zuletzt abgefallen. Wenn es weiter wichtig ist, starte diese Woche mit einer einfacheren Version neu.",
+            "neglected": "[[{{habitName}}]] ist seit [[{{days}}]] Tagen inaktiv. Ein kurzer Wiedereinstieg kann den Schwung zurückbringen."
         },
         "weekly": {
             "intro": {
-                "elite": "Du arbeitest auf einem Elite-Niveau mit [[{{count}}]] Aktionen bisher in dieser Woche. Deine Gewohnheiten sind nicht nur Aktionen; sie sind deine Identität.",
-                "strong": "Starke Beständigkeit mit [[{{count}}]] Abschlüssen. Du bist für dich selbst da, und der Schwung ist sichtbar.",
-                "balanced": "Eine Woche der Balance ([[{{count}}]] Abschlüsse). Einige Fundamente hielten stand, andere wurden getestet. Sich neu zu zentrieren ist Teil des Prozesses.",
-                "low": "Eine Woche mit geringer Geschwindigkeit mit [[{{count}}]] Abschlüssen. Dies sind oft Perioden der Ruhe oder des Widerstands – so oder so, es sind Daten für eine bessere nächste Woche."
+                "elite": "Du hast diese Woche [[{{count}}]] Aktionen abgeschlossen und lagst über dem Soll. Dein System funktioniert.",
+                "strong": "Du hast diese Woche [[{{count}}]] Abschlüsse mit guter Verlässlichkeit geschafft.",
+                "balanced": "Du hast diese Woche [[{{count}}]] Aktionen abgeschlossen. Einige Gewohnheiten hielten, andere brauchen einen klareren Auslöser.",
+                "low": "Du hast diese Woche [[{{count}}]] Abschlüsse geloggt. Halte die Mindestversion klein und fokussiere den Neustart."
             },
             "momentum": {
-                "highlight": "Deine Identität war diese Woche am stärksten in [[{{habitName}}]], mit [[{{count}}/{{total}}]] Tagen bisher abgeschlossen."
+                "highlight": "[[{{habitName}}]] war diese Woche vorn mit [[{{count}}/{{total}}]] abgeschlossenen Tagen."
             },
-            "neglected": "Du hast [[{{habitName}}]] diese Woche noch nicht protokolliert. Eine kleine 2-Minuten-Version morgen könnte den Rhythmus neu starten.",
+            "neglected": "[[{{habitName}}]] wurde diese Woche nicht geloggt. Eine 2-Minuten-Version morgen reicht zum Wiedereinstieg.",
             "growth": {
-                "recovery": "Du hast die Woche stärker beendet, als du sie begonnen hast. Das ist 'Erholungskapazität' in Aktion.",
-                "friction": "Du hattest einen kraftvollen Start, aber das Wochenende brachte etwas Reibung. Diesen 'Freitags-Abfall' zu identifizieren, ist der erste Schritt, ihn zu meistern."
+                "recovery": "Deine zweite Wochenhälfte war stärker als die erste. Das ist ein klares Erholungssignal.",
+                "friction": "Der starke Start hat gegen Ende nachgelassen. Ein End-of-Week-Trigger kann den Rückgang reduzieren."
             }
         },
         "monthly": {
             "intro": {
-                "exceptional": "Ein Monat außergewöhnlichen Fokus ([[{{count}}]] Abschlüsse bisher). Du hast diese Gewohnheiten erfolgreich in deinen Lebensstil integriert.",
-                "solid": "Solider Fortschritt diesen Monat. Mit [[{{count}}]] Gesamtabschlüssen hast du eine starke Basis der Beständigkeit etabliert.",
-                "exploration": "Ein Monat der Erkundung. [[{{count}}]] Abschlüsse zeigen Mühe, aber es gibt Raum, deinen Rhythmus für den nächsten Monat zu straffen.",
-                "low": "Ein Monat mit wenig Schwung. Nutze die [[{{count}}]] Abschlüsse, die du geschafft hast, als architektonische Daten für einen nachhaltigeren nächsten Monat."
+                "exceptional": "Mit [[{{count}}]] Abschlüssen zeigt dieser Monat hohe und stabile Ausführung.",
+                "solid": "Du hast in diesem Monat [[{{count}}]] Abschlüsse mit verlässlicher Konstanz erreicht.",
+                "exploration": "Du hast diesen Monat [[{{count}}]] Abschlüsse geloggt. Mehr Fokus kann den Übertrag in den nächsten Monat verbessern.",
+                "low": "Du hast diesen Monat [[{{count}}]] Aktionen abgeschlossen. Nutze das, um Umfang zu reduzieren und eine einfache Basis neu aufzubauen."
             },
             "momentum": {
-                "growth": "Du hast ein Wachstum von [[{{delta}}%]] seit dem letzten Monat gesehen – das ist bedeutende Identitätsverschiebung in Aktion.",
-                "cooling": "Dein Rhythmus hat sich diesen Monat um [[{{delta}}%]] abgekühlt. Das ist oft ein Zeichen für eine Anpassung der Lebensbalance; nutze es zur Neuausrichtung."
+                "growth": "Du liegst [[{{delta}}%]] über dem Vormonat, ein klar positiver Ausführungstrend.",
+                "cooling": "Du liegst [[{{delta}}%]] unter dem Vormonat. Weniger Reibung bei einer Schlüsselgewohnheit sollte den nächsten Monat stabilisieren."
             },
             "rhythm": {
-                "anchor": "Du warst diesen Monat am meisten [[{{habitName}}]] gewidmet und warst [[{{count}}]] Mal dabei. Das ist dein aktueller Anker."
+                "anchor": "[[{{habitName}}]] war dein Anker in diesem Monat mit [[{{count}}]] Abschlüssen."
             }
         }
     },

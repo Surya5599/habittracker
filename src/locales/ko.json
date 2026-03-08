@@ -49,54 +49,54 @@
     "story": {
         "annual": {
             "momentum": {
-                "ascending": "You've been building serious momentum lately, finishing the year stronger than you started.",
-                "descending": "Your recent rhythm softened toward the end of the year. That's often a signal for recalibration—not failure.",
-                "stable": "Your consistency has remained remarkably stable throughout the transitions of the year.",
-                "main": "This year, your identity centered around [[{{habitName}}]]. {{momentumMsg}}"
+                "ascending": "연중 꾸준함이 좋아져서 시작보다 더 강하게 마무리하고 있습니다.",
+                "descending": "최근 몇 달 페이스가 내려왔습니다. 실패가 아니라 핵심 루틴을 단순화해 재시작하라는 신호입니다.",
+                "stable": "주간 변화 속에서도 안정적인 리듬을 유지했습니다. 다음 성장을 위한 좋은 기반입니다.",
+                "main": "올해 [[{{habitName}}]] 은(는) 당신의 핵심 정체성 습관이 되었습니다. {{momentumMsg}}"
             },
             "rhythm": {
-                "weekend": "You find your best rhythm on the weekends—that's when your identity truly shines.",
-                "weekday": "You are a weekday warrior, but the weekends tend to be a 'blind spot' for your habits.",
-                "consistent": "You maintain a consistent rhythm throughout the entire week, from Monday to Sunday."
+                "weekend": "주말에 가장 강한 리듬이 나옵니다. 그 시간을 지키고 평일에 일부를 복제해 보세요.",
+                "weekday": "평일 구조는 강하지만 주말 일관성은 낮습니다. 주말 버전을 더 가볍게 만들면 격차를 줄일 수 있습니다.",
+                "consistent": "평일과 주말 모두 실행이 균형적이라 루틴 통제가 잘 되고 있습니다."
             },
             "consistency": {
-                "high": "You've shown up on [[{{activeDays}}]] days so far this year — enough to form real identity momentum.",
-                "medium": "You have the spark. With slightly more rhythm, this could become automatic.",
-                "low": "You're laying foundations. Early consistency matters more than volume."
+                "high": "올해 [[{{activeDays}}]]일 실천했습니다. 지속 가능한 습관 정체성이 형성되고 있다는 강한 증거입니다.",
+                "medium": "기반은 충분히 좋습니다. 트리거나 시간대를 하나만 더 고정하면 자동화가 쉬워집니다.",
+                "low": "지금은 기반을 만드는 단계입니다. 강도보다 작고 반복 가능한 성공이 더 중요합니다."
             },
-            "experimental": "You experimented broadly this year. That curiosity is a strength — narrowing focus may unlock consistency.",
-            "fading": "Your consistency with [[{{habitName}}]] has dropped significantly recently. If this was intentional, that’s clarity. If not, a small restart could bring it back into focus.",
-            "neglected": "You haven't logged [[{{habitName}}]] for [[{{days}}]] days. When it makes sense, a small revisit is enough."
+            "experimental": "올해 많은 습관을 실험했습니다. 다음 사이클에서는 우선순위를 줄이면 일관성이 더 빨리 쌓입니다.",
+            "fading": "[[{{habitName}}]] 이(가) 최근 식었습니다. 여전히 중요하다면 이번 주 더 쉬운 버전으로 재시작하세요.",
+            "neglected": "[[{{habitName}}]] 이(가) [[{{days}}]]일 비활성 상태입니다. 짧은 1회 실행으로 흐름을 되살릴 수 있습니다."
         },
         "weekly": {
             "intro": {
-                "elite": "You're operating at an elite level with [[{{count}}]] actions so far this week. Your habits aren't just actions; they are your identity.",
-                "strong": "Strong consistency with [[{{count}}]] completions. You're showing up for yourself, and the momentum is visible.",
-                "balanced": "A week of balance ([[{{count}}]] completions). Some foundations held firm, others were tested. Re-centering is part of the process.",
-                "low": "A low-velocity week with [[{{count}}]] completions. These are often periods of rest or resistance—either way, they are data for a better next week."
+                "elite": "이번 주 [[{{count}}]]개를 완료하며 기대 페이스를 넘었습니다. 시스템이 잘 작동하고 있습니다.",
+                "strong": "이번 주 [[{{count}}]]개를 안정적으로 완료했습니다.",
+                "balanced": "이번 주 [[{{count}}]]개를 완료했습니다. 유지된 습관도 있고, 트리거 보완이 필요한 습관도 보입니다.",
+                "low": "이번 주 [[{{count}}]]개를 기록했습니다. 최소 실행 기준을 낮게 두고 재시작 일관성에 집중하세요."
             },
             "momentum": {
-                "highlight": "Your identity was strongest in [[{{habitName}}]] this week, with [[{{count}}/{{total}}]] days completed so far."
+                "highlight": "이번 주 [[{{habitName}}]] 이(가) [[{{count}}/{{total}}]]일로 가장 앞섰습니다."
             },
-            "neglected": "You haven't logged [[{{habitName}}]] yet this week. A small 2-minute version of it tomorrow could restart the rhythm.",
+            "neglected": "[[{{habitName}}]] 은(는) 이번 주 기록이 없습니다. 내일 2분 버전으로 다시 시작하면 충분합니다.",
             "growth": {
-                "recovery": "You finished the week stronger than you started. That's 'recovery capacity' in action.",
-                "friction": "You had a powerful start, but the weekend brought some friction. Identifying that 'Friday fade' is the first step to mastering it."
+                "recovery": "주 후반 성과가 주 초반보다 높았습니다. 의미 있는 회복 신호입니다.",
+                "friction": "초반의 좋은 흐름이 후반에 약해졌습니다. 주 후반용 신호를 하나 추가하면 하락을 줄일 수 있습니다."
             }
         },
         "monthly": {
             "intro": {
-                "exceptional": "A month of exceptional focus ([[{{count}}]] completions so far). You've successfully integrated these habits into your lifestyle.",
-                "solid": "Solid progress this month. With [[{{count}}]] total completions, you've established a strong baseline of consistency.",
-                "exploration": "A month of exploration. [[{{count}}]] completions shows effort, but there's room to tighten your rhythm for next month.",
-                "low": "A low-momentum month. Use the [[{{count}}]] completions you did manage as architectural data for a more sustainable next month."
+                "exceptional": "이번 달 현재 [[{{count}}]]개 완료로 실행력과 안정성이 모두 높습니다.",
+                "solid": "이번 달 [[{{count}}]]개를 꾸준하게 달성했습니다.",
+                "exploration": "이번 달 [[{{count}}]]개를 기록했습니다. 다음 달 이월 성과를 높이려면 초점을 조금 더 좁히는 것이 좋습니다.",
+                "low": "이번 달 [[{{count}}]]개를 완료했습니다. 범위를 줄이고 더 단순한 기준선부터 다시 세우세요."
             },
             "momentum": {
-                "growth": "You've seen a [[{{delta}}%]] growth since last month—that's significant identity shifting in action.",
-                "cooling": "Your rhythm cooled by [[{{delta}}%]] this month. This is often a sign of life-balance adjusting; use it to recalibrate."
+                "growth": "지난달 대비 [[{{delta}}%]] 상승했습니다. 실행이 분명히 개선되고 있습니다.",
+                "cooling": "지난달 대비 [[{{delta}}%]] 하락했습니다. 핵심 습관 하나의 마찰을 줄이면 다음 달 안정화에 도움이 됩니다."
             },
             "rhythm": {
-                "anchor": "You were most dedicated to [[{{habitName}}]] this month, showing up [[{{count}}]] times. That is your current anchor."
+                "anchor": "이번 달 앵커 습관은 [[{{habitName}}]] 이며 [[{{count}}]]회 실행했습니다."
             }
         }
     },

@@ -21,10 +21,11 @@ export const FeatureAnnouncementModal: React.FC<FeatureAnnouncementModalProps> =
     image
 }) => {
     if (!isOpen) return null;
+    const modalWidthClass = image ? 'max-w-3xl' : 'max-w-sm';
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="bg-white border-[3px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] w-full max-w-sm flex flex-col relative animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+            <div className={`bg-white border-[3px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] w-full ${modalWidthClass} flex flex-col relative animate-in zoom-in-95 slide-in-from-bottom-4 duration-300`}>
                 <button
                     onClick={onClose}
                     className="absolute top-2 right-2 text-black hover:bg-stone-100 p-1 border-2 border-transparent hover:border-black transition-all z-10"

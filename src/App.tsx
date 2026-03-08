@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
 import { createPortal } from 'react-dom';
 import i18n from './i18n';
-import { X, Search, Key, Archive, Minus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Search, Key, ChevronLeft, ChevronRight } from 'lucide-react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from './supabase';
 import './i18n';
@@ -86,7 +86,7 @@ const AppContent: React.FC = () => {
   });
   const [colorMode, setColorMode] = useState<'light' | 'dark'>(() => {
     const saved = localStorage.getItem('habit_color_mode');
-    return saved === 'light' ? 'light' : 'dark';
+    return saved === 'dark' ? 'dark' : 'light';
   });
 
   // Sync i18n with state
@@ -121,15 +121,15 @@ const AppContent: React.FC = () => {
 
 
   useEffect(() => {
-    // Check for specific feature announcements
-    const seenDashboardUpdate = localStorage.getItem('seen_archive_skip_update_2026');
+    // Check for latest feature announcement
+    const seenWhatsNew = localStorage.getItem('seen_whats_new_2026_03');
 
     // Determine if onboarding is completed based on current mode
     const isGuestOnboardingDone = localStorage.getItem('habit_onboarding_completed') === 'true';
     const isUserOnboardingDone = session?.user?.user_metadata?.onboarding_completed;
     const hasCompletedOnboarding = !!((guestMode && isGuestOnboardingDone) || (session?.user && isUserOnboardingDone));
 
-    if (!seenDashboardUpdate && !showOnboarding && hasCompletedOnboarding) {
+    if (!seenWhatsNew && !showOnboarding && hasCompletedOnboarding) {
       setShowUpdateModal(true);
     }
 
@@ -144,7 +144,7 @@ const AppContent: React.FC = () => {
 
   const handleUpdateModalClose = () => {
     setShowUpdateModal(false);
-    localStorage.setItem('seen_archive_skip_update_2026', 'true');
+    localStorage.setItem('seen_whats_new_2026_03', 'true');
   };
 
   const handleUpdateModalAction = () => {
@@ -889,46 +889,43 @@ const AppContent: React.FC = () => {
       <FeatureAnnouncementModal
         isOpen={showUpdateModal}
         onClose={handleUpdateModalClose}
-        title="Archive + Skip Controls"
-        description="You can now archive habits and keep them visible only through the archive day (example: archived on Jan 15 appears until Jan 15, hidden from Jan 16 onward). You can also mark days as Not Active/Skip (example: a habit started in July can skip Jan-Jun days so those dates do not reduce your scores)."
+        title="What's New"
+        description="A faster, cleaner HabiCard is here. Here are the key updates now live:"
         image={
-          <div className="space-y-2">
-            <div className="space-y-1">
-              <p className="text-[11px] font-bold text-stone-700 leading-snug">
-                Skip / Not Active: mark days that should not count against your score.
-              </p>
-              <div className="border-2 border-black bg-amber-50 p-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                <div className="text-[9px] font-black uppercase tracking-widest text-amber-800 mb-1">Sample</div>
-                <div className="flex items-center justify-between bg-white border border-amber-300 px-2 py-1">
-                  <span className="text-xs font-bold text-stone-700">Morning Run (Jan 03)</span>
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 border border-amber-700 bg-amber-300 text-amber-900 text-[10px] font-black uppercase">
-                    <Minus size={10} strokeWidth={3} />
-                    Skip
-                  </span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {[
+              {
+                title: 'Day Card',
+                caption: 'Open any day to view and update that day card.',
+                src: '/whats-new/day-card.png'
+              },
+              {
+                title: 'Dark Mode Setting',
+                caption: 'Use the moon/sun controls in Settings for dark/light.',
+                src: '/whats-new/settings-dark-mode.png'
+              },
+              {
+                title: 'Dashboard Layout',
+                caption: 'Refined panels and monthly breakdown readability.',
+                src: '/whats-new/dashboard-layout.png'
+              },
+              {
+                title: 'Task Flow Updates',
+                caption: 'Faster task status access from each day card.',
+                src: '/whats-new/tasks.png'
+              }
+            ].map((item) => (
+              <div key={item.title} className="border border-stone-300 bg-white p-1 rounded">
+                <img src={item.src} alt={item.title} className="w-full h-20 object-cover border border-stone-200 rounded-sm" />
+                <div className="mt-1">
+                  <div className="text-[9px] font-black uppercase tracking-wider text-stone-800 leading-tight">{item.title}</div>
+                  <div className="text-[8px] font-medium text-stone-500 leading-tight mt-0.5">{item.caption}</div>
                 </div>
               </div>
-            </div>
-
-            <div className="space-y-1">
-              <p className="text-[11px] font-bold text-stone-700 leading-snug">
-                Archive: keep habit history through archive day, then hide it from future dates.
-              </p>
-              <div className="flex items-center justify-between bg-white border border-amber-300 px-2 py-1">
-                <div className="border-2 border-black bg-stone-50 p-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] w-full">
-                  <div className="text-[9px] font-black uppercase tracking-widest text-stone-700 mb-1">Sample</div>
-                  <div className="flex items-center justify-between bg-white border border-stone-300 px-2 py-1">
-                    <span className="text-xs font-bold text-stone-700">Read 20 Pages (Archived Jan 15)</span>
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 border border-black bg-white text-[10px] font-black uppercase">
-                      <Archive size={10} strokeWidth={3} />
-                      Archived
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         }
-        actionLabel="View Dashboard"
+        actionLabel="Try It Now"
         onAction={handleUpdateModalAction}
       />
 
@@ -1208,7 +1205,7 @@ const SignInPage: React.FC = () => {
   const { theme, THEMES } = useTheme();
   const [colorMode, setColorMode] = useState<'light' | 'dark'>(() => {
     const saved = localStorage.getItem('habit_color_mode');
-    return saved === 'light' ? 'light' : 'dark';
+    return saved === 'dark' ? 'dark' : 'light';
   });
   const [currentYear] = useState(new Date().getFullYear());
   const [currentMonthIndex] = useState(new Date().getMonth());

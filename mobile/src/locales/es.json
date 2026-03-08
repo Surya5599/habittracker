@@ -49,54 +49,54 @@
     "story": {
         "annual": {
             "momentum": {
-                "ascending": "Has estado construyendo un gran impulso últimamente, terminando el año más fuerte de lo que empezaste.",
-                "descending": "Tu ritmo reciente se suavizó hacia el final del año. A menudo, esto es una señal para recalibrar, no un fracaso.",
-                "stable": "Tu constancia se ha mantenido notablemente estable a través de las transiciones del año.",
-                "main": "Este año, tu identidad se centró en [[{{habitName}}]]. {{momentumMsg}}"
+                "ascending": "Tu constancia mejoró durante el año, así que estás cerrando más fuerte de lo que empezaste.",
+                "descending": "Tu ritmo bajó en los últimos meses. Tómalo como señal para simplificar y reiniciar tu rutina base.",
+                "stable": "Mantuviste un ritmo estable entre semanas cambiantes, una base sólida para crecer.",
+                "main": "Este año, [[{{habitName}}]] se convirtió en un hábito central de tu identidad. {{momentumMsg}}"
             },
             "rhythm": {
-                "weekend": "Encuentras tu mejor ritmo los fines de semana; es entonces cuando tu identidad realmente brilla.",
-                "weekday": "Eres un guerrero de entre semana, pero los fines de semana tienden a ser un 'punto ciego' para tus hábitos.",
-                "consistent": "Mantienes un ritmo constante durante toda la semana, de lunes a domingo."
+                "weekend": "Tu mejor ritmo aparece en fin de semana. Protege esa ventana y replica una parte entre semana.",
+                "weekday": "Tu estructura entre semana es fuerte, pero el fin de semana es menos constante. Una versión más ligera puede cerrar esa brecha.",
+                "consistent": "Tu ejecución se mantuvo equilibrada entre semana y fin de semana, mostrando control de rutina."
             },
             "consistency": {
-                "high": "Te has presentado [[{{activeDays}}]] días en lo que va del año — suficiente para formar un impulso real de identidad.",
-                "medium": "Tienes la chispa. Con un poco más de ritmo, esto podría volverse automático.",
-                "low": "Estás sentando las bases. La constancia temprana importa más que el volumen."
+                "high": "Te presentaste [[{{activeDays}}]] días este año. Es evidencia clara de una identidad de hábitos duradera.",
+                "medium": "Ya tienes una base confiable. Ajustar un disparador u horario puede volver esto mucho más automático.",
+                "low": "Aún estás construyendo fundamentos. Las victorias pequeñas y repetibles importan más que la intensidad ahora."
             },
-            "experimental": "Experimentaste ampliamente este año. Esa curiosidad es una fortaleza — enfocar el alcance puede desbloquear la constancia.",
-            "fading": "Tu constancia con [[{{habitName}}]] ha bajado significativamente hace poco. Si fue intencional, es claridad. Si no, un pequeño reinicio podría devolverle el enfoque.",
-            "neglected": "No has registrado [[{{habitName}}]] por [[{{days}}]] días. Cuando tenga sentido, una pequeña revisión es suficiente."
+            "experimental": "Exploraste muchos hábitos este año. Elegir menos prioridades en el siguiente ciclo puede multiplicar la constancia.",
+            "fading": "[[{{habitName}}]] se ha enfriado recientemente. Si sigue siendo importante, reinícialo esta semana con una versión más fácil.",
+            "neglected": "[[{{habitName}}]] lleva [[{{days}}]] días inactivo. Una repetición rápida puede reabrir el impulso."
         },
         "weekly": {
             "intro": {
-                "elite": "Estás operando a un nivel de élite con [[{{count}}]] acciones en lo que va de semana. Tus hábitos no son solo acciones; son tu identidad.",
-                "strong": "Fuerte constancia con [[{{count}}]] completados. Estás cumpliendo contigo mismo y el impulso es visible.",
-                "balanced": "Una semana de equilibrio ([[{{count}}]] completados). Algunos cimientos se mantuvieron firmes, otros se pusieron a prueba. Recentrarse es parte del proceso.",
-                "low": "Una semana de baja velocidad con [[{{count}}]] completados. Estos suelen ser periodos de descanso o resistencia; de cualquier modo, son datos para una mejor semana próxima."
+                "elite": "Completaste [[{{count}}]] acciones esta semana y te mantuviste por encima del ritmo esperado. Tu sistema está funcionando.",
+                "strong": "Registraste [[{{count}}]] completados esta semana con buena consistencia.",
+                "balanced": "Completaste [[{{count}}]] acciones esta semana. Algunos hábitos se mantuvieron; otros necesitan una señal más clara.",
+                "low": "Registraste [[{{count}}]] completados esta semana. Mantén el mínimo muy simple y enfócate en reiniciar la constancia."
             },
             "momentum": {
-                "highlight": "Tu identidad fue más fuerte en [[{{habitName}}]] esta semana, con [[{{count}}/{{total}}]] días completados hasta ahora."
+                "highlight": "[[{{habitName}}]] lideró esta semana con [[{{count}}/{{total}}]] días completados."
             },
-            "neglected": "No has registrado [[{{habitName}}]] aún esta semana. Una versión pequeña de 2 minutos mañana podría reiniciar el ritmo.",
+            "neglected": "[[{{habitName}}]] no se registró esta semana. Una versión de 2 minutos mañana basta para retomarlo.",
             "growth": {
-                "recovery": "Terminaste la semana más fuerte de lo que empezaste. Eso es 'capacidad de recuperación' en acción.",
-                "friction": "Tuviste un comienzo potente, pero el fin de semana trajo algo de fricción. Identificar ese 'bajón del viernes' es el primer paso para dominarlo."
+                "recovery": "Tu segunda mitad superó a la primera. Es una recuperación con señal positiva.",
+                "friction": "Tu impulso inicial cayó al final de la semana. Añade una señal de cierre para reducir esa caída."
             }
         },
         "monthly": {
             "intro": {
-                "exceptional": "Un mes de enfoque excepcional ([[{{count}}]] completados hasta ahora). Has integrado con éxito estos hábitos en tu estilo de vida.",
-                "solid": "Progreso sólido este mes. Con [[{{count}}]] completados en total, has establecido una base fuerte de constancia.",
-                "exploration": "Un mes de exploración. [[{{count}}]] completados muestra esfuerzo, pero hay espacio para ajustar tu ritmo para el próximo mes.",
-                "low": "Un mes de poco impulso. Usa los [[{{count}}]] completados que lograste como datos arquitectónicos para un próximo mes más sostenible."
+                "exceptional": "Con [[{{count}}]] completados hasta ahora, este mes muestra una ejecución alta y estable.",
+                "solid": "Alcanzaste [[{{count}}]] completados este mes con constancia confiable.",
+                "exploration": "Registraste [[{{count}}]] completados este mes. Reducir el foco puede mejorar el arrastre al próximo mes.",
+                "low": "Completaste [[{{count}}]] acciones este mes. Úsalo para reiniciar el alcance y reconstruir una base más simple."
             },
             "momentum": {
-                "growth": "Has visto un crecimiento del [[{{delta}}%]] desde el mes pasado; eso es un cambio de identidad significativo en acción.",
-                "cooling": "Tu ritmo se enfrió un [[{{delta}}%]] este mes. Esto es a menudo una señal de ajuste en el equilibrio de vida; úsalo para recalibrar."
+                "growth": "Subiste [[{{delta}}%]] frente al mes pasado: un cambio positivo y claro en ejecución.",
+                "cooling": "Bajaste [[{{delta}}%]] frente al mes pasado. Reducir fricción en un hábito clave puede estabilizar el siguiente mes."
             },
             "rhythm": {
-                "anchor": "Estuviste más dedicado a [[{{habitName}}]] este mes, presentándote [[{{count}}]] veces. Ese es tu ancla actual."
+                "anchor": "[[{{habitName}}]] fue tu ancla del mes con [[{{count}}]] completados."
             }
         }
     },

@@ -122,63 +122,72 @@ export const buildWeeklyStory = (weekProgress: any, weeklyStats: any[], habits: 
     const sections: StorySection[] = [];
     const completedCount = weekProgress.completed;
     const habitsCount = habits.length;
-
-    // Pro-rated rate
-    const totalPossibleSoFar = habitsCount * daysElapsed;
-    const rate = totalPossibleSoFar > 0 ? (completedCount / totalPossibleSoFar) * 100 : 0;
-
-    // 0. Identity Driver
+    const elapsed = Math.min(Math.max(daysElapsed, 1), 7);
     const topHabit = weekProgress.habitPerformance?.[0];
-    const lowHabit = [...(weekProgress.habitPerformance || [])].reverse().find(h => h.completed === 0);
+    const lowHabit = [...(weekProgress.habitPerformance || [])].reverse().find((h: any) => h.completed === 0);
 
-    // 1. Initial Reflection
-    let intro = "";
-    if (rate >= 90) intro = t('story.weekly.intro.elite', { count: completedCount });
-    else if (rate >= 70) intro = t('story.weekly.intro.strong', { count: completedCount });
-    else if (rate >= 40) intro = t('story.weekly.intro.balanced', { count: completedCount });
-    else intro = t('story.weekly.intro.low', { count: completedCount });
+    const weekTotal = Number(weekProgress.total) || 0;
+    const expectedSoFar = weekTotal > 0 ? weekTotal * (elapsed / 7) : 0;
+    const paceRate = expectedSoFar > 0 ? (completedCount / expectedSoFar) * 100 : 0;
 
-    sections.push({
-        type: 'consistency',
-        text: intro,
-        priority: 1
-    });
+    let intro = '';
+    if (habitsCount === 0) {
+        intro = 'Your week is open. Add one habit to start generating personal insights and trend patterns.';
+    } else if (paceRate >= 110) {
+        intro = `You completed [[${completedCount}]] actions across [[${habitsCount}]] habits, running ahead at about [[${paceRate.toFixed(0)}%]] of your expected weekly pace.`;
+    } else if (paceRate >= 85) {
+        intro = `You completed [[${completedCount}]] actions across [[${habitsCount}]] habits and are on a steady track at [[${paceRate.toFixed(0)}%]] of your expected pace.`;
+    } else if (paceRate >= 60) {
+        intro = `You logged [[${completedCount}]] actions this week. You're at [[${paceRate.toFixed(0)}%]] of pace, so one focused day can quickly lift your result.`;
+    } else {
+        intro = `You logged [[${completedCount}]] actions so far. This week is still recoverable: a simple minimum version of each habit can rebuild momentum fast.`;
+    }
 
-    // 2. Habit Highlights
-    if (topHabit && topHabit.completed >= Math.max(1, Math.floor(daysElapsed * 0.6))) {
+    sections.push({ type: 'consistency', text: intro, priority: 1 });
+
+    if (topHabit && topHabit.completed > 0) {
         sections.push({
             type: 'momentum',
-            text: t('story.weekly.momentum.highlight', { habitName: topHabit.name.toUpperCase(), count: topHabit.completed, total: daysElapsed }),
+            text: `Strongest anchor: [[${topHabit.name}]] was completed [[${topHabit.completed}]] time${topHabit.completed === 1 ? '' : 's'} this week.`,
             priority: 2
         });
     }
 
-    if (lowHabit && daysElapsed >= 3) {
-        sections.push({
-            type: 'neglected',
-            text: t('story.weekly.neglected', { habitName: lowHabit.name.toUpperCase() }),
-            priority: 4
-        });
-    }
+    const observedStats = weeklyStats.slice(0, elapsed);
+    if (observedStats.length >= 3) {
+        const bestDay = [...observedStats].sort((a, b) => b.count - a.count)[0];
+        const quietDay = [...observedStats].sort((a, b) => a.count - b.count)[0];
+        const spread = (bestDay?.count || 0) - (quietDay?.count || 0);
+        const firstHalf = observedStats.slice(0, Math.ceil(observedStats.length / 2)).reduce((sum, d) => sum + d.count, 0);
+        const secondHalf = observedStats.slice(Math.ceil(observedStats.length / 2)).reduce((sum, d) => sum + d.count, 0);
 
-    // 3. Growth vs Resistance (Only relevant if more than 4 days have passed)
-    if (daysElapsed >= 5) {
-        const midWeekStrength = weeklyStats.slice(0, 4).reduce((acc, curr) => acc + curr.count, 0);
-        const endWeekStrength = weeklyStats.slice(4).reduce((acc, curr) => acc + curr.count, 0);
-
-        if (endWeekStrength > midWeekStrength && rate > 30) {
-            sections.push({
-                type: 'momentum',
-                text: t('story.weekly.growth.recovery'),
-                priority: 3
-            });
-        } else if (midWeekStrength > endWeekStrength + 5) {
+        if (spread >= 2) {
             sections.push({
                 type: 'rhythm',
-                text: t('story.weekly.growth.friction'),
+                text: `Rhythm insight: your strongest day was [[${bestDay.displayDay}]] (${bestDay.count}), while [[${quietDay.displayDay}]] was lighter (${quietDay.count}). Planning one short session on lighter days can smooth consistency.`,
+                priority: 3
+            });
+        } else if (secondHalf > firstHalf + 1) {
+            sections.push({
+                type: 'momentum',
+                text: 'Rhythm insight: you are finishing stronger than you started this week, which usually signals good recovery and adaptation.',
+                priority: 3
+            });
+        } else if (firstHalf > secondHalf + 1) {
+            sections.push({
+                type: 'fading',
+                text: 'Rhythm insight: your early-week energy is stronger than your late-week follow-through. A lighter Friday/Saturday version could protect momentum.',
                 priority: 3
             });
         }
+    }
+
+    if (lowHabit && habitsCount > 1 && elapsed >= 3) {
+        sections.push({
+            type: 'neglected',
+            text: `Opportunity area: [[${lowHabit.name}]] has no check-ins yet. A 5-minute starter version is enough to get it moving.`,
+            priority: 4
+        });
     }
 
     return {
@@ -191,45 +200,55 @@ export const buildWeeklyStory = (weekProgress: any, weeklyStats: any[], habits: 
 export const buildMonthlyStory = (monthProgress: any, topHabits: any[], monthDelta: number, t: any, daysElapsed: number = 30): StoryResult => {
     const sections: StorySection[] = [];
     const completedCount = monthProgress.completed;
-    const habitsCount = topHabits.length || 1; // Fallback to avoid div by zero
+    const habitsCount = topHabits.length;
+    const elapsed = Math.max(daysElapsed, 1);
 
-    // Pro-rated rate
-    const totalPossibleSoFar = habitsCount * daysElapsed;
-    const rate = totalPossibleSoFar > 0 ? (completedCount / totalPossibleSoFar) * 100 : monthProgress.percentage;
+    const monthTotal = Number(monthProgress.total) || 0;
+    const expectedSoFar = monthTotal > 0 ? monthTotal * (elapsed / 30) : 0;
+    const paceRate = expectedSoFar > 0 ? (completedCount / expectedSoFar) * 100 : (monthProgress.percentage || 0);
 
-    // 1. Monthly Reflection
-    let intro = "";
-    if (rate >= 80) intro = t('story.monthly.intro.exceptional', { count: completedCount });
-    else if (rate >= 60) intro = t('story.monthly.intro.solid', { count: completedCount });
-    else if (rate >= 30) intro = t('story.monthly.intro.exploration', { count: completedCount });
-    else intro = t('story.monthly.intro.low', { count: completedCount });
+    let intro = '';
+    if (habitsCount === 0) {
+        intro = 'Your month is open. Add a habit to start seeing monthly trend insights and stronger pattern detection.';
+    } else if (paceRate >= 110) {
+        intro = `You completed [[${completedCount}]] actions this month, running ahead at about [[${paceRate.toFixed(0)}%]] of your expected pace.`;
+    } else if (paceRate >= 85) {
+        intro = `You completed [[${completedCount}]] actions this month and are tracking steadily at [[${paceRate.toFixed(0)}%]] of pace.`;
+    } else if (paceRate >= 60) {
+        intro = `You logged [[${completedCount}]] actions so far this month. You're at [[${paceRate.toFixed(0)}%]] of pace, and consistency in the next few days can close the gap.`;
+    } else {
+        intro = `You logged [[${completedCount}]] actions this month. A reset is still easy: return to a minimum version of each habit for the next 3 days.`;
+    }
 
-    sections.push({
-        type: 'consistency',
-        text: intro,
-        priority: 1
-    });
+    sections.push({ type: 'consistency', text: intro, priority: 1 });
 
-    // 2. Momentum / Delta
-    if (Math.abs(monthDelta) > 5) {
-        const momentumText = monthDelta > 0
-            ? t('story.monthly.momentum.growth', { delta: monthDelta.toFixed(0) })
-            : t('story.monthly.momentum.cooling', { delta: Math.abs(monthDelta).toFixed(0) });
+    if (Math.abs(monthDelta) >= 4) {
+        const trendText = monthDelta > 0
+            ? `Trend insight: you're up [[${monthDelta.toFixed(0)}%]] versus last month, showing clear month-over-month progress.`
+            : `Trend insight: you're down [[${Math.abs(monthDelta).toFixed(0)}%]] versus last month. A lighter but daily baseline can stabilize the month quickly.`;
 
         sections.push({
-            type: 'momentum',
-            text: momentumText,
+            type: monthDelta > 0 ? 'momentum' : 'fading',
+            text: trendText,
             priority: 2
         });
     }
 
-    // 3. Top Habit Highlight
     const topHabit = topHabits?.[0];
-    if (topHabit && topHabit.percentage > 50) {
+    if (topHabit && topHabit.stats?.completed > 0) {
         sections.push({
             type: 'rhythm',
-            text: t('story.monthly.rhythm.anchor', { habitName: topHabit.name.toUpperCase(), count: topHabit.stats.completed }),
+            text: `Strongest monthly anchor: [[${topHabit.name}]] with [[${topHabit.stats.completed}]] completions. Protecting this anchor helps the rest of your habits stay on track.`,
             priority: 3
+        });
+    }
+
+    const improvementHabit = [...(topHabits || [])].reverse().find((h: any) => (h.stats?.completed || 0) === 0 || (h.percentage || 0) < 20);
+    if (improvementHabit && habitsCount > 1) {
+        sections.push({
+            type: 'neglected',
+            text: `Opportunity area: [[${improvementHabit.name}]] is currently underused. A fixed time slot twice a week can make this habit visible again.`,
+            priority: 4
         });
     }
 

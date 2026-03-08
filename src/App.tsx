@@ -847,7 +847,7 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="h-[100svh] overflow-hidden bg-[#e5e5e5] p-2 sm:p-4 pb-20 sm:pb-4 font-sans text-[#444] relative w-full max-w-full">
+    <div className="min-h-[100svh] md:h-[100svh] overflow-y-auto md:overflow-hidden bg-[#e5e5e5] p-2 sm:p-4 pb-20 sm:pb-4 font-sans text-[#444] relative w-full max-w-full">
 
       <Toaster position="top-center" reverseOrder={false} />
 
@@ -922,7 +922,7 @@ const AppContent: React.FC = () => {
         onAction={handleUpdateModalAction}
       />
 
-      <div className="max-w-full h-full mx-auto bg-white border-[2px] sm:border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] p-2 sm:p-4 flex flex-col gap-4 overflow-hidden">
+      <div className="max-w-full md:h-full mx-auto bg-white border-[2px] sm:border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] p-2 sm:p-4 flex flex-col gap-4 overflow-visible md:overflow-hidden">
 
         <Header
           view={view}
@@ -1069,7 +1069,7 @@ const AppContent: React.FC = () => {
           document.body
         )}
 
-        <div className={`flex-1 min-h-0 ${view === 'weekly' ? 'overflow-y-auto md:overflow-hidden' : 'overflow-y-auto'}`}>
+        <div className={`flex-1 min-h-0 ${view === 'weekly' ? 'overflow-visible md:overflow-hidden' : 'overflow-visible md:overflow-y-auto'}`}>
           {view === 'monthly' ? (
             <MonthlyView
               habits={habits}

@@ -121,5 +121,10 @@
             "nov": "Nov",
             "dec": "Dic"
         }
+    },
+    "dailyCard": {
+        "addTasks": "Aggiungi attività",
+        "noTasksToday": "Nessuna attività oggi",
+        "tasksStatus": "{{completed}}/{{total}} Attività"
     }
 }

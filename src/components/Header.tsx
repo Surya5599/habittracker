@@ -692,7 +692,7 @@ export const Header: React.FC<HeaderProps> = ({
                                         <div className="space-y-3">
                                             <div className="flex items-center gap-2 mb-1">
                                                 <Sparkles size={12} className="text-amber-500" />
-                                                <span className="text-[9px] font-black uppercase tracking-widest text-stone-500">Your Story This Month</span>
+                                                <span className="text-[9px] font-black uppercase tracking-widest text-stone-500">{t('header.yourStoryMonth')}</span>
                                             </div>
                                             {story.sections.map((section: any, idx: number) => (
                                                 <p key={idx} className="text-[11px] leading-relaxed font-bold">
@@ -748,7 +748,7 @@ export const Header: React.FC<HeaderProps> = ({
                                         <div className="space-y-3">
                                             <div className="flex items-center gap-2 mb-1">
                                                 <Sparkles size={12} className="text-amber-500" />
-                                                <span className="text-[9px] font-black uppercase tracking-widest text-stone-500">Your Story This Week</span>
+                                                <span className="text-[9px] font-black uppercase tracking-widest text-stone-500">{t('header.yourStoryWeek')}</span>
                                             </div>
                                             {story.sections.map((section: any, idx: number) => (
                                                 <p key={idx} className="text-[11px] leading-relaxed font-bold">

@@ -121,5 +121,10 @@
             "nov": "十一月",
             "dec": "十二月"
         }
+    },
+    "dailyCard": {
+        "addTasks": "添加任务",
+        "noTasksToday": "今日无任务",
+        "tasksStatus": "{{completed}}/{{total}} 个任务"
     }
 }

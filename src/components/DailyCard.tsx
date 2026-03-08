@@ -539,7 +539,9 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                             className={`text-[8px] font-black uppercase tracking-wide py-1 px-1 rounded border transition-colors ${totalTasksCount > 0 ? 'bg-white border-stone-300 text-stone-700 hover:bg-stone-50' : 'bg-stone-100 border-stone-300 text-stone-500 hover:bg-stone-200'}`}
                             title="Open tasks"
                         >
-                            {totalTasksCount > 0 ? `${completedTasksCount}/${totalTasksCount} Tasks` : 'Add Tasks'}
+                            {totalTasksCount > 0
+                                ? t('dailyCard.tasksStatus', { completed: completedTasksCount, total: totalTasksCount })
+                                : t('dailyCard.addTasks')}
                         </button>
                         <button
                             onClick={openJournalView}
@@ -709,7 +711,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 ))}
                 {(!dayData.tasks || dayData.tasks.length === 0) && (
                     <div className="text-[10px] text-stone-400 text-center py-4 italic">
-                        No Tasks Today
+                        {t('dailyCard.noTasksToday')}
                     </div>
                 )}
             </div>

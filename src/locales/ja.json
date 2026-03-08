@@ -121,5 +121,10 @@
             "nov": "11月",
             "dec": "12月"
         }
+    },
+    "dailyCard": {
+        "addTasks": "タスク追加",
+        "noTasksToday": "今日のタスクはありません",
+        "tasksStatus": "{{completed}}/{{total}} タスク"
     }
 }

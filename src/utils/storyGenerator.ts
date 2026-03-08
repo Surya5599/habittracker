@@ -131,16 +131,14 @@ export const buildWeeklyStory = (weekProgress: any, weeklyStats: any[], habits: 
     const paceRate = expectedSoFar > 0 ? (completedCount / expectedSoFar) * 100 : 0;
 
     let intro = '';
-    if (habitsCount === 0) {
-        intro = 'Your week is open. Add one habit to start generating personal insights and trend patterns.';
-    } else if (paceRate >= 110) {
-        intro = `You completed [[${completedCount}]] actions across [[${habitsCount}]] habits, running ahead at about [[${paceRate.toFixed(0)}%]] of your expected weekly pace.`;
+    if (paceRate >= 110) {
+        intro = t('story.weekly.intro.elite', { count: completedCount });
     } else if (paceRate >= 85) {
-        intro = `You completed [[${completedCount}]] actions across [[${habitsCount}]] habits and are on a steady track at [[${paceRate.toFixed(0)}%]] of your expected pace.`;
+        intro = t('story.weekly.intro.strong', { count: completedCount });
     } else if (paceRate >= 60) {
-        intro = `You logged [[${completedCount}]] actions this week. You're at [[${paceRate.toFixed(0)}%]] of pace, so one focused day can quickly lift your result.`;
+        intro = t('story.weekly.intro.balanced', { count: completedCount });
     } else {
-        intro = `You logged [[${completedCount}]] actions so far. This week is still recoverable: a simple minimum version of each habit can rebuild momentum fast.`;
+        intro = t('story.weekly.intro.low', { count: completedCount });
     }
 
     sections.push({ type: 'consistency', text: intro, priority: 1 });
@@ -148,7 +146,11 @@ export const buildWeeklyStory = (weekProgress: any, weeklyStats: any[], habits: 
     if (topHabit && topHabit.completed > 0) {
         sections.push({
             type: 'momentum',
-            text: `Strongest anchor: [[${topHabit.name}]] was completed [[${topHabit.completed}]] time${topHabit.completed === 1 ? '' : 's'} this week.`,
+            text: t('story.weekly.momentum.highlight', {
+                habitName: topHabit.name,
+                count: topHabit.completed,
+                total: elapsed
+            }),
             priority: 2
         });
     }
@@ -161,22 +163,16 @@ export const buildWeeklyStory = (weekProgress: any, weeklyStats: any[], habits: 
         const firstHalf = observedStats.slice(0, Math.ceil(observedStats.length / 2)).reduce((sum, d) => sum + d.count, 0);
         const secondHalf = observedStats.slice(Math.ceil(observedStats.length / 2)).reduce((sum, d) => sum + d.count, 0);
 
-        if (spread >= 2) {
-            sections.push({
-                type: 'rhythm',
-                text: `Rhythm insight: your strongest day was [[${bestDay.displayDay}]] (${bestDay.count}), while [[${quietDay.displayDay}]] was lighter (${quietDay.count}). Planning one short session on lighter days can smooth consistency.`,
-                priority: 3
-            });
-        } else if (secondHalf > firstHalf + 1) {
+        if (secondHalf > firstHalf + 1) {
             sections.push({
                 type: 'momentum',
-                text: 'Rhythm insight: you are finishing stronger than you started this week, which usually signals good recovery and adaptation.',
+                text: t('story.weekly.growth.recovery'),
                 priority: 3
             });
-        } else if (firstHalf > secondHalf + 1) {
+        } else if (firstHalf > secondHalf + 1 || spread >= 2) {
             sections.push({
                 type: 'fading',
-                text: 'Rhythm insight: your early-week energy is stronger than your late-week follow-through. A lighter Friday/Saturday version could protect momentum.',
+                text: t('story.weekly.growth.friction'),
                 priority: 3
             });
         }
@@ -185,7 +181,7 @@ export const buildWeeklyStory = (weekProgress: any, weeklyStats: any[], habits: 
     if (lowHabit && habitsCount > 1 && elapsed >= 3) {
         sections.push({
             type: 'neglected',
-            text: `Opportunity area: [[${lowHabit.name}]] has no check-ins yet. A 5-minute starter version is enough to get it moving.`,
+            text: t('story.weekly.neglected', { habitName: lowHabit.name }),
             priority: 4
         });
     }
@@ -208,24 +204,22 @@ export const buildMonthlyStory = (monthProgress: any, topHabits: any[], monthDel
     const paceRate = expectedSoFar > 0 ? (completedCount / expectedSoFar) * 100 : (monthProgress.percentage || 0);
 
     let intro = '';
-    if (habitsCount === 0) {
-        intro = 'Your month is open. Add a habit to start seeing monthly trend insights and stronger pattern detection.';
-    } else if (paceRate >= 110) {
-        intro = `You completed [[${completedCount}]] actions this month, running ahead at about [[${paceRate.toFixed(0)}%]] of your expected pace.`;
+    if (paceRate >= 110) {
+        intro = t('story.monthly.intro.exceptional', { count: completedCount });
     } else if (paceRate >= 85) {
-        intro = `You completed [[${completedCount}]] actions this month and are tracking steadily at [[${paceRate.toFixed(0)}%]] of pace.`;
+        intro = t('story.monthly.intro.solid', { count: completedCount });
     } else if (paceRate >= 60) {
-        intro = `You logged [[${completedCount}]] actions so far this month. You're at [[${paceRate.toFixed(0)}%]] of pace, and consistency in the next few days can close the gap.`;
+        intro = t('story.monthly.intro.exploration', { count: completedCount });
     } else {
-        intro = `You logged [[${completedCount}]] actions this month. A reset is still easy: return to a minimum version of each habit for the next 3 days.`;
+        intro = t('story.monthly.intro.low', { count: completedCount });
     }
 
     sections.push({ type: 'consistency', text: intro, priority: 1 });
 
     if (Math.abs(monthDelta) >= 4) {
         const trendText = monthDelta > 0
-            ? `Trend insight: you're up [[${monthDelta.toFixed(0)}%]] versus last month, showing clear month-over-month progress.`
-            : `Trend insight: you're down [[${Math.abs(monthDelta).toFixed(0)}%]] versus last month. A lighter but daily baseline can stabilize the month quickly.`;
+            ? t('story.monthly.momentum.growth', { delta: monthDelta.toFixed(0) })
+            : t('story.monthly.momentum.cooling', { delta: Math.abs(monthDelta).toFixed(0) });
 
         sections.push({
             type: monthDelta > 0 ? 'momentum' : 'fading',
@@ -238,17 +232,8 @@ export const buildMonthlyStory = (monthProgress: any, topHabits: any[], monthDel
     if (topHabit && topHabit.stats?.completed > 0) {
         sections.push({
             type: 'rhythm',
-            text: `Strongest monthly anchor: [[${topHabit.name}]] with [[${topHabit.stats.completed}]] completions. Protecting this anchor helps the rest of your habits stay on track.`,
+            text: t('story.monthly.rhythm.anchor', { habitName: topHabit.name, count: topHabit.stats.completed }),
             priority: 3
-        });
-    }
-
-    const improvementHabit = [...(topHabits || [])].reverse().find((h: any) => (h.stats?.completed || 0) === 0 || (h.percentage || 0) < 20);
-    if (improvementHabit && habitsCount > 1) {
-        sections.push({
-            type: 'neglected',
-            text: `Opportunity area: [[${improvementHabit.name}]] is currently underused. A fixed time slot twice a week can make this habit visible again.`,
-            priority: 4
         });
     }
 

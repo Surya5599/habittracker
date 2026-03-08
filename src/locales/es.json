@@ -146,7 +146,10 @@
             "neutral": "Neutral",
             "good": "Bien",
             "veryGood": "Muy bien"
-        }
+        },
+        "addTasks": "Agregar tareas",
+        "noTasksToday": "No hay tareas hoy",
+        "tasksStatus": "{{completed}}/{{total}} Tareas"
     },
     "habitManager": {
         "title": "Mis Hábitos",

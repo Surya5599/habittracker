@@ -126,5 +126,114 @@
         "addTasks": "添加任务",
         "noTasksToday": "今日无任务",
         "tasksStatus": "{{completed}}/{{total}} 个任务"
+    },
+    "onboarding": {
+        "getStarted": "开始",
+        "stepOf": "步骤 {{current}} / {{total}}",
+        "back": "返回",
+        "next": "下一步",
+        "finish": "完成",
+        "skip": "跳过",
+        "settingsNote": "这些设置之后也可以在“设置”菜单中修改。",
+        "manageHabitsHint": "在这里管理你的全部习惯。",
+        "optionalDescription": "可选描述",
+        "fixedDescription": "选择每周固定的日期。",
+        "flexibleDescription": "设置每周完成次数。",
+        "step4Explanation": "勾选习惯会标记为完成。右键（或长按）会标记为跳过，不会影响你的分析数据。",
+        "steps": {
+            "language": {
+                "title": "选择语言",
+                "subtitle": "选择应用语言。"
+            },
+            "theme": {
+                "title": "选择颜色",
+                "subtitle": "选择应用配色风格。"
+            },
+            "startOfWeek": {
+                "title": "选择每周开始日",
+                "subtitle": "选择周一或周日。"
+            },
+            "firstHabit": {
+                "title": "创建第一个习惯",
+                "subtitle": "先创建一个习惯开始使用。"
+            },
+            "dailyCard": {
+                "title": "使用每日卡片",
+                "subtitle": "在每日卡片中完成、跳过和取消勾选。"
+            },
+            "openJournal": {
+                "title": "打开 Journal",
+                "subtitle": "点击卡片状态栏中的 Journal。"
+            },
+            "saveJournal": {
+                "title": "保存 Journal",
+                "subtitle": "选择心情，输入内容并保存。"
+            },
+            "openTasks": {
+                "title": "打开 Tasks",
+                "subtitle": "点击卡片状态栏中的 Tasks。"
+            },
+            "taskFlow": {
+                "title": "创建并完成任务",
+                "subtitle": "添加一个任务并将其完成。"
+            },
+            "analytics": {
+                "title": "分析预览",
+                "subtitle": "快速查看你将使用的分析视图。"
+            }
+        },
+        "hints": {
+            "clickLanguage": "点击这里选择语言",
+            "clickTheme": "点击这里选择颜色",
+            "clickStartDay": "点击这里选择开始日",
+            "typeHabitName": "在这里输入习惯名称",
+            "clickJournal": "点击 Journal",
+            "selectMood": "选择心情",
+            "typeJournal": "输入 Journal 内容",
+            "clickSave": "点击保存",
+            "clickTasks": "点击 Tasks",
+            "clickNewTask": "点击新建任务",
+            "giveTaskName": "输入任务名称",
+            "checkItOff": "勾选完成",
+            "clickCheckbox": "点击复选框",
+            "rightClickLongPress": "右键 / 长按",
+            "clickAgain": "再次点击",
+            "pickMood": "选择心情",
+            "typeJournalSave": "输入 Journal + 保存",
+            "great": "很好"
+        },
+        "analytics": {
+            "consistencyRing": "一致性环",
+            "weeklyTrend": "每周趋势",
+            "habitBreakdown": "习惯分解",
+            "markSeen": "标记预览为已查看",
+            "previewViewed": "预览已查看",
+            "sample": {
+                "reading": "阅读",
+                "workout": "锻炼",
+                "journal": "Journal"
+            }
+        },
+        "progress": {
+            "completedDone": "完成：已完成",
+            "completedPending": "完成：待完成",
+            "skippedDone": "跳过：已完成",
+            "skippedPending": "跳过：待完成",
+            "uncheckedDone": "取消勾选：已完成",
+            "uncheckedPending": "取消勾选：待完成"
+        },
+        "days": {
+            "monday": "周一",
+            "sunday": "周日"
+        },
+        "daysShort": {
+            "su": "日",
+            "mo": "一",
+            "tu": "二",
+            "we": "三",
+            "th": "四",
+            "fr": "五",
+            "sa": "六"
+        }
     }
 }

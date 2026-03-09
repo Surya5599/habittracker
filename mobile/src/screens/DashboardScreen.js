@@ -9,9 +9,22 @@ import { NeoButton } from '../components/NeoComponents';
 export const DashboardScreen = ({ onLogout }) => {
     const { t } = useTranslation();
     const handleLogout = async () => {
-        await supabase.auth.signOut();
-        await AsyncStorage.removeItem('habit_guest_mode');
-        if (onLogout) onLogout();
+        try {
+            const { error } = await supabase.auth.signOut();
+            if (error) {
+                const message = (error.message || '').toLowerCase();
+                const isMissingSessionError =
+                    message.includes('session not found') ||
+                    message.includes('auth session missing');
+                if (!isMissingSessionError) {
+                    console.error('Sign out failed:', error);
+                }
+            }
+            await AsyncStorage.removeItem('habit_guest_mode');
+            if (onLogout) onLogout();
+        } catch (err) {
+            console.error('Sign out failed:', err);
+        }
     };
 
     return (

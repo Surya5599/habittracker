@@ -126,5 +126,114 @@
         "addTasks": "Aggiungi attività",
         "noTasksToday": "Nessuna attività oggi",
         "tasksStatus": "{{completed}}/{{total}} Attività"
+    },
+    "onboarding": {
+        "getStarted": "Inizia",
+        "stepOf": "Passo {{current}} / {{total}}",
+        "back": "Indietro",
+        "next": "Avanti",
+        "finish": "Fine",
+        "skip": "Salta",
+        "settingsNote": "Puoi modificare queste impostazioni più tardi nel menu Impostazioni.",
+        "manageHabitsHint": "Usa questo per gestire tutte le tue abitudini.",
+        "optionalDescription": "Descrizione facoltativa",
+        "fixedDescription": "Scegli giorni specifici ogni settimana.",
+        "flexibleDescription": "Imposta quante volte a settimana.",
+        "step4Explanation": "Spuntare l’abitudine la segna come completata. Clic destro (o pressione prolungata su touch) la segna come saltata e non influisce sulle analisi.",
+        "steps": {
+            "language": {
+                "title": "Seleziona lingua",
+                "subtitle": "Scegli la lingua dell’app."
+            },
+            "theme": {
+                "title": "Seleziona colore",
+                "subtitle": "Scegli lo stile colore dell’app."
+            },
+            "startOfWeek": {
+                "title": "Seleziona inizio settimana",
+                "subtitle": "Scegli lunedì o domenica."
+            },
+            "firstHabit": {
+                "title": "Crea la prima abitudine",
+                "subtitle": "Crea un’abitudine per iniziare."
+            },
+            "dailyCard": {
+                "title": "Usa la scheda giornaliera",
+                "subtitle": "Usa la scheda per completare, saltare e deselezionare."
+            },
+            "openJournal": {
+                "title": "Apri Journal",
+                "subtitle": "Tocca Journal nella barra di stato della scheda."
+            },
+            "saveJournal": {
+                "title": "Salva Journal",
+                "subtitle": "Scegli un umore, scrivi qualcosa e salva."
+            },
+            "openTasks": {
+                "title": "Apri Tasks",
+                "subtitle": "Tocca Tasks nella barra di stato della scheda."
+            },
+            "taskFlow": {
+                "title": "Crea e completa attività",
+                "subtitle": "Aggiungi un’attività e completala."
+            },
+            "analytics": {
+                "title": "Anteprima analisi",
+                "subtitle": "Panoramica rapida delle analisi che userai."
+            }
+        },
+        "hints": {
+            "clickLanguage": "Clicca una lingua",
+            "clickTheme": "Clicca un colore",
+            "clickStartDay": "Clicca il giorno iniziale",
+            "typeHabitName": "Scrivi il nome dell’abitudine",
+            "clickJournal": "Clicca Journal",
+            "selectMood": "Seleziona umore",
+            "typeJournal": "Scrivi in Journal",
+            "clickSave": "Clicca Salva",
+            "clickTasks": "Clicca Tasks",
+            "clickNewTask": "Clicca Nuova attività",
+            "giveTaskName": "Dai un nome all’attività",
+            "checkItOff": "Spuntala",
+            "clickCheckbox": "Clicca la casella",
+            "rightClickLongPress": "Clic destro / pressione prolungata",
+            "clickAgain": "Clicca di nuovo",
+            "pickMood": "Scegli umore",
+            "typeJournalSave": "Scrivi in Journal + salva",
+            "great": "Ottimo"
+        },
+        "analytics": {
+            "consistencyRing": "Anello di costanza",
+            "weeklyTrend": "Trend settimanale",
+            "habitBreakdown": "Ripartizione abitudini",
+            "markSeen": "Segna anteprima come vista",
+            "previewViewed": "Anteprima vista",
+            "sample": {
+                "reading": "Lettura",
+                "workout": "Allenamento",
+                "journal": "Journal"
+            }
+        },
+        "progress": {
+            "completedDone": "Completato: fatto",
+            "completedPending": "Completato: in attesa",
+            "skippedDone": "Saltato: fatto",
+            "skippedPending": "Saltato: in attesa",
+            "uncheckedDone": "Deselezionato: fatto",
+            "uncheckedPending": "Deselezionato: in attesa"
+        },
+        "days": {
+            "monday": "Lunedì",
+            "sunday": "Domenica"
+        },
+        "daysShort": {
+            "su": "D",
+            "mo": "L",
+            "tu": "M",
+            "we": "M",
+            "th": "G",
+            "fr": "V",
+            "sa": "S"
+        }
     }
 }

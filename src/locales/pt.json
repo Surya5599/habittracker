@@ -126,5 +126,114 @@
         "addTasks": "Adicionar tarefas",
         "noTasksToday": "Sem tarefas hoje",
         "tasksStatus": "{{completed}}/{{total}} Tarefas"
+    },
+    "onboarding": {
+        "getStarted": "Começar",
+        "stepOf": "Etapa {{current}} / {{total}}",
+        "back": "Voltar",
+        "next": "Próximo",
+        "finish": "Concluir",
+        "skip": "Pular",
+        "settingsNote": "Você pode alterar essas configurações depois no menu Configurações.",
+        "manageHabitsHint": "Use isto para gerenciar todos os seus hábitos.",
+        "optionalDescription": "Descrição opcional",
+        "fixedDescription": "Escolha dias específicos a cada semana.",
+        "flexibleDescription": "Defina quantas vezes por semana.",
+        "step4Explanation": "Marcar o hábito o define como concluído. Clique com o botão direito (ou toque longo no celular) marca como pulado, sem afetar suas análises.",
+        "steps": {
+            "language": {
+                "title": "Selecionar idioma",
+                "subtitle": "Escolha o idioma do app."
+            },
+            "theme": {
+                "title": "Selecionar cor",
+                "subtitle": "Escolha o estilo de cor do app."
+            },
+            "startOfWeek": {
+                "title": "Selecionar início da semana",
+                "subtitle": "Escolha segunda ou domingo."
+            },
+            "firstHabit": {
+                "title": "Criar primeiro hábito",
+                "subtitle": "Crie um hábito para começar."
+            },
+            "dailyCard": {
+                "title": "Usar cartão diário",
+                "subtitle": "Use o cartão diário para concluir, pular e desmarcar."
+            },
+            "openJournal": {
+                "title": "Abrir Journal",
+                "subtitle": "Toque em Journal na barra de status do cartão."
+            },
+            "saveJournal": {
+                "title": "Salvar Journal",
+                "subtitle": "Escolha um humor, escreva algo e salve."
+            },
+            "openTasks": {
+                "title": "Abrir Tasks",
+                "subtitle": "Toque em Tasks na barra de status do cartão."
+            },
+            "taskFlow": {
+                "title": "Criar e concluir tarefa",
+                "subtitle": "Adicione uma tarefa e conclua."
+            },
+            "analytics": {
+                "title": "Prévia de análises",
+                "subtitle": "Visão rápida das análises que você vai usar."
+            }
+        },
+        "hints": {
+            "clickLanguage": "Clique em um idioma",
+            "clickTheme": "Clique em uma cor",
+            "clickStartDay": "Clique no dia inicial",
+            "typeHabitName": "Digite um nome para o hábito",
+            "clickJournal": "Clique em Journal",
+            "selectMood": "Selecione o humor",
+            "typeJournal": "Digite no Journal",
+            "clickSave": "Clique em Salvar",
+            "clickTasks": "Clique em Tasks",
+            "clickNewTask": "Clique em Nova tarefa",
+            "giveTaskName": "Dê um nome para a tarefa",
+            "checkItOff": "Marque como concluída",
+            "clickCheckbox": "Clique na caixa",
+            "rightClickLongPress": "Clique direito / toque longo",
+            "clickAgain": "Clique novamente",
+            "pickMood": "Escolha o humor",
+            "typeJournalSave": "Digite no Journal + salve",
+            "great": "Ótimo"
+        },
+        "analytics": {
+            "consistencyRing": "Anel de consistência",
+            "weeklyTrend": "Tendência semanal",
+            "habitBreakdown": "Resumo dos hábitos",
+            "markSeen": "Marcar prévia como vista",
+            "previewViewed": "Prévia vista",
+            "sample": {
+                "reading": "Leitura",
+                "workout": "Treino",
+                "journal": "Journal"
+            }
+        },
+        "progress": {
+            "completedDone": "Concluído: feito",
+            "completedPending": "Concluído: pendente",
+            "skippedDone": "Pulado: feito",
+            "skippedPending": "Pulado: pendente",
+            "uncheckedDone": "Desmarcado: feito",
+            "uncheckedPending": "Desmarcado: pendente"
+        },
+        "days": {
+            "monday": "Segunda",
+            "sunday": "Domingo"
+        },
+        "daysShort": {
+            "su": "D",
+            "mo": "S",
+            "tu": "T",
+            "we": "Q",
+            "th": "Q",
+            "fr": "S",
+            "sa": "S"
+        }
     }
 }

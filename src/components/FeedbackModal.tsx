@@ -1,8 +1,11 @@
 
-const ADMIN_EMAILS = ['knowheredeveloper@gmail.com']; // Replace with actual admin emails
+const ADMIN_EMAILS = ((import.meta.env.VITE_ADMIN_EMAILS as string | undefined) || 'admin@habicard.com,knowheredeveloper@gmail.com')
+    .split(',')
+    .map(email => email.trim().toLowerCase())
+    .filter(Boolean);
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { X, MessageSquare, Bug, Send, Clock, ChevronRight, User, Shield, Reply } from 'lucide-react';
+import { X, MessageSquare, Bug, Send, Clock, ChevronRight, User, Shield, Reply, RefreshCw } from 'lucide-react';
 import { supabase } from '../supabase';
 import toast from 'react-hot-toast';
 import { Feedback, FeedbackReply } from '../types';
@@ -28,8 +31,38 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
     const [selectedThread, setSelectedThread] = useState<Feedback | null>(null);
     const [replyContent, setReplyContent] = useState('');
 
-    const isAdmin = userEmail && ADMIN_EMAILS.includes(userEmail);
+    const isAdmin = !!userEmail && ADMIN_EMAILS.includes(userEmail.toLowerCase());
     const threadEndRef = useRef<HTMLDivElement>(null);
+
+    const sortThreadsByLatestActivity = (threads: Feedback[]) => {
+        return [...threads].sort((a, b) => {
+            const aLatestReply = (a.replies || []).reduce((latest, reply) =>
+                Math.max(latest, new Date(reply.created_at).getTime()), 0);
+            const bLatestReply = (b.replies || []).reduce((latest, reply) =>
+                Math.max(latest, new Date(reply.created_at).getTime()), 0);
+            const aLatest = Math.max(new Date(a.created_at).getTime(), aLatestReply);
+            const bLatest = Math.max(new Date(b.created_at).getTime(), bLatestReply);
+            return bLatest - aLatest;
+        });
+    };
+
+    const getLatestActivityTime = (thread: Feedback) => {
+        const latestReplyTime = (thread.replies || []).reduce((latest, reply) =>
+            Math.max(latest, new Date(reply.created_at).getTime()), 0);
+        return Math.max(new Date(thread.created_at).getTime(), latestReplyTime);
+    };
+
+    const hasAdminReply = (thread: Feedback) => {
+        return !!thread.replies?.some(reply => reply.is_admin_reply);
+    };
+
+    const needsAdminResponse = (thread: Feedback) => {
+        if (thread.status === 'closed') return false;
+        const replies = thread.replies || [];
+        if (replies.length === 0) return true;
+        const latestReply = replies[replies.length - 1];
+        return !latestReply.is_admin_reply;
+    };
 
     const reporterDirectory = useMemo(() => {
         const directory: Record<string, { name?: string; email?: string }> = {};
@@ -98,11 +131,15 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
     useEffect(() => {
         if (isOpen) {
             // Reset state on open
-            setActiveTab('new');
+            setActiveTab(isAdmin ? 'admin' : 'new');
             setSelectedThread(null);
-            fetchHistory();
+            if (isAdmin) {
+                fetchAdminInbox();
+            } else {
+                fetchHistory();
+            }
         }
-    }, [isOpen, userId]);
+    }, [isOpen, userId, isAdmin]);
 
     // Add this to auto-scroll when opening a thread or sending a reply
     useEffect(() => {
@@ -130,12 +167,12 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
             if (error) throw error;
 
             // Sort replies
-            const sorted = data?.map(item => ({
+            const normalized = data?.map(item => ({
                 ...item,
                 replies: item.replies?.sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
             })) || [];
 
-            setHistory(sorted);
+            setHistory(sortThreadsByLatestActivity(normalized));
         } catch (err: any) {
             console.error('Error fetching history:', err);
             // Show error to user, helpful if table doesn't exist
@@ -160,18 +197,33 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
 
             if (error) throw error;
 
-            const sorted = data?.map(item => ({
+            const normalized = data?.map(item => ({
                 ...item,
                 replies: item.replies?.sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
             })) || [];
 
-            setHistory(sorted);
+            setHistory(sortThreadsByLatestActivity(normalized));
         } catch (err) {
             console.error('Error fetching admin inbox:', err);
         } finally {
             setLoadingHistory(false);
         }
     };
+
+    useEffect(() => {
+        if (!isOpen || !isAdmin || activeTab !== 'admin') return;
+
+        const refresh = () => fetchAdminInbox();
+        const channel = supabase
+            .channel('in-app-admin-inbox')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'feedback' }, refresh)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'feedback_replies' }, refresh)
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [isOpen, isAdmin, activeTab]);
 
     const handleTabChange = (tab: 'new' | 'history' | 'admin') => {
         setActiveTab(tab);
@@ -277,6 +329,61 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
         }
     };
 
+    const renderThreadCard = (item: Feedback, showNeedsAdminResponse: boolean) => {
+        const latestReply = item.replies && item.replies.length > 0 ? item.replies[item.replies.length - 1] : null;
+        const lastReadTime = parseInt(localStorage.getItem('habit_feedback_last_read') || '0');
+        const hasNewReply = !!latestReply && latestReply.is_admin_reply && new Date(latestReply.created_at).getTime() > lastReadTime;
+        const awaitingAdmin = showNeedsAdminResponse && needsAdminResponse(item);
+        const latestActivity = getLatestActivityTime(item);
+
+        return (
+            <div key={item.id} onClick={() => setSelectedThread(item)} className="p-3 bg-white neo-border hover:bg-stone-50 cursor-pointer transition-colors group relative">
+                {(hasNewReply || awaitingAdmin) && (
+                    <span
+                        className={`absolute top-2 right-2 w-2 h-2 rounded-full animate-pulse z-10 ${awaitingAdmin ? 'bg-amber-500' : 'bg-red-500'}`}
+                        title={awaitingAdmin ? 'Awaiting admin response' : 'New Reply'}
+                    />
+                )}
+                <div className="flex items-start justify-between mb-1">
+                    <span className={`text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 border border-black ${item.type === 'bug' ? 'bg-rose-100 text-rose-800' : 'bg-sky-100 text-sky-800'}`}>
+                        {item.type}
+                    </span>
+                    <span className="text-[10px] text-stone-400 font-bold">Updated {new Date(latestActivity).toLocaleString()}</span>
+                </div>
+                <p className="text-sm font-medium text-stone-800 line-clamp-2 leading-snug">{item.content}</p>
+                {activeTab === 'admin' && (
+                    <div className="mt-2 text-[10px] text-stone-500 space-y-0.5">
+                        <p className="font-semibold text-stone-700">{getReporterName(item)}</p>
+                        <p>{getReporterEmail(item) || 'Email unavailable'}</p>
+                        <p className="font-mono">User ID: {item.user_id || 'guest'}</p>
+                    </div>
+                )}
+                <div className="flex items-center justify-between mt-2 pt-2 border-t border-dashed border-stone-200">
+                    <div className="flex items-center gap-1.5">
+                        {awaitingAdmin && (
+                            <span className="text-[9px] font-bold uppercase text-amber-700">Awaiting Reply</span>
+                        )}
+                        {!awaitingAdmin && hasAdminReply(item) && (
+                            <span className="text-[9px] font-bold uppercase text-green-600 flex items-center gap-1">
+                                <Reply size={10} /> HabiCard Replied
+                            </span>
+                        )}
+                        {!awaitingAdmin && !hasAdminReply(item) && item.status === 'open' && (
+                            <span className="text-[9px] font-bold uppercase text-stone-400">Open</span>
+                        )}
+                        {!awaitingAdmin && !hasAdminReply(item) && item.status === 'closed' && (
+                            <span className="text-[9px] font-bold uppercase text-stone-400">Closed</span>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-1 text-[10px] font-bold text-stone-400 group-hover:text-black transition-colors">
+                        <span>View Thread</span>
+                        <ChevronRight size={12} />
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -315,12 +422,24 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                             )}
                         </button>
                         {isAdmin && (
-                            <button
-                                onClick={() => handleTabChange('admin')}
-                                className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest transition-colors ${activeTab === 'admin' ? 'bg-black text-white' : 'text-stone-500 hover:text-black'}`}
-                            >
-                                Admin Inbox
-                            </button>
+                            <div className={`flex flex-1 items-center ${activeTab === 'admin' ? 'bg-black text-white' : 'text-stone-500 hover:text-black'}`}>
+                                <button
+                                    onClick={() => handleTabChange('admin')}
+                                    className="flex-1 py-2 text-[10px] font-black uppercase tracking-widest transition-colors"
+                                >
+                                    Admin Inbox
+                                </button>
+                                {activeTab === 'admin' && (
+                                    <button
+                                        onClick={fetchAdminInbox}
+                                        className="px-2 py-2 border-l border-white/25 hover:bg-white/10 transition-colors"
+                                        title="Refresh inbox"
+                                        aria-label="Refresh inbox"
+                                    >
+                                        <RefreshCw size={12} />
+                                    </button>
+                                )}
+                            </div>
                         )}
                     </div>
                 )}
@@ -406,50 +525,42 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                                 <div className="flex items-center justify-center h-full text-stone-400 text-xs italic">Loading...</div>
                             ) : history.length === 0 ? (
                                 <div className="flex items-center justify-center h-full text-stone-400 text-xs italic">No feedback history found.</div>
-                            ) : (
-                                history.map(item => {
-                                    // Check if this item has a new reply
-                                    const latestReply = item.replies && item.replies.length > 0 ? item.replies[item.replies.length - 1] : null;
-                                    const lastReadTime = parseInt(localStorage.getItem('habit_feedback_last_read') || '0');
-                                    const hasNewReply = latestReply && latestReply.is_admin_reply && new Date(latestReply.created_at).getTime() > lastReadTime;
-                                    const hasAdminReply = !!item.replies?.some(reply => reply.is_admin_reply);
-                                    const needsAdminResponse = activeTab === 'admin' && item.status !== 'closed' && !hasAdminReply;
-
-                                    return (
-                                        <div key={item.id} onClick={() => setSelectedThread(item)} className="p-3 bg-white neo-border hover:bg-stone-50 cursor-pointer transition-colors group relative">
-                                            {(hasNewReply || needsAdminResponse) && (
-                                                <span
-                                                    className={`absolute top-2 right-2 w-2 h-2 rounded-full animate-pulse z-10 ${needsAdminResponse ? 'bg-amber-500' : 'bg-red-500'}`}
-                                                    title={needsAdminResponse ? 'Awaiting admin response' : 'New Reply'}
-                                                />
-                                            )}
-                                            <div className="flex items-start justify-between mb-1">
-                                                <span className={`text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 border border-black ${item.type === 'bug' ? 'bg-rose-100 text-rose-800' : 'bg-sky-100 text-sky-800'}`}>
-                                                    {item.type}
-                                                </span>
-                                                <span className="text-[10px] text-stone-400 font-bold">{new Date(item.created_at).toLocaleDateString()}</span>
-                                            </div>
-                                            <p className="text-sm font-medium text-stone-800 line-clamp-2 leading-snug">{item.content}</p>
-                                            {activeTab === 'admin' && (
-                                                <div className="mt-2 text-[10px] text-stone-500 space-y-0.5">
-                                                    <p className="font-semibold text-stone-700">{getReporterName(item)}</p>
-                                                    <p>{getReporterEmail(item) || 'Email unavailable'}</p>
-                                                    <p className="font-mono">User ID: {item.user_id || 'guest'}</p>
-                                                </div>
-                                            )}
-                                            <div className="flex items-center justify-between mt-2 pt-2 border-t border-dashed border-stone-200">
-                                                <div className="flex items-center gap-1.5">
-                                                    {item.status === 'replied' && <span className="text-[9px] font-bold uppercase text-green-600 flex items-center gap-1"><Reply size={10} /> HabiCard Replied</span>}
-                                                    {item.status === 'open' && <span className="text-[9px] font-bold uppercase text-stone-400">Open</span>}
-                                                </div>
-                                                <div className="flex items-center gap-1 text-[10px] font-bold text-stone-400 group-hover:text-black transition-colors">
-                                                    <span>View Thread</span>
-                                                    <ChevronRight size={12} />
-                                                </div>
-                                            </div>
+                            ) : activeTab === 'admin' ? (
+                                <div className="space-y-3">
+                                    <div className="p-2 bg-amber-50 neo-border">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-amber-800">Not Replied</p>
+                                            <span className="text-[10px] font-bold text-amber-700">
+                                                {history.filter(needsAdminResponse).length}
+                                            </span>
                                         </div>
-                                    );
-                                })
+                                        <div className="space-y-2">
+                                            {history.filter(needsAdminResponse).length === 0 ? (
+                                                <div className="p-3 bg-white neo-border text-[11px] text-stone-500">No messages waiting for a response.</div>
+                                            ) : (
+                                                history.filter(needsAdminResponse).map(item => renderThreadCard(item, true))
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="p-2 bg-emerald-50 neo-border">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-800">Replied</p>
+                                            <span className="text-[10px] font-bold text-emerald-700">
+                                                {history.filter(item => !needsAdminResponse(item)).length}
+                                            </span>
+                                        </div>
+                                        <div className="space-y-2">
+                                            {history.filter(item => !needsAdminResponse(item)).length === 0 ? (
+                                                <div className="p-3 bg-white neo-border text-[11px] text-stone-500">No replied or closed messages yet.</div>
+                                            ) : (
+                                                history.filter(item => !needsAdminResponse(item)).map(item => renderThreadCard(item, false))
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                history.map(item => renderThreadCard(item, false))
                             )}
                         </div>
                     )}

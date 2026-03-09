@@ -12,6 +12,15 @@ export const useHabitStats = (
     weekOffset = 0,
     weekStart = 'MON'
 ) => {
+    const isHabitStartedByDate = (habit, date) => {
+        if (!habit?.createdAt) return true;
+        const createdDate = new Date(habit.createdAt);
+        createdDate.setHours(0, 0, 0, 0);
+        const target = new Date(date);
+        target.setHours(0, 0, 0, 0);
+        return target >= createdDate;
+    };
+
     const weeklyStats = useMemo(() => {
         const today = new Date();
         const day = today.getDay();
@@ -31,6 +40,7 @@ export const useHabitStats = (
             let count = 0;
             habits.forEach(habit => {
                 if (habit.weeklyTarget) return; // SKIP flexible habits for daily counts
+                if (!isHabitStartedByDate(habit, date)) return;
                 if (isCompleted(habit.id, d, completions, m, y)) count++;
             });
 
@@ -69,9 +79,16 @@ export const useHabitStats = (
             });
         }
 
-        // Add flexible targets to totalPossible
+        // Add flexible targets to totalPossible, prorated by active days this week.
         habits.filter(h => h.weeklyTarget).forEach(h => {
-            totalPossible += h.weeklyTarget;
+            let activeDays = 0;
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(weekStartDate);
+                d.setDate(weekStartDate.getDate() + i);
+                if (isHabitStartedByDate(h, d)) activeDays++;
+            }
+            const weeklyCap = Math.round(h.weeklyTarget * (activeDays / 7));
+            totalPossible += weeklyCap;
         });
 
         // Calculate completed: Daily stats (capped by frequency) + Flexible stats (capped by target)
@@ -80,11 +97,21 @@ export const useHabitStats = (
             for (let i = 0; i < 7; i++) {
                 const d = new Date(weekStartDate);
                 d.setDate(weekStartDate.getDate() + i);
+                if (!isHabitStartedByDate(h, d)) continue;
                 if (isCompleted(h.id, d.getDate(), completions, d.getMonth(), d.getFullYear())) {
                     hCompletedInWeek++;
                 }
             }
-            if (h.weeklyTarget) return acc + Math.min(hCompletedInWeek, h.weeklyTarget);
+            if (h.weeklyTarget) {
+                let activeDays = 0;
+                for (let i = 0; i < 7; i++) {
+                    const d = new Date(weekStartDate);
+                    d.setDate(weekStartDate.getDate() + i);
+                    if (isHabitStartedByDate(h, d)) activeDays++;
+                }
+                const weeklyCap = Math.round(h.weeklyTarget * (activeDays / 7));
+                return acc + Math.min(hCompletedInWeek, weeklyCap);
+            }
             return acc + hCompletedInWeek;
         }, 0);
 
@@ -93,6 +120,7 @@ export const useHabitStats = (
             for (let i = 0; i < 7; i++) {
                 const date = new Date(weekStartDate);
                 date.setDate(weekStartDate.getDate() + i);
+                if (!isHabitStartedByDate(h, date)) continue;
                 if (isCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear())) {
                     hCompleted++;
                 }

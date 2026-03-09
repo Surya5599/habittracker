@@ -1,13 +1,7 @@
 
 import { Habit } from './types';
 
-export const INITIAL_HABITS: Habit[] = [
-  { id: '1', name: 'Meditation', type: 'daily', color: '#8da18d', goal: 90 },
-  { id: '2', name: 'Exercise', type: 'daily', color: '#b2967d', goal: 80 },
-  { id: '3', name: 'Drink 2L Water', type: 'daily', color: '#7b9fb3', goal: 100 },
-  { id: '4', name: 'Reading', type: 'daily', color: '#a68a8a', goal: 70 },
-  { id: '5', name: 'Journaling', type: 'daily', color: '#9e9e9e', goal: 85 },
-];
+export const INITIAL_HABITS: Habit[] = [];
 
 export const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -46,4 +40,3 @@ export const COLORS = {
   text: '#3d4b3d',
   gridEmpty: '#f3f4f6',
 };
-

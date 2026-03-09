@@ -167,5 +167,114 @@
         "habitNamePlaceholder": "Habit name",
         "untitled": "Untitled Habit",
         "deleteConfirm": "Are you sure you want to delete this habit? You will lose all its historical data."
+    },
+    "onboarding": {
+        "getStarted": "Get Started",
+        "stepOf": "Step {{current}} / {{total}}",
+        "back": "Back",
+        "next": "Next",
+        "finish": "Finish",
+        "skip": "Skip",
+        "settingsNote": "You can change these settings later in the Settings menu.",
+        "manageHabitsHint": "Use this to manage all your habits.",
+        "optionalDescription": "Optional description",
+        "fixedDescription": "Pick specific days each week.",
+        "flexibleDescription": "Set how many times per week.",
+        "step4Explanation": "Checking off the habit marks it as done. Right-clicking (or long-pressing on touch) marks it as skipped, so it does not count against your analytics.",
+        "steps": {
+            "language": {
+                "title": "Select Language",
+                "subtitle": "Choose the app language."
+            },
+            "theme": {
+                "title": "Select Color Theme",
+                "subtitle": "Pick your app color style."
+            },
+            "startOfWeek": {
+                "title": "Select Start Of Week",
+                "subtitle": "Choose Monday or Sunday."
+            },
+            "firstHabit": {
+                "title": "Set Up First Habit",
+                "subtitle": "Create one habit to begin."
+            },
+            "dailyCard": {
+                "title": "Use The Daily Card",
+                "subtitle": "Use the exact daily card to complete, skip, and uncheck."
+            },
+            "openJournal": {
+                "title": "Open Journal",
+                "subtitle": "Tap Journal in the card status bar."
+            },
+            "saveJournal": {
+                "title": "Save Journal Entry",
+                "subtitle": "Pick a mood, type something, and save."
+            },
+            "openTasks": {
+                "title": "Open Tasks",
+                "subtitle": "Tap Tasks in the card status bar."
+            },
+            "taskFlow": {
+                "title": "Create + Complete Task",
+                "subtitle": "Add one task and complete it."
+            },
+            "analytics": {
+                "title": "Analytics Preview",
+                "subtitle": "Quick look at the analytics views you will use."
+            }
+        },
+        "hints": {
+            "clickLanguage": "Click A Language Here",
+            "clickTheme": "Click A Color Theme Here",
+            "clickStartDay": "Click Start Day Here",
+            "typeHabitName": "Type A Habit Name Here",
+            "clickJournal": "Click Journal Here",
+            "selectMood": "Select Mood Here",
+            "typeJournal": "Type Journal Here",
+            "clickSave": "Click Save Here",
+            "clickTasks": "Click Tasks Here",
+            "clickNewTask": "Click New Task",
+            "giveTaskName": "Give Task A Name",
+            "checkItOff": "Check It Off",
+            "clickCheckbox": "Click Checkbox",
+            "rightClickLongPress": "Right Click / Long Press",
+            "clickAgain": "Click Again",
+            "pickMood": "Pick Mood",
+            "typeJournalSave": "Type Journal + Save",
+            "great": "Great"
+        },
+        "analytics": {
+            "consistencyRing": "Consistency Ring",
+            "weeklyTrend": "Weekly Trend",
+            "habitBreakdown": "Habit Breakdown",
+            "markSeen": "Mark Preview As Seen",
+            "previewViewed": "Preview Viewed",
+            "sample": {
+                "reading": "Reading",
+                "workout": "Workout",
+                "journal": "Journal"
+            }
+        },
+        "progress": {
+            "completedDone": "Completed: done",
+            "completedPending": "Completed: pending",
+            "skippedDone": "Skipped: done",
+            "skippedPending": "Skipped: pending",
+            "uncheckedDone": "Unchecked: done",
+            "uncheckedPending": "Unchecked: pending"
+        },
+        "days": {
+            "monday": "Monday",
+            "sunday": "Sunday"
+        },
+        "daysShort": {
+            "su": "S",
+            "mo": "M",
+            "tu": "T",
+            "we": "W",
+            "th": "T",
+            "fr": "F",
+            "sa": "S"
+        }
     }
 }

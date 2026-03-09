@@ -37,6 +37,7 @@ interface DailyCardProps {
     globalViewMode?: 'habits' | 'tasks' | 'journal';
     onGlobalViewModeChange?: (mode: 'habits' | 'tasks' | 'journal') => void;
     fitParentHeight?: boolean;
+    onJournalSaveClick?: () => void;
 }
 
 export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = ({
@@ -63,6 +64,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
     globalViewMode,
     onGlobalViewModeChange,
     fitParentHeight = false,
+    onJournalSaveClick,
 }) => {
     const { t, i18n } = useTranslation();
     const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -218,6 +220,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
     }, [mood, journal, dayData.mood, dayData.journal, dateKey, updateNote]);
 
     const handleSaveJournal = () => {
+        onJournalSaveClick?.();
         updateNote(dateKey, { mood, journal });
     };
 
@@ -367,6 +370,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 }}
                 className="flex-1 py-2 px-1 border-r border-black flex flex-col items-center justify-center"
                 title="Show habits"
+                data-onboarding="status-habits"
             >
                 <span className="text-[9px] font-black uppercase tracking-wider text-stone-500">Habits</span>
                 <span className="text-[10px] font-black text-stone-700 mt-1">{completedHabitsCount}/{totalHabitsCount}</span>
@@ -375,6 +379,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 onClick={openTasksView}
                 className="flex-1 py-2 px-1 border-r border-black flex flex-col items-center justify-center"
                 title="Open tasks"
+                data-onboarding="status-tasks"
             >
                 <span className="text-[9px] font-black uppercase tracking-wider text-stone-500">{t('dailyCard.tasks')}</span>
                 <span className="text-[10px] font-black text-stone-700 mt-1">
@@ -385,6 +390,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 onClick={openJournalView}
                 className="flex-1 py-2 px-1 flex flex-col items-center justify-center"
                 title="Open journal"
+                data-onboarding="status-journal"
             >
                 <span className="text-[9px] font-black uppercase tracking-wider text-stone-500">{t('dailyCard.journal')}</span>
                 {hasMoodTracked ? (
@@ -487,7 +493,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                     className={`space-y-1 pr-1 touch-pan-y ${combinedView ? '' : 'md:scroll-container'}`}
                     style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
                 >
-                    {visibleHabitsForDate.length > 0 ? visibleHabitsForDate.map(habit => {
+                    {visibleHabitsForDate.length > 0 ? visibleHabitsForDate.map((habit, habitIndex) => {
                         const done = checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
                         const inactive = isHabitInactive(habit.id, dateKey);
                         let weekCompletions = 0;
@@ -552,6 +558,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                 </div>
                                 <div
                                     className={`w-4 h-4 border-2 border-black flex items-center justify-center transition-all ${inactive ? 'bg-amber-300 text-amber-900 border-amber-700' : (done ? 'bg-black text-white' : 'bg-white')}`}
+                                    data-onboarding={habitIndex === 0 ? 'habit-checkbox' : undefined}
                                 >
                                     {inactive ? <Minus size={10} strokeWidth={4} /> : (done && <Check size={10} strokeWidth={4} />)}
                                 </div>
@@ -663,6 +670,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 <button
                     onClick={() => addNewTask(false)}
                     className="inline-flex items-center gap-1 px-1.5 py-0.5 border border-black bg-white text-[9px] font-black uppercase tracking-wide hover:bg-stone-100 transition-colors"
+                    data-onboarding="task-add"
                 >
                     <Plus size={9} strokeWidth={3} />
                     Add
@@ -674,7 +682,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 className="p-2 space-y-1.5 flex-1 overflow-y-auto scroll-container touch-pan-y"
                 style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
             >
-                {(dayData.tasks || []).map((task) => (
+                {(dayData.tasks || []).map((task, taskIndex) => (
                     <div
                         key={task.id}
                         draggable={editingTaskId !== task.id}
@@ -692,6 +700,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                 updateNote(dateKey, { tasks: newTasks });
                             }}
                             className="p-1 -m-1 flex-shrink-0 flex items-center justify-center focus:outline-none"
+                            data-onboarding={taskIndex === 0 ? 'task-checkbox' : undefined}
                         >
                             <div className={`w-2.5 h-2.5 border border-black flex items-center justify-center transition-all ${task.completed ? 'bg-black text-white' : 'bg-white hover:bg-stone-100'}`}>
                                 {task.completed && <Check size={8} strokeWidth={4} />}
@@ -710,6 +719,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                 }}
                                 className="w-full text-[10px] font-medium bg-transparent outline-none leading-tight border-none p-0 focus:ring-0 text-stone-800"
                                 autoFocus
+                                data-onboarding={taskIndex === 0 ? 'task-input' : undefined}
                             />
                         ) : (
                             <span
@@ -803,7 +813,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 {/* Mood Selector */}
                 <div className="space-y-0">
                     <label className="text-[10px] font-black uppercase tracking-widest text-stone-600 block text-center">{t('dailyCard.mood')}</label>
-                    <div className="grid grid-cols-5 gap-1 px-1">
+                    <div className="grid grid-cols-5 gap-1 px-1" data-onboarding="journal-moods">
                         {MOODS.map((m) => {
                             const isSelected = mood === m.value;
                             const Icon = m.icon;
@@ -838,6 +848,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                         <button
                             onClick={handleSaveJournal}
                             className="px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide rounded border border-stone-300 bg-stone-50 text-stone-500 hover:bg-stone-100 hover:text-stone-700 transition-colors inline-flex items-center gap-1"
+                            data-onboarding="journal-save"
                         >
                             <Save size={9} strokeWidth={2.5} />
                             Save
@@ -848,6 +859,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                         onChange={(e) => setJournal(e.target.value)}
                         placeholder={t('dailyCard.journalPlaceholder')}
                         className="w-full flex-1 p-3 bg-stone-50 border-2 border-transparent focus:border-black rounded-xl resize-none text-xs leading-relaxed text-stone-900 placeholder:text-stone-300 outline-none transition-all font-medium min-h-[120px]"
+                        data-onboarding="journal-input"
                     />
                 </div>
             </div>

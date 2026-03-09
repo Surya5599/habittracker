@@ -5,6 +5,8 @@ import { Reorder, useDragControls } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 
+const HABIT_COLOR_OPTIONS = ['#8da18d', '#5b8a8a', '#b28d6c', '#8d8da1', '#5a7a5a', '#d4a89f', '#b8a8d4', '#8fa8c9', '#d4a8a8', '#a8d4c9', '#c9b88f', '#a88fa8', '#2d2d2d'];
+
 interface HabitManagerModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -33,6 +35,8 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
     const [showArchived, setShowArchived] = useState(false);
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
     const [editName, setEditName] = useState('');
+    const [editDescription, setEditDescription] = useState('');
+    const [editColor, setEditColor] = useState(themePrimary);
     const [editFrequency, setEditFrequency] = useState<number[] | undefined>(undefined);
     const [editWeeklyTarget, setEditWeeklyTarget] = useState<number | undefined>(undefined);
     const [frequencyType, setFrequencyType] = useState<'fixed' | 'flexible'>('fixed');
@@ -71,6 +75,8 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
         if (newId) {
             setEditingId(newId);
             setEditName('');
+            setEditDescription('');
+            setEditColor(themePrimary);
             setEditFrequency(undefined);
             setEditWeeklyTarget(undefined);
             setFrequencyType('fixed');
@@ -87,6 +93,8 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
     const startEditing = (habit: Habit) => {
         setEditingId(habit.id);
         setEditName(habit.name);
+        setEditDescription(habit.description || '');
+        setEditColor(habit.color || themePrimary);
         setEditFrequency(habit.frequency);
         setEditWeeklyTarget(habit.weeklyTarget);
         setFrequencyType(habit.weeklyTarget ? 'flexible' : 'fixed');
@@ -102,7 +110,11 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
             toast.error('A habit with this name already exists');
             return;
         }
-        const updates: Partial<Habit> = { name: trimmedName };
+        const updates: Partial<Habit> = {
+            name: trimmedName,
+            description: editDescription.trim(),
+            color: editColor
+        };
         if (frequencyType === 'flexible') {
             updates.weeklyTarget = editWeeklyTarget || 3;
             updates.frequency = undefined; // Clear fixed frequency if switching to flexible
@@ -183,6 +195,10 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                                         editingId={editingId}
                                         editName={editName}
                                         setEditName={setEditName}
+                                        editDescription={editDescription}
+                                        setEditDescription={setEditDescription}
+                                        editColor={editColor}
+                                        setEditColor={setEditColor}
                                         frequencyType={frequencyType}
                                         setFrequencyType={setFrequencyType}
                                         editFrequency={editFrequency}
@@ -224,6 +240,10 @@ interface HabitItemProps {
     editingId: string | null;
     editName: string;
     setEditName: (val: string) => void;
+    editDescription: string;
+    setEditDescription: (val: string) => void;
+    editColor: string;
+    setEditColor: (val: string) => void;
     frequencyType: 'fixed' | 'flexible';
     setFrequencyType: (val: 'fixed' | 'flexible') => void;
     editFrequency: number[] | undefined;
@@ -255,6 +275,10 @@ const HabitItem: React.FC<HabitItemProps> = ({
     editingId,
     editName,
     setEditName,
+    editDescription,
+    setEditDescription,
+    editColor,
+    setEditColor,
     frequencyType,
     setFrequencyType,
     editFrequency,
@@ -317,6 +341,24 @@ const HabitItem: React.FC<HabitItemProps> = ({
                             className="w-full bg-white border-2 border-black px-2 py-1 text-sm font-bold text-black outline-none focus:ring-0 focus:bg-stone-50"
                             placeholder={t('habitManager.habitNamePlaceholder')}
                         />
+                        <textarea
+                            value={editDescription}
+                            onChange={(e) => setEditDescription(e.target.value)}
+                            className="w-full bg-white border-2 border-black px-2 py-1.5 text-xs font-medium text-black outline-none focus:ring-0 focus:bg-stone-50 resize-y min-h-[58px]"
+                            placeholder={t('habitManager.habitDescriptionPlaceholder', { defaultValue: 'Optional description' })}
+                        />
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            {HABIT_COLOR_OPTIONS.map((color) => (
+                                <button
+                                    key={`${habit.id}-color-${color}`}
+                                    type="button"
+                                    onClick={() => setEditColor(color)}
+                                    className={`w-5 h-5 rounded-full border-2 ${editColor === color ? 'border-black scale-110' : 'border-stone-300'}`}
+                                    style={{ backgroundColor: color }}
+                                    aria-label={`Set habit color ${color}`}
+                                />
+                            ))}
+                        </div>
                         <div className="flex flex-col gap-3">
                             <div className="flex border-2 border-black divide-x-2 divide-black self-start overflow-hidden shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                                 <button
@@ -397,6 +439,11 @@ const HabitItem: React.FC<HabitItemProps> = ({
                         <p className="text-[10px] font-bold uppercase tracking-wide text-stone-500 truncate">
                             {getHabitFrequencyLabel(habit)}
                         </p>
+                        {!!habit.description?.trim() && (
+                            <p className="text-[11px] text-stone-600 line-clamp-2 mt-1">
+                                {habit.description}
+                            </p>
+                        )}
                     </div>
                 )}
             </div>

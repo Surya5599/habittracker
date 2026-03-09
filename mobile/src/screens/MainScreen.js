@@ -7,7 +7,7 @@ import { MonthlyView } from './MonthlyView';
 import { DashboardView } from './DashboardView';
 import { AIAnalysisView } from './AIAnalysisView';
 import { BottomNav } from '../components/BottomNav';
-import { Settings, X, Check, Plus, MessageSquare, Sun, Moon, Shield } from 'lucide-react-native';
+import { Settings, X, Check, Plus, MessageSquare, Sun, Moon, Shield, Sparkles } from 'lucide-react-native';
 import tw from 'twrnc';
 import { THEMES } from '../constants';
 import { HabitManager } from '../components/HabitManager';
@@ -36,6 +36,7 @@ export const MainScreen = ({
     weeklyStats,
     isGuest,
     onOpenSignIn,
+    onOpenOnboardingTutorial,
     weekStart,
     setWeekStart,
     aiAnalysis,
@@ -105,10 +106,20 @@ export const MainScreen = ({
     const handleAuthAction = async () => {
         try {
             if (isGuest) {
-                onOpenSignIn();
+                await onOpenSignIn();
             } else {
                 const { error } = await supabase.auth.signOut();
-                if (error) throw error;
+                if (error) {
+                    const message = (error.message || '').toLowerCase();
+                    const isMissingSessionError =
+                        message.includes('session not found') ||
+                        message.includes('auth session missing');
+                    if (!isMissingSessionError) {
+                        throw error;
+                    }
+                }
+                // Force UI back to auth screen even if auth listener is delayed.
+                await onOpenSignIn();
             }
             setIsSettingsOpen(false);
         } catch (error) {
@@ -285,6 +296,24 @@ export const MainScreen = ({
                                                 </TouchableOpacity>
                                             </View>
                                         </View>
+
+                                        <TouchableOpacity
+                                            style={[tw`flex-row items-center justify-between p-4 border-b-[3px] border-black`, { borderBottomColor: outlineColor }]}
+                                            onPress={() => {
+                                                setIsSettingsOpen(false);
+                                                if (onOpenOnboardingTutorial) onOpenOnboardingTutorial();
+                                            }}
+                                        >
+                                            <Text style={[tw`text-sm font-black uppercase tracking-tight`, { color: isDark ? '#e5e7eb' : '#1f2937' }]}>
+                                                What's New
+                                            </Text>
+                                            <View style={tw`flex-row items-center`}>
+                                                <Text style={[tw`text-xs font-black uppercase mr-2`, { color: isDark ? '#9ca3af' : '#6b7280' }]}>
+                                                    Tutorial
+                                                </Text>
+                                                <Sparkles size={16} color={isDark ? '#a3a3a3' : '#57534e'} />
+                                            </View>
+                                        </TouchableOpacity>
 
                                         <TouchableOpacity
                                             style={[tw`flex-row items-center justify-between p-4 border-b-[3px] border-black`, { borderBottomColor: outlineColor }]}

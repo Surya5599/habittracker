@@ -31,7 +31,7 @@ export const useHabits = (session, guestMode) => {
 
             let userHabits = habitsResult.data || [];
 
-            if (userHabits.length === 0) {
+            if (userHabits.length === 0 && INITIAL_HABITS.length > 0) {
                 const initialWithUser = INITIAL_HABITS.map((h, idx) => ({
                     name: h.name,
                     type: h.type,
@@ -70,6 +70,7 @@ export const useHabits = (session, guestMode) => {
             setHabits(userHabits.map(h => ({
                 id: h.id,
                 name: h.name,
+                description: h.description || '',
                 type: h.type,
                 color: h.color,
                 goal: h.goal,
@@ -126,6 +127,7 @@ export const useHabits = (session, guestMode) => {
 
             const habitsToInsert = localHabits.map((h, idx) => ({
                 name: h.name,
+                description: h.description || null,
                 type: h.type,
                 color: h.color,
                 goal: h.goal,
@@ -303,7 +305,7 @@ export const useHabits = (session, guestMode) => {
         }
     };
 
-    const addHabit = async (themePrimary, initialName = '', initialFrequency = undefined, initialWeeklyTarget = null) => {
+    const addHabit = async (themePrimary, initialName = '', initialFrequency = undefined, initialWeeklyTarget = null, initialDescription = '', initialColor = themePrimary) => {
         if (habits.length >= 25) {
             Alert.alert('Limit Reached', 'Maximum limit of 25 habits reached');
             return null;
@@ -315,8 +317,9 @@ export const useHabits = (session, guestMode) => {
         const newHabit = {
             id: tempId,
             name: initialName,
+            description: initialDescription,
             type: initialWeeklyTarget ? 'flexible' : 'daily',
-            color: themePrimary,
+            color: initialColor,
             goal: 80,
             frequency: initialFrequency,
             weeklyTarget: initialWeeklyTarget,
@@ -332,8 +335,9 @@ export const useHabits = (session, guestMode) => {
                     .from('habits')
                     .insert({
                         name: initialName,
+                        description: initialDescription || null,
                         type: initialWeeklyTarget ? 'flexible' : 'daily',
-                        color: themePrimary,
+                        color: initialColor,
                         goal: 80,
                         frequency: initialFrequency === undefined ? null : initialFrequency,
                         weekly_target: initialWeeklyTarget,
@@ -347,6 +351,7 @@ export const useHabits = (session, guestMode) => {
                     const mapped = {
                         id: data[0].id,
                         name: data[0].name,
+                        description: data[0].description || '',
                         type: data[0].type,
                         color: data[0].color,
                         goal: data[0].goal,

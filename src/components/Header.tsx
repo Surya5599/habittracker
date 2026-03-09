@@ -69,7 +69,10 @@ interface HeaderProps {
     reorderHabits: (newHabits: Habit[]) => Promise<void>;
     toggleArchiveHabit: (id: string, archive: boolean) => Promise<void>;
     onReportBug: () => void;
+    onOpenWhatsNew: () => void;
+    onOpenTutorial: () => void;
     hasUnreadFeedback: boolean;
+    hasUnseenWhatsNew: boolean;
     onSearch: () => void;
 }
 
@@ -128,7 +131,10 @@ export const Header: React.FC<HeaderProps> = ({
     reorderHabits,
     toggleArchiveHabit,
     onReportBug,
+    onOpenWhatsNew,
+    onOpenTutorial,
     hasUnreadFeedback,
+    hasUnseenWhatsNew,
     onSearch
 }) => {
     const { t } = useTranslation();
@@ -326,7 +332,10 @@ export const Header: React.FC<HeaderProps> = ({
                                 colorMode={colorMode}
                                 setColorMode={setColorMode}
                                 onReportBug={onReportBug}
+                                onOpenWhatsNew={onOpenWhatsNew}
+                                onOpenTutorial={onOpenTutorial}
                                 hasUnreadFeedback={hasUnreadFeedback}
+                                hasUnseenWhatsNew={hasUnseenWhatsNew}
                             />
 
                             {!guestMode && (

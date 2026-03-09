@@ -23,6 +23,8 @@ export const HabitManager = ({
     const [isReordering, setIsReordering] = useState(false);
     const [showArchived, setShowArchived] = useState(false);
     const [editName, setEditName] = useState('');
+    const [editDescription, setEditDescription] = useState('');
+    const [editColor, setEditColor] = useState(theme.primary);
     const [editFrequency, setEditFrequency] = useState(undefined);
     const [editWeeklyTarget, setEditWeeklyTarget] = useState(null);
     const [habitType, setHabitType] = useState('daily'); // 'daily' or 'weekly'
@@ -38,6 +40,8 @@ export const HabitManager = ({
         setIsAdding(false);
         setEditingId(habit.id);
         setEditName(habit.name);
+        setEditDescription(habit.description || '');
+        setEditColor(habit.color || theme.primary);
         setEditFrequency(habit.frequency);
         setEditWeeklyTarget(habit.weeklyTarget || null);
         setHabitType(habit.weeklyTarget ? 'weekly' : 'daily');
@@ -58,6 +62,8 @@ export const HabitManager = ({
         if (editName.trim()) {
             const updates = {
                 name: editName,
+                description: editDescription.trim(),
+                color: editColor,
                 frequency: habitType === 'daily' ? editFrequency : null,
                 weeklyTarget: habitType === 'weekly' ? editWeeklyTarget : null
             };
@@ -76,11 +82,15 @@ export const HabitManager = ({
                 theme.primary,
                 editName.trim(),
                 habitType === 'daily' ? editFrequency : undefined,
-                habitType === 'weekly' ? editWeeklyTarget : null
+                habitType === 'weekly' ? editWeeklyTarget : null,
+                editDescription.trim(),
+                editColor
             );
         }
         setIsAdding(false);
         setEditName('');
+        setEditDescription('');
+        setEditColor(theme.primary);
         setEditFrequency(undefined);
         setEditWeeklyTarget(null);
         setHabitType('daily');
@@ -90,6 +100,8 @@ export const HabitManager = ({
         if (editingId) handleSaveEdit(editingId);
         setIsAdding(true);
         setEditName('');
+        setEditDescription('');
+        setEditColor(theme.primary);
         setEditFrequency(undefined);
         setEditWeeklyTarget(3); // Default for weekly
         setHabitType('daily');
@@ -104,6 +116,7 @@ export const HabitManager = ({
 
     const isDark = colorMode === 'dark';
     const outlineColor = isDark ? '#ffffff' : '#000000';
+    const habitColors = Array.from(new Set(THEMES.map(t => t.primary)));
 
     return (
         <Modal
@@ -189,6 +202,28 @@ export const HabitManager = ({
                                             <TouchableOpacity onPress={() => setIsAdding(false)} style={[tw`p-2 bg-gray-100 border-2 border-black rounded-lg`, { borderColor: outlineColor }]}>
                                                 <X size={18} color="black" />
                                             </TouchableOpacity>
+                                        </View>
+                                        <TextInput
+                                            placeholder={t('habitManager.habitDescriptionPlaceholder', { defaultValue: 'Optional description' })}
+                                            placeholderTextColor="#a1a1aa"
+                                            value={editDescription}
+                                            onChangeText={setEditDescription}
+                                            multiline
+                                            numberOfLines={2}
+                                            textAlignVertical="top"
+                                            style={[tw`bg-gray-50 border-2 border-black p-2 rounded-lg font-medium text-gray-700 min-h-[56px]`, { borderColor: outlineColor }]}
+                                        />
+                                        <View style={tw`flex-row flex-wrap gap-2`}>
+                                            {habitColors.map(color => (
+                                                <TouchableOpacity
+                                                    key={`add-color-${color}`}
+                                                    onPress={() => setEditColor(color)}
+                                                    style={[
+                                                        tw`w-7 h-7 rounded-full border-2`,
+                                                        { backgroundColor: color, borderColor: editColor === color ? outlineColor : '#d1d5db' }
+                                                    ]}
+                                                />
+                                            ))}
                                         </View>
 
                                         {/* Type Toggle */}
@@ -343,6 +378,32 @@ export const HabitManager = ({
                                                             <Check size={18} color="white" />
                                                         </TouchableOpacity>
                                                     </View>
+                                                    <TextInput
+                                                        value={editDescription}
+                                                        onChangeText={setEditDescription}
+                                                        onBlur={() => persistCurrentEdit(habit.id)}
+                                                        placeholder={t('habitManager.habitDescriptionPlaceholder', { defaultValue: 'Optional description' })}
+                                                        placeholderTextColor="#a1a1aa"
+                                                        multiline
+                                                        numberOfLines={2}
+                                                        textAlignVertical="top"
+                                                        style={[tw`bg-gray-50 border-2 border-black p-2 rounded-lg font-medium text-gray-700 min-h-[56px]`, { borderColor: outlineColor }]}
+                                                    />
+                                                    <View style={tw`flex-row flex-wrap gap-2`}>
+                                                        {habitColors.map(color => (
+                                                            <TouchableOpacity
+                                                                key={`${habit.id}-color-${color}`}
+                                                                onPress={() => {
+                                                                    setEditColor(color);
+                                                                    updateHabit(habit.id, { color });
+                                                                }}
+                                                                style={[
+                                                                    tw`w-7 h-7 rounded-full border-2`,
+                                                                    { backgroundColor: color, borderColor: editColor === color ? outlineColor : '#d1d5db' }
+                                                                ]}
+                                                            />
+                                                        ))}
+                                                    </View>
 
                                                     {/* Type Toggle */}
                                                     <View style={[tw`flex-row bg-gray-100 border-2 border-black p-1 rounded-xl`, { borderColor: outlineColor }]}>
@@ -439,7 +500,15 @@ export const HabitManager = ({
                                                 </View>
                                             ) : (
                                                 <View style={tw`flex-1`}>
-                                                    <Text style={tw`font-bold text-lg text-black`}>{habit.name || t('habitManager.untitled')}</Text>
+                                                    <View style={tw`flex-row items-center gap-2`}>
+                                                        <View style={[tw`w-3.5 h-3.5 rounded-full border`, { backgroundColor: habit.color || theme.primary, borderColor: outlineColor }]} />
+                                                        <Text style={tw`font-bold text-lg text-black`}>{habit.name || t('habitManager.untitled')}</Text>
+                                                    </View>
+                                                    {!!habit.description?.trim() && (
+                                                        <Text style={tw`text-xs text-gray-600 mt-1`} numberOfLines={2}>
+                                                            {habit.description}
+                                                        </Text>
+                                                    )}
                                                     <Text style={tw`text-xs font-bold text-gray-400 uppercase tracking-wider`}>
                                                         {habit.weeklyTarget
                                                             ? `${t('habitManager.goal', { defaultValue: 'Goal' })}: ${habit.weeklyTarget}x / ${t('common.week', { defaultValue: 'Week' })}`

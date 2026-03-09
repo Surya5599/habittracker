@@ -14,11 +14,7 @@ export const THEMES = [
     { name: 'Monochrome', primary: '#2d2d2d', secondary: '#6b6b6b' },
 ];
 
-export const INITIAL_HABITS = [
-    { id: '1', name: 'Drink Water', type: 'daily', color: '#0ea5e9', goal: 100 },
-    { id: '2', name: 'Exercise', type: 'daily', color: '#22c55e', goal: 100 },
-    { id: '3', name: 'Read', type: 'daily', color: '#8b5cf6', goal: 100 },
-];
+export const INITIAL_HABITS = [];
 
 export const LOCAL_HABITS_KEY = 'habit_tracker_habits';
 export const LOCAL_COMPLETIONS_KEY = 'habit_tracker_completions';

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings, LayoutDashboard, Calendar, Clock, MessageSquare, ChevronRight, ChevronDown, Check, Shield, Moon, Sun } from 'lucide-react';
+import { Settings, LayoutDashboard, Calendar, Clock, MessageSquare, ChevronRight, ChevronDown, Check, Shield, Moon, Sun, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Theme } from '../types';
 
@@ -20,7 +20,10 @@ interface SettingsMenuProps {
     colorMode: 'light' | 'dark';
     setColorMode: (mode: 'light' | 'dark') => void;
     onReportBug: () => void;
+    onOpenWhatsNew: () => void;
+    onOpenTutorial: () => void;
     hasUnreadFeedback?: boolean;
+    hasUnseenWhatsNew?: boolean;
 }
 
 export const SettingsMenu: React.FC<SettingsMenuProps> = ({
@@ -39,7 +42,10 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     colorMode,
     setColorMode,
     onReportBug,
+    onOpenWhatsNew,
+    onOpenTutorial,
     hasUnreadFeedback = false,
+    hasUnseenWhatsNew = false,
 }) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -57,7 +63,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                 title={t('settings.title')}
             >
                 <Settings size={14} className={settingsOpen ? 'animate-spin-slow' : ''} />
-                {hasUnreadFeedback && (
+                {(hasUnreadFeedback || hasUnseenWhatsNew) && (
                     <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white" />
                 )}
             </button>
@@ -195,6 +201,37 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                     </div>
 
                     <div className="h-px bg-stone-100 my-1" />
+
+                    {/* What's New */}
+                    <button
+                        onClick={() => {
+                            onOpenWhatsNew();
+                            setSettingsOpen(false);
+                        }}
+                        className="flex items-center justify-between p-2 rounded-lg hover:bg-stone-50 transition-colors w-full text-left group"
+                    >
+                        <span className="text-[10px] font-bold uppercase text-stone-500 group-hover:text-stone-700">What&apos;s New</span>
+                        <div className="flex items-center gap-1.5 text-stone-400 group-hover:text-black transition-colors">
+                            {hasUnseenWhatsNew && (
+                                <span className="px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider bg-amber-200 text-amber-900 border border-amber-400">New</span>
+                            )}
+                            <Sparkles size={12} />
+                        </div>
+                    </button>
+
+                    {/* Tutorial */}
+                    <button
+                        onClick={() => {
+                            onOpenTutorial();
+                            setSettingsOpen(false);
+                        }}
+                        className="flex items-center justify-between p-2 rounded-lg hover:bg-stone-50 transition-colors w-full text-left group"
+                    >
+                        <span className="text-[10px] font-bold uppercase text-stone-500 group-hover:text-stone-700">Run Tutorial</span>
+                        <div className="flex items-center gap-1.5 text-stone-400 group-hover:text-black transition-colors">
+                            <Sparkles size={12} />
+                        </div>
+                    </button>
 
                     {/* Support Link */}
                     <button

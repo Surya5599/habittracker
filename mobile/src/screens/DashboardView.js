@@ -34,6 +34,14 @@ export const DashboardView = ({
     const [pickerMode, setPickerMode] = React.useState('both'); // 'both' or 'year'
 
     const today = new Date();
+    const isHabitStartedByDate = React.useCallback((habit, date) => {
+        if (!habit?.createdAt) return true;
+        const createdDate = new Date(habit.createdAt);
+        createdDate.setHours(0, 0, 0, 0);
+        const target = new Date(date);
+        target.setHours(0, 0, 0, 0);
+        return target >= createdDate;
+    }, []);
 
     // Mood Data Calculations
     const weeklyMoodData = React.useMemo(() => {
@@ -169,13 +177,15 @@ export const DashboardView = ({
 
         for (let d = 1; d <= daysInMonth; d++) {
             let dailyCount = 0;
+            const currentDate = new Date(currentYear, currentMonth, d);
             habits.forEach(h => {
                 const dateKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                if (!isHabitStartedByDate(h, currentDate)) return;
                 if (completions[h.id]?.[dateKey]) dailyCount++;
             });
 
-            const dayOfWeek = new Date(currentYear, currentMonth, d).getDay();
-            const possibleToday = habits.filter(h => !h.frequency || h.frequency.includes(dayOfWeek)).length;
+            const dayOfWeek = currentDate.getDay();
+            const possibleToday = habits.filter(h => isHabitStartedByDate(h, currentDate) && (!h.frequency || h.frequency.includes(dayOfWeek))).length;
             const percentageToday = possibleToday > 0 ? Math.round((dailyCount / possibleToday) * 100) : 0;
 
             chartData.push({
@@ -370,7 +380,7 @@ export const DashboardView = ({
 
             // Check total possible habits for this specific day
             const dayOfWeek = d.getDay(); // 0-6
-            const possibleHabits = habits.filter(h => !h.frequency || h.frequency.includes(dayOfWeek));
+            const possibleHabits = habits.filter(h => isHabitStartedByDate(h, d) && (!h.frequency || h.frequency.includes(dayOfWeek)));
             const totalPossible = possibleHabits.length;
 
             // Count completed

@@ -162,5 +162,114 @@
         "habitNamePlaceholder": "Nombre del hábito",
         "untitled": "Hábito sin título",
         "deleteConfirm": "¿Estás seguro de que quieres eliminar este hábito? Perderás todos sus datos históricos."
+    },
+    "onboarding": {
+        "getStarted": "Comenzar",
+        "stepOf": "Paso {{current}} / {{total}}",
+        "back": "Atrás",
+        "next": "Siguiente",
+        "finish": "Finalizar",
+        "skip": "Omitir",
+        "settingsNote": "Puedes cambiar estos ajustes más tarde en el menú de Configuración.",
+        "manageHabitsHint": "Usa esto para gestionar todos tus hábitos.",
+        "optionalDescription": "Descripción opcional",
+        "fixedDescription": "Elige días específicos cada semana.",
+        "flexibleDescription": "Define cuántas veces por semana.",
+        "step4Explanation": "Marcar el hábito lo deja como completado. Clic derecho (o pulsación larga en móvil) lo marca como omitido, y no afecta tus analíticas.",
+        "steps": {
+            "language": {
+                "title": "Selecciona idioma",
+                "subtitle": "Elige el idioma de la app."
+            },
+            "theme": {
+                "title": "Selecciona color",
+                "subtitle": "Elige el estilo de color de la app."
+            },
+            "startOfWeek": {
+                "title": "Selecciona inicio de semana",
+                "subtitle": "Elige lunes o domingo."
+            },
+            "firstHabit": {
+                "title": "Crea tu primer hábito",
+                "subtitle": "Crea un hábito para empezar."
+            },
+            "dailyCard": {
+                "title": "Usa la tarjeta diaria",
+                "subtitle": "Usa la tarjeta diaria para completar, omitir y desmarcar."
+            },
+            "openJournal": {
+                "title": "Abre Journal",
+                "subtitle": "Toca Journal en la barra de estado de la tarjeta."
+            },
+            "saveJournal": {
+                "title": "Guarda Journal",
+                "subtitle": "Elige un estado de ánimo, escribe algo y guarda."
+            },
+            "openTasks": {
+                "title": "Abre Tasks",
+                "subtitle": "Toca Tasks en la barra de estado de la tarjeta."
+            },
+            "taskFlow": {
+                "title": "Crea y completa una tarea",
+                "subtitle": "Añade una tarea y complétala."
+            },
+            "analytics": {
+                "title": "Vista previa de analíticas",
+                "subtitle": "Vista rápida de las analíticas que usarás."
+            }
+        },
+        "hints": {
+            "clickLanguage": "Haz clic en un idioma",
+            "clickTheme": "Haz clic en un color",
+            "clickStartDay": "Haz clic en el día inicial",
+            "typeHabitName": "Escribe un nombre de hábito",
+            "clickJournal": "Haz clic en Journal",
+            "selectMood": "Selecciona estado de ánimo",
+            "typeJournal": "Escribe en Journal",
+            "clickSave": "Haz clic en Guardar",
+            "clickTasks": "Haz clic en Tasks",
+            "clickNewTask": "Haz clic en Nueva tarea",
+            "giveTaskName": "Ponle un nombre a la tarea",
+            "checkItOff": "Márcala como hecha",
+            "clickCheckbox": "Haz clic en la casilla",
+            "rightClickLongPress": "Clic derecho / pulsación larga",
+            "clickAgain": "Haz clic de nuevo",
+            "pickMood": "Elige estado de ánimo",
+            "typeJournalSave": "Escribe en Journal y guarda",
+            "great": "Perfecto"
+        },
+        "analytics": {
+            "consistencyRing": "Anillo de consistencia",
+            "weeklyTrend": "Tendencia semanal",
+            "habitBreakdown": "Desglose de hábitos",
+            "markSeen": "Marcar vista previa como vista",
+            "previewViewed": "Vista previa vista",
+            "sample": {
+                "reading": "Lectura",
+                "workout": "Entrenamiento",
+                "journal": "Journal"
+            }
+        },
+        "progress": {
+            "completedDone": "Completado: hecho",
+            "completedPending": "Completado: pendiente",
+            "skippedDone": "Omitido: hecho",
+            "skippedPending": "Omitido: pendiente",
+            "uncheckedDone": "Desmarcado: hecho",
+            "uncheckedPending": "Desmarcado: pendiente"
+        },
+        "days": {
+            "monday": "Lunes",
+            "sunday": "Domingo"
+        },
+        "daysShort": {
+            "su": "D",
+            "mo": "L",
+            "tu": "M",
+            "we": "X",
+            "th": "J",
+            "fr": "V",
+            "sa": "S"
+        }
     }
 }

@@ -346,12 +346,26 @@ export const DailyCard = ({
     const cardHeight = screenHeight - 220; // Corrected height to stay above bottom nav
     const viewSwitchStyle = {
         opacity: viewSwitchAnim,
-        transform: [{
-            translateY: viewSwitchAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [6, 0]
-            })
-        }]
+        transform: [
+            {
+                translateX: viewSwitchAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [26, 0]
+                })
+            },
+            {
+                scale: viewSwitchAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.96, 1]
+                })
+            },
+            {
+                rotateZ: viewSwitchAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ['1.2deg', '0deg']
+                })
+            }
+        ]
     };
 
     return (

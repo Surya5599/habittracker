@@ -126,5 +126,114 @@
         "addTasks": "할 일 추가",
         "noTasksToday": "오늘 할 일이 없습니다",
         "tasksStatus": "{{completed}}/{{total}} 할 일"
+    },
+    "onboarding": {
+        "getStarted": "시작하기",
+        "stepOf": "단계 {{current}} / {{total}}",
+        "back": "뒤로",
+        "next": "다음",
+        "finish": "완료",
+        "skip": "건너뛰기",
+        "settingsNote": "이 설정은 나중에 설정 메뉴에서 변경할 수 있습니다.",
+        "manageHabitsHint": "여기서 모든 습관을 관리할 수 있습니다.",
+        "optionalDescription": "설명(선택)",
+        "fixedDescription": "매주 특정 요일을 선택합니다.",
+        "flexibleDescription": "주당 횟수를 설정합니다.",
+        "step4Explanation": "습관을 체크하면 완료 처리됩니다. 우클릭(또는 길게 누르기)하면 건너뜀으로 표시되며 분석에 불이익이 없습니다.",
+        "steps": {
+            "language": {
+                "title": "언어 선택",
+                "subtitle": "앱 언어를 선택하세요."
+            },
+            "theme": {
+                "title": "색상 선택",
+                "subtitle": "앱 색상 스타일을 선택하세요."
+            },
+            "startOfWeek": {
+                "title": "주 시작일 선택",
+                "subtitle": "월요일 또는 일요일을 선택하세요."
+            },
+            "firstHabit": {
+                "title": "첫 습관 만들기",
+                "subtitle": "시작을 위해 습관 1개를 만드세요."
+            },
+            "dailyCard": {
+                "title": "데일리 카드 사용",
+                "subtitle": "데일리 카드에서 완료, 건너뜀, 해제를 해보세요."
+            },
+            "openJournal": {
+                "title": "Journal 열기",
+                "subtitle": "카드 상태 바에서 Journal을 누르세요."
+            },
+            "saveJournal": {
+                "title": "Journal 저장",
+                "subtitle": "기분을 선택하고 작성 후 저장하세요."
+            },
+            "openTasks": {
+                "title": "Tasks 열기",
+                "subtitle": "카드 상태 바에서 Tasks를 누르세요."
+            },
+            "taskFlow": {
+                "title": "할 일 만들고 완료하기",
+                "subtitle": "할 일을 하나 추가하고 완료하세요."
+            },
+            "analytics": {
+                "title": "분석 미리보기",
+                "subtitle": "사용할 분석 화면을 빠르게 확인하세요."
+            }
+        },
+        "hints": {
+            "clickLanguage": "여기서 언어 선택",
+            "clickTheme": "여기서 색상 선택",
+            "clickStartDay": "여기서 시작 요일 선택",
+            "typeHabitName": "습관 이름 입력",
+            "clickJournal": "Journal 클릭",
+            "selectMood": "기분 선택",
+            "typeJournal": "Journal 입력",
+            "clickSave": "저장 클릭",
+            "clickTasks": "Tasks 클릭",
+            "clickNewTask": "새 할 일 클릭",
+            "giveTaskName": "할 일 이름 입력",
+            "checkItOff": "체크해서 완료",
+            "clickCheckbox": "체크박스 클릭",
+            "rightClickLongPress": "우클릭 / 길게 누르기",
+            "clickAgain": "다시 클릭",
+            "pickMood": "기분 선택",
+            "typeJournalSave": "Journal 입력 + 저장",
+            "great": "좋아요"
+        },
+        "analytics": {
+            "consistencyRing": "일관성 링",
+            "weeklyTrend": "주간 추이",
+            "habitBreakdown": "습관 분석",
+            "markSeen": "미리보기 확인으로 표시",
+            "previewViewed": "미리보기 확인됨",
+            "sample": {
+                "reading": "독서",
+                "workout": "운동",
+                "journal": "Journal"
+            }
+        },
+        "progress": {
+            "completedDone": "완료: 완료됨",
+            "completedPending": "완료: 대기",
+            "skippedDone": "건너뜀: 완료됨",
+            "skippedPending": "건너뜀: 대기",
+            "uncheckedDone": "해제: 완료됨",
+            "uncheckedPending": "해제: 대기"
+        },
+        "days": {
+            "monday": "월요일",
+            "sunday": "일요일"
+        },
+        "daysShort": {
+            "su": "일",
+            "mo": "월",
+            "tu": "화",
+            "we": "수",
+            "th": "목",
+            "fr": "금",
+            "sa": "토"
+        }
     }
 }

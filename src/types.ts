@@ -4,6 +4,7 @@ export type HabitType = 'daily' | 'weekly';
 export interface Habit {
   id: string;
   name: string;
+  description?: string;
   type: HabitType;
   color: string;
   goal: number; // Percentage goal

@@ -43,6 +43,14 @@ export const MonthlyView = ({
     const divider = isDark ? '#ffffff' : '#f9fafb';
     const textPrimary = isDark ? '#f5f5f5' : '#161616';
     const textMuted = isDark ? '#a3a3a3' : '#9ca3af';
+    const isHabitStartedByDate = (habit, date) => {
+        if (!habit?.createdAt) return true;
+        const createdDate = new Date(habit.createdAt);
+        createdDate.setHours(0, 0, 0, 0);
+        const target = new Date(date);
+        target.setHours(0, 0, 0, 0);
+        return target >= createdDate;
+    };
 
     return (
         <View style={[tw`flex-1`, { backgroundColor: isDark ? '#000000' : '#f9fafb' }]}>
@@ -117,8 +125,16 @@ export const MonthlyView = ({
                                 ) : (
                                     <View style={tw`flex-row flex-wrap gap-1.5`}>
                                         {(() => {
-                                            const dailyDue = habits.filter(h => !h.weeklyTarget && (!h.frequency || h.frequency.includes(date.getDay())));
-                                            const flexibleDone = habits.filter(h => h.weeklyTarget && checkCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear()));
+                                            const dailyDue = habits.filter(h =>
+                                                isHabitStartedByDate(h, date) &&
+                                                !h.weeklyTarget &&
+                                                (!h.frequency || h.frequency.includes(date.getDay()))
+                                            );
+                                            const flexibleDone = habits.filter(h =>
+                                                isHabitStartedByDate(h, date) &&
+                                                h.weeklyTarget &&
+                                                checkCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear())
+                                            );
                                             const allToShow = [...dailyDue, ...flexibleDone];
 
                                             if (allToShow.length === 0) {

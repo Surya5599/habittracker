@@ -31,7 +31,7 @@ export const useHabits = (session: any, guestMode: boolean, overrideUserId?: str
 
             let userHabits = habitsResult.data || [];
 
-            if (userHabits.length === 0) {
+            if (userHabits.length === 0 && INITIAL_HABITS.length > 0) {
                 const initialWithUser = INITIAL_HABITS.map((h, idx) => ({
                     name: h.name,
                     type: h.type,
@@ -70,6 +70,7 @@ export const useHabits = (session: any, guestMode: boolean, overrideUserId?: str
             setHabits(userHabits.map((h: any) => ({
                 id: h.id,
                 name: h.name,
+                description: h.description || '',
                 type: h.type,
                 color: h.color,
                 goal: h.goal,
@@ -127,6 +128,7 @@ export const useHabits = (session: any, guestMode: boolean, overrideUserId?: str
 
             const habitsToInsert = localHabits.map((h, idx) => ({
                 name: h.name,
+                description: h.description || null,
                 type: h.type,
                 color: h.color,
                 goal: h.goal,
@@ -197,10 +199,10 @@ export const useHabits = (session: any, guestMode: boolean, overrideUserId?: str
             const localH = JSON.parse(localStorage.getItem(LOCAL_HABITS_KEY) || '[]');
             const localC = JSON.parse(localStorage.getItem(LOCAL_COMPLETIONS_KEY) || '{}');
 
-            if (localH.length === 0) {
-                // Initialize fresh guest data
-                const initial = INITIAL_HABITS.map(h => ({ ...h }));
-                setHabits(initial);
+                if (localH.length === 0) {
+                    // Initialize fresh guest data
+                    const initial = INITIAL_HABITS.map(h => ({ ...h }));
+                    setHabits(initial);
 
                 // Seed completions
                 const today = new Date();
@@ -221,31 +223,11 @@ export const useHabits = (session: any, guestMode: boolean, overrideUserId?: str
                 const sortedDates = seedDates.reverse(); // Oldest to newest: [..., Today-1, Today]
                 const todayKey = sortedDates[sortedDates.length - 1];
 
-                // Ensure ALL habits are done Today (Perfect Day)
+                // Seed is empty when there are no starter habits.
                 initial.forEach(h => {
                     if (!currentWeekCompletions[h.id]) currentWeekCompletions[h.id] = {};
                     currentWeekCompletions[h.id][todayKey] = true;
                 });
-
-                // Habit 1 (Index 0): Add 3 previous days (Total 4: "half week maxed")
-                // sortedDates: [..., -4, -3, -2, -1, Today]
-                // Add -1, -2, -3
-                const habit1Id = initial[0].id;
-                sortedDates.slice(-4, -1).forEach(dateKey => {
-                    currentWeekCompletions[habit1Id][dateKey] = true;
-                });
-
-                // Habit 2 (Index 1): Add 2 previous days (Total 3)
-                // Add -2, -4 (random scatter)
-                const habit2Id = initial[1].id;
-                if (sortedDates.length >= 3) {
-                    currentWeekCompletions[habit2Id][sortedDates[sortedDates.length - 3]] = true; // Today-2
-                }
-                if (sortedDates.length >= 5) {
-                    currentWeekCompletions[habit2Id][sortedDates[sortedDates.length - 5]] = true; // Today-4
-                }
-
-                // Habit 3, 4, 5: Already have Today (Total 1). Done.
 
                 setCompletions(currentWeekCompletions);
                 localStorage.setItem(LOCAL_HABITS_KEY, JSON.stringify(initial));
@@ -318,6 +300,7 @@ export const useHabits = (session: any, guestMode: boolean, overrideUserId?: str
         const newHabit: Habit = {
             id: tempId,
             name: '',
+            description: '',
             type: 'daily',
             color: themePrimary,
             goal: 80,
@@ -335,6 +318,7 @@ export const useHabits = (session: any, guestMode: boolean, overrideUserId?: str
                     .from('habits')
                     .insert({
                         name: '',
+                        description: null,
                         type: 'daily',
                         color: themePrimary,
                         goal: 80,
@@ -350,6 +334,7 @@ export const useHabits = (session: any, guestMode: boolean, overrideUserId?: str
                     const mapped = {
                         id: data[0].id,
                         name: data[0].name,
+                        description: data[0].description || '',
                         type: data[0].type,
                         color: data[0].color,
                         goal: data[0].goal,

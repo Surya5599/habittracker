@@ -162,5 +162,114 @@
         "habitNamePlaceholder": "Gewohnheitsname",
         "untitled": "Unbenannte Gewohnheit",
         "deleteConfirm": "Sind Sie sicher, dass Sie diese Gewohnheit löschen möchten? Sie verlieren alle historischen Daten."
+    },
+    "onboarding": {
+        "getStarted": "Loslegen",
+        "stepOf": "Schritt {{current}} / {{total}}",
+        "back": "Zurück",
+        "next": "Weiter",
+        "finish": "Fertig",
+        "skip": "Überspringen",
+        "settingsNote": "Du kannst diese Einstellungen später im Einstellungen-Menü ändern.",
+        "manageHabitsHint": "Nutze das, um alle deine Gewohnheiten zu verwalten.",
+        "optionalDescription": "Optionale Beschreibung",
+        "fixedDescription": "Wähle feste Tage pro Woche.",
+        "flexibleDescription": "Lege fest, wie oft pro Woche.",
+        "step4Explanation": "Wenn du die Gewohnheit anhakst, ist sie erledigt. Rechtsklick (oder langes Drücken auf Touch) markiert sie als übersprungen und beeinflusst deine Analysen nicht.",
+        "steps": {
+            "language": {
+                "title": "Sprache wählen",
+                "subtitle": "Wähle die Sprache der App."
+            },
+            "theme": {
+                "title": "Farbthema wählen",
+                "subtitle": "Wähle den Farbstil der App."
+            },
+            "startOfWeek": {
+                "title": "Wochenstart wählen",
+                "subtitle": "Wähle Montag oder Sonntag."
+            },
+            "firstHabit": {
+                "title": "Erste Gewohnheit anlegen",
+                "subtitle": "Lege eine Gewohnheit zum Start an."
+            },
+            "dailyCard": {
+                "title": "Tageskarte nutzen",
+                "subtitle": "Nutze die Tageskarte zum Erledigen, Überspringen und Entfernen."
+            },
+            "openJournal": {
+                "title": "Journal öffnen",
+                "subtitle": "Tippe in der Statusleiste der Karte auf Journal."
+            },
+            "saveJournal": {
+                "title": "Journaleintrag speichern",
+                "subtitle": "Wähle eine Stimmung, schreibe etwas und speichere."
+            },
+            "openTasks": {
+                "title": "Tasks öffnen",
+                "subtitle": "Tippe in der Statusleiste der Karte auf Tasks."
+            },
+            "taskFlow": {
+                "title": "Aufgabe erstellen und erledigen",
+                "subtitle": "Füge eine Aufgabe hinzu und erledige sie."
+            },
+            "analytics": {
+                "title": "Analytics-Vorschau",
+                "subtitle": "Kurzer Blick auf die Analysen, die du nutzen wirst."
+            }
+        },
+        "hints": {
+            "clickLanguage": "Hier Sprache wählen",
+            "clickTheme": "Hier Farbthema wählen",
+            "clickStartDay": "Hier Wochenstart wählen",
+            "typeHabitName": "Hier Gewohnheitsnamen eingeben",
+            "clickJournal": "Hier Journal wählen",
+            "selectMood": "Stimmung auswählen",
+            "typeJournal": "Im Journal schreiben",
+            "clickSave": "Auf Speichern klicken",
+            "clickTasks": "Hier Tasks wählen",
+            "clickNewTask": "Auf Neue Aufgabe klicken",
+            "giveTaskName": "Aufgabe benennen",
+            "checkItOff": "Als erledigt markieren",
+            "clickCheckbox": "Checkbox anklicken",
+            "rightClickLongPress": "Rechtsklick / lang drücken",
+            "clickAgain": "Erneut klicken",
+            "pickMood": "Stimmung wählen",
+            "typeJournalSave": "Journal schreiben + speichern",
+            "great": "Super"
+        },
+        "analytics": {
+            "consistencyRing": "Konsistenz-Ring",
+            "weeklyTrend": "Wochentrend",
+            "habitBreakdown": "Gewohnheitsübersicht",
+            "markSeen": "Vorschau als gesehen markieren",
+            "previewViewed": "Vorschau gesehen",
+            "sample": {
+                "reading": "Lesen",
+                "workout": "Training",
+                "journal": "Journal"
+            }
+        },
+        "progress": {
+            "completedDone": "Erledigt: abgeschlossen",
+            "completedPending": "Erledigt: ausstehend",
+            "skippedDone": "Übersprungen: abgeschlossen",
+            "skippedPending": "Übersprungen: ausstehend",
+            "uncheckedDone": "Entfernt: abgeschlossen",
+            "uncheckedPending": "Entfernt: ausstehend"
+        },
+        "days": {
+            "monday": "Montag",
+            "sunday": "Sonntag"
+        },
+        "daysShort": {
+            "su": "S",
+            "mo": "M",
+            "tu": "D",
+            "we": "M",
+            "th": "D",
+            "fr": "F",
+            "sa": "S"
+        }
     }
 }

@@ -126,5 +126,114 @@
         "addTasks": "タスク追加",
         "noTasksToday": "今日のタスクはありません",
         "tasksStatus": "{{completed}}/{{total}} タスク"
+    },
+    "onboarding": {
+        "getStarted": "はじめる",
+        "stepOf": "ステップ {{current}} / {{total}}",
+        "back": "戻る",
+        "next": "次へ",
+        "finish": "完了",
+        "skip": "スキップ",
+        "settingsNote": "これらの設定は後で設定メニューから変更できます。",
+        "manageHabitsHint": "ここからすべての習慣を管理できます。",
+        "optionalDescription": "説明（任意）",
+        "fixedDescription": "毎週の実施日を指定します。",
+        "flexibleDescription": "週に何回行うかを設定します。",
+        "step4Explanation": "チェックすると完了になります。右クリック（または長押し）でスキップになり、分析には不利にカウントされません。",
+        "steps": {
+            "language": {
+                "title": "言語を選択",
+                "subtitle": "アプリの言語を選んでください。"
+            },
+            "theme": {
+                "title": "カラーを選択",
+                "subtitle": "アプリのカラースタイルを選んでください。"
+            },
+            "startOfWeek": {
+                "title": "週の開始日を選択",
+                "subtitle": "月曜または日曜を選んでください。"
+            },
+            "firstHabit": {
+                "title": "最初の習慣を作成",
+                "subtitle": "はじめるために習慣を1つ作成します。"
+            },
+            "dailyCard": {
+                "title": "デイリーカードを使う",
+                "subtitle": "デイリーカードで完了・スキップ・解除を試します。"
+            },
+            "openJournal": {
+                "title": "Journalを開く",
+                "subtitle": "カードのステータスバーでJournalをタップします。"
+            },
+            "saveJournal": {
+                "title": "Journalを保存",
+                "subtitle": "気分を選んで入力し、保存します。"
+            },
+            "openTasks": {
+                "title": "Tasksを開く",
+                "subtitle": "カードのステータスバーでTasksをタップします。"
+            },
+            "taskFlow": {
+                "title": "タスクを作成して完了",
+                "subtitle": "タスクを1つ追加して完了にします。"
+            },
+            "analytics": {
+                "title": "分析プレビュー",
+                "subtitle": "使う分析画面を簡単に確認します。"
+            }
+        },
+        "hints": {
+            "clickLanguage": "ここで言語を選択",
+            "clickTheme": "ここでカラーを選択",
+            "clickStartDay": "ここで開始日を選択",
+            "typeHabitName": "習慣名を入力",
+            "clickJournal": "Journalをクリック",
+            "selectMood": "気分を選択",
+            "typeJournal": "Journalを入力",
+            "clickSave": "保存をクリック",
+            "clickTasks": "Tasksをクリック",
+            "clickNewTask": "新しいタスクをクリック",
+            "giveTaskName": "タスク名を入力",
+            "checkItOff": "チェックして完了",
+            "clickCheckbox": "チェックボックスをクリック",
+            "rightClickLongPress": "右クリック / 長押し",
+            "clickAgain": "もう一度クリック",
+            "pickMood": "気分を選ぶ",
+            "typeJournalSave": "Journal入力 + 保存",
+            "great": "OK"
+        },
+        "analytics": {
+            "consistencyRing": "継続リング",
+            "weeklyTrend": "週間トレンド",
+            "habitBreakdown": "習慣の内訳",
+            "markSeen": "プレビュー確認済みにする",
+            "previewViewed": "確認済み",
+            "sample": {
+                "reading": "読書",
+                "workout": "運動",
+                "journal": "Journal"
+            }
+        },
+        "progress": {
+            "completedDone": "完了: 済み",
+            "completedPending": "完了: 未",
+            "skippedDone": "スキップ: 済み",
+            "skippedPending": "スキップ: 未",
+            "uncheckedDone": "解除: 済み",
+            "uncheckedPending": "解除: 未"
+        },
+        "days": {
+            "monday": "月曜日",
+            "sunday": "日曜日"
+        },
+        "daysShort": {
+            "su": "日",
+            "mo": "月",
+            "tu": "火",
+            "we": "水",
+            "th": "木",
+            "fr": "金",
+            "sa": "土"
+        }
     }
 }

@@ -29,6 +29,14 @@ import { StreakModal } from './components/StreakModal';
 import { SearchModal } from './components/SearchModal';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
 
+const ADMIN_EMAILS = ((import.meta.env.VITE_ADMIN_EMAILS as string | undefined) || 'admin@habicard.com,knowheredeveloper@gmail.com')
+  .split(',')
+  .map(email => email.trim().toLowerCase())
+  .filter(Boolean);
+const WHATS_NEW_VERSION = '2026_04';
+const WHATS_NEW_SEEN_KEY = 'habit_whats_new_seen_version';
+const LEGACY_DEFAULT_HABIT_NAMES = new Set(['meditation', 'exercise', 'drink 2l water', 'reading', 'journaling']);
+
 const DEMO_HABITS: Habit[] = [
   { id: '1', name: 'Morning Meditation', type: 'daily', goal: 7, color: '#C19A9A' },
   { id: '2', name: 'Deep Work', type: 'daily', goal: 5, color: '#9AC1A0' },
@@ -68,7 +76,7 @@ const AppContent: React.FC = () => {
   const impersonateId = queryParams.get('impersonate');
   const [session, setSession] = useState<any>(null);
 
-  const isAdmin = session?.user?.email === 'admin@habicard.com';
+  const isAdmin = !!session?.user?.email && ADMIN_EMAILS.includes(session.user.email.toLowerCase());
   const effectiveUserId = (isAdmin && impersonateId) ? impersonateId : session?.user?.id;
   const isImpersonating = !!(isAdmin && impersonateId);
   const [guestMode, setGuestMode] = useState(() => {
@@ -103,7 +111,8 @@ const AppContent: React.FC = () => {
   }, [colorMode]);
   const [view, setView] = useState<'monthly' | 'dashboard' | 'weekly'>(defaultView);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [showWhatsNewModal, setShowWhatsNewModal] = useState(false);
+  const [hasUnseenWhatsNew, setHasUnseenWhatsNew] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   useEffect(() => {
@@ -122,15 +131,18 @@ const AppContent: React.FC = () => {
 
   useEffect(() => {
     // Check for latest feature announcement
-    const seenWhatsNew = localStorage.getItem('seen_whats_new_2026_03');
+    const seenWhatsNewVersion = localStorage.getItem(WHATS_NEW_SEEN_KEY);
+    const hasSeenLatestWhatsNew = seenWhatsNewVersion === WHATS_NEW_VERSION;
 
     // Determine if onboarding is completed based on current mode
     const isGuestOnboardingDone = localStorage.getItem('habit_onboarding_completed') === 'true';
     const isUserOnboardingDone = session?.user?.user_metadata?.onboarding_completed;
     const hasCompletedOnboarding = !!((guestMode && isGuestOnboardingDone) || (session?.user && isUserOnboardingDone));
 
-    if (!seenWhatsNew && !showOnboarding && hasCompletedOnboarding) {
-      setShowUpdateModal(true);
+    setHasUnseenWhatsNew(!hasSeenLatestWhatsNew);
+
+    if (!hasSeenLatestWhatsNew && !showOnboarding && hasCompletedOnboarding) {
+      setShowWhatsNewModal(true);
     }
 
     // Handle Extension Login
@@ -142,15 +154,92 @@ const AppContent: React.FC = () => {
     }
   }, [showOnboarding, guestMode, session?.user?.id]);
 
-  const handleUpdateModalClose = () => {
-    setShowUpdateModal(false);
-    localStorage.setItem('seen_whats_new_2026_03', 'true');
+  const markWhatsNewAsSeen = () => {
+    localStorage.setItem(WHATS_NEW_SEEN_KEY, WHATS_NEW_VERSION);
+    setHasUnseenWhatsNew(false);
   };
 
-  const handleUpdateModalAction = () => {
-    setView('dashboard');
-    handleUpdateModalClose();
+  const handleWhatsNewClose = () => {
+    setShowWhatsNewModal(false);
   };
+
+  const handleOpenWhatsNew = () => {
+    setShowWhatsNewModal(true);
+  };
+
+  const handleOpenTutorial = () => {
+    setShowOnboarding(true);
+  };
+
+  const handleWhatsNewFinish = () => {
+    markWhatsNewAsSeen();
+    setView('weekly');
+    setShowWhatsNewModal(false);
+  };
+
+  const whatsNewSlides = useMemo(() => ([
+    {
+      id: 'status-bar',
+      title: 'New Status Bar',
+      description: 'Tap Habits, Tasks, or Journal to switch instantly.',
+      bullets: [
+        'Counts and icons update for the day.'
+      ],
+      image: (
+        <img src="/whats-new/status-bar.png" alt="Status bar for Habits, Tasks, and Journal" className="w-full h-44 object-contain bg-stone-100 border border-stone-200 rounded-sm" />
+      )
+    },
+    {
+      id: 'skip-habit',
+      title: 'Skip Habits Without Penalty',
+      description: 'Right-click a habit checkbox to skip it.',
+      bullets: [
+        'Skipped habits do not lower your completion rate.'
+      ],
+      image: (
+        <div className="w-full border border-stone-200 rounded-sm bg-white p-3">
+          <div className="flex items-center justify-between border border-stone-200 rounded px-3 py-2 bg-stone-50">
+            <div className="min-w-0">
+              <p className="text-sm font-black text-stone-800 truncate">Morning Run</p>
+              <p className="text-[11px] font-bold text-stone-500">Right-click to skip</p>
+            </div>
+            <div className="w-6 h-6 border-2 border-black rounded-sm bg-[#facc15] flex items-center justify-center">
+              <span className="text-[10px] font-black text-black leading-none">-</span>
+            </div>
+          </div>
+          <p className="mt-2 text-[10px] font-black uppercase tracking-widest text-[#ca8a04]">Skipped = No Penalty</p>
+        </div>
+      )
+    },
+    {
+      id: 'language-support',
+      title: 'Language Support',
+      description: 'Choose your app language in Settings.',
+      bullets: [
+        'Tap Settings → Language, then pick your preferred language.'
+      ],
+      image: (
+        <img src="/whats-new/language-support.png" alt="Language selection in settings" className="w-full h-44 object-contain bg-stone-100 border border-stone-200 rounded-sm" />
+      )
+    },
+    {
+      id: 'daily-view-combined',
+      title: 'Daily View Together',
+      description: 'See Habits, Tasks, and Journal in one daily view.',
+      bullets: [
+        'Click on the Day/Date of the card to see the full day view.'
+      ],
+      image: (
+        <div className="w-full bg-stone-100 border border-stone-200 rounded-sm p-1">
+          <img
+            src="/whats-new/daily-habit-view.gif"
+            alt="Daily view preview with habits tasks and journal together"
+            className="w-full h-56 object-contain rounded-sm bg-stone-100"
+          />
+        </div>
+      )
+    }
+  ]), []);
 
   const updateDefaultView = async (newView: 'monthly' | 'dashboard' | 'weekly') => {
     setDefaultView(newView);
@@ -560,11 +649,6 @@ const AppContent: React.FC = () => {
   const handleOnboardingComplete = async () => {
     setShowOnboarding(false);
 
-    // Show update modal immediately after onboarding if relevant
-    if (!localStorage.getItem('seen_resolutions_update_2026')) {
-      setShowUpdateModal(true);
-    }
-
     if (session?.user && !isImpersonating) {
       try {
         await supabase.auth.updateUser({
@@ -576,6 +660,37 @@ const AppContent: React.FC = () => {
     } else if (!session) {
       localStorage.setItem('habit_onboarding_completed', 'true');
     }
+  };
+
+  const handleOnboardingCreateFirstHabit = async (payload: {
+    name: string;
+    description: string;
+    color: string;
+    frequency: number[] | undefined;
+    weeklyTarget: number | undefined;
+  }) => {
+    const existingActiveHabits = habits.filter(h => !h.archivedAt);
+    const hasOnlyLegacyDefaults = existingActiveHabits.length > 0 &&
+      existingActiveHabits.every(h => LEGACY_DEFAULT_HABIT_NAMES.has((h.name || '').trim().toLowerCase()));
+
+    if (existingActiveHabits.length > 0 && !hasOnlyLegacyDefaults) return;
+
+    if (hasOnlyLegacyDefaults) {
+      for (const habit of existingActiveHabits) {
+        await removeHabit(habit.id);
+      }
+    }
+
+    const newId = await addHabit(payload.color || theme.primary);
+    if (!newId) return;
+
+    await updateHabit(newId, {
+      name: payload.name,
+      description: payload.description,
+      color: payload.color || theme.primary,
+      frequency: payload.frequency,
+      weeklyTarget: payload.weeklyTarget
+    });
   };
 
   useEffect(() => {
@@ -881,52 +996,21 @@ const AppContent: React.FC = () => {
         onClose={handleOnboardingComplete}
         initialTheme={theme}
         onThemeChange={setTheme}
-        initialView={defaultView}
-        onViewChange={updateDefaultView}
+        initialLanguage={language}
+        onLanguageChange={updateLanguage}
+        initialStartOfWeek={startOfWeek}
+        onStartOfWeekChange={updateStartOfWeek}
+        onCreateFirstHabit={handleOnboardingCreateFirstHabit}
         username={session?.user?.email}
       />
 
       <FeatureAnnouncementModal
-        isOpen={showUpdateModal}
-        onClose={handleUpdateModalClose}
-        title="What's New"
-        description="A faster, cleaner HabiCard is here. Here are the key updates now live:"
-        image={
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {[
-              {
-                title: 'Day Card',
-                caption: 'Open any day to view and update that day card.',
-                src: '/whats-new/day-card.png'
-              },
-              {
-                title: 'Dark Mode Setting',
-                caption: 'Use the moon/sun controls in Settings for dark/light.',
-                src: '/whats-new/settings-dark-mode.png'
-              },
-              {
-                title: 'Dashboard Layout',
-                caption: 'Refined panels and monthly breakdown readability.',
-                src: '/whats-new/dashboard-layout.png'
-              },
-              {
-                title: 'Task Flow Updates',
-                caption: 'Faster task status access from each day card.',
-                src: '/whats-new/tasks.png'
-              }
-            ].map((item) => (
-              <div key={item.title} className="border border-stone-300 bg-white p-1 rounded">
-                <img src={item.src} alt={item.title} className="w-full h-20 object-cover border border-stone-200 rounded-sm" />
-                <div className="mt-1">
-                  <div className="text-[9px] font-black uppercase tracking-wider text-stone-800 leading-tight">{item.title}</div>
-                  <div className="text-[8px] font-medium text-stone-500 leading-tight mt-0.5">{item.caption}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        }
-        actionLabel="Try It Now"
-        onAction={handleUpdateModalAction}
+        isOpen={showWhatsNewModal}
+        onClose={handleWhatsNewClose}
+        slides={whatsNewSlides}
+        headerTitle="What's New"
+        headerDescription="Explore the latest updates. We’ll keep adding future releases here."
+        onFinish={handleWhatsNewFinish}
       />
 
       <div className="max-w-full md:h-full mx-auto bg-white border-[2px] sm:border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] p-2 sm:p-4 flex flex-col gap-4 overflow-visible md:overflow-hidden">
@@ -987,6 +1071,9 @@ const AppContent: React.FC = () => {
           setIsStreakModalOpen={setIsStreakModalOpen}
           onReportBug={() => setIsFeedbackModalOpen(true)}
           hasUnreadFeedback={hasUnreadFeedback}
+          onOpenWhatsNew={handleOpenWhatsNew}
+          onOpenTutorial={handleOpenTutorial}
+          hasUnseenWhatsNew={hasUnseenWhatsNew}
           onSearch={() => setIsSearchOpen(true)}
         />
 
@@ -1248,6 +1335,11 @@ const SignInPage: React.FC = () => {
             isStreakModalOpen={false} setIsStreakModalOpen={() => { }}
             reorderHabits={async () => { }}
             onReportBug={() => { }}
+            onOpenWhatsNew={() => { }}
+            onOpenTutorial={() => { }}
+            hasUnseenWhatsNew={false}
+            hasUnreadFeedback={false}
+            onSearch={() => { }}
           />
           <DashboardView
             annualStats={DEMO_ANNUAL_STATS}

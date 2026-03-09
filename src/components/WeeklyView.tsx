@@ -19,6 +19,7 @@ interface WeeklyViewProps {
     addHabit: () => void;
     setSelectedDateForCard: (date: Date | null, flipped?: boolean) => void;
     startOfWeek: 'monday' | 'sunday';
+    cardStyle: 'compact' | 'large';
 }
 
 export const WeeklyView: React.FC<WeeklyViewProps> = ({
@@ -35,6 +36,7 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
     addHabit,
     setSelectedDateForCard,
     startOfWeek,
+    cardStyle,
 }) => {
     const [shareModalOpen, setShareModalOpen] = useState(false);
     const [shareData, setShareData] = useState<{
@@ -169,6 +171,7 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                                 onGlobalViewModeChange={setWeekViewMode}
                                 startOfWeek={startOfWeek}
                                 fitParentHeight={true}
+                                cardStyle={cardStyle}
                             />
                         ))}
                     </div>
@@ -197,6 +200,7 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                         onGlobalViewModeChange={setWeekViewMode}
                         startOfWeek={startOfWeek}
                         fitParentHeight={false}
+                        cardStyle={cardStyle}
                     />
                 </div>
             </div>

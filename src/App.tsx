@@ -96,6 +96,10 @@ const AppContent: React.FC = () => {
     const saved = localStorage.getItem('habit_color_mode');
     return saved === 'dark' ? 'dark' : 'light';
   });
+  const [cardStyle, setCardStyle] = useState<'compact' | 'large'>(() => {
+    const saved = localStorage.getItem('habit_card_style');
+    return saved === 'large' ? 'large' : 'compact';
+  });
 
   // Sync i18n with state
   useEffect(() => {
@@ -109,6 +113,10 @@ const AppContent: React.FC = () => {
     document.documentElement.setAttribute('data-color-mode', colorMode);
     document.documentElement.style.colorScheme = colorMode;
   }, [colorMode]);
+
+  useEffect(() => {
+    localStorage.setItem('habit_card_style', cardStyle);
+  }, [cardStyle]);
   const [view, setView] = useState<'monthly' | 'dashboard' | 'weekly'>(defaultView);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showWhatsNewModal, setShowWhatsNewModal] = useState(false);
@@ -240,6 +248,54 @@ const AppContent: React.FC = () => {
       )
     },
     {
+      id: 'card-style',
+      title: 'Card Style Options',
+      description: 'Choose how day progress appears on your daily card.',
+      bullets: [
+        'Tap Settings → Appearance → Card Style.'
+      ],
+      image: (
+        <div className="w-full border border-stone-200 rounded-sm bg-stone-100 p-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-xl border border-black overflow-hidden bg-white">
+              <div className="flex items-center justify-between px-2 py-2 bg-[#9ab4c1]">
+                <div className="min-w-0">
+                  <p className="text-[8px] font-black uppercase tracking-wider text-white">Thursday</p>
+                  <p className="text-[7px] font-bold text-white/85">Jan 1, 2026</p>
+                </div>
+                <div className="w-7 h-7 rounded-full border-[3px] border-white/35 border-r-white flex items-center justify-center text-[7px] font-black text-white">
+                  40
+                </div>
+              </div>
+              <div className="px-2 py-3 bg-stone-50">
+                <div className="h-2 rounded bg-stone-200 mb-1.5"></div>
+                <div className="h-2 rounded bg-stone-200 w-4/5"></div>
+              </div>
+              <div className="px-2 py-1 border-t border-stone-200 text-[8px] font-black uppercase tracking-widest text-stone-500">
+                Compact
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-black overflow-hidden bg-white">
+              <div className="px-2 py-2 bg-[#9ab4c1] text-center">
+                <p className="text-[8px] font-black uppercase tracking-wider text-white">Thursday</p>
+                <p className="text-[7px] font-bold text-white/85">Jan 1, 2026</p>
+              </div>
+              <div className="px-2 py-2 bg-stone-50 flex flex-col items-center">
+                <div className="w-12 h-12 rounded-full border-[5px] border-stone-200 border-r-[#9ab4c1] flex items-center justify-center text-[10px] font-black text-stone-700">
+                  40%
+                </div>
+                <div className="mt-2 h-2 rounded bg-stone-200 w-full"></div>
+              </div>
+              <div className="px-2 py-1 border-t border-stone-200 text-[8px] font-black uppercase tracking-widest text-stone-500">
+                Large
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
       id: 'daily-view-combined',
       title: 'Daily View Together',
       description: 'See Habits, Tasks, and Journal in one daily view.',
@@ -303,6 +359,21 @@ const AppContent: React.FC = () => {
     }
   };
 
+  const updateCardStyle = async (newStyle: 'compact' | 'large') => {
+    setCardStyle(newStyle);
+    localStorage.setItem('habit_card_style', newStyle);
+
+    if (session?.user?.id && !isImpersonating) {
+      try {
+        await supabase.auth.updateUser({
+          data: { card_style: newStyle }
+        });
+      } catch (err) {
+        console.error('Failed to save card style setting:', err);
+      }
+    }
+  };
+
   useEffect(() => {
     if (session?.user?.user_metadata?.default_view) {
       const remoteView = session.user.user_metadata.default_view;
@@ -321,6 +392,13 @@ const AppContent: React.FC = () => {
       if (['monday', 'sunday'].includes(remoteStart)) {
         setStartOfWeek(remoteStart);
         localStorage.setItem('habit_start_of_week', remoteStart);
+      }
+    }
+    if (session?.user?.user_metadata?.card_style) {
+      const remoteCardStyle = session.user.user_metadata.card_style;
+      if (['compact', 'large'].includes(remoteCardStyle)) {
+        setCardStyle(remoteCardStyle);
+        localStorage.setItem('habit_card_style', remoteCardStyle);
       }
     }
   }, [session?.user?.id]);
@@ -1075,6 +1153,8 @@ const AppContent: React.FC = () => {
           setDefaultView={updateDefaultView}
           colorMode={colorMode}
           setColorMode={setColorMode}
+          cardStyle={cardStyle}
+          setCardStyle={updateCardStyle}
           addHabit={addHabit}
           updateHabit={updateHabit}
           removeHabit={removeHabit}
@@ -1180,10 +1260,11 @@ const AppContent: React.FC = () => {
                 isHabitInactive={isHabitInactive}
                 notes={notes}
                 updateNote={updateNote}
-                onShareClick={() => { }}
-                defaultFlipped={cardOpenFlipped}
-                combinedView={true}
-              />
+              onShareClick={() => { }}
+              defaultFlipped={cardOpenFlipped}
+              combinedView={true}
+              cardStyle={cardStyle}
+            />
             </div>
           </div>,
           document.body
@@ -1256,6 +1337,7 @@ const AppContent: React.FC = () => {
                 setCardOpenFlipped(flipped);
               }}
               startOfWeek={startOfWeek}
+              cardStyle={cardStyle}
             />
           )}
         </div>
@@ -1351,6 +1433,7 @@ const SignInPage: React.FC = () => {
             dailyStats={[]} weeklyStats={[]} weekProgress={{ completed: 25, total: 28, percentage: 89 }}
             habits={DEMO_HABITS} defaultView="dashboard" setDefaultView={() => { }}
             colorMode={colorMode} setColorMode={setColorMode}
+            cardStyle={cardStyle} setCardStyle={setCardStyle}
             addHabit={async () => ''} updateHabit={async () => { }} removeHabit={async () => { }}
             weekDelta={12} monthDelta={5} monthlyGoals={{}} updateMonthlyGoals={() => { }}
             topHabitsThisMonth={[]} weekOffset={0}

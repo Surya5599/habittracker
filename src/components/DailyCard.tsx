@@ -38,6 +38,7 @@ interface DailyCardProps {
     onGlobalViewModeChange?: (mode: 'habits' | 'tasks' | 'journal') => void;
     fitParentHeight?: boolean;
     onJournalSaveClick?: () => void;
+    cardStyle?: 'compact' | 'large';
 }
 
 export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = ({
@@ -65,6 +66,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
     onGlobalViewModeChange,
     fitParentHeight = false,
     onJournalSaveClick,
+    cardStyle = 'compact',
 }) => {
     const { t, i18n } = useTranslation();
     const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -420,6 +422,78 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
         </div>
     );
 
+    const HeaderTitle = (
+        <div className={`min-w-0 overflow-hidden ${cardStyle === 'large' ? 'text-center px-4' : 'text-left pl-4 pr-1'}`}>
+            <h3 className="text-white font-black tracking-tight text-sm sm:text-base leading-tight truncate">
+                <span className="sm:hidden">{dayNameShort}</span>
+                <span className="hidden sm:inline">{dayName}</span>
+            </h3>
+            <p className="text-white/80 font-bold text-[9px] sm:text-[10px] tracking-wide whitespace-nowrap truncate">{dateString}</p>
+        </div>
+    );
+
+    const SmallProgressBadge = (
+        <div className="relative w-11 h-11 flex-shrink-0 justify-self-end">
+            <svg className="w-full h-full transform -rotate-90">
+                <circle
+                    cx="22"
+                    cy="22"
+                    r="17"
+                    stroke="rgba(255,255,255,0.25)"
+                    strokeWidth="4"
+                    fill="transparent"
+                />
+                <circle
+                    cx="22"
+                    cy="22"
+                    r="17"
+                    stroke="white"
+                    strokeWidth="4"
+                    fill="transparent"
+                    strokeDasharray={2 * Math.PI * 17}
+                    strokeDashoffset={2 * Math.PI * 17 * (1 - progress / 100)}
+                    strokeLinecap="round"
+                    className="transition-all duration-1000 ease-out"
+                />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-[10px] font-black text-white">{Math.round(progress)}%</span>
+            </div>
+        </div>
+    );
+
+    const LargeProgressPanel = (
+        <div className="px-4 pt-1 pb-0 bg-white border-b border-stone-100">
+            <div className="mx-auto w-[128px] h-[128px] relative">
+                <svg className="w-full h-full transform -rotate-90">
+                    <circle
+                        cx="64"
+                        cy="64"
+                        r="44"
+                        stroke="rgba(0,0,0,0.06)"
+                        strokeWidth="10"
+                        fill="transparent"
+                    />
+                    <circle
+                        cx="64"
+                        cy="64"
+                        r="44"
+                        stroke={theme.secondary}
+                        strokeWidth="10"
+                        fill="transparent"
+                        strokeDasharray={2 * Math.PI * 44}
+                        strokeDashoffset={2 * Math.PI * 44 * (1 - progress / 100)}
+                        strokeLinecap="round"
+                        className="transition-all duration-1000 ease-out"
+                    />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-2xl font-black text-stone-800">{Math.round(progress)}%</span>
+                </div>
+            </div>
+        </div>
+    );
+
     const FrontFace = (
         <div
             className={`relative w-full h-full bg-white neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans ${isToday ? 'ring-2 ring-black ring-offset-0' : ''}`}
@@ -432,7 +506,15 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                     if (onDateClick && !combinedView) onDateClick(date);
                 }}
             >
-                <div className={`mx-auto w-full grid items-center gap-0 ${hasDayNav ? 'grid-cols-[28px_minmax(0,1fr)_48px_28px]' : 'grid-cols-[minmax(0,1fr)_48px]'}`}>
+                <div className={`mx-auto w-full grid items-center gap-0 ${
+                    hasDayNav
+                        ? cardStyle === 'compact'
+                            ? 'grid-cols-[28px_minmax(0,1fr)_48px_28px]'
+                            : 'grid-cols-[28px_minmax(0,1fr)_28px]'
+                        : cardStyle === 'compact'
+                            ? 'grid-cols-[minmax(0,1fr)_48px]'
+                            : 'grid-cols-[minmax(0,1fr)]'
+                }`}>
                     {hasDayNav ? (
                     <div className="flex items-center justify-center">
                         {onPrev ? (
@@ -448,40 +530,8 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                         ) : null}
                     </div>
                     ) : null}
-                    <div className="min-w-0 overflow-hidden text-left pl-4 pr-1">
-                        <h3 className="text-white font-black tracking-tight text-sm sm:text-base leading-tight truncate">
-                            <span className="sm:hidden">{dayNameShort}</span>
-                            <span className="hidden sm:inline">{dayName}</span>
-                        </h3>
-                        <p className="text-white/80 font-bold text-[9px] sm:text-[10px] tracking-wide whitespace-nowrap truncate">{dateString}</p>
-                    </div>
-                    <div className="relative w-11 h-11 flex-shrink-0 justify-self-end">
-                        <svg className="w-full h-full transform -rotate-90">
-                            <circle
-                                cx="22"
-                                cy="22"
-                                r="17"
-                                stroke="rgba(255,255,255,0.25)"
-                                strokeWidth="4"
-                                fill="transparent"
-                            />
-                            <circle
-                                cx="22"
-                                cy="22"
-                                r="17"
-                                stroke="white"
-                                strokeWidth="4"
-                                fill="transparent"
-                                strokeDasharray={2 * Math.PI * 17}
-                                strokeDashoffset={2 * Math.PI * 17 * (1 - progress / 100)}
-                                strokeLinecap="round"
-                                className="transition-all duration-1000 ease-out"
-                            />
-                        </svg>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-[10px] font-black text-white">{Math.round(progress)}%</span>
-                        </div>
-                    </div>
+                    {HeaderTitle}
+                    {cardStyle === 'compact' ? SmallProgressBadge : null}
                     {hasDayNav ? (
                     <div className="flex items-center justify-center">
                         {onNext ? (
@@ -500,16 +550,17 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 </div>
             </div>
 
+            {cardStyle === 'large' ? LargeProgressPanel : null}
+
             <div
-                className={`${combinedView ? 'flex-1 overflow-y-auto' : 'flex-1 min-h-0 overflow-y-auto'}`}
-                style={combinedView ? { WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' } : { WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}
+                ref={dailyHabitsRef}
+                className={`${combinedView ? 'flex-1 overflow-y-auto scroll-container touch-pan-y' : 'flex-1 min-h-0 overflow-y-auto scroll-container touch-pan-y'}`}
+                style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
             >
             {/* Habits List */}
             <div className="py-1 px-3 bg-stone-50/50 flex flex-col border-b border-stone-100">
                 <div
-                    ref={dailyHabitsRef}
-                    className={`space-y-1 pr-1 touch-pan-y ${combinedView ? '' : 'md:scroll-container'}`}
-                    style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
+                    className="space-y-1 pr-1"
                 >
                     {visibleHabitsForDate.length > 0 ? visibleHabitsForDate.map((habit, habitIndex) => {
                         const done = checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
@@ -898,13 +949,14 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.48, ease: 'easeOut' }}
-                className="w-full h-[600px] grid grid-cols-1 md:grid-cols-3 gap-4"
+                className="w-full h-[min(78svh,900px)] md:h-[600px] grid grid-cols-1 md:grid-cols-3 md:auto-rows-fr gap-4 overflow-y-auto md:overflow-hidden pr-1 touch-pan-y"
+                style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
             >
                 <motion.div
                     initial={{ opacity: 0, x: 95, y: 10, scale: 0.84 }}
                     animate={{ opacity: 1, x: 0, scale: 1 }}
                     transition={{ duration: 0.62, delay: 0.42, ease: [0.22, 1, 0.36, 1] }}
-                    className="relative z-10"
+                    className="relative z-10 min-h-[420px] md:min-h-0"
                 >
                     {JournalFace}
                 </motion.div>
@@ -912,7 +964,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                     initial={{ opacity: 0, scale: 0.8, y: 14 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     transition={{ duration: 0.58, ease: [0.22, 1, 0.36, 1] }}
-                    className="relative z-20"
+                    className="relative z-20 min-h-[420px] md:min-h-0"
                 >
                     {FrontFace}
                 </motion.div>
@@ -920,7 +972,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                     initial={{ opacity: 0, x: -95, y: 10, scale: 0.84 }}
                     animate={{ opacity: 1, x: 0, scale: 1 }}
                     transition={{ duration: 0.62, delay: 0.42, ease: [0.22, 1, 0.36, 1] }}
-                    className="relative z-10"
+                    className="relative z-10 min-h-[420px] md:min-h-0"
                 >
                     {TasksFace}
                 </motion.div>

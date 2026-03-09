@@ -48,6 +48,8 @@ interface HeaderProps {
     setDefaultView: (view: 'daily' | 'monthly' | 'dashboard') => void;
     colorMode: 'light' | 'dark';
     setColorMode: (mode: 'light' | 'dark') => void;
+    cardStyle: 'compact' | 'large';
+    setCardStyle: (style: 'compact' | 'large') => void;
     addHabit: (themePrimary: string) => Promise<string>;
     updateHabit: (id: string, updates: Partial<Habit>) => Promise<void>;
     removeHabit: (id: string) => Promise<void>;
@@ -112,6 +114,8 @@ export const Header: React.FC<HeaderProps> = ({
     setDefaultView,
     colorMode,
     setColorMode,
+    cardStyle,
+    setCardStyle,
     addHabit,
     updateHabit,
     removeHabit,
@@ -335,6 +339,8 @@ export const Header: React.FC<HeaderProps> = ({
                                 setDefaultView={setDefaultView}
                                 colorMode={colorMode}
                                 setColorMode={setColorMode}
+                                cardStyle={cardStyle}
+                                setCardStyle={setCardStyle}
                                 onReportBug={onReportBug}
                                 onOpenWhatsNew={onOpenWhatsNew}
                                 onOpenTutorial={onOpenTutorial}

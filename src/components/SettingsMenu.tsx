@@ -19,6 +19,8 @@ interface SettingsMenuProps {
     setDefaultView: (view: 'daily' | 'monthly' | 'dashboard') => void;
     colorMode: 'light' | 'dark';
     setColorMode: (mode: 'light' | 'dark') => void;
+    cardStyle: 'compact' | 'large';
+    setCardStyle: (style: 'compact' | 'large') => void;
     onReportBug: () => void;
     onOpenWhatsNew: () => void;
     onOpenTutorial: () => void;
@@ -43,6 +45,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     setDefaultView,
     colorMode,
     setColorMode,
+    cardStyle,
+    setCardStyle,
     onReportBug,
     onOpenWhatsNew,
     onOpenTutorial,
@@ -53,9 +57,9 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
 }) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const [expandedSection, setExpandedSection] = useState<'language' | 'theme' | null>(null);
+    const [expandedSection, setExpandedSection] = useState<'language' | 'theme' | 'cardStyle' | null>(null);
 
-    const toggleSection = (section: 'language' | 'theme') => {
+    const toggleSection = (section: 'language' | 'theme' | 'cardStyle') => {
         setExpandedSection(expandedSection === section ? null : section);
     };
 
@@ -212,6 +216,68 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                                     <Moon size={10} />
                                 </button>
                             </div>
+                        </div>
+
+                        <div className="flex flex-col">
+                            <button
+                                onClick={() => toggleSection('cardStyle')}
+                                className={`flex items-center justify-between p-2 rounded-lg hover:bg-white transition-colors w-full ${expandedSection === 'cardStyle' ? 'bg-white' : ''}`}
+                            >
+                                <span className="text-[10px] font-bold uppercase text-stone-500">Card Style</span>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-[10px] font-bold uppercase text-black">{cardStyle === 'large' ? 'Large' : 'Compact'}</span>
+                                    {expandedSection === 'cardStyle' ? <ChevronDown size={12} className="text-stone-400" /> : <ChevronRight size={12} className="text-stone-400" />}
+                                </div>
+                            </button>
+
+                            {expandedSection === 'cardStyle' && (
+                                <div className="grid grid-cols-2 gap-2 p-2 pt-0 animate-in slide-in-from-top-1 duration-200">
+                                    <button
+                                        type="button"
+                                        onClick={() => setCardStyle('compact')}
+                                        className={`rounded-xl border p-2 text-left transition-all ${cardStyle === 'compact' ? 'border-black bg-white shadow-sm' : 'border-stone-200 bg-stone-50 hover:border-stone-400'}`}
+                                    >
+                                        <div className="rounded-lg border border-black overflow-hidden bg-white">
+                                            <div className="flex items-center justify-between px-2 py-2 bg-[#9ab4c1]">
+                                                <div className="min-w-0">
+                                                    <div className="text-[8px] font-black uppercase tracking-wider text-white">Thursday</div>
+                                                    <div className="text-[7px] font-bold text-white/85">Jan 1, 2026</div>
+                                                </div>
+                                                <div className="w-7 h-7 rounded-full border-[3px] border-white/35 border-r-white flex items-center justify-center text-[7px] font-black text-white">
+                                                    40
+                                                </div>
+                                            </div>
+                                            <div className="px-2 py-3 bg-stone-50">
+                                                <div className="h-2 rounded bg-stone-200 mb-1.5"></div>
+                                                <div className="h-2 rounded bg-stone-200 w-4/5"></div>
+                                            </div>
+                                        </div>
+                                        <div className="mt-2 text-[10px] font-black uppercase text-stone-700">Compact</div>
+                                        <div className="text-[9px] text-stone-500">Small progress badge in the header.</div>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => setCardStyle('large')}
+                                        className={`rounded-xl border p-2 text-left transition-all ${cardStyle === 'large' ? 'border-black bg-white shadow-sm' : 'border-stone-200 bg-stone-50 hover:border-stone-400'}`}
+                                    >
+                                        <div className="rounded-lg border border-black overflow-hidden bg-white">
+                                            <div className="px-2 py-2 bg-[#9ab4c1] text-center">
+                                                <div className="text-[8px] font-black uppercase tracking-wider text-white">Thursday</div>
+                                                <div className="text-[7px] font-bold text-white/85">Jan 1, 2026</div>
+                                            </div>
+                                            <div className="px-2 py-3 bg-stone-50 flex flex-col items-center">
+                                                <div className="w-12 h-12 rounded-full border-[5px] border-stone-200 border-r-[#9ab4c1] flex items-center justify-center text-[10px] font-black text-stone-700">
+                                                    40%
+                                                </div>
+                                                <div className="mt-2 h-2 rounded bg-stone-200 w-full"></div>
+                                            </div>
+                                        </div>
+                                        <div className="mt-2 text-[10px] font-black uppercase text-stone-700">Large</div>
+                                        <div className="text-[9px] text-stone-500">Big day progress panel under the date.</div>
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
 

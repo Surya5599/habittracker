@@ -77,6 +77,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
     const journalRef = useRef<HTMLDivElement>(null);
     const longPressTimerRef = useRef<number | null>(null);
     const longPressTriggeredRef = useRef(false);
+    const touchMovedRef = useRef(false);
 
     useEffect(() => {
         // Helper: smooth-scroll animator per element. Stores state on element.
@@ -293,6 +294,23 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
             window.clearTimeout(longPressTimerRef.current);
             longPressTimerRef.current = null;
         }
+    };
+
+    const handleHabitTouchStart = (habitId: string) => {
+        touchMovedRef.current = false;
+        startLongPress(habitId);
+    };
+
+    const handleHabitTouchMove = () => {
+        touchMovedRef.current = true;
+        clearLongPress();
+    };
+
+    const handleHabitTouchEnd = () => {
+        clearLongPress();
+        window.setTimeout(() => {
+            touchMovedRef.current = false;
+        }, 0);
     };
 
     const startLongPress = (habitId: string) => {
@@ -527,6 +545,10 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                             <div
                                 key={habit.id}
                                 onClick={() => {
+                                    if (touchMovedRef.current) {
+                                        touchMovedRef.current = false;
+                                        return;
+                                    }
                                     if (longPressTriggeredRef.current) {
                                         longPressTriggeredRef.current = false;
                                         return;
@@ -536,15 +558,17 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                 onMouseDown={() => startLongPress(habit.id)}
                                 onMouseUp={clearLongPress}
                                 onMouseLeave={clearLongPress}
-                                onTouchStart={() => startLongPress(habit.id)}
-                                onTouchEnd={clearLongPress}
-                                onTouchCancel={clearLongPress}
+                                onTouchStart={() => handleHabitTouchStart(habit.id)}
+                                onTouchMove={handleHabitTouchMove}
+                                onTouchEnd={handleHabitTouchEnd}
+                                onTouchCancel={handleHabitTouchEnd}
                                 onContextMenu={(e) => {
                                     e.preventDefault();
                                     clearLongPress();
                                     toggleHabitInactive(habit.id, dateKey);
                                 }}
-                                className="flex items-center justify-between group cursor-pointer hover:bg-black/5 rounded p-1 -mx-1 transition-colors"
+                                className="flex items-center justify-between group cursor-pointer hover:bg-black/5 rounded p-1 -mx-1 transition-colors touch-pan-y"
+                                style={{ touchAction: 'pan-y' }}
                             >
                                 <div className="flex items-center flex-1 min-w-0">
                                     <span className={`text-[11px] font-bold truncate ${inactive ? 'text-amber-700' : (done ? 'text-stone-400 line-through' : 'text-stone-700')}`}>

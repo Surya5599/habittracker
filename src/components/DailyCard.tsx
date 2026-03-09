@@ -80,6 +80,8 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
     const longPressTimerRef = useRef<number | null>(null);
     const longPressTriggeredRef = useRef(false);
     const touchMovedRef = useRef(false);
+    const taskRevealTimerRef = useRef<number | null>(null);
+    const [revealedTaskId, setRevealedTaskId] = useState<string | null>(null);
 
     useEffect(() => {
         // Helper: smooth-scroll animator per element. Stores state on element.
@@ -335,6 +337,24 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
         }
     };
 
+    const clearTaskReveal = () => {
+        if (taskRevealTimerRef.current) {
+            window.clearTimeout(taskRevealTimerRef.current);
+            taskRevealTimerRef.current = null;
+        }
+        setRevealedTaskId(null);
+    };
+
+    const startTaskReveal = (taskId: string, element: HTMLElement) => {
+        clearTaskReveal();
+        taskRevealTimerRef.current = window.setTimeout(() => {
+            const isClipped = element.scrollWidth > element.clientWidth || element.scrollHeight > element.clientHeight;
+            if (isClipped) {
+                setRevealedTaskId(taskId);
+            }
+        }, 2000);
+    };
+
     const handleHabitTouchStart = (habitId: string) => {
         touchMovedRef.current = false;
         startLongPress(habitId);
@@ -361,6 +381,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
     };
 
     const handleFinishEditing = (taskId: string) => {
+        clearTaskReveal();
         const currentTasks = dayData.tasks || [];
         const task = currentTasks.find(t => t.id === taskId);
         if (!task) {
@@ -397,6 +418,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
     };
 
     const addNewTask = (openPanel: boolean = false) => {
+        clearTaskReveal();
         const currentTasks = dayData.tasks || [];
         const newTask: Task = { id: generateUUID(), text: '', completed: false };
         updateNote(dateKey, { tasks: [...currentTasks, newTask] });
@@ -802,7 +824,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                             e.dataTransfer.setData('application/json', JSON.stringify({ taskId: task.id, sourceDateKey: dateKey }));
                             e.dataTransfer.effectAllowed = 'move';
                         }}
-                        className={`flex items-start gap-1.5 group bg-white border border-transparent hover:border-stone-200 p-1.5 rounded shadow-sm hover:shadow-md transition-all ${editingTaskId === task.id ? 'ring-2 ring-black' : 'cursor-move'}`}
+                        className={`relative flex items-start gap-1.5 group bg-white border border-transparent hover:border-stone-200 p-1.5 rounded shadow-sm hover:shadow-md transition-all ${editingTaskId === task.id ? 'ring-2 ring-black' : 'cursor-move'}`}
                     >
                         <button
                             onClick={(e) => {
@@ -834,20 +856,35 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                 data-onboarding={taskIndex === 0 ? 'task-input' : undefined}
                             />
                         ) : (
-                            <span
-                                className={`flex-1 text-[10px] font-medium leading-tight break-all ${task.completed ? 'text-stone-400 line-through' : 'text-stone-800'}`}
-                                onDoubleClick={() => {
-                                    setEditingTaskId(task.id);
-                                    setEditingTaskText(task.text);
-                                }}
-                            >
-                                {task.text}
-                            </span>
+                            <>
+                                <span
+                                    className={`flex-1 text-[10px] font-medium leading-tight break-all ${task.completed ? 'text-stone-400 line-through' : 'text-stone-800'}`}
+                                    onDoubleClick={() => {
+                                        clearTaskReveal();
+                                        setEditingTaskId(task.id);
+                                        setEditingTaskText(task.text);
+                                    }}
+                                    onMouseEnter={(e) => startTaskReveal(task.id, e.currentTarget)}
+                                    onMouseLeave={clearTaskReveal}
+                                    onTouchStart={(e) => startTaskReveal(task.id, e.currentTarget)}
+                                    onTouchEnd={clearTaskReveal}
+                                    onTouchCancel={clearTaskReveal}
+                                >
+                                    {task.text}
+                                </span>
+
+                                {revealedTaskId === task.id && (
+                                    <div className="absolute left-8 right-2 top-0 z-20 -translate-y-[calc(100%+4px)] rounded border border-black bg-white px-2 py-1 text-[10px] font-bold leading-tight text-stone-800 shadow-[3px_3px_0_0_rgba(0,0,0,0.12)]">
+                                        {task.text}
+                                    </div>
+                                )}
+                            </>
                         )}
 
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
                                 onClick={() => {
+                                    clearTaskReveal();
                                     setEditingTaskId(task.id);
                                     setEditingTaskText(task.text);
                                 }}
@@ -858,6 +895,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                             </button>
                             <button
                                 onClick={() => {
+                                    clearTaskReveal();
                                     const currentTasks = dayData.tasks || [];
                                     const newTasks = currentTasks.filter(t => t.id !== task.id);
                                     updateNote(dateKey, { tasks: newTasks });

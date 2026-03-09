@@ -33,7 +33,7 @@ const ADMIN_EMAILS = ((import.meta.env.VITE_ADMIN_EMAILS as string | undefined) 
   .split(',')
   .map(email => email.trim().toLowerCase())
   .filter(Boolean);
-const WHATS_NEW_VERSION = '2026_05';
+const WHATS_NEW_VERSION = '2026_06';
 const WHATS_NEW_SEEN_KEY = 'habit_whats_new_seen_version';
 const LEGACY_DEFAULT_HABIT_NAMES = new Set(['meditation', 'exercise', 'drink 2l water', 'reading', 'journaling']);
 
@@ -291,6 +291,33 @@ const AppContent: React.FC = () => {
                 Large
               </div>
             </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 'export-data',
+      title: 'Export Your Data',
+      description: 'Download your HabiCard data directly from Settings.',
+      bullets: [
+        'Tap Settings → Data → Export Data.'
+      ],
+      image: (
+        <div className="w-full rounded-sm border border-stone-200 bg-stone-100 p-3">
+          <div className="mx-auto max-w-[320px] rounded-2xl border border-black bg-white p-3 shadow-[4px_4px_0_0_rgba(0,0,0,0.08)]">
+            <div className="rounded-xl border border-stone-200 bg-stone-50/70 p-2">
+              <div className="flex items-center gap-2 px-2 pb-2">
+                <div className="h-3 w-3 rounded-sm bg-stone-300" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">Data</span>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-stone-200 bg-white p-2">
+                <span className="text-[10px] font-bold uppercase text-stone-600">Export Data</span>
+                <span className="text-[10px] font-black uppercase text-stone-700">Download</span>
+              </div>
+            </div>
+            <p className="mt-3 text-center text-[10px] font-bold uppercase tracking-widest text-stone-500">
+              One tap from Settings
+            </p>
           </div>
         </div>
       )

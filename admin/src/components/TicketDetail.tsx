@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabase';
-import type { Feedback, FeedbackReply } from '../types';
-import { X, Send, User, Shield, CheckCircle, ExternalLink } from 'lucide-react';
+import type { Feedback, FeedbackAttachment, FeedbackReply } from '../types';
+import { X, Send, User, Shield, CheckCircle, ExternalLink, ImagePlus } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 interface TicketDetailProps {
@@ -10,16 +10,55 @@ interface TicketDetailProps {
     onStatusChange: (id: string, status: Feedback['status']) => void;
 }
 
+const FEEDBACK_ATTACHMENTS_BUCKET = 'feedback-attachments';
+const MAX_ATTACHMENT_SIZE = 5 * 1024 * 1024;
+const MAX_ATTACHMENTS = 3;
+
+interface PendingAttachment {
+    file: File;
+    previewUrl: string;
+}
+
+const sanitizeFileName = (name: string) =>
+    name
+        .toLowerCase()
+        .replace(/[^a-z0-9.-]+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '') || 'image';
+
+const releasePendingAttachments = (pendingAttachments: PendingAttachment[]) => {
+    pendingAttachments.forEach((attachment) => URL.revokeObjectURL(attachment.previewUrl));
+};
+
+const getReplyAttachments = (reply?: FeedbackReply | null): FeedbackAttachment[] => {
+    if (!reply?.metadata?.attachments || !Array.isArray(reply.metadata.attachments)) return [];
+    return reply.metadata.attachments.filter((attachment: FeedbackAttachment | null) => {
+        return !!attachment?.url && !!attachment?.path;
+    });
+};
+
 export const TicketDetail: React.FC<TicketDetailProps> = ({ feedback, onClose, onStatusChange }) => {
     const [replies, setReplies] = useState<FeedbackReply[]>([]);
     const [replyContent, setReplyContent] = useState('');
+    const [replyAttachments, setReplyAttachments] = useState<PendingAttachment[]>([]);
     const [sending, setSending] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const replyAttachmentsRef = useRef<PendingAttachment[]>([]);
 
     useEffect(() => {
         fetchReplies();
         markAsRead(); // Optional: Logic to mark as read if we had that field
     }, [feedback.id]);
+
+    useEffect(() => {
+        replyAttachmentsRef.current = replyAttachments;
+    }, [replyAttachments]);
+
+    useEffect(() => {
+        return () => {
+            releasePendingAttachments(replyAttachmentsRef.current);
+        };
+    }, []);
 
     const fetchReplies = async () => {
         const { data, error } = await supabase
@@ -40,20 +79,106 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({ feedback, onClose, o
         // Placeholder if we implemented 'read' status
     };
 
+    const handleAttachmentSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFiles = Array.from(e.target.files || []);
+        if (selectedFiles.length === 0) return;
+
+        const availableSlots = Math.max(0, MAX_ATTACHMENTS - replyAttachments.length);
+        if (availableSlots === 0) {
+            toast.error(`You can attach up to ${MAX_ATTACHMENTS} images.`);
+            e.target.value = '';
+            return;
+        }
+
+        const nextAttachments: PendingAttachment[] = [];
+
+        selectedFiles.slice(0, availableSlots).forEach((file) => {
+            if (!file.type.startsWith('image/')) {
+                toast.error(`${file.name} is not an image.`);
+                return;
+            }
+            if (file.size > MAX_ATTACHMENT_SIZE) {
+                toast.error(`${file.name} is larger than 5 MB.`);
+                return;
+            }
+
+            nextAttachments.push({
+                file,
+                previewUrl: URL.createObjectURL(file)
+            });
+        });
+
+        if (selectedFiles.length > availableSlots) {
+            toast.error(`Only ${MAX_ATTACHMENTS} images can be attached.`);
+        }
+
+        if (nextAttachments.length > 0) {
+            setReplyAttachments((prev) => [...prev, ...nextAttachments]);
+        }
+
+        e.target.value = '';
+    };
+
+    const removeAttachment = (index: number) => {
+        setReplyAttachments((prev) => {
+            const target = prev[index];
+            if (target) URL.revokeObjectURL(target.previewUrl);
+            return prev.filter((_, currentIndex) => currentIndex !== index);
+        });
+    };
+
+    const uploadPendingAttachments = async () => {
+        const uploadedAttachments: FeedbackAttachment[] = [];
+
+        for (const attachment of replyAttachments) {
+            const objectPath = `admin-replies/${feedback.id}/${Date.now()}-${crypto.randomUUID()}-${sanitizeFileName(attachment.file.name)}`;
+            const { error: uploadError } = await supabase
+                .storage
+                .from(FEEDBACK_ATTACHMENTS_BUCKET)
+                .upload(objectPath, attachment.file, {
+                    cacheControl: '3600',
+                    contentType: attachment.file.type,
+                    upsert: false
+                });
+
+            if (uploadError) throw uploadError;
+
+            const { data: publicUrlData } = supabase
+                .storage
+                .from(FEEDBACK_ATTACHMENTS_BUCKET)
+                .getPublicUrl(objectPath);
+
+            uploadedAttachments.push({
+                path: objectPath,
+                url: publicUrlData.publicUrl,
+                name: attachment.file.name,
+                size: attachment.file.size,
+                mimeType: attachment.file.type
+            });
+        }
+
+        return uploadedAttachments;
+    };
+
     const handleSendReply = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!replyContent.trim()) return;
+        if (!replyContent.trim() && replyAttachments.length === 0) return;
 
         setSending(true);
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error('Not authenticated');
 
+            const uploadedAttachments = await uploadPendingAttachments();
+
             const { error } = await supabase.from('feedback_replies').insert({
                 feedback_id: feedback.id,
                 user_id: user.id,
                 content: replyContent,
-                is_admin_reply: true
+                is_admin_reply: true,
+                metadata: {
+                    attachments: uploadedAttachments
+                }
             });
 
             if (error) throw error;
@@ -63,6 +188,8 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({ feedback, onClose, o
             onStatusChange(feedback.id, 'replied');
 
             setReplyContent('');
+            releasePendingAttachments(replyAttachments);
+            setReplyAttachments([]);
             fetchReplies();
             toast.success('Reply sent');
         } catch (error: any) {
@@ -82,6 +209,10 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({ feedback, onClose, o
             toast.error('Failed to close ticket');
         }
     }
+
+    const attachments = Array.isArray(feedback.metadata?.attachments)
+        ? feedback.metadata.attachments.filter((attachment) => attachment?.url && attachment?.path)
+        : [];
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -134,6 +265,29 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({ feedback, onClose, o
                             <div className="p-3 bg-white neo-border text-sm leading-relaxed shadow-sm">
                                 {feedback.content}
                             </div>
+                            {attachments.length > 0 && (
+                                <div className="grid grid-cols-2 gap-2 pt-2 sm:grid-cols-3">
+                                    {attachments.map((attachment) => (
+                                        <a
+                                            key={attachment.path}
+                                            href={attachment.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="block overflow-hidden neo-border bg-stone-100"
+                                        >
+                                            <img
+                                                src={attachment.url}
+                                                alt={attachment.name}
+                                                className="h-28 w-full object-cover"
+                                                loading="lazy"
+                                            />
+                                            <div className="border-t border-black/10 bg-white px-2 py-1.5 text-[10px] font-bold text-stone-600 truncate">
+                                                {attachment.name}
+                                            </div>
+                                        </a>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -151,6 +305,29 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({ feedback, onClose, o
                                 <div className={`p-3 neo-border text-sm leading-relaxed shadow-sm ${reply.is_admin_reply ? 'bg-stone-900 text-white' : 'bg-white text-stone-900'}`}>
                                     {reply.content}
                                 </div>
+                                {getReplyAttachments(reply).length > 0 && (
+                                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                                        {getReplyAttachments(reply).map((attachment) => (
+                                            <a
+                                                key={attachment.path}
+                                                href={attachment.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="block overflow-hidden neo-border bg-stone-100"
+                                            >
+                                                <img
+                                                    src={attachment.url}
+                                                    alt={attachment.name}
+                                                    className="h-24 w-full object-cover"
+                                                    loading="lazy"
+                                                />
+                                                <div className="border-t border-black/10 bg-white px-2 py-1.5 text-[10px] font-bold text-stone-600 truncate">
+                                                    {attachment.name}
+                                                </div>
+                                            </a>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ))}
@@ -159,20 +336,56 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({ feedback, onClose, o
 
                 {/* FOOTER / REPLY INPUT */}
                 <div className="p-4 bg-white border-t-2 border-black">
-                    <form onSubmit={handleSendReply} className="flex gap-2">
-                        <input
-                            value={replyContent}
-                            onChange={e => setReplyContent(e.target.value)}
-                            placeholder="Type your reply..."
-                            className="flex-1 p-3 neo-border bg-stone-50 focus:bg-white focus:outline-none transition-colors"
-                        />
-                        <button
-                            type="submit"
-                            disabled={sending || !replyContent.trim()}
-                            className="bg-black text-white px-6 font-bold uppercase tracking-widest hover:-translate-y-0.5 active:translate-y-0 active:shadow-none neo-border neo-shadow disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none transition-all flex items-center gap-2"
-                        >
-                            {sending ? 'Sending...' : <><Send size={16} /> Reply</>}
-                        </button>
+                    <form onSubmit={handleSendReply} className="space-y-2">
+                        {replyAttachments.length > 0 && (
+                            <div className="grid grid-cols-3 gap-2">
+                                {replyAttachments.map((attachment, index) => (
+                                    <div key={`${attachment.file.name}-${index}`} className="overflow-hidden neo-border bg-white">
+                                        <img
+                                            src={attachment.previewUrl}
+                                            alt={attachment.file.name}
+                                            className="h-16 w-full object-cover"
+                                        />
+                                        <div className="border-t border-black/10 p-1.5">
+                                            <p className="truncate text-[10px] font-bold text-stone-600">{attachment.file.name}</p>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeAttachment(index)}
+                                                className="mt-1 text-[10px] font-black uppercase text-rose-600"
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        <div className="flex gap-2">
+                            <input
+                                value={replyContent}
+                                onChange={e => setReplyContent(e.target.value)}
+                                placeholder="Type your reply..."
+                                className="flex-1 p-3 neo-border bg-stone-50 focus:bg-white focus:outline-none transition-colors"
+                            />
+                            <label className="inline-flex cursor-pointer items-center gap-1 border border-stone-300 bg-stone-50 px-3 py-2 text-[10px] font-black uppercase text-stone-600 hover:border-black hover:text-black">
+                                <ImagePlus size={13} />
+                                Image
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    onChange={handleAttachmentSelection}
+                                    className="hidden"
+                                />
+                            </label>
+                            <button
+                                type="submit"
+                                disabled={sending || (!replyContent.trim() && replyAttachments.length === 0)}
+                                className="bg-black text-white px-6 font-bold uppercase tracking-widest hover:-translate-y-0.5 active:translate-y-0 active:shadow-none neo-border neo-shadow disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none transition-all flex items-center gap-2"
+                            >
+                                {sending ? 'Sending...' : <><Send size={16} /> Reply</>}
+                            </button>
+                        </div>
                     </form>
                     <div className="mt-2 flex justify-end">
                         {feedback.status !== 'closed' && (

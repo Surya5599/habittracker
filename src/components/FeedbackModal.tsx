@@ -5,10 +5,10 @@ const ADMIN_EMAILS = ((import.meta.env.VITE_ADMIN_EMAILS as string | undefined) 
     .filter(Boolean);
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { X, MessageSquare, Bug, Send, Clock, ChevronRight, User, Shield, Reply, RefreshCw } from 'lucide-react';
+import { X, MessageSquare, Bug, Send, ChevronRight, User, Shield, Reply, RefreshCw, ImagePlus } from 'lucide-react';
 import { supabase } from '../supabase';
 import toast from 'react-hot-toast';
-import { Feedback, FeedbackReply } from '../types';
+import { Feedback, FeedbackAttachment, FeedbackReply } from '../types';
 
 interface FeedbackModalProps {
     isOpen: boolean;
@@ -18,12 +18,80 @@ interface FeedbackModalProps {
     hasUnreadFeedback?: boolean;
 }
 
+const FEEDBACK_ATTACHMENTS_BUCKET = 'feedback-attachments';
+const MAX_ATTACHMENT_SIZE = 5 * 1024 * 1024;
+const MAX_ATTACHMENTS = 3;
+
+interface PendingAttachment {
+    file: File;
+    previewUrl: string;
+}
+
+const sanitizeFileName = (name: string) =>
+    name
+        .toLowerCase()
+        .replace(/[^a-z0-9.-]+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '') || 'image';
+
+const getFeedbackAttachments = (item?: Feedback | null): FeedbackAttachment[] => {
+    if (!item?.metadata?.attachments || !Array.isArray(item.metadata.attachments)) return [];
+    return item.metadata.attachments.filter((attachment: FeedbackAttachment | null) => {
+        return !!attachment?.url && !!attachment?.path;
+    });
+};
+
+const getReplyAttachments = (reply?: FeedbackReply | null): FeedbackAttachment[] => {
+    if (!reply?.metadata?.attachments || !Array.isArray(reply.metadata.attachments)) return [];
+    return reply.metadata.attachments.filter((attachment: FeedbackAttachment | null) => {
+        return !!attachment?.url && !!attachment?.path;
+    });
+};
+
+const releasePendingAttachments = (pendingAttachments: PendingAttachment[]) => {
+    pendingAttachments.forEach((attachment) => URL.revokeObjectURL(attachment.previewUrl));
+};
+
+const uploadPendingAttachments = async (pendingAttachments: PendingAttachment[], folder: string) => {
+    const uploadedAttachments: FeedbackAttachment[] = [];
+
+    for (const attachment of pendingAttachments) {
+        const objectPath = `${folder}/${Date.now()}-${crypto.randomUUID()}-${sanitizeFileName(attachment.file.name)}`;
+        const { error: uploadError } = await supabase
+            .storage
+            .from(FEEDBACK_ATTACHMENTS_BUCKET)
+            .upload(objectPath, attachment.file, {
+                cacheControl: '3600',
+                contentType: attachment.file.type,
+                upsert: false
+            });
+
+        if (uploadError) throw uploadError;
+
+        const { data: publicUrlData } = supabase
+            .storage
+            .from(FEEDBACK_ATTACHMENTS_BUCKET)
+            .getPublicUrl(objectPath);
+
+        uploadedAttachments.push({
+            path: objectPath,
+            url: publicUrlData.publicUrl,
+            name: attachment.file.name,
+            size: attachment.file.size,
+            mimeType: attachment.file.type
+        });
+    }
+
+    return uploadedAttachments;
+};
+
 export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, userId, userEmail, hasUnreadFeedback }) => {
     const donationUrl = ((import.meta.env.VITE_DONATION_URL as string | undefined)?.trim() || 'https://ko-fi.com/B0B31VLYXB');
     const [activeTab, setActiveTab] = useState<'new' | 'history' | 'admin'>('new');
     const [type, setType] = useState<'bug' | 'suggestion'>('bug');
     const [content, setContent] = useState('');
     const [guestEmail, setGuestEmail] = useState('');
+    const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
     const [submitting, setSubmitting] = useState(false);
 
     // History & Thread State
@@ -31,6 +99,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
     const [loadingHistory, setLoadingHistory] = useState(false);
     const [selectedThread, setSelectedThread] = useState<Feedback | null>(null);
     const [replyContent, setReplyContent] = useState('');
+    const [replyAttachments, setReplyAttachments] = useState<PendingAttachment[]>([]);
 
     const isAdmin = !!userEmail && ADMIN_EMAILS.includes(userEmail.toLowerCase());
     const threadEndRef = useRef<HTMLDivElement>(null);
@@ -132,6 +201,14 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
     useEffect(() => {
         if (isOpen) {
             // Reset state on open
+            setAttachments((prev) => {
+                releasePendingAttachments(prev);
+                return [];
+            });
+            setReplyAttachments((prev) => {
+                releasePendingAttachments(prev);
+                return [];
+            });
             setActiveTab(isAdmin ? 'admin' : 'new');
             setSelectedThread(null);
             setGuestEmail(userEmail || '');
@@ -142,6 +219,23 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
             }
         }
     }, [isOpen, userId, isAdmin]);
+
+    useEffect(() => {
+        if (!isOpen) {
+            setAttachments((prev) => {
+                if (prev.length > 0) {
+                    releasePendingAttachments(prev);
+                }
+                return [];
+            });
+            setReplyAttachments((prev) => {
+                if (prev.length > 0) {
+                    releasePendingAttachments(prev);
+                }
+                return [];
+            });
+        }
+    }, [isOpen]);
 
     // Add this to auto-scroll when opening a thread or sending a reply
     useEffect(() => {
@@ -230,6 +324,11 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
     const handleTabChange = (tab: 'new' | 'history' | 'admin') => {
         setActiveTab(tab);
         setSelectedThread(null);
+        setReplyContent('');
+        setReplyAttachments((prev) => {
+            releasePendingAttachments(prev);
+            return [];
+        });
         if (tab === 'history') {
             fetchHistory();
         } else if (tab === 'admin') {
@@ -253,6 +352,8 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
 
         setSubmitting(true);
         try {
+            const uploadedAttachments = await uploadPendingAttachments(attachments, `${userId || 'guest'}/threads`);
+
             const { error } = await supabase
                 .from('feedback')
                 .insert({
@@ -265,7 +366,8 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                         reporterEmail: reporterEmail || null,
                         url: window.location.href,
                         userAgent: navigator.userAgent,
-                        timestamp: new Date().toISOString()
+                        timestamp: new Date().toISOString(),
+                        attachments: uploadedAttachments
                     }
                 });
 
@@ -274,9 +376,13 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
             toast.success('Thank you for your feedback!');
             setContent('');
             if (!userId) setGuestEmail('');
+            releasePendingAttachments(attachments);
+            setAttachments([]);
             // Switch to history to show it's submitted
-            setActiveTab('history');
-            fetchHistory();
+            if (userId) {
+                setActiveTab('history');
+                fetchHistory();
+            }
         } catch (err) {
             console.error('Error submitting feedback:', err);
             toast.error('Failed to submit feedback. Please try again.');
@@ -285,9 +391,128 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
         }
     };
 
+    const handleAttachmentSelection = (
+        e: React.ChangeEvent<HTMLInputElement>,
+        currentAttachments: PendingAttachment[],
+        setPendingAttachments: React.Dispatch<React.SetStateAction<PendingAttachment[]>>
+    ) => {
+        const selectedFiles = Array.from(e.target.files || []);
+        if (selectedFiles.length === 0) return;
+
+        const availableSlots = Math.max(0, MAX_ATTACHMENTS - currentAttachments.length);
+        if (availableSlots === 0) {
+            toast.error(`You can attach up to ${MAX_ATTACHMENTS} images.`);
+            e.target.value = '';
+            return;
+        }
+
+        const nextAttachments: PendingAttachment[] = [];
+
+        selectedFiles.slice(0, availableSlots).forEach((file) => {
+            if (!file.type.startsWith('image/')) {
+                toast.error(`${file.name} is not an image.`);
+                return;
+            }
+            if (file.size > MAX_ATTACHMENT_SIZE) {
+                toast.error(`${file.name} is larger than 5 MB.`);
+                return;
+            }
+
+            nextAttachments.push({
+                file,
+                previewUrl: URL.createObjectURL(file)
+            });
+        });
+
+        if (selectedFiles.length > availableSlots) {
+            toast.error(`Only ${MAX_ATTACHMENTS} images can be attached.`);
+        }
+
+        if (nextAttachments.length > 0) {
+            setPendingAttachments((prev) => [...prev, ...nextAttachments]);
+        }
+
+        e.target.value = '';
+    };
+
+    const removeAttachment = (index: number, setPendingAttachments: React.Dispatch<React.SetStateAction<PendingAttachment[]>>) => {
+        setPendingAttachments((prev) => {
+            const target = prev[index];
+            if (target) URL.revokeObjectURL(target.previewUrl);
+            return prev.filter((_, currentIndex) => currentIndex !== index);
+        });
+    };
+
+    const renderAttachmentGallery = (thread: Feedback) => {
+        const threadAttachments = getFeedbackAttachments(thread);
+        if (threadAttachments.length === 0) return null;
+
+        return (
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {threadAttachments.map((attachment) => (
+                    <a
+                        key={attachment.path}
+                        href={attachment.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block overflow-hidden neo-border bg-stone-100"
+                    >
+                        <img
+                            src={attachment.url}
+                            alt={attachment.name}
+                            className="h-28 w-full object-cover"
+                            loading="lazy"
+                        />
+                        <div className="border-t border-black/10 bg-white px-2 py-1.5 text-[10px] font-bold text-stone-600 truncate">
+                            {attachment.name}
+                        </div>
+                    </a>
+                ))}
+            </div>
+        );
+    };
+
+    const renderReplyAttachmentGallery = (reply: FeedbackReply) => {
+        const replyImageAttachments = getReplyAttachments(reply);
+        if (replyImageAttachments.length === 0) return null;
+
+        return (
+            <div className="grid max-w-[90%] grid-cols-2 gap-2 sm:grid-cols-3">
+                {replyImageAttachments.map((attachment) => (
+                    <a
+                        key={attachment.path}
+                        href={attachment.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block overflow-hidden neo-border bg-stone-100"
+                    >
+                        <img
+                            src={attachment.url}
+                            alt={attachment.name}
+                            className="h-24 w-full object-cover"
+                            loading="lazy"
+                        />
+                        <div className="border-t border-black/10 bg-white px-2 py-1.5 text-[10px] font-bold text-stone-600 truncate">
+                            {attachment.name}
+                        </div>
+                    </a>
+                ))}
+            </div>
+        );
+    };
+
+    const handleThreadSelect = (thread: Feedback) => {
+        setReplyContent('');
+        setReplyAttachments((prev) => {
+            releasePendingAttachments(prev);
+            return [];
+        });
+        setSelectedThread(thread);
+    };
+
     const handleReply = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!replyContent.trim() || !selectedThread) return;
+        if ((!replyContent.trim() && replyAttachments.length === 0) || !selectedThread) return;
         if (!userId) {
             toast.error('You must be logged in to reply.');
             return;
@@ -295,13 +520,17 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
 
         setSubmitting(true);
         try {
+            const uploadedReplyAttachments = await uploadPendingAttachments(replyAttachments, `${userId}/replies`);
             const { error } = await supabase
                 .from('feedback_replies')
                 .insert({
                     feedback_id: selectedThread.id,
                     user_id: userId,
                     content: replyContent,
-                    is_admin_reply: isAdmin
+                    is_admin_reply: isAdmin,
+                    metadata: {
+                        attachments: uploadedReplyAttachments
+                    }
                 });
 
             if (error) throw error;
@@ -313,7 +542,10 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                 user_id: userId,
                 content: replyContent,
                 created_at: new Date().toISOString(),
-                is_admin_reply: !!isAdmin
+                is_admin_reply: !!isAdmin,
+                metadata: {
+                    attachments: uploadedReplyAttachments
+                }
             };
 
             const updatedThread = {
@@ -325,6 +557,8 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
             setSelectedThread(updatedThread);
             setHistory(prev => prev.map(f => f.id === selectedThread.id ? updatedThread : f));
             setReplyContent('');
+            releasePendingAttachments(replyAttachments);
+            setReplyAttachments([]);
 
             // Also update status if admin replying
             if (isAdmin && selectedThread.status === 'open') {
@@ -339,6 +573,30 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
         }
     };
 
+    const handleMarkComplete = async (thread: Feedback) => {
+        if (!isAdmin) return;
+
+        setSubmitting(true);
+        try {
+            const { error } = await supabase
+                .from('feedback')
+                .update({ status: 'closed' })
+                .eq('id', thread.id);
+
+            if (error) throw error;
+
+            const updatedThread = { ...thread, status: 'closed' as const };
+            setSelectedThread(updatedThread);
+            setHistory(prev => prev.map(item => item.id === thread.id ? updatedThread : item));
+            toast.success('Marked as complete.');
+        } catch (err) {
+            console.error('Error marking feedback complete:', err);
+            toast.error('Failed to mark item complete.');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
     const renderThreadCard = (item: Feedback, showNeedsAdminResponse: boolean) => {
         const latestReply = item.replies && item.replies.length > 0 ? item.replies[item.replies.length - 1] : null;
         const lastReadTime = parseInt(localStorage.getItem('habit_feedback_last_read') || '0');
@@ -347,7 +605,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
         const latestActivity = getLatestActivityTime(item);
 
         return (
-            <div key={item.id} onClick={() => setSelectedThread(item)} className="p-3 bg-white neo-border hover:bg-stone-50 cursor-pointer transition-colors group relative">
+            <div key={item.id} onClick={() => handleThreadSelect(item)} className="p-3 bg-white neo-border hover:bg-stone-50 cursor-pointer transition-colors group relative">
                 {(hasNewReply || awaitingAdmin) && (
                     <span
                         className={`absolute top-2 right-2 w-2 h-2 rounded-full animate-pulse z-10 ${awaitingAdmin ? 'bg-amber-500' : 'bg-red-500'}`}
@@ -382,7 +640,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                             <span className="text-[9px] font-bold uppercase text-stone-400">Open</span>
                         )}
                         {!awaitingAdmin && !hasAdminReply(item) && item.status === 'closed' && (
-                            <span className="text-[9px] font-bold uppercase text-stone-400">Closed</span>
+                            <span className="text-[9px] font-bold uppercase text-stone-400">Completed</span>
                         )}
                     </div>
                     <div className="flex items-center gap-1 text-[10px] font-bold text-stone-400 group-hover:text-black transition-colors">
@@ -398,19 +656,36 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-            <div className="bg-white neo-border neo-shadow w-full max-w-md h-[500px] flex flex-col animate-in fade-in zoom-in duration-200 overflow-hidden">
+            <div className="bg-white neo-border neo-shadow w-full max-w-md h-[min(560px,85vh)] flex flex-col animate-in fade-in zoom-in duration-200 overflow-hidden">
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b-2 border-black bg-stone-50 shrink-0">
-                    <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between gap-3 p-4 border-b-2 border-black bg-stone-50 shrink-0">
+                    <div className="flex items-center gap-2 min-w-0">
                         <MessageSquare size={18} className="text-black" />
                         <h2 className="text-lg font-black uppercase tracking-tight">Feedback</h2>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="p-1 hover:bg-stone-200 rounded-full transition-colors"
-                    >
-                        <X size={20} />
-                    </button>
+                    <div className="flex items-center gap-2 shrink-0">
+                        <a
+                            href={donationUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-block"
+                            aria-label="Support development"
+                            title="Support development"
+                        >
+                            <img
+                                height={28}
+                                style={{ border: 0, height: 28 }}
+                                src="https://storage.ko-fi.com/cdn/kofi6.png?v=6"
+                                alt="Buy Me a Coffee at ko-fi.com"
+                            />
+                        </a>
+                        <button
+                            onClick={onClose}
+                            className="p-1 hover:bg-stone-200 rounded-full transition-colors"
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Tabs */}
@@ -459,7 +734,8 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
 
                     {/* NEW FEEDBACK FORM */}
                     {activeTab === 'new' && !selectedThread && (
-                        <form onSubmit={handleSubmit} className="p-4 space-y-4 flex flex-col h-full overflow-y-auto">
+                        <form onSubmit={handleSubmit} className="flex h-full min-h-0 flex-col overflow-y-auto p-4">
+                            <div className="space-y-4 pb-4">
                             {!userId && (
                                 <div className="p-3 bg-amber-50 border-l-4 border-amber-400 text-xs text-amber-800 font-medium">
                                     Note: You are submitting as a guest. Enter your email so HabiCard can follow up with you directly.
@@ -500,32 +776,64 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                                 </div>
                             </div>
 
-                            <div className="flex-1 min-h-0 flex flex-col">
+                            <div>
                                 <label className="text-[10px] font-black uppercase text-stone-500 mb-2 block">Your Message</label>
                                 <textarea
                                     value={content}
                                     onChange={(e) => setContent(e.target.value)}
                                     placeholder={type === 'bug' ? "Describe clinical details of the bug..." : "Tell us what feature you'd like to see!"}
-                                    className="w-full flex-1 p-3 neo-border focus:ring-0 focus:outline-none text-sm font-medium resize-none placeholder:text-stone-300 min-h-[100px]"
+                                    className="w-full h-32 p-3 neo-border focus:ring-0 focus:outline-none text-sm font-medium resize-none placeholder:text-stone-300 sm:h-36"
                                 />
                             </div>
 
-                            <div className="p-3 bg-rose-50 border border-rose-200 rounded-md">
-                                <p className="text-[10px] font-black uppercase tracking-wide text-rose-700 mb-2">Support Development</p>
-                                <a href={donationUrl} target="_blank" rel="noopener noreferrer" className="inline-block">
-                                    <img
-                                        height={36}
-                                        style={{ border: 0, height: 36 }}
-                                        src="https://storage.ko-fi.com/cdn/kofi6.png?v=6"
-                                        alt="Buy Me a Coffee at ko-fi.com"
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between gap-3">
+                                    <label className="text-[10px] font-black uppercase text-stone-500 block">Images</label>
+                                    <span className="text-[10px] font-bold text-stone-400">{attachments.length}/{MAX_ATTACHMENTS}</span>
+                                </div>
+                                <label className="inline-flex cursor-pointer items-center gap-2 border-2 border-dashed border-stone-300 bg-stone-50 px-3 py-2 text-xs font-bold uppercase tracking-wide text-stone-600 transition-colors hover:border-black hover:text-black">
+                                    <ImagePlus size={14} />
+                                    Attach Image
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        multiple
+                                        onChange={(e) => handleAttachmentSelection(e, attachments, setAttachments)}
+                                        className="hidden"
                                     />
-                                </a>
+                                </label>
+                                <p className="text-[10px] text-stone-400">Up to 3 images, 5 MB each.</p>
+                                {attachments.length > 0 && (
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {attachments.map((attachment, index) => (
+                                            <div key={`${attachment.file.name}-${index}`} className="overflow-hidden neo-border bg-white">
+                                                <img
+                                                    src={attachment.previewUrl}
+                                                    alt={attachment.file.name}
+                                                    className="h-20 w-full object-cover"
+                                                />
+                                                <div className="border-t border-black/10 p-1.5">
+                                                    <p className="truncate text-[10px] font-bold text-stone-600">{attachment.file.name}</p>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeAttachment(index, setAttachments)}
+                                                        className="mt-1 text-[10px] font-black uppercase text-rose-600"
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
                             </div>
 
                             <button
                                 type="submit"
                                 disabled={submitting}
-                                className="w-full py-3 bg-black text-white neo-border neo-shadow font-black uppercase tracking-widest text-sm flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all disabled:opacity-50 disabled:pointer-events-none shrink-0"
+                                className="mt-auto w-full shrink-0 py-3 bg-black text-white neo-border neo-shadow font-black uppercase tracking-widest text-sm flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all disabled:opacity-50 disabled:pointer-events-none"
                             >
                                 {submitting ? 'Submitting...' : 'Send Feedback'}
                                 <Send size={14} />
@@ -592,7 +900,17 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                     {selectedThread && (
                         <div className="flex flex-col h-full bg-stone-50">
                             <div className="p-2 border-b border-stone-200 bg-white flex items-center gap-2 shrink-0">
-                                <button onClick={() => setSelectedThread(null)} className="p-1 hover:bg-stone-100 rounded">
+                                <button
+                                    onClick={() => {
+                                        setReplyContent('');
+                                        setReplyAttachments((prev) => {
+                                            releasePendingAttachments(prev);
+                                            return [];
+                                        });
+                                        setSelectedThread(null);
+                                    }}
+                                    className="p-1 hover:bg-stone-100 rounded"
+                                >
                                     <ChevronRight size={18} className="rotate-180" />
                                 </button>
                                 <span className="text-xs font-bold uppercase tracking-wide">Thread</span>
@@ -605,15 +923,33 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                                         <User size={14} className="text-stone-500" />
                                     </div>
                                     <div className="flex-1 space-y-1">
-                                        <div className="flex items-baseline gap-2">
-                                            <span className="text-xs font-black">
-                                                {activeTab === 'admin' ? getReporterName(selectedThread) : 'You'}
-                                            </span>
-                                            <span className="text-[10px] text-stone-400">{new Date(selectedThread.created_at).toLocaleString()}</span>
-                                        </div>
-                                        {activeTab === 'admin' && (
-                                            <div className="text-[10px] text-stone-500 space-y-0.5">
-                                                <p>{getReporterEmail(selectedThread) || 'Email unavailable'}</p>
+                        <div className="flex items-baseline gap-2">
+                            <span className="text-xs font-black">
+                                {activeTab === 'admin' ? getReporterName(selectedThread) : 'You'}
+                            </span>
+                            <span className="text-[10px] text-stone-400">{new Date(selectedThread.created_at).toLocaleString()}</span>
+                        </div>
+                        {activeTab === 'admin' && (
+                            <div className="mt-2">
+                                {selectedThread.status !== 'closed' ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleMarkComplete(selectedThread)}
+                                        disabled={submitting}
+                                        className="px-2 py-1 border border-black bg-stone-50 text-[10px] font-black uppercase tracking-widest text-stone-700 hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        Mark Complete
+                                    </button>
+                                ) : (
+                                    <span className="inline-flex px-2 py-1 border border-stone-300 bg-stone-100 text-[10px] font-black uppercase tracking-widest text-stone-500">
+                                        Completed
+                                    </span>
+                                )}
+                            </div>
+                        )}
+                        {activeTab === 'admin' && (
+                            <div className="text-[10px] text-stone-500 space-y-0.5">
+                                <p>{getReporterEmail(selectedThread) || 'Email unavailable'}</p>
                                                 <p className="font-mono">User ID: {selectedThread.user_id || 'guest'}</p>
                                                 {getTicketUrl(selectedThread) && (
                                                     <p className="truncate">URL: {getTicketUrl(selectedThread)}</p>
@@ -623,6 +959,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                                         <div className="bg-white p-3 neo-border rounded-tl-none text-sm text-stone-800 leading-relaxed shadow-sm">
                                             {selectedThread.content}
                                         </div>
+                                        {renderAttachmentGallery(selectedThread)}
                                     </div>
                                 </div>
 
@@ -643,6 +980,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                                                 }`}>
                                                 {reply.content}
                                             </div>
+                                            {renderReplyAttachmentGallery(reply)}
                                         </div>
                                     </div>
                                 ))}
@@ -650,21 +988,57 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                             </div>
 
                             {/* Reply Input */}
-                            <form onSubmit={handleReply} className="p-3 bg-white border-t border-stone-200 shrink-0 flex gap-2">
-                                <input
-                                    type="text"
-                                    value={replyContent}
-                                    onChange={(e) => setReplyContent(e.target.value)}
-                                    placeholder={isAdmin ? "Reply as Admin..." : "Write a reply..."}
-                                    className="flex-1 bg-stone-100 border-none rounded-lg px-3 text-sm focus:ring-1 focus:ring-black outline-none"
-                                />
-                                <button
-                                    type="submit"
-                                    disabled={!replyContent.trim() || submitting}
-                                    className="p-2 bg-black text-white rounded-lg disabled:opacity-50 hover:bg-stone-800 transition-colors"
-                                >
-                                    <Send size={16} />
-                                </button>
+                            <form onSubmit={handleReply} className="p-3 bg-white border-t border-stone-200 shrink-0 space-y-2">
+                                {replyAttachments.length > 0 && (
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {replyAttachments.map((attachment, index) => (
+                                            <div key={`${attachment.file.name}-${index}`} className="overflow-hidden neo-border bg-white">
+                                                <img
+                                                    src={attachment.previewUrl}
+                                                    alt={attachment.file.name}
+                                                    className="h-16 w-full object-cover"
+                                                />
+                                                <div className="border-t border-black/10 p-1.5">
+                                                    <p className="truncate text-[10px] font-bold text-stone-600">{attachment.file.name}</p>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeAttachment(index, setReplyAttachments)}
+                                                        className="mt-1 text-[10px] font-black uppercase text-rose-600"
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="text"
+                                        value={replyContent}
+                                        onChange={(e) => setReplyContent(e.target.value)}
+                                        placeholder={isAdmin ? "Reply as Admin..." : "Write a reply..."}
+                                        className="flex-1 bg-stone-100 border-none rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-black outline-none"
+                                    />
+                                    <label className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-stone-300 bg-stone-50 px-2 py-2 text-[10px] font-black uppercase text-stone-600 hover:border-black hover:text-black">
+                                        <ImagePlus size={13} />
+                                        Image
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            multiple
+                                            onChange={(e) => handleAttachmentSelection(e, replyAttachments, setReplyAttachments)}
+                                            className="hidden"
+                                        />
+                                    </label>
+                                    <button
+                                        type="submit"
+                                        disabled={(!replyContent.trim() && replyAttachments.length === 0) || submitting}
+                                        className="p-2 bg-black text-white rounded-lg disabled:opacity-50 hover:bg-stone-800 transition-colors"
+                                    >
+                                        <Send size={16} />
+                                    </button>
+                                </div>
                             </form>
                         </div>
                     )}

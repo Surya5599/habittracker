@@ -70,6 +70,18 @@ export interface FeedbackReply {
   content: string;
   created_at: string;
   is_admin_reply: boolean;
+  metadata?: {
+    attachments?: FeedbackAttachment[];
+    [key: string]: any;
+  };
+}
+
+export interface FeedbackAttachment {
+  path: string;
+  url: string;
+  name: string;
+  size: number;
+  mimeType: string;
 }
 
 export interface Feedback {
@@ -79,6 +91,9 @@ export interface Feedback {
   content: string;
   status: 'open' | 'closed' | 'replied';
   created_at: string;
-  metadata?: any;
+  metadata?: {
+    attachments?: FeedbackAttachment[];
+    [key: string]: any;
+  };
   replies?: FeedbackReply[];
 }

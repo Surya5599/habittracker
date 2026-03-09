@@ -13,7 +13,7 @@ export const TicketList: React.FC<TicketListProps> = () => {
     const [tickets, setTickets] = useState<Feedback[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedTicket, setSelectedTicket] = useState<Feedback | null>(null);
-    const [filter, setFilter] = useState<'all' | 'open' | 'closed'>('all');
+    const [filter, setFilter] = useState<'all' | 'open' | 'replied'>('all');
 
     const fetchTickets = useCallback(async (showSpinner = false) => {
         if (showSpinner) setLoading(true);
@@ -55,8 +55,8 @@ export const TicketList: React.FC<TicketListProps> = () => {
 
     const filteredTickets = tickets.filter(t => {
         if (filter === 'all') return true;
-        if (filter === 'open') return t.status === 'open' || t.status === 'replied';
-        if (filter === 'closed') return t.status === 'closed';
+        if (filter === 'open') return t.status === 'open';
+        if (filter === 'replied') return t.status === 'replied' || t.status === 'closed';
         return true;
     });
 
@@ -71,7 +71,7 @@ export const TicketList: React.FC<TicketListProps> = () => {
             {/* CONTROLS */}
             <div className="flex items-center justify-between mb-6">
                 <div className="flex gap-2">
-                    {(['all', 'open', 'closed'] as const).map(f => (
+                    {(['all', 'open', 'replied'] as const).map(f => (
                         <button
                             key={f}
                             onClick={() => setFilter(f)}
@@ -80,7 +80,7 @@ export const TicketList: React.FC<TicketListProps> = () => {
                                 : 'bg-white text-stone-500 hover:bg-stone-50'
                                 }`}
                         >
-                            {f}
+                            {f === 'replied' ? 'replied' : f}
                         </button>
                     ))}
                     <button
@@ -119,7 +119,7 @@ export const TicketList: React.FC<TicketListProps> = () => {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     {ticket.status === 'replied' && <span className="text-xs font-bold text-green-600 flex items-center gap-1"><Reply size={12} /> Replied</span>}
-                                    {ticket.status === 'closed' && <span className="text-xs font-bold text-stone-400 flex items-center gap-1"><CheckCircle size={12} /> Closed</span>}
+                                    {ticket.status === 'closed' && <span className="text-xs font-bold text-stone-400 flex items-center gap-1"><CheckCircle size={12} /> Completed</span>}
                                     {ticket.status === 'open' && <span className="text-xs font-bold text-amber-500 uppercase">Open</span>}
                                     <span className="text-xs text-stone-400 ml-2">{new Date(ticket.created_at).toLocaleDateString()}</span>
                                 </div>

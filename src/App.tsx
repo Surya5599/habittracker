@@ -6,7 +6,6 @@ import { X, Search, Key, ChevronLeft, ChevronRight } from 'lucide-react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from './supabase';
 import './i18n';
-import { exportToExcel } from './utils/exportToExcel';
 import { AuthForm } from './components/AuthForm';
 import { UpdatePasswordForm } from './components/UpdatePasswordForm';
 import { Header } from './components/Header';
@@ -21,6 +20,7 @@ import { BottomNav } from './components/BottomNav';
 import { DailyCard } from './components/DailyCard';
 import { generateUUID } from './utils/uuid';
 import { getInactiveHabitsForDate, isHabitActiveOnDate, isHabitManuallyInactive } from './utils/habitActivity';
+import { exportUserDataCsv } from './utils/exportUserDataCsv';
 import { OnboardingModal } from './components/OnboardingModal';
 import { FeatureAnnouncementModal } from './components/FeatureAnnouncementModal';
 import { LoadingScreen } from './components/LoadingScreen';
@@ -400,6 +400,7 @@ const AppContent: React.FC = () => {
   };
   const [cardOpenFlipped, setCardOpenFlipped] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [isExportingData, setIsExportingData] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const goalInputRef = useRef<HTMLInputElement>(null);
   const [notes, setNotes] = useState<DailyNote>({});
@@ -908,21 +909,25 @@ const AppContent: React.FC = () => {
     }
   };
 
-  const handleExport = async () => {
+  const handleExportData = async () => {
     try {
-      toast.loading('Generating Excel file...', { id: 'export' });
-      await exportToExcel({
+      setIsExportingData(true);
+      toast.loading('Preparing export...', { id: 'export' });
+      const result = await exportUserDataCsv({
+        userId: effectiveUserId,
+        userEmail: session?.user?.email,
+        guestMode,
         habits,
         completions,
-        currentYear,
-        currentMonthIndex,
-        theme,
-        userName: session?.user?.email || 'Guest'
+        notes,
+        monthlyGoals
       });
-      toast.success('Excel file downloaded successfully!', { id: 'export' });
+      toast.success(`Downloaded ${result.filename} with ${result.rowCount} rows.`, { id: 'export' });
     } catch (error) {
       console.error('Export error:', error);
       toast.error('Failed to export. Please try again.', { id: 'export' });
+    } finally {
+      setIsExportingData(false);
     }
   };
 
@@ -1090,6 +1095,8 @@ const AppContent: React.FC = () => {
           hasUnreadFeedback={hasUnreadFeedback}
           onOpenWhatsNew={handleOpenWhatsNew}
           onOpenTutorial={handleOpenTutorial}
+          onExportData={handleExportData}
+          isExportingData={isExportingData}
           hasUnseenWhatsNew={hasUnseenWhatsNew}
           onSearch={() => setIsSearchOpen(true)}
         />
@@ -1354,6 +1361,8 @@ const SignInPage: React.FC = () => {
             onReportBug={() => { }}
             onOpenWhatsNew={() => { }}
             onOpenTutorial={() => { }}
+            onExportData={() => { }}
+            isExportingData={false}
             hasUnseenWhatsNew={false}
             hasUnreadFeedback={false}
             onSearch={() => { }}

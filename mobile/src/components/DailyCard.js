@@ -275,7 +275,7 @@ export const DailyCard = ({
                 onPress={flipToFront}
                 style={[tw`flex-1 px-2 py-2 border-r border-black items-center justify-center`, { borderRightColor: outlineColor }]}
             >
-                <Text style={[tw`text-[9px] font-black uppercase tracking-wider`, { color: textSecondary }]}>{t('monthlyView.habits') || 'Habits'}</Text>
+                <Text style={[tw`text-[9px] font-black uppercase tracking-wider`, { color: textSecondary }]}>{t('common.myHabits')}</Text>
                 <Text style={[tw`text-[10px] font-black mt-1`, { color: textPrimary }]}>{completedHabitsCount}/{totalHabitsCount}</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -504,7 +504,7 @@ export const DailyCard = ({
 
                         <View style={tw`px-5 pb-6 pt-4`}>
                             <View style={[tw`border-b mb-2 pb-2 flex-row justify-between items-center`, { borderColor: borderSoft }]}>
-                                <Text style={[tw`text-xs font-black uppercase tracking-widest`, { color: textSecondary }]}>{t('monthlyView.habits') || 'Habits'}</Text>
+                                <Text style={[tw`text-xs font-black uppercase tracking-widest`, { color: textSecondary }]}>{t('common.myHabits')}</Text>
                                 <Text style={[tw`text-xs font-black mr-2`, { color: textSecondary }]}>{completedHabitsCount}/{totalHabitsCount}</Text>
                             </View>
 

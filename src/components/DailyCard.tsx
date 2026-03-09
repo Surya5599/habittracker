@@ -369,16 +369,16 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                     setIsFlipped(false);
                 }}
                 className="flex-1 py-2 px-1 border-r border-black flex flex-col items-center justify-center"
-                title="Show habits"
+                title={t('dailyCard.habitsLabel', { defaultValue: 'Habits' })}
                 data-onboarding="status-habits"
             >
-                <span className="text-[9px] font-black uppercase tracking-wider text-stone-500">Habits</span>
+                <span className="text-[9px] font-black uppercase tracking-wider text-stone-500">{t('dailyCard.habitsLabel', { defaultValue: 'Habits' })}</span>
                 <span className="text-[10px] font-black text-stone-700 mt-1">{completedHabitsCount}/{totalHabitsCount}</span>
             </button>
             <button
                 onClick={openTasksView}
                 className="flex-1 py-2 px-1 border-r border-black flex flex-col items-center justify-center"
-                title="Open tasks"
+                title={t('dailyCard.tasks')}
                 data-onboarding="status-tasks"
             >
                 <span className="text-[9px] font-black uppercase tracking-wider text-stone-500">{t('dailyCard.tasks')}</span>
@@ -389,7 +389,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
             <button
                 onClick={openJournalView}
                 className="flex-1 py-2 px-1 flex flex-col items-center justify-center"
-                title="Open journal"
+                title={t('dailyCard.journal')}
                 data-onboarding="status-journal"
             >
                 <span className="text-[9px] font-black uppercase tracking-wider text-stone-500">{t('dailyCard.journal')}</span>

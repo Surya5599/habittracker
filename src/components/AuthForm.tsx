@@ -14,6 +14,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest }) => {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [isResetMode, setIsResetMode] = useState(false);
+    const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
     const navigate = useNavigate();
 
     const handleResetPassword = async (e: React.FormEvent) => {
@@ -26,9 +27,6 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest }) => {
         else toast.success('Password reset email sent! Check your inbox.');
         setLoading(false);
     };
-
-
-
     const handleSubmit = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
         setLoading(true);
@@ -43,51 +41,35 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest }) => {
             return;
         }
 
-        // 1. Try Login first
-        const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+        if (authMode === 'signin') {
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-        if (!loginError) {
-            toast.success('Logged in successfully!');
-            setLoading(false);
-            navigate('/');
-            return;
-        }
-
-        // 2. If login fails, try Sign Up (user might not exist)
-        const { error: signUpError, data: signUpData } = await supabase.auth.signUp({ email, password });
-
-        if (!signUpError) {
-            if (!signUpData?.session) {
-                const { error: retryError } = await supabase.auth.signInWithPassword({ email, password });
-                if (retryError) {
-                    if (retryError.message.toLowerCase().includes('email not confirmed')) {
-                        toast.success('Check your email to confirm your account!');
-                    } else {
-                        toast.error(loginError.message);
-                    }
+            if (error) {
+                if (error.message.toLowerCase().includes('email not confirmed')) {
+                    toast.error('Confirm your email before signing in.');
                 } else {
-                    toast.success('Account created and logged in!');
-                    navigate('/');
+                    toast.error(error.message);
                 }
             } else {
-                toast.success('Account created and logged in!');
+                toast.success('Signed in successfully!');
                 navigate('/');
             }
-            setLoading(false);
-            return;
-        }
-
-        if (signUpError.message.toLowerCase().includes('already registered')) {
-            toast.error(loginError.message);
         } else {
-            toast.error(signUpError.message);
+            const { error, data } = await supabase.auth.signUp({ email, password });
+
+            if (error) {
+                toast.error(error.message);
+            } else if (!data.session) {
+                toast.success('Account created. Check your email to confirm your account.');
+                setAuthMode('signin');
+            } else {
+                toast.success('Account created successfully!');
+                navigate('/');
+            }
         }
 
         setLoading(false);
     };
-
-    const handleLogin = (e: React.FormEvent) => handleSubmit(e);
-    const handleSignUp = (e: React.FormEvent) => handleSubmit(e);
 
     return (
         <div className="flex items-center justify-center p-4 relative w-full">
@@ -121,6 +103,27 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest }) => {
                                 className="space-y-4"
                                 onSubmit={handleSubmit}
                             >
+                                {!isResetMode && (
+                                    <div className="grid grid-cols-2 gap-1 rounded-xl bg-stone-100 p-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => setAuthMode('signin')}
+                                            className={`rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all ${authMode === 'signin' ? 'bg-white text-black shadow-sm' : 'text-stone-500 hover:text-black'}`}
+                                            disabled={loading}
+                                        >
+                                            Sign In
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setAuthMode('signup')}
+                                            className={`rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all ${authMode === 'signup' ? 'bg-white text-black shadow-sm' : 'text-stone-500 hover:text-black'}`}
+                                            disabled={loading}
+                                        >
+                                            Sign Up
+                                        </button>
+                                    </div>
+                                )}
+
                                 <div className="space-y-4">
                                     <div>
                                         <label htmlFor="email" className="block text-[9px] font-black uppercase tracking-widest text-stone-400 mb-1">Email</label>
@@ -172,12 +175,17 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest }) => {
                                     </div>
                                 ) : (
                                     <div className="space-y-4 pt-2">
+                                        {authMode === 'signup' && (
+                                            <div className="rounded-xl border border-[#C19A9A]/30 bg-[#C19A9A]/10 px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-stone-600">
+                                                You&apos;ll need to confirm your email before signing in.
+                                            </div>
+                                        )}
                                         <button
                                             type="submit"
                                             className="w-full px-6 py-3.5 bg-black text-white neo-border neo-shadow-sm font-black uppercase tracking-widest text-xs hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all disabled:opacity-50"
                                             disabled={loading}
                                         >
-                                            {loading ? 'Verifying...' : 'Sign In/Sign up'}
+                                            {loading ? 'Verifying...' : authMode === 'signin' ? 'Sign In' : 'Create Account'}
                                         </button>
 
                                         <div className="flex justify-center">

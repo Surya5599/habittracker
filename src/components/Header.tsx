@@ -71,6 +71,8 @@ interface HeaderProps {
     onReportBug: () => void;
     onOpenWhatsNew: () => void;
     onOpenTutorial: () => void;
+    onExportData: () => void;
+    isExportingData: boolean;
     hasUnreadFeedback: boolean;
     hasUnseenWhatsNew: boolean;
     onSearch: () => void;
@@ -133,6 +135,8 @@ export const Header: React.FC<HeaderProps> = ({
     onReportBug,
     onOpenWhatsNew,
     onOpenTutorial,
+    onExportData,
+    isExportingData,
     hasUnreadFeedback,
     hasUnseenWhatsNew,
     onSearch
@@ -334,6 +338,8 @@ export const Header: React.FC<HeaderProps> = ({
                                 onReportBug={onReportBug}
                                 onOpenWhatsNew={onOpenWhatsNew}
                                 onOpenTutorial={onOpenTutorial}
+                                onExportData={onExportData}
+                                isExportingData={isExportingData}
                                 hasUnreadFeedback={hasUnreadFeedback}
                                 hasUnseenWhatsNew={hasUnseenWhatsNew}
                             />

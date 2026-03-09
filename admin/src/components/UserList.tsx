@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
-import { ExternalLink, Search, Loader2, Users } from 'lucide-react';
+import { ExternalLink, Search, Loader2, Users, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { exportUserDataAsCsv } from '../utils/exportUserData';
 
 interface UserSummary {
     id: string;
@@ -13,6 +14,7 @@ export const UserList: React.FC = () => {
     const [users, setUsers] = useState<UserSummary[]>([]);
     const [loading, setLoading] = useState(true);
     const [manualId, setManualId] = useState('');
+    const [exportingUserId, setExportingUserId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchUsers();
@@ -62,6 +64,22 @@ export const UserList: React.FC = () => {
         setManualId('');
     };
 
+    const handleExport = async (userId: string) => {
+        const trimmedUserId = userId.trim();
+        if (!trimmedUserId) return;
+
+        setExportingUserId(trimmedUserId);
+        try {
+            const result = await exportUserDataAsCsv(trimmedUserId);
+            toast.success(`Exported ${result.downloadedFiles} CSV file${result.downloadedFiles === 1 ? '' : 's'}.`);
+        } catch (error: any) {
+            console.error('Error exporting user data:', error);
+            toast.error(error.message || 'Failed to export user data.');
+        } finally {
+            setExportingUserId(null);
+        }
+    };
+
     return (
         <div className="space-y-6">
             {/* MANUAL INPUT */}
@@ -83,6 +101,15 @@ export const UserList: React.FC = () => {
                         className="bg-black text-white px-6 font-bold uppercase tracking-widest hover:-translate-y-0.5 active:translate-y-0 active:shadow-none neo-border neo-shadow transition-all"
                     >
                         Go
+                    </button>
+                    <button
+                        type="button"
+                        disabled={!manualId.trim() || exportingUserId === manualId.trim()}
+                        onClick={() => handleExport(manualId)}
+                        className="bg-white text-black px-4 font-bold uppercase tracking-widest border border-stone-300 hover:border-black disabled:opacity-50 disabled:cursor-not-allowed transition-all inline-flex items-center gap-2"
+                    >
+                        {exportingUserId === manualId.trim() ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                        Export CSV
                     </button>
                 </form>
             </div>
@@ -112,15 +139,26 @@ export const UserList: React.FC = () => {
                                         {user.habitCount} habits • Last habit created: {user.lastActive ? new Date(user.lastActive).toLocaleDateString() : 'Unknown'}
                                     </div>
                                 </div>
-                                <a
-                                    href={`http://localhost:5173/?impersonate=${user.id}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2 px-3 py-1.5 bg-white border border-stone-200 text-stone-600 text-xs font-bold uppercase hover:border-black hover:text-black transition-all"
-                                >
-                                    <ExternalLink size={14} />
-                                    View App
-                                </a>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleExport(user.id)}
+                                        disabled={exportingUserId === user.id}
+                                        className="flex items-center gap-2 px-3 py-1.5 bg-white border border-stone-200 text-stone-600 text-xs font-bold uppercase hover:border-black hover:text-black disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                    >
+                                        {exportingUserId === user.id ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                                        Export CSV
+                                    </button>
+                                    <a
+                                        href={`http://localhost:5173/?impersonate=${user.id}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-2 px-3 py-1.5 bg-white border border-stone-200 text-stone-600 text-xs font-bold uppercase hover:border-black hover:text-black transition-all"
+                                    >
+                                        <ExternalLink size={14} />
+                                        View App
+                                    </a>
+                                </div>
                             </div>
                         ))}
                     </div>

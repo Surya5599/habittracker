@@ -157,11 +157,14 @@ export const useHabitStats = (
             return { name: h.name, completed: displayCount };
         }).sort((a, b) => b.completed - a.completed);
 
+        const normalizedTotal = Math.max(0, Math.round(totalPossible));
+        const normalizedCompleted = Math.max(0, Math.round(completed));
+
         return {
-            total: totalPossible,
-            completed,
-            remaining: Math.max(0, totalPossible - completed),
-            percentage: totalPossible > 0 ? (completed / totalPossible) * 100 : 0,
+            total: normalizedTotal,
+            completed: normalizedCompleted,
+            remaining: Math.max(0, normalizedTotal - normalizedCompleted),
+            percentage: normalizedTotal > 0 ? (normalizedCompleted / normalizedTotal) * 100 : 0,
             habitPerformance
         };
     }, [habits, completions, notes, weeklyStats, weekOffset, startOfWeek]);

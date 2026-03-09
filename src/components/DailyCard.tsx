@@ -408,7 +408,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
         >
             {/* Header */}
             <div
-                className={`py-2 px-0 text-center border-b-[2px] border-black relative ${onDateClick && !combinedView ? 'cursor-pointer' : ''}`}
+                className={`day-date-header py-2 px-0 text-center border-b-[2px] border-black relative ${onDateClick && !combinedView ? 'cursor-pointer' : ''}`}
                 style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}
                 onClick={() => {
                     if (onDateClick && !combinedView) onDateClick(date);
@@ -631,7 +631,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 updateNote(dateKey, { tasks: [...targetTasks, taskToMove] });
             }}
         >
-            <div className="p-3 text-center border-b-[2px] border-black relative" style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}>
+            <div className="day-date-header p-3 text-center border-b-[2px] border-black relative" style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}>
                 {onPrev && (
                     <button
                         onClick={(e) => {
@@ -773,7 +773,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
             className={`relative w-full h-full bg-white neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans ${isToday && !combinedView ? 'ring-2 ring-black ring-offset-0' : ''}`}
         >
             {/* Header */}
-            <div className="p-3 text-center border-b-[2px] border-black relative" style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}>
+            <div className="day-date-header p-3 text-center border-b-[2px] border-black relative" style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}>
                 {onPrev && (
                     <button
                         onClick={(e) => {

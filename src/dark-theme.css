@@ -1,14 +1,14 @@
 :root {
-  --dark-bg: #02050b;
-  --dark-bg-soft: #060b13;
-  --dark-surface: #090f19;
-  --dark-surface-2: #0d1522;
-  --dark-border: #2a3446;
-  --dark-border-strong: #3b4960;
-  --dark-text: #e7edf7;
-  --dark-muted: #99a6bb;
-  --dark-dim: #708099;
-  --dark-glow: rgba(151, 205, 189, 0.2);
+  --dark-bg: #0b0b0b;
+  --dark-bg-soft: #121212;
+  --dark-surface: #151515;
+  --dark-surface-2: #1a1a1a;
+  --dark-border: #2d2d2d;
+  --dark-border-strong: #3a3a3a;
+  --dark-text: #ededed;
+  --dark-muted: #a8a8a8;
+  --dark-dim: #7d7d7d;
+  --dark-glow: rgba(0, 0, 0, 0.35);
 }
 
 html,
@@ -37,8 +37,8 @@ html[data-color-mode='dark'] {
 html[data-color-mode='dark'] body {
   color: var(--dark-text);
   background:
-    radial-gradient(1200px 600px at 18% 0%, rgba(74, 107, 170, 0.14), transparent 60%),
-    radial-gradient(1000px 540px at 85% 8%, rgba(93, 149, 134, 0.1), transparent 62%),
+    radial-gradient(1200px 600px at 18% 0%, rgba(255, 255, 255, 0.04), transparent 60%),
+    radial-gradient(1000px 540px at 85% 8%, rgba(255, 255, 255, 0.02), transparent 62%),
     linear-gradient(180deg, var(--dark-bg-soft), var(--dark-bg));
   background-attachment: fixed;
 }
@@ -88,7 +88,7 @@ html[data-color-mode='dark'] [class*='bg-[#f9f9f9]'] {
 }
 
 html[data-color-mode='dark'] [class*='bg-[#e5e5e5]/30'] {
-  background-color: rgba(24, 35, 52, 0.42) !important;
+  background-color: rgba(34, 34, 34, 0.42) !important;
 }
 
 html[data-color-mode='dark'] .bg-\[\#f9f2f2\],
@@ -105,11 +105,19 @@ html[data-color-mode='dark'] [class*='!bg-stone-50'] {
 
 html[data-color-mode='dark'] [class*='bg-stone-50/'],
 html[data-color-mode='dark'] [class*='bg-black/'] {
-  background-color: rgba(18, 27, 41, 0.78) !important;
+  background-color: rgba(20, 20, 20, 0.78) !important;
 }
 
 html[data-color-mode='dark'] .bg-black {
-  background: linear-gradient(180deg, #070d17, #040912) !important;
+  background: linear-gradient(180deg, #141414, #0f0f0f) !important;
+}
+
+html[data-color-mode='dark'] .day-date-header {
+  background: linear-gradient(180deg, #1a1a1a, #121212) !important;
+}
+
+html[data-color-mode='dark'] .my-habits-button {
+  background: linear-gradient(180deg, #1a1a1a, #121212) !important;
 }
 
 html[data-color-mode='dark'] .text-black,
@@ -158,14 +166,14 @@ html[data-color-mode='dark'] ::placeholder {
 }
 
 html[data-color-mode='dark'] ::-webkit-scrollbar-track {
-  background: #09111e;
+  background: #121212;
 }
 
 html[data-color-mode='dark'] ::-webkit-scrollbar-thumb {
-  background: #2a3b55;
+  background: #333;
   border-radius: 999px;
 }
 
 html[data-color-mode='dark'] ::-webkit-scrollbar-thumb:hover {
-  background: #395173;
+  background: #444;
 }

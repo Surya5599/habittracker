@@ -33,7 +33,7 @@ const ADMIN_EMAILS = ((import.meta.env.VITE_ADMIN_EMAILS as string | undefined) 
   .split(',')
   .map(email => email.trim().toLowerCase())
   .filter(Boolean);
-const WHATS_NEW_VERSION = '2026_04';
+const WHATS_NEW_VERSION = '2026_05';
 const WHATS_NEW_SEEN_KEY = 'habit_whats_new_seen_version';
 const LEGACY_DEFAULT_HABIT_NAMES = new Set(['meditation', 'exercise', 'drink 2l water', 'reading', 'journaling']);
 
@@ -220,6 +220,23 @@ const AppContent: React.FC = () => {
       ],
       image: (
         <img src="/whats-new/language-support.png" alt="Language selection in settings" className="w-full h-44 object-contain bg-stone-100 border border-stone-200 rounded-sm" />
+      )
+    },
+    {
+      id: 'dark-mode',
+      title: 'Dark Mode',
+      description: 'You can use dark mode now.',
+      bullets: [
+        'Tap Settings → Appearance, then choose Dark.'
+      ],
+      image: (
+        <div className="w-full h-44 border border-stone-200 rounded-sm bg-[#121212] flex items-center justify-center">
+          <div className="w-[88%] max-w-[300px] border border-[#2d2d2d] rounded-lg p-3 bg-[#1a1a1a]">
+            <div className="h-2.5 w-20 rounded bg-[#2a2a2a] mb-2" />
+            <div className="h-2.5 w-full rounded bg-[#252525] mb-2" />
+            <div className="h-2.5 w-[80%] rounded bg-[#252525]" />
+          </div>
+        </div>
       )
     },
     {

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { User } from 'lucide-react';
 import { supabase } from '../supabase';
-import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
@@ -9,34 +8,68 @@ interface AuthFormProps {
     onContinueAsGuest: () => void;
 }
 
+type PanelTone = 'error' | 'success' | 'info';
+
 export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [isResetMode, setIsResetMode] = useState(false);
     const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
+    const [panelMessage, setPanelMessage] = useState<{ tone: PanelTone; text: string } | null>(null);
+    const [showResendConfirmation, setShowResendConfirmation] = useState(false);
     const navigate = useNavigate();
 
-    const handleResetPassword = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const resetPanelState = () => {
+        setPanelMessage(null);
+        setShowResendConfirmation(false);
+    };
+
+    const setMessage = (tone: PanelTone, text: string, allowResend = false) => {
+        setPanelMessage({ tone, text });
+        setShowResendConfirmation(allowResend);
+    };
+
+    const handleResendConfirmation = async () => {
+        if (!email.trim()) {
+            setMessage('error', 'Enter your email address first.');
+            return;
+        }
+
         setLoading(true);
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin,
+        const { error } = await supabase.auth.resend({
+            type: 'signup',
+            email,
+            options: {
+                emailRedirectTo: window.location.origin
+            }
         });
-        if (error) toast.error(error.message);
-        else toast.success('Password reset email sent! Check your inbox.');
+
+        if (error) {
+            setMessage('error', error.message);
+        } else {
+            setMessage('success', 'Confirmation email sent. Check your inbox.');
+        }
+
         setLoading(false);
     };
+
     const handleSubmit = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
         setLoading(true);
+        resetPanelState();
 
         if (isResetMode) {
             const { error } = await supabase.auth.resetPasswordForEmail(email, {
                 redirectTo: window.location.origin,
             });
-            if (error) toast.error(error.message);
-            else toast.success('Password reset email sent! Check your inbox.');
+
+            if (error) {
+                setMessage('error', error.message);
+            } else {
+                setMessage('success', 'Password reset email sent. Check your inbox.');
+            }
+
             setLoading(false);
             return;
         }
@@ -46,24 +79,22 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest }) => {
 
             if (error) {
                 if (error.message.toLowerCase().includes('email not confirmed')) {
-                    toast.error('Confirm your email before signing in.');
+                    setMessage('error', 'Confirm your email before signing in.', true);
                 } else {
-                    toast.error(error.message);
+                    setMessage('error', error.message);
                 }
             } else {
-                toast.success('Signed in successfully!');
                 navigate('/');
             }
         } else {
             const { error, data } = await supabase.auth.signUp({ email, password });
 
             if (error) {
-                toast.error(error.message);
+                setMessage('error', error.message);
             } else if (!data.session) {
-                toast.success('Account created. Check your email to confirm your account.');
+                setMessage('success', 'Account created. Check your email to confirm your account.');
                 setAuthMode('signin');
             } else {
-                toast.success('Account created successfully!');
                 navigate('/');
             }
         }
@@ -82,13 +113,12 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest }) => {
                     transition={{
                         duration: 6,
                         repeat: Infinity,
-                        ease: "easeInOut"
+                        ease: 'easeInOut'
                     }}
                     className="w-full max-w-[340px] md:max-w-[360px] max-h-[calc(100svh-2rem)] overflow-y-auto bg-white/60 backdrop-blur-xl neo-border neo-shadow rounded-2xl p-6 md:p-8 relative perspective-1000 transform-gpu"
                     style={{ transformStyle: 'preserve-3d' }}
                 >
                     <div className="h-full flex flex-col space-y-6">
-                        {/* Styled Header Branding inside the card */}
                         <div className="text-center">
                             <h1 className="text-5xl md:text-6xl font-black uppercase tracking-tighter leading-none mb-3">
                                 Habi<span className="text-[#C19A9A]">Card</span>
@@ -99,15 +129,15 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest }) => {
                         </div>
 
                         <div className="space-y-4">
-                            <form
-                                className="space-y-4"
-                                onSubmit={handleSubmit}
-                            >
+                            <form className="space-y-4" onSubmit={handleSubmit}>
                                 {!isResetMode && (
                                     <div className="grid grid-cols-2 gap-1 rounded-xl bg-stone-100 p-1">
                                         <button
                                             type="button"
-                                            onClick={() => setAuthMode('signin')}
+                                            onClick={() => {
+                                                setAuthMode('signin');
+                                                resetPanelState();
+                                            }}
                                             className={`rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all ${authMode === 'signin' ? 'bg-white text-black shadow-sm' : 'text-stone-500 hover:text-black'}`}
                                             disabled={loading}
                                         >
@@ -115,7 +145,10 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest }) => {
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={() => setAuthMode('signup')}
+                                            onClick={() => {
+                                                setAuthMode('signup');
+                                                resetPanelState();
+                                            }}
                                             className={`rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all ${authMode === 'signup' ? 'bg-white text-black shadow-sm' : 'text-stone-500 hover:text-black'}`}
                                             disabled={loading}
                                         >
@@ -132,7 +165,10 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest }) => {
                                             type="email"
                                             placeholder="USER@DOMAIN.COM"
                                             value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
+                                            onChange={(e) => {
+                                                setEmail(e.target.value);
+                                                resetPanelState();
+                                            }}
                                             className="w-full p-2.5 bg-stone-50/50 neo-border focus:ring-2 focus:ring-[#C19A9A]/20 focus:outline-none transition-all text-sm font-black uppercase placeholder:text-stone-300"
                                             disabled={loading}
                                         />
@@ -148,13 +184,40 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest }) => {
                                                 type="password"
                                                 placeholder="••••••••"
                                                 value={password}
-                                                onChange={(e) => setPassword(e.target.value)}
+                                                onChange={(e) => {
+                                                    setPassword(e.target.value);
+                                                    resetPanelState();
+                                                }}
                                                 className="w-full p-2.5 bg-stone-50/50 neo-border focus:ring-2 focus:ring-[#C19A9A]/20 focus:outline-none transition-all text-sm font-black uppercase"
                                                 disabled={loading}
                                             />
                                         </div>
                                     )}
                                 </div>
+
+                                {panelMessage && (
+                                    <div
+                                        className={`rounded-xl px-3 py-3 text-[10px] font-bold uppercase tracking-wide ${
+                                            panelMessage.tone === 'error'
+                                                ? 'border border-rose-200 bg-rose-50 text-rose-700'
+                                                : panelMessage.tone === 'success'
+                                                    ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
+                                                    : 'border border-stone-200 bg-stone-50 text-stone-600'
+                                        }`}
+                                    >
+                                        <div>{panelMessage.text}</div>
+                                        {showResendConfirmation && (
+                                            <button
+                                                type="button"
+                                                onClick={handleResendConfirmation}
+                                                disabled={loading}
+                                                className="mt-3 inline-flex items-center rounded-full border border-current px-3 py-1 text-[9px] font-black uppercase tracking-widest transition-opacity hover:opacity-80 disabled:opacity-50"
+                                            >
+                                                Resend Confirmation Email
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
 
                                 {isResetMode ? (
                                     <div className="space-y-3 pt-2">
@@ -167,7 +230,11 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest }) => {
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={(e) => { e.preventDefault(); setIsResetMode(false); }}
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                setIsResetMode(false);
+                                                resetPanelState();
+                                            }}
                                             className="w-full py-2 text-[9px] font-black uppercase tracking-widest text-stone-400 hover:text-black transition-colors"
                                         >
                                             Return to Login
@@ -191,7 +258,11 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest }) => {
                                         <div className="flex justify-center">
                                             <button
                                                 type="button"
-                                                onClick={(e) => { e.preventDefault(); setIsResetMode(true); }}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    setIsResetMode(true);
+                                                    resetPanelState();
+                                                }}
                                                 className="text-[9px] font-black uppercase tracking-widest text-stone-400 hover:text-black transition-colors"
                                             >
                                                 Forgot your password?
@@ -205,7 +276,10 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest }) => {
                                         </div>
 
                                         <button
-                                            onClick={(e) => { e.preventDefault(); onContinueAsGuest(); }}
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                onContinueAsGuest();
+                                            }}
                                             className="w-full px-6 py-2.5 bg-white/50 text-black border-[2px] border-dashed border-stone-200 font-black uppercase tracking-widest text-[10px] hover:border-black hover:text-black transition-all flex items-center justify-center gap-2"
                                         >
                                             <User size={12} />
@@ -215,7 +289,6 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest }) => {
                                 )}
                             </form>
                         </div>
-
                     </div>
                 </motion.div>
             </div>

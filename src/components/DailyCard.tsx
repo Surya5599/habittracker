@@ -129,11 +129,45 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
             }
         };
 
+        const handleTouchStart = (e: TouchEvent) => {
+            const target = e.currentTarget as HTMLElement & {
+                __touchScroll?: { lastY: number };
+            };
+            if (e.touches.length !== 1) return;
+            target.__touchScroll = { lastY: e.touches[0].clientY };
+        };
+
+        const handleTouchMove = (e: TouchEvent) => {
+            const target = e.currentTarget as HTMLElement & {
+                __touchScroll?: { lastY: number };
+            };
+
+            if (e.touches.length !== 1) return;
+            if (target.scrollHeight <= target.clientHeight + 1) return;
+
+            const touchState = target.__touchScroll || { lastY: e.touches[0].clientY };
+            const currentY = e.touches[0].clientY;
+            const deltaY = touchState.lastY - currentY;
+
+            const maxScroll = target.scrollHeight - target.clientHeight;
+            const nextScrollTop = Math.min(maxScroll, Math.max(0, target.scrollTop + deltaY));
+
+            if (nextScrollTop !== target.scrollTop) {
+                e.preventDefault();
+                e.stopPropagation();
+                target.scrollTop = nextScrollTop;
+            }
+
+            target.__touchScroll = { lastY: currentY };
+        };
+
         const refs = [dailyHabitsRef, tasksRef, journalRef];
 
         refs.forEach(ref => {
             if (ref.current) {
                 ref.current.addEventListener('wheel', handleWheel, { passive: false });
+                ref.current.addEventListener('touchstart', handleTouchStart, { passive: true });
+                ref.current.addEventListener('touchmove', handleTouchMove, { passive: false });
             }
         });
 
@@ -142,9 +176,12 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 const el = ref.current;
                 if (el) {
                     el.removeEventListener('wheel', handleWheel);
+                    el.removeEventListener('touchstart', handleTouchStart);
+                    el.removeEventListener('touchmove', handleTouchMove);
                     const s = (el as any).__smoothScroll;
                     if (s && s.raf) cancelAnimationFrame(s.raf);
                     (el as any).__smoothScroll = null;
+                    (el as any).__touchScroll = null;
                 }
             });
         };

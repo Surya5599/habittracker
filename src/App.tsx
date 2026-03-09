@@ -1400,6 +1400,10 @@ const SignInPage: React.FC = () => {
     const saved = localStorage.getItem('habit_color_mode');
     return saved === 'dark' ? 'dark' : 'light';
   });
+  const [cardStyle, setCardStyle] = useState<'compact' | 'large'>(() => {
+    const saved = localStorage.getItem('habit_card_style');
+    return saved === 'large' ? 'large' : 'compact';
+  });
   const [currentYear] = useState(new Date().getFullYear());
   const [currentMonthIndex] = useState(new Date().getMonth());
 

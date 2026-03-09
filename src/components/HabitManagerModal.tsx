@@ -142,8 +142,8 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-20 md:pt-20 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white border-[2px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-full max-w-md overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-start justify-center p-3 pt-8 sm:p-4 sm:pt-12 md:pt-20 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white border-[2px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-full max-w-md overflow-hidden flex flex-col min-h-0 max-h-[calc(100svh-2rem)] sm:max-h-[calc(100svh-3rem)] md:max-h-[90vh] animate-in zoom-in-95 duration-200">
                 <div className="p-4 border-b-[2px] border-black flex items-center justify-between gap-2 bg-white">
                     <h2 className="text-3xl font-black uppercase tracking-tighter text-black">{t('habitManager.title')}</h2>
                     <div className="flex items-center gap-2">
@@ -174,7 +174,11 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                     </button>
                 </div>
 
-                <div ref={listRef} className="flex-1 overflow-y-auto p-4">
+                <div
+                    ref={listRef}
+                    className="flex-1 min-h-0 overflow-y-auto p-4 touch-pan-y"
+                    style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
+                >
                     {habits.length === 0 ? (
                         <div className="text-center py-8 text-stone-400 text-xs font-medium uppercase tracking-wider">
                             {t('habitManager.noHabits')}
@@ -185,6 +189,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                             values={habits}
                             onReorder={reorderHabits}
                             className="space-y-2"
+                            style={{ touchAction: 'pan-y' }}
                         >
                             {habits
                                 .filter(h => showArchived ? h.archivedAt : !h.archivedAt)

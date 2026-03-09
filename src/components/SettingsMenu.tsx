@@ -231,7 +231,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                         >
                             <span className="text-[10px] font-bold uppercase text-stone-500 group-hover:text-stone-700">Export Data</span>
                             <div className="flex items-center gap-1.5 text-stone-400 group-hover:text-black transition-colors">
-                                <span className="text-[10px] font-bold">{isExportingData ? 'Preparing...' : 'Single CSV'}</span>
+                                <span className="text-[10px] font-bold">{isExportingData ? 'Preparing...' : 'Download'}</span>
                                 <Download size={12} />
                             </div>
                         </button>

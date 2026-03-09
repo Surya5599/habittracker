@@ -77,6 +77,14 @@ const downloadTextFile = (filename: string, content: string) => {
 
 const sanitizeFileSegment = (value: string) => value.replace(/[^a-zA-Z0-9-_]+/g, '_');
 
+const isMissingTableError = (error: { message?: string; code?: string } | null | undefined, tableName: string) => {
+    if (!error) return false;
+    const message = (error.message || '').toLowerCase();
+    return message.includes(`could not find the table 'public.${tableName}'`) ||
+        message.includes(`relation "public.${tableName}" does not exist`) ||
+        error.code === 'PGRST205';
+};
+
 const createRow = (partial: Partial<ExportRow> & Pick<ExportRow, 'record_type' | 'record_id'>): ExportRow => ({
     record_type: partial.record_type,
     record_id: partial.record_id,
@@ -240,7 +248,9 @@ export const exportUserDataCsv = async ({
                 .order('created_at', { ascending: true })
         ]);
 
-        if (profileResult.error) {
+        const profileData = isMissingTableError(profileResult.error, 'profiles') ? null : profileResult.data;
+
+        if (profileResult.error && !isMissingTableError(profileResult.error, 'profiles')) {
             throw new Error(profileResult.error.message);
         }
 
@@ -248,16 +258,16 @@ export const exportUserDataCsv = async ({
             throw new Error(feedbackResult.error.message);
         }
 
-        if (profileResult.data) {
+        if (profileData) {
             rows.push(createRow({
                 record_type: 'profile',
-                record_id: profileResult.data.id,
+                record_id: profileData.id,
                 user_id: userId,
-                updated_at: profileResult.data.updated_at || '',
+                updated_at: profileData.updated_at || '',
                 title: 'Profile',
-                status: profileResult.data.is_premium ? 'premium' : 'free',
-                value: String(profileResult.data.analysis_count ?? ''),
-                payload_json: stringifyPayload(profileResult.data)
+                status: profileData.is_premium ? 'premium' : 'free',
+                value: String(profileData.analysis_count ?? ''),
+                payload_json: stringifyPayload(profileData)
             }));
         }
 

@@ -23,6 +23,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
     const [activeTab, setActiveTab] = useState<'new' | 'history' | 'admin'>('new');
     const [type, setType] = useState<'bug' | 'suggestion'>('bug');
     const [content, setContent] = useState('');
+    const [guestEmail, setGuestEmail] = useState('');
     const [submitting, setSubmitting] = useState(false);
 
     // History & Thread State
@@ -133,6 +134,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
             // Reset state on open
             setActiveTab(isAdmin ? 'admin' : 'new');
             setSelectedThread(null);
+            setGuestEmail(userEmail || '');
             if (isAdmin) {
                 fetchAdminInbox();
             } else {
@@ -237,6 +239,13 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        const reporterEmail = userEmail || guestEmail.trim();
+
+        if (!userId && !reporterEmail) {
+            toast.error('Please enter your email so we can follow up.');
+            return;
+        }
+
         if (!content.trim()) {
             toast.error('Please enter your feedback');
             return;
@@ -252,8 +261,8 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                     content,
                     status: 'open',
                     metadata: {
-                        reporterName: userEmail ? userEmail.split('@')[0] : 'Guest',
-                        reporterEmail: userEmail || null,
+                        reporterName: reporterEmail ? reporterEmail.split('@')[0] : 'Guest',
+                        reporterEmail: reporterEmail || null,
                         url: window.location.href,
                         userAgent: navigator.userAgent,
                         timestamp: new Date().toISOString()
@@ -264,6 +273,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
 
             toast.success('Thank you for your feedback!');
             setContent('');
+            if (!userId) setGuestEmail('');
             // Switch to history to show it's submitted
             setActiveTab('history');
             fetchHistory();
@@ -452,7 +462,20 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                         <form onSubmit={handleSubmit} className="p-4 space-y-4 flex flex-col h-full overflow-y-auto">
                             {!userId && (
                                 <div className="p-3 bg-amber-50 border-l-4 border-amber-400 text-xs text-amber-800 font-medium">
-                                    Note: You are submitting as a guest. You won't be able to see replies unless you sign in.
+                                    Note: You are submitting as a guest. Enter your email so HabiCard can follow up with you directly.
+                                </div>
+                            )}
+                            {!userId && (
+                                <div>
+                                    <label className="text-[10px] font-black uppercase text-stone-500 mb-2 block">Your Email</label>
+                                    <input
+                                        type="email"
+                                        value={guestEmail}
+                                        onChange={(e) => setGuestEmail(e.target.value)}
+                                        placeholder="you@example.com"
+                                        className="w-full p-3 neo-border focus:ring-0 focus:outline-none text-sm font-medium placeholder:text-stone-300"
+                                        required
+                                    />
                                 </div>
                             )}
                             <div>

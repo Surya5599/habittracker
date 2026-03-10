@@ -30,6 +30,7 @@ import { StreakModal } from './components/StreakModal';
 import { SearchModal } from './components/SearchModal';
 import { MonthlyTabSurveyModal } from './components/MonthlyTabSurveyModal';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
+import { LandingPage } from './pages/LandingPage';
 
 const ADMIN_EMAILS = ((import.meta.env.VITE_ADMIN_EMAILS as string | undefined) || 'admin@habicard.com,knowheredeveloper@gmail.com')
   .split(',')
@@ -1282,7 +1283,7 @@ const AppContent: React.FC = () => {
               Close Tab
             </button>
             <button
-              onClick={() => window.location.href = window.location.origin}
+              onClick={() => window.location.href = `${window.location.origin}/app`}
               className="px-6 py-2 bg-white text-black border-2 border-black text-sm font-bold uppercase tracking-widest hover:bg-stone-50 transition-colors"
             >
               See Web App
@@ -1309,7 +1310,7 @@ const AppContent: React.FC = () => {
             <span>Viewing as: {effectiveUserId}</span>
           </div>
           <button
-            onClick={() => window.location.href = '/'}
+            onClick={() => window.location.href = '/app'}
             className="px-3 py-1 bg-black text-white text-xs font-bold uppercase hover:opacity-80 transition-opacity"
           >
             Exit View
@@ -1679,7 +1680,7 @@ const SignInPage: React.FC = () => {
 
   const handleContinueAsGuest = () => {
     localStorage.setItem('habit_guest_mode', 'true');
-    navigate('/');
+    navigate('/app');
   };
 
   return (
@@ -1795,7 +1796,8 @@ const App: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/signin" element={<SignInPage />} />
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/signin" element={<LandingPage />} />
         <Route
           path="/privacy"
           element={
@@ -1808,7 +1810,7 @@ const App: React.FC = () => {
         />
 
         <Route
-          path="/*"
+          path="/app/*"
           element={
             <ProtectedRoute>
               <AppContent />

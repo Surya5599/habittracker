@@ -9,6 +9,12 @@
   --dark-muted: #a8a8a8;
   --dark-dim: #7d7d7d;
   --dark-glow: rgba(0, 0, 0, 0.35);
+  --landing-neo-yellow: #FFD800;
+  --landing-neo-pink: #FF90E8;
+  --landing-neo-green: #23A094;
+  --landing-neo-blue: #90A8ED;
+  --landing-neo-orange: #FF7A00;
+  --landing-neo-bg: #F4F4F0;
 }
 
 html,
@@ -19,6 +25,31 @@ body,
 
 body {
   font-family: 'Inter', sans-serif;
+}
+
+.landing-neo-shadow {
+  box-shadow: 6px 6px 0 0 rgba(0, 0, 0, 1);
+}
+
+.landing-neo-shadow-sm {
+  box-shadow: 4px 4px 0 0 rgba(0, 0, 0, 1);
+}
+
+.landing-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.landing-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.landing-scrollbar::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+.landing-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }
 
 html[data-color-mode='light'] {

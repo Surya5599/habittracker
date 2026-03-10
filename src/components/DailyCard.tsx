@@ -66,7 +66,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
     onGlobalViewModeChange,
     fitParentHeight = false,
     onJournalSaveClick,
-    cardStyle = 'compact',
+    cardStyle = 'large',
 }) => {
     const { t, i18n } = useTranslation();
     const [editingTaskId, setEditingTaskId] = useState<string | null>(null);

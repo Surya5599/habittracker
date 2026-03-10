@@ -438,12 +438,12 @@ export const Header: React.FC<HeaderProps> = ({
                         <div className="grid grid-cols-2 gap-2 flex-grow">
                             <button
                                 onClick={() => setIsHabitModalOpen(true)}
-                                className="my-habits-button flex flex-col items-center justify-center p-2 text-white rounded-2xl neo-border neo-shadow hover:translate-y-0.5 hover:shadow-none transition-all group min-h-[60px]"
+                                className="my-habits-button flex min-h-[78px] flex-col items-center rounded-2xl p-3 text-white neo-border neo-shadow transition-all hover:translate-y-0.5 hover:shadow-none group"
                                 style={{ backgroundColor: theme.secondary }}
                             >
                                 <span className="text-[14px] font-black uppercase tracking-widest leading-none">{t('common.myHabits')}</span>
-                                <span className="text-xl font-black mt-1 leading-none">{habits.length}</span>
-                                <span className="text-[8px] text-white uppercase tracking-tighter mt-1 leading-none">{t('common.manageHabits')}</span>
+                                <span className="mt-1 text-xl font-black leading-none">{habits.length}</span>
+                                <span className="mt-auto pt-2 text-[11px] font-black uppercase tracking-wide leading-none">{t('common.manageHabits')}</span>
                             </button>
                             <div
                                 onClick={() => setIsStreakModalOpen(true)}
@@ -490,12 +490,12 @@ export const Header: React.FC<HeaderProps> = ({
                         <div className="grid grid-cols-2 gap-2 flex-grow">
                             <button
                                 onClick={() => setIsHabitModalOpen(true)}
-                                className="my-habits-button flex flex-col items-center justify-center p-2 text-white rounded-2xl neo-border neo-shadow hover:translate-y-0.5 hover:shadow-none transition-all group min-h-[60px]"
+                                className="my-habits-button flex min-h-[78px] flex-col items-center rounded-2xl p-3 text-white neo-border neo-shadow transition-all hover:translate-y-0.5 hover:shadow-none group"
                                 style={{ backgroundColor: theme.secondary }}
                             >
-                                <span className="text-[12px] font-black uppercase tracking-widest leading-none">{t('common.myHabits')}</span>
-                                <span className="text-xl font-black mt-1 leading-none">{habits.length}</span>
-                                <span className="text-[8px] text-white uppercase tracking-tighter mt-1 leading-none">{t('common.manageHabits')}</span>
+                                <span className="text-[13px] font-black uppercase tracking-widest leading-none">{t('common.myHabits')}</span>
+                                <span className="mt-1 text-xl font-black leading-none">{habits.length}</span>
+                                <span className="mt-auto pt-2 text-[11px] font-black uppercase tracking-wide leading-none">{t('common.manageHabits')}</span>
                             </button>
                             <div
                                 onClick={() => setIsStreakModalOpen(true)}
@@ -531,12 +531,12 @@ export const Header: React.FC<HeaderProps> = ({
                         <div className="grid grid-cols-2 gap-2 flex-grow">
                             <button
                                 onClick={() => setIsHabitModalOpen(true)}
-                                className="my-habits-button flex flex-col items-center justify-center p-2 text-white rounded-2xl neo-border neo-shadow hover:translate-y-0.5 hover:shadow-none transition-all group min-h-[60px]"
+                                className="my-habits-button flex min-h-[78px] flex-col items-center rounded-2xl p-3 text-white neo-border neo-shadow transition-all hover:translate-y-0.5 hover:shadow-none group"
                                 style={{ backgroundColor: theme.secondary }}
                             >
-                                <span className="text-[12px] font-black uppercase tracking-widest leading-none">{t('common.myHabits')}</span>
-                                <span className="text-xl font-black mt-1 leading-none">{habits.length}</span>
-                                <span className="text-[8px] text-white uppercase tracking-tighter mt-1 leading-none">{t('common.manageHabits')}</span>
+                                <span className="text-[13px] font-black uppercase tracking-widest leading-none">{t('common.myHabits')}</span>
+                                <span className="mt-1 text-xl font-black leading-none">{habits.length}</span>
+                                <span className="mt-auto pt-2 text-[11px] font-black uppercase tracking-wide leading-none">{t('common.manageHabits')}</span>
                             </button>
                             <div
                                 onClick={() => setIsStreakModalOpen(true)}

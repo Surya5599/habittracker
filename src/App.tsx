@@ -100,7 +100,7 @@ const AppContent: React.FC = () => {
   });
   const [cardStyle, setCardStyle] = useState<'compact' | 'large'>(() => {
     const saved = localStorage.getItem('habit_card_style');
-    return saved === 'large' ? 'large' : 'compact';
+    return saved === 'compact' ? 'compact' : 'large';
   });
 
   // Sync i18n with state
@@ -1572,7 +1572,7 @@ const SignInPage: React.FC = () => {
   });
   const [cardStyle, setCardStyle] = useState<'compact' | 'large'>(() => {
     const saved = localStorage.getItem('habit_card_style');
-    return saved === 'large' ? 'large' : 'compact';
+    return saved === 'compact' ? 'compact' : 'large';
   });
   const [currentYear] = useState(new Date().getFullYear());
   const [currentMonthIndex] = useState(new Date().getMonth());

@@ -482,6 +482,27 @@ export const useHabitStats = (
         let weekendPossible = 0;
         let weekdayCompletions = 0;
         let weekdayPossible = 0;
+        let loggedDaysCount = 0;
+        let trackableDaysCount = 0;
+
+        for (let m = 0; m < 12; m++) {
+            if (currentYear === currentYearToday && m > currentMonthToday) break;
+            const dInM = new Date(currentYear, m + 1, 0).getDate();
+            for (let d = 1; d <= dInM; d++) {
+                if (currentYear === currentYearToday && m === currentMonthToday && d > currentDateToday) break;
+                const date = new Date(currentYear, m, d);
+                const hasTrackableHabit = habits.some((habit) => !isHabitInactiveOnDate(habit, date));
+                if (!hasTrackableHabit) continue;
+
+                trackableDaysCount++;
+                const anyCompleted = habits.some((habit) => {
+                    if (isHabitInactiveOnDate(habit, date)) return false;
+                    return isCompleted(habit.id, d, completions, m, currentYear);
+                });
+
+                if (anyCompleted) loggedDaysCount++;
+            }
+        }
 
         const habitPerformance = habits.map(h => {
             let hCompleted = 0;
@@ -564,6 +585,14 @@ export const useHabitStats = (
             };
         }).sort((a, b) => b.rate - a.rate || a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
 
+        const activeHabitsInYear = habitPerformance.filter(h => h.total > 0);
+        const loggedHabitsCount = activeHabitsInYear.filter(h => h.completed > 0).length;
+        const mostLoggedHabit = [...activeHabitsInYear]
+            .sort((a, b) => b.completed - a.completed || b.rate - a.rate || a.name.localeCompare(b.name) || a.id.localeCompare(b.id))[0] || null;
+        const weakestHabit = [...activeHabitsInYear]
+            .filter(h => h.total > 0)
+            .sort((a, b) => a.rate - b.rate || a.completed - b.completed || a.name.localeCompare(b.name) || a.id.localeCompare(b.id))[0] || null;
+
         const strongestMonth = [...monthlySummaries].sort((a, b) => b.rate - a.rate)[0];
         const consistencyRate = proRatedTotalPossible > 0 ? (totalCompletions / proRatedTotalPossible) * 100 : 0;
         const activeDays = monthlySummaries.reduce((sum, m) => sum + (m.consistency * (new Date(currentYear, MONTHS.indexOf(m.month) + 1, 0).getDate()) / 100), 0);
@@ -624,7 +653,13 @@ export const useHabitStats = (
             longestHabitStreak: [...habitPerformance].sort((a, b) => b.maxStreak - a.maxStreak)[0] || null,
             activeDays: Math.round(activeDays),
             activeHabitsCount,
-            storyVariant
+            storyVariant,
+            loggedDaysCount,
+            trackableDaysCount,
+            loggedHabitsCount,
+            totalHabitsInYear: activeHabitsInYear.length,
+            mostLoggedHabit,
+            weakestHabit
         };
     }, [completions, notes, habits, currentYear]);
 

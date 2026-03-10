@@ -1,55 +1,223 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { Activity, CalendarDays, CheckCheck, Flame, Grid3X3, Minus, TrendingDown, TrendingUp } from 'lucide-react';
 import { Theme } from '../types';
 import { MONTHS } from '../constants';
+import { YearRetroModal } from './YearRetroModal';
+
+interface MonthSummary {
+    month: string;
+    completed: number;
+    total: number;
+    rate: number;
+    proRatedRate?: number;
+    delta?: number;
+    signal?: string;
+    isFutureMonth?: boolean;
+    isCurrentMonth?: boolean;
+    days?: any[];
+    topHabit?: { name?: string } | null;
+}
 
 interface YearViewProps {
     theme: Theme;
     currentYear: number;
+    startOfWeek: 'monday' | 'sunday';
+    onDayClick: (monthIndex: number, day: number) => void;
+    onOpenMonth: (monthIndex: number) => void;
     annualStats: {
         consistencyRate: number;
-        monthlySummaries: any[];
+        totalCompletions: number;
+        activeDays?: number;
+        activeHabitsCount?: number;
+        maxStreak: number;
+        strongestMonth?: { month?: string; rate?: number } | null;
+        momentum?: string;
+        monthlySummaries: MonthSummary[];
     };
 }
 
-const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats }) => {
+const MONTH_LABELS = MONTHS.map((month) => month.slice(0, 3).toUpperCase());
+
+const getMomentumCopy = (momentum?: string) => {
+    if (momentum === 'ascending') return { label: 'Building momentum', icon: TrendingUp, tone: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' };
+    if (momentum === 'descending') return { label: 'Needs recovery', icon: TrendingDown, tone: 'text-rose-700', bg: 'bg-rose-50 border-rose-200' };
+    return { label: 'Holding steady', icon: Minus, tone: 'text-stone-700', bg: 'bg-stone-50 border-stone-200' };
+};
+
+const formatDelta = (delta: number) => {
+    if (Math.abs(delta) < 0.5) return 'Flat';
+    return `${delta > 0 ? '+' : ''}${Math.round(delta)} pts`;
+};
+
+const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, startOfWeek, onDayClick, onOpenMonth }) => {
+    const [isRetroModalOpen, setIsRetroModalOpen] = useState(false);
+    const strongestMonth = annualStats.strongestMonth?.month || 'No peak yet';
+    const strongestRate = annualStats.strongestMonth?.rate || 0;
+    const momentumCopy = getMomentumCopy(annualStats.momentum);
+    const MomentumIcon = momentumCopy.icon;
+
     return (
-        <div className="bg-white neo-border neo-shadow rounded-2xl p-6 flex flex-col h-full relative overflow-hidden group">
-            <div className="mb-6 flex justify-between items-center z-10 relative">
-                <h4 className="font-black uppercase text-sm tracking-widest">{currentYear} Retrospective</h4>
-                <p className="text-xl font-black" style={{ color: theme.secondary }}>{annualStats.consistencyRate.toFixed(0)}% Done</p>
+        <div className="bg-white neo-border neo-shadow rounded-2xl p-5 flex flex-col h-full relative overflow-hidden">
+            <div className="relative z-10 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 pb-4 border-b border-stone-100">
+                <div>
+                    <span className="text-[10px] font-black uppercase tracking-[0.28em] text-stone-400 block mb-1">Year View</span>
+                    <h4 className="font-black uppercase text-lg sm:text-xl tracking-tight leading-tight">{currentYear} In Review</h4>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                    <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 ${momentumCopy.bg}`}>
+                        <MomentumIcon size={13} className={momentumCopy.tone} />
+                        <span className={`text-[10px] font-black uppercase tracking-[0.16em] ${momentumCopy.tone}`}>{momentumCopy.label}</span>
+                    </div>
+                    <button
+                        onClick={() => setIsRetroModalOpen(true)}
+                        className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-stone-600 hover:text-black hover:border-black transition-colors"
+                    >
+                        <Grid3X3 size={12} />
+                        Open Grids
+                    </button>
+                </div>
             </div>
 
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-4 flex-1 z-10 relative">
-                {MONTHS.map((month, idx) => {
-                    const summary = annualStats.monthlySummaries[idx] || {};
-                    const rate = summary.rate || 0;
+            <div className="relative z-10 mt-4 grid grid-cols-1 xl:grid-cols-[1.35fr_1fr] gap-4 items-start">
+                <section className="min-w-0 space-y-4">
+                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-2">
+                        <div className="rounded-2xl border border-stone-200 bg-stone-950 text-white p-3 lg:col-span-1">
+                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-stone-400 block">Overall</span>
+                            <span className="text-3xl font-black leading-none mt-2 block" style={{ color: theme.secondary }}>
+                                {Math.round(annualStats.consistencyRate)}%
+                            </span>
+                            <span className="text-[11px] font-bold text-stone-400">Follow-through</span>
+                        </div>
+                        <div className="rounded-2xl border border-stone-200 bg-stone-50 p-3">
+                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-stone-400 block">Completions</span>
+                            <span className="text-2xl font-black leading-none mt-2 block">{annualStats.totalCompletions}</span>
+                            <span className="text-[11px] font-bold text-stone-500">What you did</span>
+                        </div>
+                        <div className="rounded-2xl border border-stone-200 bg-stone-50 p-3">
+                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-stone-400 block">Active Days</span>
+                            <span className="text-2xl font-black leading-none mt-2 block">{annualStats.activeDays || 0}</span>
+                            <span className="text-[11px] font-bold text-stone-500">Days with activity</span>
+                        </div>
+                        <div className="rounded-2xl border border-stone-200 bg-white p-3">
+                            <div className="flex items-center gap-2 text-stone-500">
+                                <CalendarDays size={13} />
+                                <span className="text-[9px] font-black uppercase tracking-[0.2em]">Peak Month</span>
+                            </div>
+                            <span className="text-sm font-black uppercase mt-2 block truncate">{strongestMonth}</span>
+                            <span className="text-[11px] font-bold text-stone-500">{Math.round(strongestRate)}% completion</span>
+                        </div>
+                        <div className="rounded-2xl border border-stone-200 bg-white p-3">
+                            <div className="flex items-center gap-2 text-stone-500">
+                                <Activity size={13} />
+                                <span className="text-[9px] font-black uppercase tracking-[0.2em]">Habits In Play</span>
+                            </div>
+                            <span className="text-sm font-black uppercase mt-2 block">{annualStats.activeHabitsCount || 0} reliable</span>
+                            <span className="text-[11px] font-bold text-stone-500">Habits with repeat follow-through</span>
+                        </div>
+                    </div>
 
-                    return (
-                        <div key={month} className="flex flex-col items-center group/month">
-                            <div className="w-full aspect-square bg-stone-50 border border-stone-200 relative overflow-hidden mb-1">
-                                <motion.div
-                                    initial={{ height: 0 }}
-                                    whileInView={{ height: `${rate}%` }}
-                                    transition={{ duration: 1, delay: idx * 0.05 }}
-                                    className="absolute bottom-0 left-0 right-0 transition-colors duration-300"
-                                    style={{ backgroundColor: theme.primary }}
-                                />
-                                <div className="absolute inset-0 flex items-center justify-center font-black text-[10px] z-10 pointer-events-none mix-blend-multiply transition-opacity">
-                                    {rate.toFixed(0)}%
+                    <div className="rounded-[22px] border border-black bg-stone-950 text-white p-4 overflow-hidden relative">
+                        <div className="absolute inset-x-0 top-0 h-1" style={{ backgroundColor: theme.primary }} />
+                        <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-3 items-center">
+                            <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-xl flex items-center justify-center text-white" style={{ backgroundColor: theme.secondary }}>
+                                    <Flame size={15} />
+                                </div>
+                                <div>
+                                    <span className="text-[10px] font-black uppercase tracking-[0.24em] text-stone-400 block">How You Did</span>
+                                    <span className="text-sm font-black uppercase">Year quality</span>
                                 </div>
                             </div>
-                            <span className="text-[9px] font-black uppercase text-black group-hover/month:text-black transition-colors">{month}</span>
+                            <div className="min-w-0">
+                                <div className="h-3 rounded-full bg-white/10 overflow-hidden">
+                                    <div
+                                        className="h-full rounded-full transition-[width] duration-700"
+                                        style={{ width: `${Math.min(100, Math.max(0, annualStats.consistencyRate))}%`, backgroundColor: theme.secondary }}
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-4 text-[11px] font-bold text-stone-400 whitespace-nowrap">
+                                <span>{annualStats.maxStreak}d streak</span>
+                                <span>{annualStats.totalCompletions} done</span>
+                            </div>
                         </div>
-                    );
-                })}
+                    </div>
+                </section>
+
+                <section className="min-w-0 space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                        <div>
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">Month Over Month</p>
+                            <p className="text-sm font-black uppercase">Quick month scan</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 sm:grid-cols-4 xl:grid-cols-3 gap-2">
+                        {annualStats.monthlySummaries.map((summary, idx) => {
+                            const displayRate = summary.isCurrentMonth ? (summary.proRatedRate || summary.rate || 0) : (summary.rate || 0);
+                            const barWidth = Math.max(displayRate, summary.isFutureMonth ? 10 : 4);
+                            const delta = summary.delta || 0;
+                            const isPositive = delta > 0.5;
+                            const isNegative = delta < -0.5;
+                            const monthLabel = MONTH_LABELS[idx] || summary.month.slice(0, 3).toUpperCase();
+                            const statusLabel = summary.isFutureMonth
+                                ? 'Upcoming'
+                                : summary.isCurrentMonth
+                                    ? 'Live month'
+                                    : summary.signal || 'Closed';
+
+                            return (
+                                <button
+                                    key={summary.month}
+                                    onClick={() => onOpenMonth(idx)}
+                                    className="rounded-2xl border border-stone-200 bg-stone-50/80 p-3 text-left hover:border-black transition-colors"
+                                >
+                                    <div className="flex items-center justify-between gap-2 mb-2">
+                                        <div className="min-w-0">
+                                            <p className="text-[11px] font-black uppercase tracking-[0.16em]">{monthLabel}</p>
+                                            <p className="text-[10px] font-bold text-stone-500 truncate">{statusLabel}</p>
+                                        </div>
+                                        <div className={`text-right ${isPositive ? 'text-emerald-600' : isNegative ? 'text-rose-600' : 'text-stone-500'}`}>
+                                            <p className="text-sm font-black leading-none">{Math.round(displayRate)}%</p>
+                                            <p className="text-[10px] font-bold">{summary.isFutureMonth ? 'Upcoming' : formatDelta(delta)}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="h-2.5 rounded-full bg-white border border-stone-200 overflow-hidden">
+                                        <div
+                                            className="h-full rounded-full transition-[width] duration-700"
+                                            style={{
+                                                width: `${Math.min(100, barWidth)}%`,
+                                                backgroundColor: summary.isFutureMonth ? '#d6d3d1' : isNegative ? theme.secondary : theme.primary
+                                            }}
+                                        />
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </section>
             </div>
 
-            <div className="mt-8 p-4 border border-black text-white relative z-10" style={{ backgroundColor: theme.secondary }}>
-                <p className="text-xs font-bold italic">"Consistency is the signature of greatness."</p>
-            </div>
+            <div className="absolute -top-14 -right-14 w-36 h-36 rounded-full opacity-[0.07] pointer-events-none" style={{ backgroundColor: theme.primary }} />
+            <div className="absolute -bottom-16 -left-16 w-40 h-40 rounded-full opacity-[0.05] pointer-events-none" style={{ backgroundColor: theme.secondary }} />
 
-            <div className="absolute -bottom-10 -right-10 w-40 h-40 rounded-full opacity-5 pointer-events-none" style={{ backgroundColor: theme.primary }} />
+            <YearRetroModal
+                isOpen={isRetroModalOpen}
+                onClose={() => setIsRetroModalOpen(false)}
+                theme={theme}
+                currentYear={currentYear}
+                monthlySummaries={annualStats.monthlySummaries}
+                startOfWeek={startOfWeek}
+                onDayClick={(monthIndex, day) => {
+                    onDayClick(monthIndex, day);
+                    setIsRetroModalOpen(false);
+                }}
+                onOpenMonth={(monthIndex) => {
+                    onOpenMonth(monthIndex);
+                    setIsRetroModalOpen(false);
+                }}
+            />
         </div>
     );
 };

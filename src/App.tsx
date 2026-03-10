@@ -35,7 +35,7 @@ const ADMIN_EMAILS = ((import.meta.env.VITE_ADMIN_EMAILS as string | undefined) 
   .split(',')
   .map(email => email.trim().toLowerCase())
   .filter(Boolean);
-const WHATS_NEW_VERSION = '2026_06';
+const WHATS_NEW_VERSION = '2026_07';
 const WHATS_NEW_SEEN_KEY = 'habit_whats_new_seen_version';
 const MONTHLY_TAB_SURVEY_MIN_ACCOUNT_AGE_MS = 5 * 24 * 60 * 60 * 1000;
 const LEGACY_DEFAULT_HABIT_NAMES = new Set(['meditation', 'exercise', 'drink 2l water', 'reading', 'journaling']);
@@ -323,6 +323,17 @@ const AppContent: React.FC = () => {
   };
 
   const whatsNewSlides = useMemo(() => ([
+    {
+      id: 'my-habits-menu',
+      title: 'Edit Or Archive From My Habits',
+      description: 'Use the 3-dot menu on a habit to edit it or archive it.',
+      bullets: [
+        'Archive removes it from your active list while keeping your history.'
+      ],
+      image: (
+        <img src="/whats-new/my-habits-menu-sample.svg" alt="Single sample habit with the 3-dot menu open showing Edit habit and Archive habit" className="w-full h-44 object-contain bg-stone-100 border border-stone-200 rounded-sm" />
+      )
+    },
     {
       id: 'status-bar',
       title: 'New Status Bar',

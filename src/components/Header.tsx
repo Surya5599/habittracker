@@ -152,7 +152,6 @@ export const Header: React.FC<HeaderProps> = ({
     const { t } = useTranslation();
     const isDarkMode = colorMode === 'dark';
     const today = new Date();
-    const currentDayOfWeek = today.getDay() === 0 ? 7 : today.getDay();
     const currentDayOfMonth = today.getDate();
     const currentMonthOfYear = today.getMonth();
     const currentFullYear = today.getFullYear();
@@ -790,7 +789,9 @@ export const Header: React.FC<HeaderProps> = ({
                             </div>
                             <div className="h-[140px] bg-stone-50/50 neo-border rounded-xl p-2 overflow-y-auto custom-scrollbar">
                                 {(() => {
-                                    const daysElapsed = weekOffset === 0 ? currentDayOfWeek : 7;
+                                    const daysElapsed = weekOffset === 0
+                                        ? (startOfWeek === 'sunday' ? today.getDay() + 1 : (today.getDay() === 0 ? 7 : today.getDay()))
+                                        : 7;
                                     const story = buildWeeklyStory(weekProgress, weeklyStats, habits, t, daysElapsed);
                                     return (
                                         <div className="space-y-3">

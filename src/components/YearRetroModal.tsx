@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Angry, ExternalLink, Frown, Laugh, Meh, Smile, Sparkles, X } from 'lucide-react';
 import { RetroGrid } from './RetroGrid';
 import { Theme } from '../types';
@@ -37,14 +38,15 @@ export const YearRetroModal: React.FC<YearRetroModalProps> = ({
     onDayClick,
     onOpenMonth
 }) => {
+    const { t } = useTranslation();
     const [viewMode, setViewMode] = useState<'habits' | 'mood'>('habits');
     const moodMeta = useMemo(() => ({
-        1: { label: 'Angry', icon: Angry, tone: 'text-rose-600', bg: 'bg-rose-50 border-rose-200' },
-        2: { label: 'Low', icon: Frown, tone: 'text-orange-600', bg: 'bg-orange-50 border-orange-200' },
-        3: { label: 'Neutral', icon: Meh, tone: 'text-amber-600', bg: 'bg-amber-50 border-amber-200' },
-        4: { label: 'Good', icon: Smile, tone: 'text-lime-700', bg: 'bg-lime-50 border-lime-200' },
-        5: { label: 'Great', icon: Laugh, tone: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' },
-    }), []);
+        1: { label: t('annualUi.yearRetro.moods.angry'), icon: Angry, tone: 'text-rose-600', bg: 'bg-rose-50 border-rose-200' },
+        2: { label: t('annualUi.yearRetro.moods.low'), icon: Frown, tone: 'text-orange-600', bg: 'bg-orange-50 border-orange-200' },
+        3: { label: t('annualUi.yearRetro.moods.neutral'), icon: Meh, tone: 'text-amber-600', bg: 'bg-amber-50 border-amber-200' },
+        4: { label: t('annualUi.yearRetro.moods.good'), icon: Smile, tone: 'text-lime-700', bg: 'bg-lime-50 border-lime-200' },
+        5: { label: t('annualUi.yearRetro.moods.great'), icon: Laugh, tone: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' },
+    }), [t]);
 
     if (!isOpen) return null;
 
@@ -57,7 +59,7 @@ export const YearRetroModal: React.FC<YearRetroModalProps> = ({
                 <button
                     onClick={onClose}
                     className="absolute top-4 right-4 text-stone-400 hover:text-black transition-colors z-10"
-                    aria-label="Close yearly retro grids"
+                    aria-label={t('annualUi.yearRetro.closeAria')}
                 >
                     <X size={22} />
                 </button>
@@ -69,9 +71,9 @@ export const YearRetroModal: React.FC<YearRetroModalProps> = ({
                                 <Sparkles size={18} />
                             </div>
                             <div>
-                                <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight">{currentYear} Yearly Retro Grids</h2>
+                                <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight">{t('annualUi.yearRetro.title', { year: currentYear })}</h2>
                                 <p className="text-sm text-stone-500 font-medium mt-1">
-                                    Scan all 12 months at once. Open any month for detail or tap a day to inspect that date.
+                                    {t('annualUi.yearRetro.description')}
                                 </p>
                             </div>
                         </div>
@@ -81,13 +83,13 @@ export const YearRetroModal: React.FC<YearRetroModalProps> = ({
                                     onClick={() => setViewMode('habits')}
                                     className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-[0.16em] transition-colors ${viewMode === 'habits' ? 'bg-white text-black' : 'text-white/80'}`}
                                 >
-                                    Habits
+                                    {t('annualUi.yearRetro.habits')}
                                 </button>
                                 <button
                                     onClick={() => setViewMode('mood')}
                                     className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-[0.16em] transition-colors ${viewMode === 'mood' ? 'bg-white text-black' : 'text-white/80'}`}
                                 >
-                                    Moods
+                                    {t('annualUi.yearRetro.moodsLabel')}
                                 </button>
                             </div>
                         </div>
@@ -98,7 +100,7 @@ export const YearRetroModal: React.FC<YearRetroModalProps> = ({
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                         {monthlySummaries.map((summary, idx) => {
                             const displayRate = summary.isCurrentMonth ? (summary.proRatedRate || summary.rate || 0) : (summary.rate || 0);
-                            const status = summary.isFutureMonth ? 'Upcoming month' : summary.signal || (summary.isCurrentMonth ? 'Live month' : 'Completed month');
+                            const status = summary.isFutureMonth ? t('annualUi.yearRetro.upcomingMonth') : summary.signal || (summary.isCurrentMonth ? t('annualUi.yearRetro.liveMonth') : t('annualUi.yearRetro.completedMonth'));
                             const moodCounts = (summary.days || []).reduce((acc: Record<number, number>, day: any) => {
                                 if (day?.mood) acc[day.mood] = (acc[day.mood] || 0) + 1;
                                 return acc;
@@ -117,9 +119,9 @@ export const YearRetroModal: React.FC<YearRetroModalProps> = ({
                                             {viewMode === 'habits' ? (
                                                 <div className="mt-1 flex items-center gap-2">
                                                     <span className="inline-flex items-center rounded-full bg-stone-950 px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-white">
-                                                        {Math.round(displayRate)}% done
+                                                        {t('annualUi.yearRetro.percentDone', { percent: Math.round(displayRate) })}
                                                     </span>
-                                                    <span className="text-[11px] font-bold text-stone-500">{summary.completed}/{Math.round(summary.total)} logs</span>
+                                                    <span className="text-[11px] font-bold text-stone-500">{t('annualUi.yearRetro.logsCount', { completed: summary.completed, total: Math.round(summary.total) })}</span>
                                                 </div>
                                             ) : moodConfig && MoodIcon ? (
                                                 <div className="mt-1 flex items-center gap-2">
@@ -130,7 +132,7 @@ export const YearRetroModal: React.FC<YearRetroModalProps> = ({
                                                     <span className="text-[11px] font-bold text-stone-500">{topMoodCount} logs</span>
                                                 </div>
                                             ) : (
-                                                <p className="text-sm font-black uppercase mt-1 text-stone-400">No mood logs yet</p>
+                                                <p className="text-sm font-black uppercase mt-1 text-stone-400">{t('annualUi.yearRetro.noMoodLogsYet')}</p>
                                             )}
                                             <p className="text-[11px] font-bold text-stone-500 mt-1">{status}</p>
                                         </div>
@@ -138,7 +140,7 @@ export const YearRetroModal: React.FC<YearRetroModalProps> = ({
                                             onClick={() => onOpenMonth(idx)}
                                             className="inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-stone-600 hover:text-black hover:border-black transition-colors"
                                         >
-                                            Open
+                                            {t('annualUi.yearRetro.open')}
                                             <ExternalLink size={12} />
                                         </button>
                                     </div>
@@ -156,14 +158,14 @@ export const YearRetroModal: React.FC<YearRetroModalProps> = ({
                                     <div className="mt-3 flex items-center justify-between gap-3 text-[11px] font-bold text-stone-500">
                                         {viewMode === 'habits' ? (
                                             <>
-                                                <span>{summary.completed}/{Math.round(summary.total)} done</span>
-                                                <span className="truncate text-right">{summary.topHabit?.name ? `Top: ${summary.topHabit.name}` : 'No top habit yet'}</span>
+                                                <span>{t('annualUi.yearRetro.doneCount', { completed: summary.completed, total: Math.round(summary.total) })}</span>
+                                                <span className="truncate text-right">{summary.topHabit?.name ? t('annualUi.yearRetro.topHabit', { name: summary.topHabit.name }) : t('annualUi.yearRetro.noTopHabitYet')}</span>
                                             </>
                                         ) : (
                                             <>
-                                                <span>Mood this month</span>
+                                                <span>{t('annualUi.yearRetro.moodThisMonth')}</span>
                                                 <span className="truncate text-right">
-                                                    {moodConfig ? `${moodConfig.label} (${topMoodCount})` : 'No mood yet'}
+                                                    {moodConfig ? t('annualUi.yearRetro.moodWithCount', { mood: moodConfig.label, count: topMoodCount }) : t('annualUi.yearRetro.noMoodYet')}
                                                 </span>
                                             </>
                                         )}

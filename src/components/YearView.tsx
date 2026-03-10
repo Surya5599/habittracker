@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Activity, CalendarDays, CheckCheck, Flame, Grid3X3, Minus, TrendingDown, TrendingUp } from 'lucide-react';
 import { Theme } from '../types';
 import { MONTHS } from '../constants';
@@ -38,30 +39,31 @@ interface YearViewProps {
 
 const MONTH_LABELS = MONTHS.map((month) => month.slice(0, 3).toUpperCase());
 
-const getMomentumCopy = (momentum?: string) => {
-    if (momentum === 'ascending') return { label: 'Building momentum', icon: TrendingUp, tone: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' };
-    if (momentum === 'descending') return { label: 'Needs recovery', icon: TrendingDown, tone: 'text-rose-700', bg: 'bg-rose-50 border-rose-200' };
-    return { label: 'Holding steady', icon: Minus, tone: 'text-stone-700', bg: 'bg-stone-50 border-stone-200' };
+const getMomentumCopy = (t: any, momentum?: string) => {
+    if (momentum === 'ascending') return { label: t('annualUi.yearView.buildingMomentum'), icon: TrendingUp, tone: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' };
+    if (momentum === 'descending') return { label: t('annualUi.yearView.needsRecovery'), icon: TrendingDown, tone: 'text-rose-700', bg: 'bg-rose-50 border-rose-200' };
+    return { label: t('annualUi.yearView.holdingSteady'), icon: Minus, tone: 'text-stone-700', bg: 'bg-stone-50 border-stone-200' };
 };
 
-const formatDelta = (delta: number) => {
-    if (Math.abs(delta) < 0.5) return 'Flat';
-    return `${delta > 0 ? '+' : ''}${Math.round(delta)} pts`;
+const formatDelta = (t: any, delta: number) => {
+    if (Math.abs(delta) < 0.5) return t('annualUi.yearView.flat');
+    return t('annualUi.yearView.deltaPoints', { value: `${delta > 0 ? '+' : ''}${Math.round(delta)}` });
 };
 
 const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, startOfWeek, onDayClick, onOpenMonth }) => {
+    const { t } = useTranslation();
     const [isRetroModalOpen, setIsRetroModalOpen] = useState(false);
-    const strongestMonth = annualStats.strongestMonth?.month || 'No peak yet';
+    const strongestMonth = annualStats.strongestMonth?.month || t('annualUi.yearView.noPeakYet');
     const strongestRate = annualStats.strongestMonth?.rate || 0;
-    const momentumCopy = getMomentumCopy(annualStats.momentum);
+    const momentumCopy = getMomentumCopy(t, annualStats.momentum);
     const MomentumIcon = momentumCopy.icon;
 
     return (
         <div className="bg-white neo-border neo-shadow rounded-2xl p-5 flex flex-col h-full relative overflow-hidden">
             <div className="relative z-10 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 pb-4 border-b border-stone-100">
                 <div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.28em] text-stone-400 block mb-1">Year View</span>
-                    <h4 className="font-black uppercase text-lg sm:text-xl tracking-tight leading-tight">{currentYear} In Review</h4>
+                    <span className="text-[10px] font-black uppercase tracking-[0.28em] text-stone-400 block mb-1">{t('annualUi.yearView.label')}</span>
+                    <h4 className="font-black uppercase text-lg sm:text-xl tracking-tight leading-tight">{t('annualUi.yearView.inReview', { year: currentYear })}</h4>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                     <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 ${momentumCopy.bg}`}>
@@ -73,7 +75,7 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
                         className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-stone-600 hover:text-black hover:border-black transition-colors"
                     >
                         <Grid3X3 size={12} />
-                        Open Grids
+                        {t('annualUi.yearView.openGrids')}
                     </button>
                 </div>
             </div>
@@ -82,37 +84,37 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
                 <section className="min-w-0 space-y-4">
                     <div className="grid grid-cols-2 lg:grid-cols-5 gap-2">
                         <div className="rounded-2xl border border-stone-200 bg-stone-950 text-white p-3 lg:col-span-1">
-                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-stone-400 block">Overall</span>
+                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-stone-400 block">{t('annualUi.yearView.overall')}</span>
                             <span className="text-3xl font-black leading-none mt-2 block" style={{ color: theme.secondary }}>
                                 {Math.round(annualStats.consistencyRate)}%
                             </span>
-                            <span className="text-[11px] font-bold text-stone-400">Follow-through</span>
+                            <span className="text-[11px] font-bold text-stone-400">{t('annualUi.yearView.followThrough')}</span>
                         </div>
                         <div className="rounded-2xl border border-stone-200 bg-stone-50 p-3">
-                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-stone-400 block">Completions</span>
+                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-stone-400 block">{t('annualUi.yearView.completions')}</span>
                             <span className="text-2xl font-black leading-none mt-2 block">{annualStats.totalCompletions}</span>
-                            <span className="text-[11px] font-bold text-stone-500">What you did</span>
+                            <span className="text-[11px] font-bold text-stone-500">{t('annualUi.yearView.whatYouDid')}</span>
                         </div>
                         <div className="rounded-2xl border border-stone-200 bg-stone-50 p-3">
-                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-stone-400 block">Active Days</span>
+                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-stone-400 block">{t('annualUi.yearView.activeDays')}</span>
                             <span className="text-2xl font-black leading-none mt-2 block">{annualStats.activeDays || 0}</span>
-                            <span className="text-[11px] font-bold text-stone-500">Days with activity</span>
+                            <span className="text-[11px] font-bold text-stone-500">{t('annualUi.yearView.daysWithActivity')}</span>
                         </div>
                         <div className="rounded-2xl border border-stone-200 bg-white p-3">
                             <div className="flex items-center gap-2 text-stone-500">
                                 <CalendarDays size={13} />
-                                <span className="text-[9px] font-black uppercase tracking-[0.2em]">Peak Month</span>
+                                <span className="text-[9px] font-black uppercase tracking-[0.2em]">{t('annualUi.yearView.peakMonth')}</span>
                             </div>
                             <span className="text-sm font-black uppercase mt-2 block truncate">{strongestMonth}</span>
-                            <span className="text-[11px] font-bold text-stone-500">{Math.round(strongestRate)}% completion</span>
+                            <span className="text-[11px] font-bold text-stone-500">{t('annualUi.yearView.percentCompletion', { percent: Math.round(strongestRate) })}</span>
                         </div>
                         <div className="rounded-2xl border border-stone-200 bg-white p-3">
                             <div className="flex items-center gap-2 text-stone-500">
                                 <Activity size={13} />
-                                <span className="text-[9px] font-black uppercase tracking-[0.2em]">Habits In Play</span>
+                                <span className="text-[9px] font-black uppercase tracking-[0.2em]">{t('annualUi.yearView.habitsInPlay')}</span>
                             </div>
-                            <span className="text-sm font-black uppercase mt-2 block">{annualStats.activeHabitsCount || 0} reliable</span>
-                            <span className="text-[11px] font-bold text-stone-500">Habits with repeat follow-through</span>
+                            <span className="text-sm font-black uppercase mt-2 block">{t('annualUi.yearView.reliableCount', { count: annualStats.activeHabitsCount || 0 })}</span>
+                            <span className="text-[11px] font-bold text-stone-500">{t('annualUi.yearView.repeatFollowThrough')}</span>
                         </div>
                     </div>
 
@@ -124,8 +126,8 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
                                     <Flame size={15} />
                                 </div>
                                 <div>
-                                    <span className="text-[10px] font-black uppercase tracking-[0.24em] text-stone-400 block">How You Did</span>
-                                    <span className="text-sm font-black uppercase">Year quality</span>
+                                    <span className="text-[10px] font-black uppercase tracking-[0.24em] text-stone-400 block">{t('annualUi.yearView.howYouDid')}</span>
+                                    <span className="text-sm font-black uppercase">{t('annualUi.yearView.yearQuality')}</span>
                                 </div>
                             </div>
                             <div className="min-w-0">
@@ -137,8 +139,8 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
                                 </div>
                             </div>
                             <div className="flex items-center gap-4 text-[11px] font-bold text-stone-400 whitespace-nowrap">
-                                <span>{annualStats.maxStreak}d streak</span>
-                                <span>{annualStats.totalCompletions} done</span>
+                                <span>{t('annualUi.yearView.streakDays', { count: annualStats.maxStreak })}</span>
+                                <span>{t('annualUi.yearView.doneCount', { count: annualStats.totalCompletions })}</span>
                             </div>
                         </div>
                     </div>
@@ -147,8 +149,8 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
                 <section className="min-w-0 space-y-3">
                     <div className="flex items-center justify-between gap-3">
                         <div>
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">Month Over Month</p>
-                            <p className="text-sm font-black uppercase">Quick month scan</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">{t('annualUi.yearView.monthOverMonth')}</p>
+                            <p className="text-sm font-black uppercase">{t('annualUi.yearView.quickMonthScan')}</p>
                         </div>
                     </div>
 
@@ -161,10 +163,10 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
                             const isNegative = delta < -0.5;
                             const monthLabel = MONTH_LABELS[idx] || summary.month.slice(0, 3).toUpperCase();
                             const statusLabel = summary.isFutureMonth
-                                ? 'Upcoming'
+                                ? t('annualUi.yearView.upcoming')
                                 : summary.isCurrentMonth
-                                    ? 'Live month'
-                                    : summary.signal || 'Closed';
+                                    ? t('annualUi.yearView.liveMonth')
+                                    : summary.signal || t('annualUi.yearView.closed');
 
                             return (
                                 <button
@@ -179,7 +181,7 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
                                         </div>
                                         <div className={`text-right ${isPositive ? 'text-emerald-600' : isNegative ? 'text-rose-600' : 'text-stone-500'}`}>
                                             <p className="text-sm font-black leading-none">{Math.round(displayRate)}%</p>
-                                            <p className="text-[10px] font-bold">{summary.isFutureMonth ? 'Upcoming' : formatDelta(delta)}</p>
+                                            <p className="text-[10px] font-bold">{summary.isFutureMonth ? t('annualUi.yearView.upcoming') : formatDelta(t, delta)}</p>
                                         </div>
                                     </div>
 

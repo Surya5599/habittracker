@@ -27,6 +27,7 @@ import { LoadingScreen } from './components/LoadingScreen';
 import { FeedbackModal } from './components/FeedbackModal';
 import { StreakModal } from './components/StreakModal';
 import { SearchModal } from './components/SearchModal';
+import { MonthlyTabSurveyModal } from './components/MonthlyTabSurveyModal';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
 
 const ADMIN_EMAILS = ((import.meta.env.VITE_ADMIN_EMAILS as string | undefined) || 'admin@habicard.com,knowheredeveloper@gmail.com')
@@ -35,6 +36,7 @@ const ADMIN_EMAILS = ((import.meta.env.VITE_ADMIN_EMAILS as string | undefined) 
   .filter(Boolean);
 const WHATS_NEW_VERSION = '2026_06';
 const WHATS_NEW_SEEN_KEY = 'habit_whats_new_seen_version';
+const MONTHLY_TAB_SURVEY_MIN_ACCOUNT_AGE_MS = 5 * 24 * 60 * 60 * 1000;
 const LEGACY_DEFAULT_HABIT_NAMES = new Set(['meditation', 'exercise', 'drink 2l water', 'reading', 'journaling']);
 
 const DEMO_HABITS: Habit[] = [
@@ -122,6 +124,11 @@ const AppContent: React.FC = () => {
   const [showWhatsNewModal, setShowWhatsNewModal] = useState(false);
   const [hasUnseenWhatsNew, setHasUnseenWhatsNew] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [showMonthlyTabSurvey, setShowMonthlyTabSurvey] = useState(false);
+  const [submittingMonthlyTabSurvey, setSubmittingMonthlyTabSurvey] = useState(false);
+  const [monthlyTabSurveyChecked, setMonthlyTabSurveyChecked] = useState(false);
+  const [hasAnsweredMonthlyTabSurvey, setHasAnsweredMonthlyTabSurvey] = useState(false);
+  const [dismissedMonthlyTabSurveyThisSession, setDismissedMonthlyTabSurveyThisSession] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -179,10 +186,139 @@ const AppContent: React.FC = () => {
     setShowOnboarding(true);
   };
 
+  const monthlyTabSurveyStorageKey = session?.user?.id
+    ? `habit_monthly_tab_survey_seen_${session.user.id}`
+    : null;
+
+  useEffect(() => {
+    const checkMonthlyTabSurveyStatus = async () => {
+    if (!session?.user?.id || guestMode || isImpersonating) {
+      setMonthlyTabSurveyChecked(false);
+      setHasAnsweredMonthlyTabSurvey(false);
+      setDismissedMonthlyTabSurveyThisSession(false);
+      return;
+    }
+
+      setMonthlyTabSurveyChecked(false);
+      try {
+        const { data, error } = await supabase
+          .from('feedback')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .contains('metadata', { surveyType: 'monthly_tab_usage' })
+          .limit(1);
+
+        if (error) throw error;
+
+        const hasResponse = Array.isArray(data) && data.length > 0;
+        setHasAnsweredMonthlyTabSurvey(hasResponse);
+        if (hasResponse && monthlyTabSurveyStorageKey) {
+          localStorage.setItem(monthlyTabSurveyStorageKey, 'true');
+        }
+      } catch (error) {
+        console.error('Failed to check monthly tab survey status:', error);
+        const seenLocally = monthlyTabSurveyStorageKey
+          ? localStorage.getItem(monthlyTabSurveyStorageKey) === 'true'
+          : false;
+        setHasAnsweredMonthlyTabSurvey(seenLocally);
+      } finally {
+        setMonthlyTabSurveyChecked(true);
+      }
+    };
+
+    checkMonthlyTabSurveyStatus();
+  }, [session?.user?.id, guestMode, isImpersonating, monthlyTabSurveyStorageKey]);
+
+  const shouldAskMonthlyTabSurvey = useMemo(() => {
+    if (!session?.user?.id || guestMode || isImpersonating) return false;
+    if (showOnboarding || showWhatsNewModal || showMonthlyTabSurvey) return false;
+    if (!session.user.created_at) return false;
+    if (!monthlyTabSurveyChecked || hasAnsweredMonthlyTabSurvey || dismissedMonthlyTabSurveyThisSession) return false;
+
+    const accountCreatedAt = new Date(session.user.created_at).getTime();
+    if (Number.isNaN(accountCreatedAt)) return false;
+
+    return (Date.now() - accountCreatedAt) >= MONTHLY_TAB_SURVEY_MIN_ACCOUNT_AGE_MS;
+  }, [
+    session?.user?.id,
+    session?.user?.created_at,
+    guestMode,
+    isImpersonating,
+    showOnboarding,
+    showWhatsNewModal,
+    showMonthlyTabSurvey,
+    monthlyTabSurveyChecked,
+    hasAnsweredMonthlyTabSurvey,
+    dismissedMonthlyTabSurveyThisSession
+  ]);
+
+  useEffect(() => {
+    if (!shouldAskMonthlyTabSurvey) return;
+
+    const timer = window.setTimeout(() => {
+      setShowMonthlyTabSurvey(true);
+    }, 2200);
+
+    return () => window.clearTimeout(timer);
+  }, [shouldAskMonthlyTabSurvey]);
+
   const handleWhatsNewFinish = () => {
     markWhatsNewAsSeen();
     setView('weekly');
     setShowWhatsNewModal(false);
+  };
+
+  const markMonthlyTabSurveySeen = () => {
+    if (monthlyTabSurveyStorageKey) {
+      localStorage.setItem(monthlyTabSurveyStorageKey, 'true');
+    }
+  };
+
+  const handleCloseMonthlyTabSurvey = () => {
+    setDismissedMonthlyTabSurveyThisSession(true);
+    setShowMonthlyTabSurvey(false);
+  };
+
+  const handleSubmitMonthlyTabSurvey = async (payload: { answer: 'often' | 'sometimes' | 'never' }) => {
+    if (!session?.user?.id) return;
+
+    setSubmittingMonthlyTabSurvey(true);
+    try {
+      const labelMap = {
+        often: 'Often',
+        sometimes: 'Sometimes',
+        never: 'Never'
+      } as const;
+
+      const { error } = await supabase
+        .from('feedback')
+        .insert({
+          user_id: session.user.id,
+          type: 'suggestion',
+          status: 'closed',
+          content: `Monthly tab survey: ${labelMap[payload.answer]}`,
+          metadata: {
+            surveyType: 'monthly_tab_usage',
+            answer: payload.answer,
+            triggeredView: view,
+            accountCreatedAt: session.user.created_at || null,
+            reporterEmail: session.user.email || null,
+            timestamp: new Date().toISOString()
+          }
+        });
+
+      if (error) throw error;
+
+      markMonthlyTabSurveySeen();
+      setHasAnsweredMonthlyTabSurvey(true);
+      setShowMonthlyTabSurvey(false);
+      toast.success('Thanks for the feedback.');
+    } catch (error) {
+      console.error('Monthly tab survey error:', error);
+      toast.error('Failed to submit survey. Please try again.');
+    } finally {
+      setSubmittingMonthlyTabSurvey(false);
+    }
   };
 
   const whatsNewSlides = useMemo(() => ([
@@ -1138,6 +1274,13 @@ const AppContent: React.FC = () => {
         headerTitle="What's New"
         headerDescription="Explore the latest updates. We’ll keep adding future releases here."
         onFinish={handleWhatsNewFinish}
+      />
+
+      <MonthlyTabSurveyModal
+        isOpen={showMonthlyTabSurvey}
+        onClose={handleCloseMonthlyTabSurvey}
+        onSubmit={handleSubmitMonthlyTabSurvey}
+        submitting={submittingMonthlyTabSurvey}
       />
 
       <div className="max-w-full md:h-full mx-auto bg-white border-[2px] sm:border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] p-2 sm:p-4 flex flex-col gap-4 overflow-visible md:overflow-hidden">

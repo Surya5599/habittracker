@@ -436,6 +436,8 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
     ];
     const selectedMood = MOODS.find(m => m.value === mood);
     const MoodStatusIcon = selectedMood?.icon || Meh;
+    const remainingHabitsCount = Math.max(0, totalHabitsCount - completedHabitsCount);
+    const openTasksCount = Math.max(0, totalTasksCount - completedTasksCount);
     const StatusBar = (
         <div className="flex border-y-2 border-black bg-stone-50">
             <button
@@ -611,13 +613,28 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
 
             {cardStyle === 'large' ? LargeProgressPanel : null}
 
+            {combinedView && (
+                <div className="border-b-2 border-black bg-stone-50 px-3 py-2">
+                    <div className="flex items-center justify-between gap-2">
+                        <div>
+                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-stone-400">Habits</p>
+                            <p className="mt-1 text-sm font-black text-stone-900">{completedHabitsCount}/{totalHabitsCount} complete</p>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-stone-400">Focus</p>
+                            <p className="mt-1 text-xs font-black text-stone-600">{remainingHabitsCount > 0 ? `${remainingHabitsCount} left` : 'All done'}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div
                 ref={dailyHabitsRef}
                 className={`${combinedView ? 'flex-1 overflow-y-auto scroll-container touch-pan-y' : 'flex-1 min-h-0 overflow-y-auto scroll-container touch-pan-y'}`}
                 style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
             >
             {/* Habits List */}
-            <div className="py-1 px-3 bg-stone-50/50 flex flex-col border-b border-stone-100">
+            <div className="py-1 px-3 bg-stone-50/50 flex flex-col border-b border-stone-200">
                 <div
                     className="space-y-1 pr-1"
                 >
@@ -797,13 +814,16 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 )}
             </div>
 
-            <div className="p-2 border-b border-stone-200 bg-stone-50 flex items-center justify-between gap-1.5">
-                <div className="text-[9px] font-black uppercase tracking-wider text-stone-600 px-1.5 py-0.5 border border-stone-300 rounded">
-                    {(dayData.tasks || []).length} tasks
+            <div className="p-2 border-b-2 border-black bg-stone-50 flex items-center justify-between gap-2">
+                <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-stone-400">Tasks</p>
+                    <p className="mt-1 text-sm font-black text-stone-900">
+                        {totalTasksCount > 0 ? `${openTasksCount} open of ${totalTasksCount}` : 'No tasks yet'}
+                    </p>
                 </div>
                 <button
                     onClick={() => addNewTask(false)}
-                    className="inline-flex items-center gap-1 px-1.5 py-0.5 border border-black bg-white text-[9px] font-black uppercase tracking-wide hover:bg-stone-100 transition-colors"
+                    className="inline-flex items-center gap-1 px-2 py-1 border border-black bg-white text-[9px] font-black uppercase tracking-wide hover:bg-stone-100 transition-colors"
                     data-onboarding="task-add"
                 >
                     <Plus size={9} strokeWidth={3} />
@@ -960,6 +980,22 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 className="p-3 pb-4 flex-1 flex flex-col gap-1 overflow-y-auto scroll-container touch-pan-y"
                 style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
             >
+                {combinedView && (
+                    <div className="mb-2 rounded-xl border-2 border-black bg-stone-50 px-3 py-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.08)]">
+                        <div className="flex items-center justify-between gap-2">
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-stone-400">Journal</p>
+                                <p className="mt-1 text-sm font-black text-stone-900">
+                                    {hasJournalEntry ? 'Entry saved' : 'Ready to reflect'}
+                                </p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-stone-400">Mood</p>
+                                <p className="mt-1 text-xs font-black text-stone-600">{hasMoodTracked ? selectedMood?.label : 'Not logged'}</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 {/* Mood Selector */}
                 <div className="space-y-0">
                     <label className="text-[10px] font-black uppercase tracking-widest text-stone-600 block text-center">{t('dailyCard.mood')}</label>
@@ -1024,30 +1060,30 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.48, ease: 'easeOut' }}
-                className="w-full h-[min(78svh,900px)] md:h-[600px] grid grid-cols-1 md:grid-cols-3 md:auto-rows-fr gap-4 overflow-y-auto md:overflow-hidden pr-1 touch-pan-y"
+                className="w-full h-[min(78svh,900px)] md:h-[600px] grid grid-cols-1 md:grid-cols-3 md:auto-rows-fr gap-3 overflow-y-auto md:overflow-hidden pr-1 touch-pan-y"
                 style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
             >
-                <motion.div
-                    initial={{ opacity: 0, x: 95, y: 10, scale: 0.84 }}
-                    animate={{ opacity: 1, x: 0, scale: 1 }}
-                    transition={{ duration: 0.62, delay: 0.42, ease: [0.22, 1, 0.36, 1] }}
-                    className="relative z-10 min-h-[420px] md:min-h-0"
-                >
-                    {JournalFace}
-                </motion.div>
                 <motion.div
                     initial={{ opacity: 0, scale: 0.8, y: 14 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     transition={{ duration: 0.58, ease: [0.22, 1, 0.36, 1] }}
-                    className="relative z-20 min-h-[420px] md:min-h-0"
+                    className="order-1 relative z-20 min-h-[360px] md:order-2 md:min-h-0"
                 >
                     {FrontFace}
+                </motion.div>
+                <motion.div
+                    initial={{ opacity: 0, x: 95, y: 10, scale: 0.84 }}
+                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                    transition={{ duration: 0.62, delay: 0.42, ease: [0.22, 1, 0.36, 1] }}
+                    className="order-3 relative z-10 min-h-[320px] md:order-1 md:min-h-0"
+                >
+                    {JournalFace}
                 </motion.div>
                 <motion.div
                     initial={{ opacity: 0, x: -95, y: 10, scale: 0.84 }}
                     animate={{ opacity: 1, x: 0, scale: 1 }}
                     transition={{ duration: 0.62, delay: 0.42, ease: [0.22, 1, 0.36, 1] }}
-                    className="relative z-10 min-h-[420px] md:min-h-0"
+                    className="order-2 relative z-10 min-h-[320px] md:order-3 md:min-h-0"
                 >
                     {TasksFace}
                 </motion.div>

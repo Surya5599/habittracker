@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, LayoutDashboard, Calendar, Clock, LogIn, LogOut, ArrowUp, ArrowDown, Minus, Trophy, BarChart2, Activity, Sparkles, Search } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LayoutDashboard, Calendar, Clock, LogIn, LogOut, ArrowUp, ArrowDown, Minus, Trophy, BarChart2, Activity, Sparkles, Search, Plus } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 import { MONTHS } from '../constants';
 import { Habit, Theme, MonthStats, MonthlyGoal, MonthlyGoals } from '../types';
@@ -78,6 +78,8 @@ interface HeaderProps {
     hasUnreadFeedback: boolean;
     hasUnseenWhatsNew: boolean;
     onSearch: () => void;
+    onLogToday: () => void;
+    logTodayStatus: 'empty' | 'partial' | 'done';
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -143,7 +145,9 @@ export const Header: React.FC<HeaderProps> = ({
     isExportingData,
     hasUnreadFeedback,
     hasUnseenWhatsNew,
-    onSearch
+    onSearch,
+    onLogToday,
+    logTodayStatus
 }) => {
     const { t } = useTranslation();
     const isDarkMode = colorMode === 'dark';
@@ -159,6 +163,21 @@ export const Header: React.FC<HeaderProps> = ({
     const [showWeekSelector, setShowWeekSelector] = React.useState(false);
     const [showMonthSelector, setShowMonthSelector] = React.useState(false);
     const [showYearSelector, setShowYearSelector] = React.useState(false);
+    const [autoAddHabitOnOpen, setAutoAddHabitOnOpen] = React.useState(false);
+    const leftPanelClass = "flex flex-col gap-2 mt-2 h-full";
+    const authButtonClass = "w-full min-h-[60px] flex items-center justify-center gap-2 text-[12px] font-black uppercase tracking-wider bg-black text-white px-2 py-2 rounded-xl hover:bg-stone-800 transition-colors shadow-sm";
+    const quickActionButtonClass = "flex min-h-[60px] items-center justify-center gap-2 rounded-2xl border border-stone-200 px-3 py-3 text-[11px] font-black uppercase tracking-wider transition-colors";
+    const quickActionMutedClass = `${quickActionButtonClass} bg-stone-50 text-stone-800 hover:bg-stone-100`;
+    const quickActionPrimaryClass = logTodayStatus === 'done'
+        ? `${quickActionButtonClass} border-emerald-300 bg-emerald-100 text-emerald-900 hover:bg-emerald-200`
+        : logTodayStatus === 'partial'
+            ? `${quickActionButtonClass} border-amber-300 bg-amber-100 text-amber-900 hover:bg-amber-200`
+            : `${quickActionButtonClass} border-rose-300 bg-rose-100 text-rose-900 hover:bg-rose-200`;
+    const utilityCardClass = "rounded-2xl p-3 neo-border neo-shadow transition-all";
+    const habitsCardClass = `${utilityCardClass} flex min-h-[78px] flex-col items-center text-white hover:translate-y-0.5 hover:shadow-none group`;
+    const streakCardClass = `${utilityCardClass} flex min-h-[78px] cursor-pointer flex-col items-center justify-center bg-white text-center hover:bg-orange-50 group/streak`;
+    const utilityTitleClass = "text-[13px] font-black uppercase tracking-widest leading-none";
+    const utilityMetaClass = "mt-auto pt-2 text-[11px] font-black uppercase tracking-wide leading-none";
 
     React.useEffect(() => {
         localStorage.setItem('habit_chart_type', chartType);
@@ -363,14 +382,14 @@ export const Header: React.FC<HeaderProps> = ({
                     </div>
 
                     <div className="flex items-center gap-2 w-full">
-                        <div className="flex-1 bg-stone-100 p-1 rounded-full relative flex items-center shadow-inner">
+                        <div className="flex-1 rounded-xl border-2 border-black bg-stone-100 p-1 relative flex items-center shadow-[2px_2px_0px_0px_rgba(0,0,0,0.12)]">
                             <button
                                 onClick={() => { resetWeekOffset(); setView('weekly'); }}
-                                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all z-10 relative ${view === 'weekly' ? 'bg-black text-white shadow-md transform scale-100' : 'text-stone-500 hover:text-black'}`}
-                                title={t('header.myWeek')}
+                                className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-[0.12em] transition-all z-10 relative border ${view === 'weekly' ? 'bg-black text-white border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,0.18)]' : 'border-transparent text-stone-500 hover:text-black'}`}
+                                title="Week"
                             >
-                                <Clock size={12} strokeWidth={3} />
-                                <span className="inline md:hidden xl:inline">{t('header.myWeek')}</span>
+                                <Clock size={11} strokeWidth={3} className={view === 'weekly' ? 'opacity-100' : 'opacity-70'} />
+                                <span>Week</span>
                             </button>
 
                             <button
@@ -380,11 +399,11 @@ export const Header: React.FC<HeaderProps> = ({
                                     setCurrentMonthIndex(now.getMonth());
                                     setCurrentYear(now.getFullYear());
                                 }}
-                                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all z-10 relative ${view === 'monthly' ? 'bg-black text-white shadow-md transform scale-100' : 'text-stone-500 hover:text-black'}`}
-                                title={t('header.myMonth')}
+                                className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-[0.12em] transition-all z-10 relative border ${view === 'monthly' ? 'bg-black text-white border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,0.18)]' : 'border-transparent text-stone-500 hover:text-black'}`}
+                                title="Month"
                             >
-                                <Calendar size={12} strokeWidth={3} />
-                                <span className="inline md:hidden xl:inline">{t('header.myMonth')}</span>
+                                <Calendar size={11} strokeWidth={3} className={view === 'monthly' ? 'opacity-100' : 'opacity-70'} />
+                                <span>Month</span>
                             </button>
 
                             <button
@@ -392,62 +411,61 @@ export const Header: React.FC<HeaderProps> = ({
                                     setView('dashboard');
                                     setCurrentYear(new Date().getFullYear());
                                 }}
-                                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all z-10 relative ${view === 'dashboard' ? 'bg-black text-white shadow-md transform scale-100' : 'text-stone-500 hover:text-black'}`}
-                                title={t('header.dashboard')}
+                                className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-[0.12em] transition-all z-10 relative border ${view === 'dashboard' ? 'bg-black text-white border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,0.18)]' : 'border-transparent text-stone-500 hover:text-black'}`}
+                                title="Year"
                             >
-                                <LayoutDashboard size={12} strokeWidth={3} />
-                                <span className="inline md:hidden xl:inline">{t('header.dashboard')}</span>
+                                <LayoutDashboard size={11} strokeWidth={3} className={view === 'dashboard' ? 'opacity-100' : 'opacity-70'} />
+                                <span>Year</span>
                             </button>
                         </div>
                     </div>
                 </div>
 
                 {view === 'monthly' ? (
-                    <div className="flex flex-col gap-2 mt-2 h-full">
+                    <div className={leftPanelClass}>
                         {guestMode ? (
                             <button
                                 onClick={() => window.location.href = '/signin'}
-                                className="w-full min-h-[60px] flex items-center justify-center gap-2 text-[12px] font-black uppercase tracking-wider bg-black text-white px-2 py-2 rounded-xl hover:bg-stone-800 transition-colors shadow-sm"
+                                className={authButtonClass}
                             >
                                 <LogIn size={14} />
                                 Sign up / Sign in
                             </button>
-                        ) : (
-                            <div className="grid grid-cols-2 gap-2">
-                                <div className="bg-stone-50 border border-stone-200 p-2 rounded-sm" title="Total habits completed this month">
-                                    <div className="flex flex-col items-center justify-center mb-1">
-                                        <span className="text-[8px] font-black uppercase text-stone-500 tracking-wider">{t('common.done')}</span>
-                                        <span className="text-lg font-black leading-none" style={{ color: theme.primary }}>{monthProgress.completed}</span>
-                                    </div>
-                                    <div className="w-full bg-stone-200 h-1 rounded-full overflow-hidden">
-                                        <div className="h-full transition-all duration-300" style={{ width: `${monthProgress.percentage}%`, backgroundColor: theme.primary }} />
-                                    </div>
-                                </div>
-                                <div className="bg-stone-50 border border-stone-200 p-2 rounded-sm" title="Percentage of monthly habits completed">
-                                    <div className="flex flex-col items-center justify-center mb-1">
-                                        <span className="text-[8px] font-black uppercase text-stone-500 tracking-wider">{t('common.rate')}</span>
-                                        <span className="text-lg font-black leading-none" style={{ color: theme.secondary }}>{monthProgress.percentage.toFixed(0)}%</span>
-                                    </div>
-                                    <div className="w-full bg-stone-200 h-1 rounded-full overflow-hidden">
-                                        <div className="h-full transition-all duration-300" style={{ width: `${monthProgress.percentage}%`, backgroundColor: theme.secondary }} />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+                        ) : null}
+
+                        <div className="grid grid-cols-2 gap-2">
+                            <button
+                                onClick={() => {
+                                    setAutoAddHabitOnOpen(true);
+                                    setIsHabitModalOpen(true);
+                                }}
+                                className={quickActionMutedClass}
+                            >
+                                <Plus size={14} />
+                                Add Habit
+                            </button>
+                            <button
+                                onClick={onLogToday}
+                                className={quickActionPrimaryClass}
+                            >
+                                <Clock size={14} />
+                                Log Today
+                            </button>
+                        </div>
 
                         <div className="grid grid-cols-2 gap-2 flex-grow">
                             <button
                                 onClick={() => setIsHabitModalOpen(true)}
-                                className="my-habits-button flex min-h-[78px] flex-col items-center rounded-2xl p-3 text-white neo-border neo-shadow transition-all hover:translate-y-0.5 hover:shadow-none group"
+                                className={`my-habits-button ${habitsCardClass}`}
                                 style={{ backgroundColor: theme.secondary }}
                             >
-                                <span className="text-[14px] font-black uppercase tracking-widest leading-none">{t('common.myHabits')}</span>
+                                <span className={utilityTitleClass}>{t('common.myHabits')}</span>
                                 <span className="mt-1 text-xl font-black leading-none">{habits.length}</span>
-                                <span className="mt-auto pt-2 text-[11px] font-black uppercase tracking-wide leading-none">{t('common.manageHabits')}</span>
+                                <span className={utilityMetaClass}>{t('common.manageHabits')}</span>
                             </button>
                             <div
                                 onClick={() => setIsStreakModalOpen(true)}
-                                className="bg-white neo-border neo-shadow p-2 text-center rounded-2xl flex flex-col items-center justify-center min-h-[60px] cursor-pointer hover:bg-orange-50 transition-colors group/streak"
+                                className={streakCardClass}
                             >
                                 <p className="text-[8px] font-black opacity-50 uppercase tracking-widest leading-none group-hover/streak:text-orange-500 transition-colors">{t('common.currentStreak')}</p>
                                 <p className="text-2xl font-black mt-1 leading-none group-hover/streak:scale-110 transition-transform">{annualStats.currentStreak} <span className="text-[10px]">{t('common.days')}</span></p>
@@ -455,51 +473,50 @@ export const Header: React.FC<HeaderProps> = ({
                         </div>
                     </div>
                 ) : view === 'weekly' ? (
-                    <div className="flex flex-col gap-2 mt-2 h-full">
+                    <div className={leftPanelClass}>
                         {guestMode ? (
                             <button
                                 onClick={() => window.location.href = '/signin'}
-                                className="w-full min-h-[60px] flex items-center justify-center gap-2 text-[12px] font-black uppercase tracking-wider bg-black text-white px-2 py-2 rounded-xl hover:bg-stone-800 transition-colors shadow-sm"
+                                className={authButtonClass}
                             >
                                 <LogIn size={14} />
                                 Sign up / Sign in
                             </button>
-                        ) : (
-                            <div className="grid grid-cols-2 gap-2">
-                                <div className="bg-stone-50 border border-stone-200 p-2 rounded-sm" title="Total habits completed this week">
-                                    <div className="flex flex-col items-center justify-center mb-1">
-                                        <span className="text-[8px] font-black uppercase text-stone-500 tracking-wider">{t('common.done')}</span>
-                                        <span className="text-lg font-black leading-none" style={{ color: theme.primary }}>{weekProgress.completed}</span>
-                                    </div>
-                                    <div className="w-full bg-stone-200 h-1 rounded-full overflow-hidden">
-                                        <div className="h-full transition-all duration-300" style={{ width: `${weekProgress.percentage}%`, backgroundColor: theme.primary }} />
-                                    </div>
-                                </div>
-                                <div className="bg-stone-50 border border-stone-200 p-2 rounded-sm" title="Percentage of weekly habits completed">
-                                    <div className="flex flex-col items-center justify-center mb-1">
-                                        <span className="text-[8px] font-black uppercase text-stone-500 tracking-wider">{t('common.rate')}</span>
-                                        <span className="text-lg font-black leading-none" style={{ color: theme.secondary }}>{weekProgress.percentage.toFixed(0)}%</span>
-                                    </div>
-                                    <div className="w-full bg-stone-200 h-1 rounded-full overflow-hidden">
-                                        <div className="h-full transition-all duration-300" style={{ width: `${weekProgress.percentage}%`, backgroundColor: theme.secondary }} />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+                        ) : null}
+
+                        <div className="grid grid-cols-2 gap-2">
+                            <button
+                                onClick={() => {
+                                    setAutoAddHabitOnOpen(true);
+                                    setIsHabitModalOpen(true);
+                                }}
+                                className={quickActionMutedClass}
+                            >
+                                <Plus size={14} />
+                                Add Habit
+                            </button>
+                            <button
+                                onClick={onLogToday}
+                                className={quickActionPrimaryClass}
+                            >
+                                <Clock size={14} />
+                                Log Today
+                            </button>
+                        </div>
 
                         <div className="grid grid-cols-2 gap-2 flex-grow">
                             <button
                                 onClick={() => setIsHabitModalOpen(true)}
-                                className="my-habits-button flex min-h-[78px] flex-col items-center rounded-2xl p-3 text-white neo-border neo-shadow transition-all hover:translate-y-0.5 hover:shadow-none group"
+                                className={`my-habits-button ${habitsCardClass}`}
                                 style={{ backgroundColor: theme.secondary }}
                             >
-                                <span className="text-[13px] font-black uppercase tracking-widest leading-none">{t('common.myHabits')}</span>
+                                <span className={utilityTitleClass}>{t('common.myHabits')}</span>
                                 <span className="mt-1 text-xl font-black leading-none">{habits.length}</span>
-                                <span className="mt-auto pt-2 text-[11px] font-black uppercase tracking-wide leading-none">{t('common.manageHabits')}</span>
+                                <span className={utilityMetaClass}>{t('common.manageHabits')}</span>
                             </button>
                             <div
                                 onClick={() => setIsStreakModalOpen(true)}
-                                className="bg-white neo-border neo-shadow p-2 text-center rounded-2xl flex flex-col items-center justify-center min-h-[60px] cursor-pointer hover:bg-orange-50 transition-colors group/streak"
+                                className={streakCardClass}
                             >
                                 <p className="text-[8px] font-black opacity-50 uppercase tracking-widest leading-none group-hover/streak:text-orange-500 transition-colors">{t('common.currentStreak')}</p>
                                 <p className="text-2xl font-black mt-1 leading-none group-hover/streak:scale-110 transition-transform">{annualStats.currentStreak} <span className="text-[10px]">{t('common.days')}</span></p>
@@ -507,40 +524,50 @@ export const Header: React.FC<HeaderProps> = ({
                         </div>
                     </div>
                 ) : (
-                    <div className="flex flex-col gap-2 mt-2 h-full">
+                    <div className={leftPanelClass}>
                         {guestMode ? (
                             <button
                                 onClick={() => window.location.href = '/signin'}
-                                className="w-full min-h-[60px] flex items-center justify-center gap-2 text-[12px] font-black uppercase tracking-wider bg-black text-white px-2 py-2 rounded-xl hover:bg-stone-800 transition-colors shadow-sm"
+                                className={authButtonClass}
                             >
                                 <LogIn size={14} />
                                 Sign up / Sign in
                             </button>
-                        ) : (
-                            currentYear === new Date().getFullYear() && (
-                                <button
-                                    onClick={() => setIsResolutionsModalOpen(true)}
-                                    className="w-full min-h-[60px] flex items-center justify-center gap-1.5 text-[12px] font-black uppercase tracking-wider bg-black text-white px-2 py-2 rounded-xl hover:bg-stone-800 transition-colors shadow-sm"
-                                >
-                                    <Sparkles size={14} />
-                                    This Year Resolutions
-                                </button>
-                            )
-                        )}
+                        ) : null}
+
+                        <div className="grid grid-cols-2 gap-2">
+                            <button
+                                onClick={() => {
+                                    setAutoAddHabitOnOpen(true);
+                                    setIsHabitModalOpen(true);
+                                }}
+                                className={quickActionMutedClass}
+                            >
+                                <Plus size={14} />
+                                Add Habit
+                            </button>
+                            <button
+                                onClick={onLogToday}
+                                className={quickActionPrimaryClass}
+                            >
+                                <Clock size={14} />
+                                Log Today
+                            </button>
+                        </div>
 
                         <div className="grid grid-cols-2 gap-2 flex-grow">
                             <button
                                 onClick={() => setIsHabitModalOpen(true)}
-                                className="my-habits-button flex min-h-[78px] flex-col items-center rounded-2xl p-3 text-white neo-border neo-shadow transition-all hover:translate-y-0.5 hover:shadow-none group"
+                                className={`my-habits-button ${habitsCardClass}`}
                                 style={{ backgroundColor: theme.secondary }}
                             >
-                                <span className="text-[13px] font-black uppercase tracking-widest leading-none">{t('common.myHabits')}</span>
+                                <span className={utilityTitleClass}>{t('common.myHabits')}</span>
                                 <span className="mt-1 text-xl font-black leading-none">{habits.length}</span>
-                                <span className="mt-auto pt-2 text-[11px] font-black uppercase tracking-wide leading-none">{t('common.manageHabits')}</span>
+                                <span className={utilityMetaClass}>{t('common.manageHabits')}</span>
                             </button>
                             <div
                                 onClick={() => setIsStreakModalOpen(true)}
-                                className="bg-white neo-border neo-shadow p-2 text-center rounded-2xl flex flex-col items-center justify-center min-h-[60px] cursor-pointer hover:bg-orange-50 transition-colors group/streak"
+                                className={streakCardClass}
                             >
                                 <p className="text-[8px] font-black opacity-50 uppercase tracking-widest leading-none group-hover/streak:text-orange-500 transition-colors">{t('common.currentStreak')}</p>
                                 <p className="text-2xl font-black mt-1 leading-none group-hover/streak:scale-110 transition-transform">{annualStats.currentStreak} <span className="text-[10px]">{t('common.days')}</span></p>
@@ -676,7 +703,7 @@ export const Header: React.FC<HeaderProps> = ({
                         <div className="w-full h-full flex flex-col gap-1 overflow-hidden">
                             <div className="flex items-center justify-between px-2 pt-1 mb-1">
                                 <div className="flex flex-col">
-                                    <span className="text-[10px] font-black uppercase text-stone-400 tracking-widest leading-none mb-2">Month Mastery</span>
+                                    <span className="text-[10px] font-black uppercase text-stone-400 tracking-widest leading-none mb-2">Month Story</span>
                                     <div className="flex items-baseline gap-1">
                                         <span className="text-3xl font-black leading-none">{monthProgress.completed}</span>
                                         <span className="text-lg font-black text-stone-300">/</span>
@@ -819,6 +846,16 @@ export const Header: React.FC<HeaderProps> = ({
                                 }
                             </div>
 
+                            {currentYear === new Date().getFullYear() && (
+                                <button
+                                    onClick={() => setIsResolutionsModalOpen(true)}
+                                    className="mt-3 w-full min-h-[44px] flex items-center justify-center gap-1.5 text-[11px] font-black uppercase tracking-wider bg-black text-white px-2 py-2 rounded-xl hover:bg-stone-800 transition-colors shadow-sm"
+                                >
+                                    <Sparkles size={14} />
+                                    This Year Resolutions
+                                </button>
+                            )}
+
                             {view === 'monthly' && (
                                 <div className="w-full grid grid-cols-2 gap-2 mt-2 px-2 border-t border-stone-100 pt-2">
                                     <div className="flex flex-col items-center justify-center">
@@ -863,6 +900,8 @@ export const Header: React.FC<HeaderProps> = ({
                 reorderHabits={reorderHabits}
                 toggleArchiveHabit={toggleArchiveHabit}
                 themePrimary={theme.primary}
+                autoAddOnOpen={autoAddHabitOnOpen}
+                onAutoAddHandled={() => setAutoAddHabitOnOpen(false)}
             />
             <ResolutionsModal
                 isOpen={isResolutionsModalOpen}

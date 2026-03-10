@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { Trash2, Save, Check, Minus, Laugh, Smile, Meh, Frown, Angry, BookOpen, X } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Save, Check, Minus, Laugh, Smile, Meh, Frown, Angry, BookOpen, ChevronDown, ChevronUp } from 'lucide-react';
 import { CircularProgress } from './CircularProgress';
 import { Habit, HabitCompletion, Theme, DailyNote, DayData } from '../types';
 import { DAYS_OF_WEEK_SHORT } from '../constants';
@@ -64,9 +64,28 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
     updateNote,
     setSelectedDateForCard,
 }) => {
+    const [showTopHabits, setShowTopHabits] = useState(false);
     const visibleHabits = habits.filter(h =>
         monthDates.some(day => isHabitActiveOnDate(h, new Date(currentYear, currentMonthIndex, day)))
     );
+    const today = new Date();
+    const isCurrentMonth = currentYear === today.getFullYear() && currentMonthIndex === today.getMonth();
+    const moodTrackableDays = isCurrentMonth
+        ? monthDates.filter(day => day <= today.getDate()).length
+        : monthDates.length;
+    const moodLoggedDays = monthDates.reduce((count, day) => {
+        const dateKey = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayNote = notes ? notes[dateKey] : undefined;
+
+        if (!dayNote || Array.isArray(dayNote)) return count;
+
+        const hasMood = typeof dayNote.mood === 'number';
+        const hasJournal = Boolean(dayNote.journal && dayNote.journal.trim().length > 0);
+
+        return hasMood || hasJournal ? count + 1 : count;
+    }, 0);
+    const moodMissedDays = Math.max(0, moodTrackableDays - moodLoggedDays);
+    const moodLoggedPercentage = moodTrackableDays > 0 ? (moodLoggedDays / moodTrackableDays) * 100 : 0;
 
     const tableScrollRef = useRef<HTMLDivElement>(null);
     const todayRef = useRef<HTMLTableHeaderCellElement>(null);
@@ -97,36 +116,20 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
 
     return (
         <>
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                <div className="md:col-span-9 border border-stone-200 bg-white flex flex-col overflow-hidden">
-                    <div className="text-[11px] font-black uppercase py-1 tracking-widest grid grid-cols-5 md:grid-cols-9 transition-colors duration-500" style={{ backgroundColor: theme.secondary + '40', color: theme.secondary }}>
-                        <span className="col-span-2 px-4 hidden md:block">Weekly Overview</span>
-                        <div className="col-span-9 md:col-span-7 flex">{weeks.map((week, i) => {
-                            const startDate = new Date(currentYear, currentMonthIndex, week[0]);
-                            const endDate = new Date(currentYear, currentMonthIndex, week[week.length - 1]);
-                            const monthShort = startDate.toLocaleString('default', { month: 'short' });
-                            return (
-                                <span key={i} className="flex-1 text-center border-l border-stone-200/30 font-black text-[10px] md:text-[11px] flex flex-col items-center justify-center leading-tight">
-                                    <span>W{i + 1}</span>
-                                    <span className="text-[9px] font-normal text-stone-500">{monthShort} {String(startDate.getDate()).padStart(2, '0')}-{String(endDate.getDate()).padStart(2, '0')}</span>
-                                </span>
-                            );
-                        })}</div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-9 h-auto md:h-[220px] min-h-[220px]">
-                        <div className="hidden md:col-span-2 border-r border-stone-100 md:flex flex-col text-[9px] font-black uppercase text-stone-500">
-                            <div className="flex-[2] flex items-center px-2 border-b border-stone-50" title="Weekly completion percentage - shows how many habits were completed out of 
-total possible">
-                                <span className="cursor-help">Success Rate</span>
+            <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+                    <div className="rounded-2xl border border-stone-200 bg-white p-4">
+                        <div className="mb-4 flex items-center justify-between gap-3">
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-stone-400">Weekly Snapshot</p>
+                                <h4 className="mt-1 text-base font-black uppercase tracking-tight text-stone-900">Month pacing by week</h4>
                             </div>
-                            <div className="flex-none h-10 flex items-center px-2 border-b border-stone-50" title="Completed habits / Total possible for the week">
-                                <span className="cursor-help">Completed</span>
-                            </div>
-                            <div className="flex-1 flex items-center px-2" title="Daily completion bars - hover to see details">
-                                <span className="cursor-help">Weekly Activity</span>
+                            <div className="hidden text-[10px] font-black uppercase tracking-[0.18em] text-stone-400 md:block">
+                                {weeks.length} checkpoints
                             </div>
                         </div>
-                        <div ref={weeksScrollRef} className="col-span-9 md:col-span-7 flex overflow-x-auto min-h-[220px] snap-x snap-mandatory">
+
+                        <div ref={weeksScrollRef} className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
                             {weeks.map((week, wIndex) => {
                                 const weekTotal = habits.reduce((acc, h) => {
                                     let hWeekDone = 0;
@@ -180,82 +183,128 @@ total possible">
                                 const weekTotalLabel = Number.isInteger(weekTotal) ? String(weekTotal) : weekTotal.toFixed(1);
                                 const weekMaxLabel = Number.isInteger(weekMax) ? String(weekMax) : weekMax.toFixed(1);
                                 const isCurrentWeek = week.includes(new Date().getDate()) && currentMonthIndex === new Date().getMonth() && currentYear === new Date().getFullYear();
+                                const startDate = new Date(currentYear, currentMonthIndex, week[0]);
+                                const endDate = new Date(currentYear, currentMonthIndex, week[week.length - 1]);
+
                                 return (
-                                    <div key={wIndex} ref={isCurrentWeek ? currentWeekRef : null} className="flex-1 min-w-[80px] border-r border-stone-100 flex flex-col snap-center">
-                                        <div className="flex-[2] flex flex-col items-center justify-center p-1 border-b border-stone-50">
+                                    <div
+                                        key={wIndex}
+                                        ref={isCurrentWeek ? currentWeekRef : null}
+                                        className={`rounded-2xl border p-3 transition-colors ${isCurrentWeek ? 'border-stone-900 bg-stone-50' : 'border-stone-200 bg-white'}`}
+                                    >
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div>
+                                                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-stone-400">Week {wIndex + 1}</p>
+                                                <p className="mt-1 text-xs font-bold uppercase tracking-wide text-stone-600">
+                                                    {startDate.toLocaleString('default', { month: 'short' })} {String(startDate.getDate()).padStart(2, '0')} - {String(endDate.getDate()).padStart(2, '0')}
+                                                </p>
+                                            </div>
                                             <CircularProgress
                                                 percentage={weekPerc}
-                                                size={70}
-                                                strokeWidth={8}
+                                                size={58}
+                                                strokeWidth={7}
                                                 color={theme.secondary}
                                                 trackColor={theme.secondary + '20'}
-                                                textClassName="text-xl"
+                                                textClassName="text-sm"
                                             />
                                         </div>
-                                        <div className="flex-none h-10 flex items-center justify-center border-b border-stone-50 py-0.5"><span className="text-xl font-black">{weekTotalLabel}/{weekMaxLabel}</span></div>
-                                        <div className="flex-1 p-2 flex items-end justify-between gap-0.5 h-20 md:h-auto group/week">
-                                            {week.map(day => {
-                                                const dayDate = new Date(currentYear, currentMonthIndex, day);
-                                                const dayIndex = dayDate.getDay();
+                                        <div className="mt-3 flex items-end justify-between gap-3">
+                                            <div>
+                                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-stone-400">Completed</p>
+                                                <p className="mt-1 text-2xl font-black leading-none text-stone-900">{weekTotalLabel}<span className="ml-1 text-sm text-stone-300">/ {weekMaxLabel}</span></p>
+                                            </div>
+                                            <div className="flex h-10 items-end gap-1">
+                                                {week.map(day => {
+                                                    const dayDate = new Date(currentYear, currentMonthIndex, day);
+                                                    const dayIndex = dayDate.getDay();
+                                                    const dueHabits = habits.filter(h => {
+                                                        if (h.weeklyTarget) return false;
+                                                        if (!(!h.frequency || h.frequency.includes(dayIndex))) return false;
+                                                        if (!isHabitActiveOnDate(h, dayDate)) return false;
+                                                        const dateKey = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                                                        return !isHabitManuallyInactive(notes, dateKey, h.id);
+                                                    });
+                                                    let dc = 0;
+                                                    dueHabits.forEach(h => {
+                                                        if (checkCompleted(h.id, day, completions, currentMonthIndex, currentYear)) dc++;
+                                                    });
 
-                                                // Only use fixed-frequency habits for the daily activity bars and "all done" state
-                                                const dueHabits = habits.filter(h => {
-                                                    if (h.weeklyTarget) return false;
-                                                    if (!(!h.frequency || h.frequency.includes(dayIndex))) return false;
-                                                    if (!isHabitActiveOnDate(h, dayDate)) return false;
-                                                    const dateKey = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                                                    return !isHabitManuallyInactive(notes, dateKey, h.id);
-                                                });
-                                                let dc = 0;
-                                                dueHabits.forEach(h => { if (checkCompleted(h.id, day, completions, currentMonthIndex, currentYear)) dc++; });
-
-                                                const hRatio = dueHabits.length > 0 ? dc / dueHabits.length : 0;
-                                                const isAllDone = dueHabits.length > 0 && dc === dueHabits.length;
-
-                                                return <div key={day} className="flex-1 relative group/bar" style={{ height: `${Math.max(2, hRatio * 100)}%`, backgroundColor: isAllDone ? theme.primary : theme.secondary }} title={`Day ${day}: ${dc}/${dueHabits.length} habits completed`}>
-                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-1.5 py-0.5 bg-black text-white text-[7px] font-black rounded opacity-0 invisible group-hover/bar:opacity-100 group-hover/bar:visible transition-all whitespace-nowrap z-10">
-                                                        {dc}/{dueHabits.length}
-                                                    </div>
-                                                </div>;
-                                            })}
+                                                    const hRatio = dueHabits.length > 0 ? dc / dueHabits.length : 0;
+                                                    return (
+                                                        <div
+                                                            key={day}
+                                                            className="w-2 rounded-full"
+                                                            style={{
+                                                                height: `${Math.max(6, hRatio * 40)}px`,
+                                                                backgroundColor: hRatio === 1 && dueHabits.length > 0 ? theme.primary : theme.secondary + '80'
+                                                            }}
+                                                            title={`Day ${day}: ${dc}/${dueHabits.length}`}
+                                                        />
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
                                     </div>
                                 );
                             })}
                         </div>
                     </div>
-                </div>
-                <div className="md:col-span-3 bg-white neo-border neo-shadow rounded-2xl flex flex-col overflow-hidden h-[260px]">
-                    <div className="p-3 border-b-2 border-black text-center" style={{ backgroundColor: theme.primary + '15' }} title="Top performing habits ranked by completion days this month">
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-700">Top 10 This Month</span>
-                    </div>
-                    <div className="p-3 space-y-2 flex-1 overflow-y-auto overflow-x-hidden min-h-[200px]">
-                        {topHabitsThisMonth.map((h, i) => {
-                            const stats = h.stats;
-                            const p = h.percentage;
-                            return (
-                                <div key={h.id} className="flex items-center justify-between text-[11px] font-bold animate-in fade-in slide-in-from-right-1 py-1">
-                                    <div className="flex gap-2 items-center">
-                                        <span className="text-stone-300 w-3 font-black">{i + 1}</span>
-                                        <span className="truncate w-32 sm:w-40 md:w-36 uppercase tracking-tight">{h.name || 'Untitled'}</span>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-stone-500 font-black" title={`Completed ${stats.completed} days this month`}>{stats.completed} <span className="text-[8px] opacity-50">DAYS</span></span>
-                                        <div className="w-12 h-2 bg-stone-100 rounded-sm overflow-hidden border border-black/5">
-                                            <div className="h-full transition-all duration-500" style={{ width: `${p}%`, backgroundColor: theme.primary }} />
-                                        </div>
-                                    </div>
+
+                    <div className="space-y-4">
+                        <div className="rounded-2xl border border-stone-200 bg-white p-4">
+                            <button
+                                onClick={() => setShowTopHabits(prev => !prev)}
+                                className="flex w-full items-center justify-between gap-3 text-left"
+                            >
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.22em] text-stone-400">Ranking</p>
+                                    <h4 className="mt-1 text-base font-black uppercase tracking-tight text-stone-900">Top habits this month</h4>
                                 </div>
-                            );
-                        })}
-                        {topHabitsThisMonth.length === 0 && (
-                            <div className="h-full flex items-center justify-center text-[11px] font-black text-stone-400 uppercase italic">No logged activity</div>
-                        )}
+                                {showTopHabits ? <ChevronUp size={16} className="text-stone-400" /> : <ChevronDown size={16} className="text-stone-400" />}
+                            </button>
+
+                            {showTopHabits && (
+                                <div className="mt-4 space-y-2">
+                                    {topHabitsThisMonth.map((h, i) => {
+                                        const stats = h.stats;
+                                        const p = h.percentage;
+                                        return (
+                                            <div key={h.id} className="flex items-center justify-between gap-3 rounded-xl bg-stone-50 px-3 py-2">
+                                                <div className="min-w-0">
+                                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-stone-300">#{i + 1}</p>
+                                                    <p className="truncate text-sm font-black uppercase text-stone-800">{h.name || 'Untitled'}</p>
+                                                </div>
+                                                <div className="min-w-[84px]">
+                                                    <p className="text-right text-xs font-black text-stone-500">{stats.completed} days</p>
+                                                    <div className="mt-1 h-2 overflow-hidden rounded-full bg-stone-200">
+                                                        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${p}%`, backgroundColor: theme.primary }} />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                    {topHabitsThisMonth.length === 0 && (
+                                        <div className="rounded-xl bg-stone-50 px-3 py-6 text-center text-[11px] font-black uppercase italic text-stone-400">
+                                            No logged activity
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="rounded-2xl border border-stone-200 bg-white p-4">
+                            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-stone-400">Grid Guide</p>
+                            <div className="mt-3 space-y-2 text-sm font-medium text-stone-600">
+                                <p><span className="font-black text-stone-900">Click</span> a square to mark completion.</p>
+                                <p><span className="font-black text-stone-900">Long press</span> to mark a habit inactive for that day.</p>
+                                <p><span className="font-black text-stone-900">Click Mood</span> to jump into the journal side of the daily card.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div className={`border border-stone-200 bg-white flex flex-col overflow-hidden relative w-full transition-opacity duration-300 ${isModalOpen ? 'opacity-30 pointer-events-none grayscale-[0.5]' : 'opacity-100'}`}>
+            <div className={`border border-stone-200 bg-white flex flex-col overflow-hidden relative w-full rounded-2xl transition-opacity duration-300 ${isModalOpen ? 'opacity-30 pointer-events-none grayscale-[0.5]' : 'opacity-100'}`}>
                 <div ref={scrollContainerRef} className="overflow-x-auto w-full">
                     <table className="w-full border-separate border-spacing-0">
                         <thead>
@@ -346,8 +395,32 @@ total possible">
                                         </td>
                                     );
                                 })}
-                                <td className="p-0 border-l border-stone-200 bg-[#fcfcfc]"></td>
-                                <td className="p-0 border-l border-stone-100 bg-[#fcfcfc]"></td>
+                                <td className="p-1 px-3 border-l border-stone-200 bg-[#fcfcfc] text-center">
+                                    <div className="flex items-center justify-center gap-1.5 h-full">
+                                        <span className="text-[11px] font-black w-6 text-right" style={{ color: theme.secondary }}>{moodLoggedPercentage.toFixed(0)}%</span>
+                                        <div className="hidden sm:flex w-12 bg-stone-100 h-2 gap-0.5 rounded-sm overflow-hidden">
+                                            {Array.from({ length: 5 }).map((_, i) => (
+                                                <div
+                                                    key={i}
+                                                    className={`h-full flex-1 transition-all duration-500 ${moodLoggedPercentage >= (i + 1) * 20 ? '' : 'bg-transparent'}`}
+                                                    style={{ backgroundColor: moodLoggedPercentage >= (i + 1) * 20 ? theme.secondary : undefined }}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className="p-0 border-l border-stone-100 bg-[#fcfcfc]">
+                                    <div className="grid grid-cols-2 text-center text-[9px] font-black uppercase tracking-tight h-full">
+                                        <div className="p-1 px-2 border-r border-stone-200" style={{ backgroundColor: theme.secondary + '20' }}>
+                                            <span className="text-stone-500 block">Done</span>
+                                            <span className="text-lg leading-none">{moodLoggedDays}</span>
+                                        </div>
+                                        <div className="p-1 px-2" style={{ backgroundColor: '#f0f0f0' }}>
+                                            <span className="text-stone-500 block">Miss</span>
+                                            <span className="text-lg leading-none text-rose-400">{moodMissedDays}</span>
+                                        </div>
+                                    </div>
+                                </td>
                             </tr>
                             {visibleHabits.map((habit) => {
                                 const habitStats = getHabitMonthStats(

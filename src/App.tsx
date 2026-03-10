@@ -21,6 +21,7 @@ import { DailyCard } from './components/DailyCard';
 import { generateUUID } from './utils/uuid';
 import { getInactiveHabitsForDate, isHabitActiveOnDate, isHabitManuallyInactive } from './utils/habitActivity';
 import { exportUserDataCsv } from './utils/exportUserDataCsv';
+import { isCompleted as checkCompleted } from './utils/stats';
 import { OnboardingModal } from './components/OnboardingModal';
 import { FeatureAnnouncementModal } from './components/FeatureAnnouncementModal';
 import { LoadingScreen } from './components/LoadingScreen';
@@ -1131,6 +1132,57 @@ const AppContent: React.FC = () => {
     return dayStatsItem && dayStatsItem.totalDue > 0 && dayStatsItem.count === dayStatsItem.totalDue;
   };
 
+  const selectedDateSummary = useMemo(() => {
+    if (!selectedDateForCard) return null;
+
+    const date = selectedDateForCard;
+    const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const visibleHabitsForDate = habits.filter(h => {
+      if (!isHabitActiveOnDate(h, date)) return false;
+      if (h.weeklyTarget) return true;
+      return !h.frequency || h.frequency.includes(date.getDay());
+    });
+    const totalHabits = visibleHabitsForDate.filter(h => !isHabitInactive(h.id, dateKey)).length;
+    const completedHabits = visibleHabitsForDate.reduce((acc, h) => {
+      if (isHabitInactive(h.id, dateKey)) return acc;
+      return checkCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear()) ? acc + 1 : acc;
+    }, 0);
+    const dayData = notes[dateKey];
+    const normalizedDayData = Array.isArray(dayData) ? { tasks: dayData } : (dayData || { tasks: [] });
+    const totalTasks = normalizedDayData.tasks?.length || 0;
+    const openTasks = (normalizedDayData.tasks || []).filter((task: any) => !task.completed).length;
+    const hasJournal = Boolean(normalizedDayData.journal && normalizedDayData.journal.trim());
+    const hasMood = typeof normalizedDayData.mood === 'number';
+
+    return {
+      completedHabits,
+      totalHabits,
+      openTasks,
+      totalTasks,
+      hasJournal,
+      hasMood
+    };
+  }, [selectedDateForCard, habits, completions, notes]);
+
+  const logTodayStatus = useMemo<'empty' | 'partial' | 'done'>(() => {
+    const today = new Date();
+    const dateKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const visibleHabitsForToday = habits.filter(h => {
+      if (!isHabitActiveOnDate(h, today)) return false;
+      if (h.weeklyTarget) return true;
+      return !h.frequency || h.frequency.includes(today.getDay());
+    });
+    const totalHabits = visibleHabitsForToday.filter(h => !isHabitInactive(h.id, dateKey)).length;
+    const completedHabits = visibleHabitsForToday.reduce((acc, h) => {
+      if (isHabitInactive(h.id, dateKey)) return acc;
+      return checkCompleted(h.id, today.getDate(), completions, today.getMonth(), today.getFullYear()) ? acc + 1 : acc;
+    }, 0);
+
+    if (totalHabits > 0 && completedHabits === totalHabits) return 'done';
+    if (completedHabits > 0) return 'partial';
+    return 'empty';
+  }, [habits, completions, notes]);
+
   const handleLogout = async () => {
     try {
       setLoading(true);
@@ -1349,6 +1401,11 @@ const AppContent: React.FC = () => {
           isExportingData={isExportingData}
           hasUnseenWhatsNew={hasUnseenWhatsNew}
           onSearch={() => setIsSearchOpen(true)}
+          onLogToday={() => {
+            setSelectedDateForCard(new Date());
+            setCardOpenFlipped(false);
+          }}
+          logTodayStatus={logTodayStatus}
         />
 
         <SearchModal
@@ -1367,57 +1424,84 @@ const AppContent: React.FC = () => {
         />
 
         {selectedDateForCard && createPortal(
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 md:p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setSelectedDateForCard(null)}>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 md:p-4 bg-black/35 backdrop-blur-[2px] animate-in fade-in duration-200" onClick={() => setSelectedDateForCard(null)}>
             <div className="w-full max-w-6xl relative animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 flex flex-col pt-[max(env(safe-area-inset-top),1rem)] md:pt-4" onClick={e => e.stopPropagation()}>
-              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 mb-2">
-                <div className="justify-self-start min-w-0">
+              <div className="mb-3 rounded-2xl border-[2px] border-black bg-white p-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.12)]">
+                <div className="grid grid-cols-[1fr_auto] items-start gap-2 md:grid-cols-[1fr_auto_1fr] md:items-center">
+                  <div className="justify-self-start min-w-0">
                   {isSearchOpen ? (
                     <button
                       onClick={() => setSelectedDateForCard(null)}
-                      className="text-white hover:text-stone-300 p-2 transition-colors flex items-center gap-2"
+                      className="text-stone-700 hover:text-black p-2 transition-colors flex items-center gap-2"
                     >
                       <Search size={20} />
                       <span className="font-bold text-sm uppercase tracking-wider truncate">Back to Search</span>
                     </button>
-                  ) : <div />}
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => navigateSelectedCardDate('prev')}
-                    className="text-white hover:text-stone-300 p-2 transition-colors border-2 border-white/30 hover:border-white/70 bg-black/20"
-                    title="Previous day"
-                  >
-                    <ChevronLeft size={20} />
-                  </button>
-                  <input
-                    type="date"
-                    value={toDateInputValue(selectedDateForCard)}
-                    onChange={(e) => updateSelectedCardDateFromInput(e.target.value)}
-                    className="h-10 px-2 text-sm font-bold border-2 border-white/60 bg-black/30 text-white focus:outline-none focus:border-white"
-                    title="Select date"
-                  />
-                  <button
-                    onClick={() => setSelectedDateForCard(new Date())}
-                    className="h-10 px-2 text-[10px] font-black uppercase tracking-wide text-white border-2 border-white/30 hover:border-white/70 bg-black/20 transition-colors"
-                    title="Jump to today"
-                  >
-                    Today
-                  </button>
-                  <button
-                    onClick={() => navigateSelectedCardDate('next')}
-                    className="text-white hover:text-stone-300 p-2 transition-colors border-2 border-white/30 hover:border-white/70 bg-black/20"
-                    title="Next day"
-                  >
-                    <ChevronRight size={20} />
-                  </button>
-                </div>
-                <div className="justify-self-end">
-                  <button
-                    onClick={() => setSelectedDateForCard(null)}
-                    className="text-white hover:text-stone-300 p-2 transition-colors"
-                  >
-                    <X size={24} />
-                  </button>
+                  ) : (
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-black uppercase tracking-[0.22em] text-stone-400">Daily Workspace</p>
+                      <div className="mt-1 flex flex-wrap gap-2">
+                        <span className="rounded-full border border-stone-200 bg-stone-50 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-stone-700">
+                          Habits {selectedDateSummary?.completedHabits ?? 0}/{selectedDateSummary?.totalHabits ?? 0}
+                        </span>
+                        <span className="rounded-full border border-stone-200 bg-stone-50 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-stone-700">
+                          Tasks {selectedDateSummary?.openTasks ?? 0} open
+                        </span>
+                        <span className="rounded-full border border-stone-200 bg-stone-50 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-stone-700">
+                          {selectedDateSummary?.hasJournal || selectedDateSummary?.hasMood ? 'Journal updated' : 'Journal empty'}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  </div>
+                  <div className="justify-self-end md:hidden">
+                    <button
+                      onClick={() => setSelectedDateForCard(null)}
+                      className="text-stone-700 hover:text-black p-2 transition-colors"
+                    >
+                      <X size={24} />
+                    </button>
+                  </div>
+                  <div className="md:justify-self-center md:min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        onClick={() => navigateSelectedCardDate('prev')}
+                        className="text-stone-700 hover:text-black p-2 transition-colors border-2 border-stone-200 hover:border-black bg-stone-50"
+                        title="Previous day"
+                      >
+                        <ChevronLeft size={20} />
+                      </button>
+                      <input
+                        type="date"
+                        value={toDateInputValue(selectedDateForCard)}
+                        onChange={(e) => updateSelectedCardDateFromInput(e.target.value)}
+                        className="h-10 px-2 text-sm font-bold border-2 border-stone-200 bg-white text-stone-900 focus:outline-none focus:border-black"
+                        title="Select date"
+                      />
+                      <button
+                        onClick={() => setSelectedDateForCard(new Date())}
+                        className="h-10 px-2 text-[10px] font-black uppercase tracking-wide text-stone-900 border-2 border-stone-200 hover:border-black bg-stone-50 transition-colors"
+                        title="Jump to today"
+                      >
+                        Today
+                      </button>
+                      <button
+                        onClick={() => navigateSelectedCardDate('next')}
+                        className="text-stone-700 hover:text-black p-2 transition-colors border-2 border-stone-200 hover:border-black bg-stone-50"
+                        title="Next day"
+                      >
+                        <ChevronRight size={20} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="hidden justify-self-end md:block">
+                    <button
+                      onClick={() => setSelectedDateForCard(null)}
+                      className="text-stone-700 hover:text-black p-2 transition-colors"
+                    >
+                      <X size={24} />
+                    </button>
+                  </div>
                 </div>
               </div>
               <DailyCard
@@ -1623,6 +1707,8 @@ const SignInPage: React.FC = () => {
             hasUnseenWhatsNew={false}
             hasUnreadFeedback={false}
             onSearch={() => { }}
+            onLogToday={() => { }}
+            logTodayStatus="empty"
           />
           <DashboardView
             annualStats={DEMO_ANNUAL_STATS}

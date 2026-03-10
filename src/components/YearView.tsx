@@ -55,6 +55,7 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
     const [isRetroModalOpen, setIsRetroModalOpen] = useState(false);
     const strongestMonth = annualStats.strongestMonth?.month || t('annualUi.yearView.noPeakYet');
     const strongestRate = annualStats.strongestMonth?.rate || 0;
+    const roundedTotalCompletions = Math.round(annualStats.totalCompletions || 0);
     const momentumCopy = getMomentumCopy(t, annualStats.momentum);
     const MomentumIcon = momentumCopy.icon;
 
@@ -83,7 +84,7 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
             <div className="relative z-10 mt-4 grid grid-cols-1 xl:grid-cols-[1.35fr_1fr] gap-4 items-start">
                 <section className="min-w-0 space-y-4">
                     <div className="grid grid-cols-2 lg:grid-cols-5 gap-2">
-                        <div className="rounded-2xl border border-stone-200 bg-stone-950 text-white p-3 lg:col-span-1">
+                        <div className="rounded-2xl border p-3 lg:col-span-1" style={{ borderColor: `${theme.secondary}55`, backgroundColor: `${theme.secondary}18`, color: '#1c1917' }}>
                             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-stone-400 block">{t('annualUi.yearView.overall')}</span>
                             <span className="text-3xl font-black leading-none mt-2 block" style={{ color: theme.secondary }}>
                                 {Math.round(annualStats.consistencyRate)}%
@@ -92,7 +93,7 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
                         </div>
                         <div className="rounded-2xl border border-stone-200 bg-stone-50 p-3">
                             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-stone-400 block">{t('annualUi.yearView.completions')}</span>
-                            <span className="text-2xl font-black leading-none mt-2 block">{annualStats.totalCompletions}</span>
+                            <span className="text-2xl font-black leading-none mt-2 block">{roundedTotalCompletions}</span>
                             <span className="text-[11px] font-bold text-stone-500">{t('annualUi.yearView.whatYouDid')}</span>
                         </div>
                         <div className="rounded-2xl border border-stone-200 bg-stone-50 p-3">
@@ -118,7 +119,7 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
                         </div>
                     </div>
 
-                    <div className="rounded-[22px] border border-black bg-stone-950 text-white p-4 overflow-hidden relative">
+                    <div className="rounded-[22px] border p-4 overflow-hidden relative" style={{ borderColor: `${theme.primary}66`, background: `linear-gradient(135deg, ${theme.primary}18 0%, ${theme.secondary}14 100%)`, color: '#1c1917' }}>
                         <div className="absolute inset-x-0 top-0 h-1" style={{ backgroundColor: theme.primary }} />
                         <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-3 items-center">
                             <div className="flex items-center gap-2">
@@ -131,16 +132,16 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
                                 </div>
                             </div>
                             <div className="min-w-0">
-                                <div className="h-3 rounded-full bg-white/10 overflow-hidden">
+                                <div className="h-3 rounded-full overflow-hidden" style={{ backgroundColor: `${theme.primary}22` }}>
                                     <div
                                         className="h-full rounded-full transition-[width] duration-700"
                                         style={{ width: `${Math.min(100, Math.max(0, annualStats.consistencyRate))}%`, backgroundColor: theme.secondary }}
                                     />
                                 </div>
                             </div>
-                            <div className="flex items-center gap-4 text-[11px] font-bold text-stone-400 whitespace-nowrap">
+                            <div className="flex items-center gap-4 text-[11px] font-bold text-stone-500 whitespace-nowrap">
                                 <span>{t('annualUi.yearView.streakDays', { count: annualStats.maxStreak })}</span>
-                                <span>{t('annualUi.yearView.doneCount', { count: annualStats.totalCompletions })}</span>
+                                <span>{t('annualUi.yearView.doneCount', { count: roundedTotalCompletions })}</span>
                             </div>
                         </div>
                     </div>
@@ -172,7 +173,8 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
                                 <button
                                     key={summary.month}
                                     onClick={() => onOpenMonth(idx)}
-                                    className="rounded-2xl border border-stone-200 bg-stone-50/80 p-3 text-left hover:border-black transition-colors"
+                                    className="rounded-2xl border border-stone-200 bg-stone-50/80 p-3 text-left transition-colors"
+                                    style={{ borderColor: `${theme.primary}22` }}
                                 >
                                     <div className="flex items-center justify-between gap-2 mb-2">
                                         <div className="min-w-0">
@@ -185,7 +187,7 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
                                         </div>
                                     </div>
 
-                                    <div className="h-2.5 rounded-full bg-white border border-stone-200 overflow-hidden">
+                                    <div className="h-2.5 rounded-full bg-white border overflow-hidden" style={{ borderColor: `${theme.primary}22` }}>
                                         <div
                                             className="h-full rounded-full transition-[width] duration-700"
                                             style={{

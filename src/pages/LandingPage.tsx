@@ -20,6 +20,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthForm } from '../components/AuthForm';
+import { useTheme } from '../hooks/useTheme';
 import { supabase } from '../supabase';
 
 type ActiveDay = {
@@ -121,6 +122,17 @@ const LANDING_MOODS = [
   { value: 4, icon: Smile, color: '#84cc16', label: 'Good' },
   { value: 5, icon: Laugh, color: '#10b981', label: 'Very Good' },
 ] as const;
+
+const mixHex = (colorA: string, colorB: string, weight = 0.5) => {
+  const hexA = colorA.replace('#', '');
+  const hexB = colorB.replace('#', '');
+  const parse = (hex: string, start: number) => parseInt(hex.slice(start, start + 2), 16);
+  const mix = (a: number, b: number) => Math.round(a + (b - a) * weight);
+  const r = mix(parse(hexA, 0), parse(hexB, 0));
+  const g = mix(parse(hexA, 2), parse(hexB, 2));
+  const b = mix(parse(hexA, 4), parse(hexB, 4));
+  return `#${[r, g, b].map((value) => value.toString(16).padStart(2, '0')).join('')}`;
+};
 
 const StorySection: React.FC = () => {
   return (
@@ -574,6 +586,7 @@ const InteractiveCard: React.FC = () => {
 export const LandingPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup' | null>(null);
 
@@ -626,7 +639,17 @@ export const LandingPage: React.FC = () => {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen overflow-hidden bg-[var(--landing-neo-bg)] font-sans text-black">
+    <div
+      className="min-h-screen overflow-hidden bg-[var(--landing-neo-bg)] font-sans text-black"
+      style={{
+        ['--landing-neo-green' as string]: theme.primary,
+        ['--landing-neo-pink' as string]: theme.secondary,
+        ['--landing-neo-blue' as string]: mixHex(theme.primary, theme.secondary, 0.65),
+        ['--landing-neo-yellow' as string]: mixHex(theme.primary, theme.secondary, 0.4),
+        ['--landing-neo-orange' as string]: mixHex(theme.primary, theme.secondary, 0.8),
+        ['--landing-neo-bg' as string]: mixHex('#fcfbf7', theme.secondary, 0.12),
+      }}
+    >
       <nav className="mx-auto flex max-w-7xl items-center justify-between p-6">
         <div className="flex items-center">
           <span className="text-3xl font-black uppercase tracking-tighter md:text-4xl">

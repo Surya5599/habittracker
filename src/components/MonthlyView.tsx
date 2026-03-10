@@ -180,8 +180,8 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                 }, 0);
 
                                 const weekPerc = weekMax > 0 ? (weekTotal / weekMax) * 100 : 0;
-                                const weekTotalLabel = Number.isInteger(weekTotal) ? String(weekTotal) : weekTotal.toFixed(1);
-                                const weekMaxLabel = Number.isInteger(weekMax) ? String(weekMax) : weekMax.toFixed(1);
+                                const weekTotalLabel = String(Math.round(weekTotal));
+                                const weekMaxLabel = String(Math.round(weekMax));
                                 const isCurrentWeek = week.includes(new Date().getDate()) && currentMonthIndex === new Date().getMonth() && currentYear === new Date().getFullYear();
                                 const startDate = new Date(currentYear, currentMonthIndex, week[0]);
                                 const endDate = new Date(currentYear, currentMonthIndex, week[week.length - 1]);

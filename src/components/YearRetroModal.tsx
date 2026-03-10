@@ -100,6 +100,8 @@ export const YearRetroModal: React.FC<YearRetroModalProps> = ({
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                         {monthlySummaries.map((summary, idx) => {
                             const displayRate = summary.isCurrentMonth ? (summary.proRatedRate || summary.rate || 0) : (summary.rate || 0);
+                            const roundedCompleted = Math.round(summary.completed || 0);
+                            const roundedTotal = Math.round(summary.total || 0);
                             const status = summary.isFutureMonth ? t('annualUi.yearRetro.upcomingMonth') : summary.signal || (summary.isCurrentMonth ? t('annualUi.yearRetro.liveMonth') : t('annualUi.yearRetro.completedMonth'));
                             const moodCounts = (summary.days || []).reduce((acc: Record<number, number>, day: any) => {
                                 if (day?.mood) acc[day.mood] = (acc[day.mood] || 0) + 1;
@@ -121,7 +123,7 @@ export const YearRetroModal: React.FC<YearRetroModalProps> = ({
                                                     <span className="inline-flex items-center rounded-full bg-stone-950 px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-white">
                                                         {t('annualUi.yearRetro.percentDone', { percent: Math.round(displayRate) })}
                                                     </span>
-                                                    <span className="text-[11px] font-bold text-stone-500">{t('annualUi.yearRetro.logsCount', { completed: summary.completed, total: Math.round(summary.total) })}</span>
+                                                    <span className="text-[11px] font-bold text-stone-500">{t('annualUi.yearRetro.logsCount', { completed: roundedCompleted, total: roundedTotal })}</span>
                                                 </div>
                                             ) : moodConfig && MoodIcon ? (
                                                 <div className="mt-1 flex items-center gap-2">
@@ -158,7 +160,7 @@ export const YearRetroModal: React.FC<YearRetroModalProps> = ({
                                     <div className="mt-3 flex items-center justify-between gap-3 text-[11px] font-bold text-stone-500">
                                         {viewMode === 'habits' ? (
                                             <>
-                                                <span>{t('annualUi.yearRetro.doneCount', { completed: summary.completed, total: Math.round(summary.total) })}</span>
+                                                <span>{t('annualUi.yearRetro.doneCount', { completed: roundedCompleted, total: roundedTotal })}</span>
                                                 <span className="truncate text-right">{summary.topHabit?.name ? t('annualUi.yearRetro.topHabit', { name: summary.topHabit.name }) : t('annualUi.yearRetro.noTopHabitYet')}</span>
                                             </>
                                         ) : (

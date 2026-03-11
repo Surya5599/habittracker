@@ -148,11 +148,11 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
     };
 
     return (
-        <div className="h-full min-h-0 p-1">
+        <div className="h-full min-h-0 p-2">
             {/* Desktop View (Grid) */}
             <div className="hidden md:block h-full min-h-0">
-                <div className="h-full min-h-0 overflow-x-auto overflow-y-hidden pb-1">
-                    <div className="grid grid-cols-7 gap-4 h-full min-h-0 auto-rows-fr min-w-[1120px]">
+                <div className="h-full min-h-0 overflow-x-auto overflow-y-visible px-1 pb-[2px] pt-1">
+                    <div className="grid grid-cols-7 gap-4 h-full min-h-0 auto-rows-fr min-w-[1120px] items-stretch">
                         {weekDates.map((date) => (
                             <DailyCard
                                 key={date.toISOString()}

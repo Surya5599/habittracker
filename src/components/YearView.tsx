@@ -37,8 +37,6 @@ interface YearViewProps {
     };
 }
 
-const MONTH_LABELS = MONTHS.map((month) => month.slice(0, 3).toUpperCase());
-
 const getMomentumCopy = (t: any, momentum?: string) => {
     if (momentum === 'ascending') return { label: t('annualUi.yearView.buildingMomentum'), icon: TrendingUp, tone: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' };
     if (momentum === 'descending') return { label: t('annualUi.yearView.needsRecovery'), icon: TrendingDown, tone: 'text-rose-700', bg: 'bg-rose-50 border-rose-200' };
@@ -50,10 +48,29 @@ const formatDelta = (t: any, delta: number) => {
     return t('annualUi.yearView.deltaPoints', { value: `${delta > 0 ? '+' : ''}${Math.round(delta)}` });
 };
 
+const getLocalizedMonthName = (t: any, month?: string, short = false) => {
+    if (!month) return '';
+    const monthIndex = MONTHS.findIndex((entry) => entry.toLowerCase() === month.toLowerCase());
+    if (monthIndex === -1) return month;
+    const monthKeys = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'] as const;
+    const translated = t(`common.months.${monthKeys[monthIndex]}`);
+    return short ? translated.slice(0, 3).toUpperCase() : translated;
+};
+
+const getLocalizedSignal = (t: any, signal?: string) => {
+    if (!signal) return '';
+    if (signal === 'Best focus month') return t('annualUi.yearView.bestFocusMonth');
+    if (signal === 'Burnout dip') return t('annualUi.yearView.burnoutDip');
+    if (signal === 'Rebound month') return t('annualUi.yearView.reboundMonth');
+    return signal;
+};
+
 const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, startOfWeek, onDayClick, onOpenMonth }) => {
     const { t } = useTranslation();
     const [isRetroModalOpen, setIsRetroModalOpen] = useState(false);
-    const strongestMonth = annualStats.strongestMonth?.month || t('annualUi.yearView.noPeakYet');
+    const strongestMonth = annualStats.strongestMonth?.month
+        ? getLocalizedMonthName(t, annualStats.strongestMonth.month)
+        : t('annualUi.yearView.noPeakYet');
     const strongestRate = annualStats.strongestMonth?.rate || 0;
     const roundedTotalCompletions = Math.round(annualStats.totalCompletions || 0);
     const momentumCopy = getMomentumCopy(t, annualStats.momentum);
@@ -162,12 +179,13 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
                             const delta = summary.delta || 0;
                             const isPositive = delta > 0.5;
                             const isNegative = delta < -0.5;
-                            const monthLabel = MONTH_LABELS[idx] || summary.month.slice(0, 3).toUpperCase();
+                            const monthLabel = getLocalizedMonthName(t, summary.month, true) || summary.month.slice(0, 3).toUpperCase();
+                            const localizedSignal = getLocalizedSignal(t, summary.signal);
                             const statusLabel = summary.isFutureMonth
                                 ? t('annualUi.yearView.upcoming')
                                 : summary.isCurrentMonth
                                     ? t('annualUi.yearView.liveMonth')
-                                    : summary.signal || t('annualUi.yearView.closed');
+                                    : localizedSignal || t('annualUi.yearView.closed');
 
                             return (
                                 <button

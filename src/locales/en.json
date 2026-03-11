@@ -43,7 +43,7 @@
         "weeklySuccess": "Weekly Success",
         "annualPerformance": "Annual Performance",
         "monthMastery": "Month Mastery",
-        "habitMaster": "Habit Master",
+        "habitMaster": "Habits Completed",
         "yourStoryMonth": "Your Story This Month",
         "yourStoryWeek": "Your Story This Week",
         "completed": "Completed",
@@ -126,7 +126,9 @@
             "nov": "Nov",
             "dec": "Dec"
         },
-        "selectYear": "Select Year"
+        "selectYear": "Select Year",
+        "addHabit": "Add Habit",
+        "logToday": "Log Today"
     },
     "dailyCard": {
         "dailyHabits": "Daily Habits",
@@ -307,7 +309,10 @@
             "quickMonthScan": "Quick month scan",
             "upcoming": "Upcoming",
             "liveMonth": "Live month",
-            "closed": "Closed"
+            "closed": "Closed",
+            "bestFocusMonth": "Best focus month",
+            "burnoutDip": "Burnout dip",
+            "reboundMonth": "Rebound month"
         },
         "yearRetro": {
             "closeAria": "Close yearly retro grids",

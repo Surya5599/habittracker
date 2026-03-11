@@ -93,6 +93,7 @@ export interface Feedback {
   created_at: string;
   metadata?: {
     attachments?: FeedbackAttachment[];
+    admin_completed_at?: string;
     [key: string]: any;
   };
   replies?: FeedbackReply[];

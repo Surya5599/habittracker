@@ -5,7 +5,7 @@ const ADMIN_EMAILS = ((import.meta.env.VITE_ADMIN_EMAILS as string | undefined) 
     .filter(Boolean);
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { X, MessageSquare, Bug, Send, ChevronRight, User, Shield, Reply, RefreshCw, ImagePlus } from 'lucide-react';
+import { X, MessageSquare, Bug, Send, ChevronRight, User, Shield, Reply, RefreshCw, ImagePlus, Trash2, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../supabase';
 import toast from 'react-hot-toast';
 import { Feedback, FeedbackAttachment, FeedbackReply } from '../types';
@@ -122,16 +122,36 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
         return Math.max(new Date(thread.created_at).getTime(), latestReplyTime);
     };
 
+    const getAdminCompletedTime = (thread: Feedback) => {
+        const raw = thread.metadata?.admin_completed_at;
+        if (!raw) return null;
+        const parsed = new Date(raw).getTime();
+        return Number.isNaN(parsed) ? null : parsed;
+    };
+
+    const getLatestUserMessageTime = (thread: Feedback) => {
+        const latestReplyTime = (thread.replies || [])
+            .filter(reply => !reply.is_admin_reply)
+            .reduce((latest, reply) => Math.max(latest, new Date(reply.created_at).getTime()), 0);
+        return Math.max(new Date(thread.created_at).getTime(), latestReplyTime);
+    };
+
     const hasAdminReply = (thread: Feedback) => {
         return !!thread.replies?.some(reply => reply.is_admin_reply);
     };
 
     const needsAdminResponse = (thread: Feedback) => {
-        if (thread.status === 'closed') return false;
-        const replies = thread.replies || [];
-        if (replies.length === 0) return true;
-        const latestReply = replies[replies.length - 1];
-        return !latestReply.is_admin_reply;
+        const completedAt = getAdminCompletedTime(thread);
+        if (!completedAt) {
+            if (thread.status === 'closed') {
+                const replies = thread.replies || [];
+                if (replies.length === 0) return false;
+                const latestReply = replies[replies.length - 1];
+                return !latestReply.is_admin_reply;
+            }
+            return true;
+        }
+        return completedAt < getLatestUserMessageTime(thread);
     };
 
     const reporterDirectory = useMemo(() => {
@@ -561,10 +581,15 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
             setReplyAttachments([]);
 
             // Also update status if admin replying
-            if (isAdmin && selectedThread.status === 'open') {
+            if (isAdmin) {
                 await supabase.from('feedback').update({ status: 'replied' }).eq('id', selectedThread.id);
             }
 
+            const sortedUpdatedHistory = sortThreadsByLatestActivity(
+                history.map(f => f.id === selectedThread.id ? updatedThread : f)
+            );
+
+            setHistory(sortedUpdatedHistory);
         } catch (err) {
             console.error('Error sending reply:', err);
             toast.error('Failed to send reply.');
@@ -578,20 +603,57 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
 
         setSubmitting(true);
         try {
+            const adminCompletedAt = new Date().toISOString();
+            const updatedMetadata = {
+                ...(thread.metadata || {}),
+                admin_completed_at: adminCompletedAt
+            };
             const { error } = await supabase
                 .from('feedback')
-                .update({ status: 'closed' })
+                .update({ status: 'closed', metadata: updatedMetadata })
                 .eq('id', thread.id);
 
             if (error) throw error;
 
-            const updatedThread = { ...thread, status: 'closed' as const };
+            const updatedThread = { ...thread, status: 'closed' as const, metadata: updatedMetadata };
             setSelectedThread(updatedThread);
-            setHistory(prev => prev.map(item => item.id === thread.id ? updatedThread : item));
+            setHistory(prev => sortThreadsByLatestActivity(prev.map(item => item.id === thread.id ? updatedThread : item)));
             toast.success('Marked as complete.');
         } catch (err) {
             console.error('Error marking feedback complete:', err);
             toast.error('Failed to mark item complete.');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleDeleteThread = async (thread: Feedback) => {
+        if (!isAdmin) return;
+        const confirmed = window.confirm('Delete this thread permanently? This will remove the thread and all replies.');
+        if (!confirmed) return;
+
+        setSubmitting(true);
+        try {
+            const { error: repliesError } = await supabase
+                .from('feedback_replies')
+                .delete()
+                .eq('feedback_id', thread.id);
+
+            if (repliesError) throw repliesError;
+
+            const { error: threadError } = await supabase
+                .from('feedback')
+                .delete()
+                .eq('id', thread.id);
+
+            if (threadError) throw threadError;
+
+            setHistory(prev => prev.filter(item => item.id !== thread.id));
+            setSelectedThread(null);
+            toast.success('Thread deleted.');
+        } catch (err) {
+            console.error('Error deleting feedback thread:', err);
+            toast.error('Failed to delete thread.');
         } finally {
             setSubmitting(false);
         }
@@ -628,19 +690,12 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                 )}
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-dashed border-stone-200">
                     <div className="flex items-center gap-1.5">
-                        {awaitingAdmin && (
-                            <span className="text-[9px] font-bold uppercase text-amber-700">Awaiting Reply</span>
-                        )}
-                        {!awaitingAdmin && hasAdminReply(item) && (
+                        {awaitingAdmin ? (
+                            <span className="text-[9px] font-bold uppercase text-amber-700">Not Replied</span>
+                        ) : (
                             <span className="text-[9px] font-bold uppercase text-green-600 flex items-center gap-1">
-                                <Reply size={10} /> HabiCard Replied
+                                <CheckCircle2 size={10} /> Replied
                             </span>
-                        )}
-                        {!awaitingAdmin && !hasAdminReply(item) && item.status === 'open' && (
-                            <span className="text-[9px] font-bold uppercase text-stone-400">Open</span>
-                        )}
-                        {!awaitingAdmin && !hasAdminReply(item) && item.status === 'closed' && (
-                            <span className="text-[9px] font-bold uppercase text-stone-400">Completed</span>
                         )}
                     </div>
                     <div className="flex items-center gap-1 text-[10px] font-bold text-stone-400 group-hover:text-black transition-colors">
@@ -931,7 +986,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                         </div>
                         {activeTab === 'admin' && (
                             <div className="mt-2">
-                                {selectedThread.status !== 'closed' ? (
+                                {needsAdminResponse(selectedThread) ? (
                                     <button
                                         type="button"
                                         onClick={() => handleMarkComplete(selectedThread)}
@@ -945,6 +1000,14 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                                         Completed
                                     </span>
                                 )}
+                                <button
+                                    type="button"
+                                    onClick={() => handleDeleteThread(selectedThread)}
+                                    disabled={submitting}
+                                    className="ml-2 px-2 py-1 border border-rose-200 bg-rose-50 text-[10px] font-black uppercase tracking-widest text-rose-700 hover:bg-rose-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    Delete
+                                </button>
                             </div>
                         )}
                         {activeTab === 'admin' && (

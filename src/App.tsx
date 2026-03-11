@@ -1438,7 +1438,7 @@ const AppContent: React.FC = () => {
         {selectedDateForCard && createPortal(
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 md:p-4 bg-black/35 backdrop-blur-[2px] animate-in fade-in duration-200" onClick={() => setSelectedDateForCard(null)}>
             <div className="w-full max-w-6xl relative animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 flex flex-col pt-[max(env(safe-area-inset-top),1rem)] md:pt-4" onClick={e => e.stopPropagation()}>
-              <div className="mb-3 rounded-2xl border-[2px] border-black bg-white p-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.12)]">
+              <div className="rounded-[30px] border-[3px] border-black bg-white p-3 md:p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.12)]">
                 <div className="grid grid-cols-[1fr_auto] items-start gap-2 md:grid-cols-[1fr_auto_1fr] md:items-center">
                   <div className="justify-self-start min-w-0">
                   {isSearchOpen ? (
@@ -1515,22 +1515,24 @@ const AppContent: React.FC = () => {
                     </button>
                   </div>
                 </div>
+                <div className="mt-3">
+                  <DailyCard
+                    date={selectedDateForCard}
+                    habits={habits}
+                    completions={completions}
+                    theme={theme}
+                    toggleCompletion={toggleCompletion}
+                    toggleHabitInactive={toggleHabitInactive}
+                    isHabitInactive={isHabitInactive}
+                    notes={notes}
+                    updateNote={updateNote}
+                    onShareClick={() => { }}
+                    defaultFlipped={cardOpenFlipped}
+                    combinedView={true}
+                    cardStyle={cardStyle}
+                  />
+                </div>
               </div>
-              <DailyCard
-                date={selectedDateForCard}
-                habits={habits}
-                completions={completions}
-                theme={theme}
-                toggleCompletion={toggleCompletion}
-                toggleHabitInactive={toggleHabitInactive}
-                isHabitInactive={isHabitInactive}
-                notes={notes}
-                updateNote={updateNote}
-              onShareClick={() => { }}
-              defaultFlipped={cardOpenFlipped}
-              combinedView={true}
-              cardStyle={cardStyle}
-            />
             </div>
           </div>,
           document.body

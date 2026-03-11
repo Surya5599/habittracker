@@ -441,14 +441,14 @@ export const Header: React.FC<HeaderProps> = ({
                                 className={quickActionMutedClass}
                             >
                                 <Plus size={14} />
-                                Add Habit
+                                {t('common.addHabit')}
                             </button>
                             <button
                                 onClick={onLogToday}
                                 className={quickActionPrimaryClass}
                             >
                                 <Clock size={14} />
-                                Log Today
+                                {t('common.logToday')}
                             </button>
                         </div>
 
@@ -492,14 +492,14 @@ export const Header: React.FC<HeaderProps> = ({
                                 className={quickActionMutedClass}
                             >
                                 <Plus size={14} />
-                                Add Habit
+                                {t('common.addHabit')}
                             </button>
                             <button
                                 onClick={onLogToday}
                                 className={quickActionPrimaryClass}
                             >
                                 <Clock size={14} />
-                                Log Today
+                                {t('common.logToday')}
                             </button>
                         </div>
 
@@ -543,14 +543,14 @@ export const Header: React.FC<HeaderProps> = ({
                                 className={quickActionMutedClass}
                             >
                                 <Plus size={14} />
-                                Add Habit
+                                {t('common.addHabit')}
                             </button>
                             <button
                                 onClick={onLogToday}
                                 className={quickActionPrimaryClass}
                             >
                                 <Clock size={14} />
-                                Log Today
+                                {t('common.logToday')}
                             </button>
                         </div>
 
@@ -759,7 +759,7 @@ export const Header: React.FC<HeaderProps> = ({
                         <div className="w-full h-full flex flex-col gap-1 overflow-hidden">
                             <div className="flex items-center justify-between px-2 pt-1 mb-1">
                                 <div className="flex flex-col">
-                                    <span className="text-[10px] font-black uppercase text-stone-400 tracking-widest leading-none mb-2">Habit Master</span>
+                                    <span className="text-[10px] font-black uppercase text-stone-400 tracking-widest leading-none mb-2">{t('header.habitMaster')}</span>
                                     <div className="flex items-baseline gap-1">
                                         <span className="text-3xl font-black leading-none">{weekProgress.completed}</span>
                                         <span className="text-lg font-black text-stone-300">/</span>

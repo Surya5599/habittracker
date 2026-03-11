@@ -38,7 +38,12 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
 
     const isMissingAccountError = (message: string) => {
         const normalized = message.toLowerCase();
-        return normalized.includes('invalid login credentials') || normalized.includes('email not found') || normalized.includes('user not found');
+        return normalized.includes('email not found') || normalized.includes('user not found') || normalized.includes('no user found');
+    };
+
+    const isWrongPasswordError = (message: string) => {
+        const normalized = message.toLowerCase();
+        return normalized.includes('invalid login credentials') || normalized.includes('invalid password') || normalized.includes('wrong password');
     };
 
     const handleResendConfirmation = async () => {
@@ -63,6 +68,21 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
         }
 
         setLoading(false);
+    };
+
+    const lookupEmailStatus = async (candidateEmail: string) => {
+        const { data, error } = await supabase.functions.invoke('auth-email-status', {
+            body: { email: candidateEmail }
+        });
+
+        if (error) {
+            throw error;
+        }
+
+        return {
+            exists: Boolean(data?.exists),
+            confirmed: Boolean(data?.confirmed),
+        };
     };
 
     const handleSubmit = async (e?: React.FormEvent) => {
@@ -94,6 +114,20 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
                 } else if (isMissingAccountError(error.message)) {
                     setAuthMode('signup');
                     setMessage('info', 'Email does not exist. Please sign up.');
+                } else if (isWrongPasswordError(error.message)) {
+                    try {
+                        const status = await lookupEmailStatus(email);
+                        if (!status.exists) {
+                            setAuthMode('signup');
+                            setMessage('info', 'Email does not exist. Please sign up.');
+                        } else if (!status.confirmed) {
+                            setMessage('error', 'Confirm your email before logging in.', true);
+                        } else {
+                            setMessage('error', 'Incorrect password. Please fix your password and try again.');
+                        }
+                    } catch {
+                        setMessage('error', 'Incorrect password. Please fix your password and try again.');
+                    }
                 } else {
                     setMessage('error', error.message);
                 }

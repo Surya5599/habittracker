@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Theme, Habit, HabitCompletion, DailyNote, DayData } from '../types';
 import { THEMES } from '../constants';
-import { Check, Globe, Palette, CalendarDays, BookOpen, ListTodo, BarChart3, ArrowDown } from 'lucide-react';
+import { Check, Globe, Palette, CalendarDays, BookOpen, ListTodo, BarChart3, ArrowDown, X } from 'lucide-react';
 import { DailyCard } from './DailyCard';
 import { useTranslation } from 'react-i18next';
 
@@ -726,7 +726,17 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                             </div>
                             <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">{t('onboarding.getStarted')}</span>
                         </div>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">{t('onboarding.stepOf', { current: step + 1, total: totalSteps })}</span>
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">{t('onboarding.stepOf', { current: step + 1, total: totalSteps })}</span>
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="flex h-8 w-8 items-center justify-center border-2 border-black bg-white text-black transition-colors hover:bg-black hover:text-white"
+                                aria-label="Close tutorial"
+                            >
+                                <X size={14} strokeWidth={3} />
+                            </button>
+                        </div>
                     </div>
                     <h2 className="text-xl font-black uppercase tracking-tight">{steps[step].title}</h2>
                     <p className="text-sm text-stone-600">{steps[step].subtitle}</p>

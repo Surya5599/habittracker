@@ -12,6 +12,7 @@ import { StatCard } from './StatCard';
 import { DailyQuote } from './DailyQuote';
 import { DailyTips } from './DailyTips';
 import { WeekPicker, MonthPicker, YearPicker } from './DateSelectors';
+import { buildAchievements } from './StreakModal';
 import { buildWeeklyStory, buildMonthlyStory } from '../utils/storyGenerator';
 
 interface HeaderProps {
@@ -181,6 +182,15 @@ export const Header: React.FC<HeaderProps> = ({
     React.useEffect(() => {
         localStorage.setItem('habit_chart_type', chartType);
     }, [chartType]);
+
+    const badgeCount = React.useMemo(() => {
+        return buildAchievements(
+            annualStats,
+            annualStats?.allTopHabits || [],
+            annualStats?.maxStreak || 0,
+            annualStats?.currentStreak || 0
+        ).filter((achievement) => achievement.unlocked).length;
+    }, [annualStats]);
 
     // Close selectors when clicking outside
     React.useEffect(() => {
@@ -468,6 +478,7 @@ export const Header: React.FC<HeaderProps> = ({
                             >
                                 <p className="text-[8px] font-black opacity-50 uppercase tracking-widest leading-none group-hover/streak:text-orange-500 transition-colors">{t('common.currentStreak')}</p>
                                 <p className="text-2xl font-black mt-1 leading-none group-hover/streak:scale-110 transition-transform">{annualStats.currentStreak} <span className="text-[10px]">{t('common.days')}</span></p>
+                                <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-stone-500">{badgeCount} badges</p>
                             </div>
                         </div>
                     </div>
@@ -519,6 +530,7 @@ export const Header: React.FC<HeaderProps> = ({
                             >
                                 <p className="text-[8px] font-black opacity-50 uppercase tracking-widest leading-none group-hover/streak:text-orange-500 transition-colors">{t('common.currentStreak')}</p>
                                 <p className="text-2xl font-black mt-1 leading-none group-hover/streak:scale-110 transition-transform">{annualStats.currentStreak} <span className="text-[10px]">{t('common.days')}</span></p>
+                                <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-stone-500">{badgeCount} badges</p>
                             </div>
                         </div>
                     </div>
@@ -570,6 +582,7 @@ export const Header: React.FC<HeaderProps> = ({
                             >
                                 <p className="text-[8px] font-black opacity-50 uppercase tracking-widest leading-none group-hover/streak:text-orange-500 transition-colors">{t('common.currentStreak')}</p>
                                 <p className="text-2xl font-black mt-1 leading-none group-hover/streak:scale-110 transition-transform">{annualStats.currentStreak} <span className="text-[10px]">{t('common.days')}</span></p>
+                                <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-stone-500">{badgeCount} badges</p>
                             </div>
                         </div>
                     </div>

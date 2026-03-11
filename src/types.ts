@@ -94,6 +94,7 @@ export interface Feedback {
   metadata?: {
     attachments?: FeedbackAttachment[];
     admin_completed_at?: string;
+    admin_locked_at?: string;
     [key: string]: any;
   };
   replies?: FeedbackReply[];

@@ -25,6 +25,7 @@ Set these in your Supabase project:
 
 - `create-premium-checkout`
 - `stripe-webhook`
+- `auth-email-status`
 
 ## 5. Configure Stripe webhook endpoint
 

@@ -1640,6 +1640,7 @@ const AppContent: React.FC = () => {
         theme={theme}
         globalCurrentStreak={annualStats.currentStreak}
         globalMaxStreak={annualStats.maxStreak}
+        annualStats={annualStats}
       />
 
       <style>{`

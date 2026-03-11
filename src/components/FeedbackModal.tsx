@@ -27,6 +27,8 @@ interface PendingAttachment {
     previewUrl: string;
 }
 
+type AdminThreadBucket = 'needs_response' | 'in_progress' | 'completed' | 'locked_away';
+
 const sanitizeFileName = (name: string) =>
     name
         .toLowerCase()
@@ -129,6 +131,13 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
         return Number.isNaN(parsed) ? null : parsed;
     };
 
+    const getAdminLockedTime = (thread: Feedback) => {
+        const raw = thread.metadata?.admin_locked_at;
+        if (!raw) return null;
+        const parsed = new Date(raw).getTime();
+        return Number.isNaN(parsed) ? null : parsed;
+    };
+
     const getLatestUserMessageTime = (thread: Feedback) => {
         const latestReplyTime = (thread.replies || [])
             .filter(reply => !reply.is_admin_reply)
@@ -136,22 +145,56 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
         return Math.max(new Date(thread.created_at).getTime(), latestReplyTime);
     };
 
-    const hasAdminReply = (thread: Feedback) => {
-        return !!thread.replies?.some(reply => reply.is_admin_reply);
+    const getLatestAdminReplyTime = (thread: Feedback) => {
+        return (thread.replies || [])
+            .filter(reply => reply.is_admin_reply)
+            .reduce((latest, reply) => Math.max(latest, new Date(reply.created_at).getTime()), 0);
     };
 
-    const needsAdminResponse = (thread: Feedback) => {
+    const getThreadBucket = (thread: Feedback): AdminThreadBucket => {
+        const latestUserMessageTime = getLatestUserMessageTime(thread);
+        const latestAdminReplyTime = getLatestAdminReplyTime(thread);
         const completedAt = getAdminCompletedTime(thread);
-        if (!completedAt) {
-            if (thread.status === 'closed') {
-                const replies = thread.replies || [];
-                if (replies.length === 0) return false;
-                const latestReply = replies[replies.length - 1];
-                return !latestReply.is_admin_reply;
-            }
-            return true;
+        const lockedAt = getAdminLockedTime(thread);
+
+        if (lockedAt && lockedAt >= latestUserMessageTime) {
+            return 'locked_away';
         }
-        return completedAt < getLatestUserMessageTime(thread);
+
+        if (completedAt && completedAt >= latestUserMessageTime) {
+            return 'completed';
+        }
+
+        if (latestAdminReplyTime >= latestUserMessageTime && latestAdminReplyTime > 0) {
+            return 'in_progress';
+        }
+
+        return 'needs_response';
+    };
+
+    const needsAdminResponse = (thread: Feedback) => getThreadBucket(thread) === 'needs_response';
+
+    const isLikelyThankYouMessage = (message?: string | null) => {
+        if (!message) return false;
+        const normalized = message.trim().toLowerCase().replace(/[!.,?]/g, '');
+        return [
+            'thanks',
+            'thank you',
+            'ty',
+            'ok thanks',
+            'thank you so much',
+            'got it thanks',
+            'awesome thanks',
+            'perfect thanks',
+            'works now thanks'
+        ].includes(normalized);
+    };
+
+    const isLikelyThankYouThread = (thread: Feedback) => {
+        const userReplies = (thread.replies || []).filter(reply => !reply.is_admin_reply);
+        if (userReplies.length === 0) return false;
+        const latestUserReply = userReplies[userReplies.length - 1];
+        return isLikelyThankYouMessage(latestUserReply?.content);
     };
 
     const reporterDirectory = useMemo(() => {
@@ -610,18 +653,77 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
             };
             const { error } = await supabase
                 .from('feedback')
-                .update({ status: 'closed', metadata: updatedMetadata })
+                .update({ metadata: updatedMetadata })
                 .eq('id', thread.id);
 
             if (error) throw error;
 
-            const updatedThread = { ...thread, status: 'closed' as const, metadata: updatedMetadata };
+            const updatedThread = { ...thread, metadata: updatedMetadata };
             setSelectedThread(updatedThread);
             setHistory(prev => sortThreadsByLatestActivity(prev.map(item => item.id === thread.id ? updatedThread : item)));
             toast.success('Marked as complete.');
         } catch (err) {
             console.error('Error marking feedback complete:', err);
             toast.error('Failed to mark item complete.');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleLockAway = async (thread: Feedback) => {
+        if (!isAdmin) return;
+
+        setSubmitting(true);
+        try {
+            const adminLockedAt = new Date().toISOString();
+            const updatedMetadata = {
+                ...(thread.metadata || {}),
+                admin_locked_at: adminLockedAt
+            };
+            const { error } = await supabase
+                .from('feedback')
+                .update({ metadata: updatedMetadata })
+                .eq('id', thread.id);
+
+            if (error) throw error;
+
+            const updatedThread = { ...thread, metadata: updatedMetadata };
+            setSelectedThread(updatedThread);
+            setHistory(prev => sortThreadsByLatestActivity(prev.map(item => item.id === thread.id ? updatedThread : item)));
+            toast.success('Thread locked away.');
+        } catch (err) {
+            console.error('Error locking thread:', err);
+            toast.error('Failed to lock away thread.');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleRestoreThread = async (thread: Feedback) => {
+        if (!isAdmin) return;
+
+        setSubmitting(true);
+        try {
+            const updatedMetadata = {
+                ...(thread.metadata || {})
+            };
+            delete updatedMetadata.admin_completed_at;
+            delete updatedMetadata.admin_locked_at;
+
+            const { error } = await supabase
+                .from('feedback')
+                .update({ metadata: updatedMetadata })
+                .eq('id', thread.id);
+
+            if (error) throw error;
+
+            const updatedThread = { ...thread, metadata: updatedMetadata };
+            setSelectedThread(updatedThread);
+            setHistory(prev => sortThreadsByLatestActivity(prev.map(item => item.id === thread.id ? updatedThread : item)));
+            toast.success('Thread restored.');
+        } catch (err) {
+            console.error('Error restoring thread:', err);
+            toast.error('Failed to restore thread.');
         } finally {
             setSubmitting(false);
         }
@@ -659,12 +761,20 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
         }
     };
 
-    const renderThreadCard = (item: Feedback, showNeedsAdminResponse: boolean) => {
+    const renderThreadCard = (item: Feedback) => {
         const latestReply = item.replies && item.replies.length > 0 ? item.replies[item.replies.length - 1] : null;
         const lastReadTime = parseInt(localStorage.getItem('habit_feedback_last_read') || '0');
         const hasNewReply = !!latestReply && latestReply.is_admin_reply && new Date(latestReply.created_at).getTime() > lastReadTime;
-        const awaitingAdmin = showNeedsAdminResponse && needsAdminResponse(item);
+        const bucket = getThreadBucket(item);
+        const awaitingAdmin = bucket === 'needs_response';
         const latestActivity = getLatestActivityTime(item);
+        const statusMeta = bucket === 'needs_response'
+            ? { label: 'Needs Response', classes: 'text-amber-700' }
+            : bucket === 'in_progress'
+                ? { label: 'In Progress', classes: 'text-sky-700' }
+                : bucket === 'completed'
+                    ? { label: 'Completed', classes: 'text-emerald-700' }
+                    : { label: 'Locked Away', classes: 'text-stone-600' };
 
         return (
             <div key={item.id} onClick={() => handleThreadSelect(item)} className="p-3 bg-white neo-border hover:bg-stone-50 cursor-pointer transition-colors group relative">
@@ -690,11 +800,13 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                 )}
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-dashed border-stone-200">
                     <div className="flex items-center gap-1.5">
-                        {awaitingAdmin ? (
-                            <span className="text-[9px] font-bold uppercase text-amber-700">Not Replied</span>
-                        ) : (
-                            <span className="text-[9px] font-bold uppercase text-green-600 flex items-center gap-1">
-                                <CheckCircle2 size={10} /> Replied
+                        <span className={`text-[9px] font-bold uppercase ${statusMeta.classes} flex items-center gap-1`}>
+                            {bucket === 'completed' && <CheckCircle2 size={10} />}
+                            {statusMeta.label}
+                        </span>
+                        {isLikelyThankYouThread(item) && bucket !== 'locked_away' && (
+                            <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[8px] font-black uppercase tracking-wide text-stone-500">
+                                Thanks-only
                             </span>
                         )}
                     </div>
@@ -915,38 +1027,70 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                                 <div className="space-y-3">
                                     <div className="p-2 bg-amber-50 neo-border">
                                         <div className="flex items-center justify-between mb-2">
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-amber-800">Not Replied</p>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-amber-800">Needs Response</p>
                                             <span className="text-[10px] font-bold text-amber-700">
-                                                {history.filter(needsAdminResponse).length}
+                                                {history.filter(item => getThreadBucket(item) === 'needs_response').length}
                                             </span>
                                         </div>
                                         <div className="space-y-2">
-                                            {history.filter(needsAdminResponse).length === 0 ? (
+                                            {history.filter(item => getThreadBucket(item) === 'needs_response').length === 0 ? (
                                                 <div className="p-3 bg-white neo-border text-[11px] text-stone-500">No messages waiting for a response.</div>
                                             ) : (
-                                                history.filter(needsAdminResponse).map(item => renderThreadCard(item, true))
+                                                history.filter(item => getThreadBucket(item) === 'needs_response').map(item => renderThreadCard(item))
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="p-2 bg-sky-50 neo-border">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-sky-800">In Progress</p>
+                                            <span className="text-[10px] font-bold text-sky-700">
+                                                {history.filter(item => getThreadBucket(item) === 'in_progress').length}
+                                            </span>
+                                        </div>
+                                        <div className="space-y-2">
+                                            {history.filter(item => getThreadBucket(item) === 'in_progress').length === 0 ? (
+                                                <div className="p-3 bg-white neo-border text-[11px] text-stone-500">No active threads in progress.</div>
+                                            ) : (
+                                                history.filter(item => getThreadBucket(item) === 'in_progress').map(item => renderThreadCard(item))
                                             )}
                                         </div>
                                     </div>
 
                                     <div className="p-2 bg-emerald-50 neo-border">
                                         <div className="flex items-center justify-between mb-2">
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-800">Replied</p>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-800">Completed</p>
                                             <span className="text-[10px] font-bold text-emerald-700">
-                                                {history.filter(item => !needsAdminResponse(item)).length}
+                                                {history.filter(item => getThreadBucket(item) === 'completed').length}
                                             </span>
                                         </div>
                                         <div className="space-y-2">
-                                            {history.filter(item => !needsAdminResponse(item)).length === 0 ? (
-                                                <div className="p-3 bg-white neo-border text-[11px] text-stone-500">No replied or closed messages yet.</div>
+                                            {history.filter(item => getThreadBucket(item) === 'completed').length === 0 ? (
+                                                <div className="p-3 bg-white neo-border text-[11px] text-stone-500">No completed threads yet.</div>
                                             ) : (
-                                                history.filter(item => !needsAdminResponse(item)).map(item => renderThreadCard(item, false))
+                                                history.filter(item => getThreadBucket(item) === 'completed').map(item => renderThreadCard(item))
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="p-2 bg-stone-100 neo-border">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-stone-700">Locked Away</p>
+                                            <span className="text-[10px] font-bold text-stone-600">
+                                                {history.filter(item => getThreadBucket(item) === 'locked_away').length}
+                                            </span>
+                                        </div>
+                                        <div className="space-y-2">
+                                            {history.filter(item => getThreadBucket(item) === 'locked_away').length === 0 ? (
+                                                <div className="p-3 bg-white neo-border text-[11px] text-stone-500">No locked-away threads.</div>
+                                            ) : (
+                                                history.filter(item => getThreadBucket(item) === 'locked_away').map(item => renderThreadCard(item))
                                             )}
                                         </div>
                                     </div>
                                 </div>
                             ) : (
-                                history.map(item => renderThreadCard(item, false))
+                                history.map(item => renderThreadCard(item))
                             )}
                         </div>
                     )}
@@ -984,9 +1128,9 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                             </span>
                             <span className="text-[10px] text-stone-400">{new Date(selectedThread.created_at).toLocaleString()}</span>
                         </div>
-                        {activeTab === 'admin' && (
+                                {activeTab === 'admin' && (
                             <div className="mt-2">
-                                {needsAdminResponse(selectedThread) ? (
+                                {getThreadBucket(selectedThread) !== 'completed' && (
                                     <button
                                         type="button"
                                         onClick={() => handleMarkComplete(selectedThread)}
@@ -995,10 +1139,26 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                                     >
                                         Mark Complete
                                     </button>
-                                ) : (
-                                    <span className="inline-flex px-2 py-1 border border-stone-300 bg-stone-100 text-[10px] font-black uppercase tracking-widest text-stone-500">
-                                        Completed
-                                    </span>
+                                )}
+                                {getThreadBucket(selectedThread) !== 'locked_away' ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleLockAway(selectedThread)}
+                                        disabled={submitting}
+                                        className="ml-2 px-2 py-1 border border-stone-300 bg-stone-100 text-[10px] font-black uppercase tracking-widest text-stone-700 hover:bg-stone-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        {isLikelyThankYouThread(selectedThread) ? 'Lock Away Thanks' : 'Lock Away'}
+                                    </button>
+                                ) : null}
+                                {(getThreadBucket(selectedThread) === 'completed' || getThreadBucket(selectedThread) === 'locked_away') && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRestoreThread(selectedThread)}
+                                        disabled={submitting}
+                                        className="ml-2 px-2 py-1 border border-sky-200 bg-sky-50 text-[10px] font-black uppercase tracking-widest text-sky-700 hover:bg-sky-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        Restore
+                                    </button>
                                 )}
                                 <button
                                     type="button"

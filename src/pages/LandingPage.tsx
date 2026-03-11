@@ -544,7 +544,7 @@ const InteractiveCard: React.FC = () => {
   };
 
   return (
-    <div className="pointer-events-none z-10 mx-auto h-[600px] w-full max-w-[320px] [perspective:1000px]">
+    <div className="pointer-events-none z-10 mx-auto h-[520px] w-full max-w-[280px] [perspective:1000px] sm:h-[560px] sm:max-w-[300px] md:h-[600px] md:max-w-[320px]">
       <AnimatePresence mode="wait">
         <motion.div
           key={activeTab}
@@ -552,26 +552,26 @@ const InteractiveCard: React.FC = () => {
           animate={{ rotateY: 0, opacity: 1 }}
           exit={{ rotateY: -90, opacity: 0 }}
           transition={{ duration: 0.3, ease: 'easeInOut' }}
-          className="landing-neo-shadow flex h-full w-full flex-col overflow-hidden rounded-2xl border-[4px] border-black bg-white"
+          className="landing-neo-shadow flex h-full w-full flex-col overflow-hidden rounded-[22px] border-[4px] border-black bg-white md:rounded-2xl"
         >
-          <div className="shrink-0 border-b-[4px] border-black bg-[#9cb4a4] p-5 text-center text-white">
-            <h2 className="text-3xl font-black uppercase tracking-wide drop-shadow-sm">Sunday</h2>
-            <p className="mt-1 text-sm font-bold opacity-90">Mar 8, 2026</p>
+          <div className="shrink-0 border-b-[4px] border-black bg-[#9cb4a4] p-4 text-center text-white md:p-5">
+            <h2 className="text-[1.7rem] font-black uppercase tracking-wide drop-shadow-sm md:text-3xl">Sunday</h2>
+            <p className="mt-1 text-xs font-bold opacity-90 md:text-sm">Mar 8, 2026</p>
           </div>
 
           {renderContent()}
 
           <div className="grid shrink-0 grid-cols-3 border-t-[4px] border-black bg-white">
-            <div className={`flex flex-col items-center justify-center border-r-[4px] border-black p-3 transition-colors ${activeTab === 'habits' ? 'bg-gray-100' : ''}`}>
-              <span className="mb-1 text-[10px] font-black tracking-wider text-gray-500">HABITS</span>
-              <span className="text-sm font-bold text-black">{completedHabits}/{totalHabits}</span>
+            <div className={`flex flex-col items-center justify-center border-r-[4px] border-black p-2.5 transition-colors md:p-3 ${activeTab === 'habits' ? 'bg-gray-100' : ''}`}>
+              <span className="mb-1 text-[9px] font-black tracking-wider text-gray-500 md:text-[10px]">HABITS</span>
+              <span className="text-xs font-bold text-black md:text-sm">{completedHabits}/{totalHabits}</span>
             </div>
-            <div className={`flex flex-col items-center justify-center border-r-[4px] border-black p-3 transition-colors ${activeTab === 'tasks' ? 'bg-gray-100' : ''}`}>
-              <span className="mb-1 text-[10px] font-black tracking-wider text-gray-500">TASKS</span>
-              <span className="text-sm font-bold text-black">{tasks.length > 0 ? tasks.length : '+'}</span>
+            <div className={`flex flex-col items-center justify-center border-r-[4px] border-black p-2.5 transition-colors md:p-3 ${activeTab === 'tasks' ? 'bg-gray-100' : ''}`}>
+              <span className="mb-1 text-[9px] font-black tracking-wider text-gray-500 md:text-[10px]">TASKS</span>
+              <span className="text-xs font-bold text-black md:text-sm">{tasks.length > 0 ? tasks.length : '+'}</span>
             </div>
-            <div className={`flex flex-col items-center justify-center p-3 transition-colors ${activeTab === 'journal' ? 'bg-gray-100' : ''}`}>
-              <span className="mb-1 text-[10px] font-black tracking-wider text-gray-500">JOURNAL</span>
+            <div className={`flex flex-col items-center justify-center p-2.5 transition-colors md:p-3 ${activeTab === 'journal' ? 'bg-gray-100' : ''}`}>
+              <span className="mb-1 text-[9px] font-black tracking-wider text-gray-500 md:text-[10px]">JOURNAL</span>
               <div className="flex items-center justify-center">
                 <selectedMood.icon size={16} strokeWidth={2.8} className="text-black" fill={selectedMood.color} />
               </div>
@@ -650,25 +650,25 @@ export const LandingPage: React.FC = () => {
         ['--landing-neo-bg' as string]: mixHex('#fcfbf7', theme.secondary, 0.12),
       }}
     >
-      <nav className="mx-auto flex max-w-7xl items-center justify-between gap-3 p-6">
+      <nav className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-5 sm:px-6">
         <div className="flex items-center">
-          <span className="text-3xl font-black uppercase tracking-tighter md:text-4xl">
+          <span className="text-[1.7rem] font-black uppercase tracking-tighter sm:text-3xl md:text-4xl">
             <span className="text-[#404040]">HABI</span>
             <span className="text-[#c59b97]">CARD</span>
           </span>
         </div>
-        <div className="flex items-center gap-2 md:hidden">
+        <div className="ml-auto flex items-center gap-2 md:hidden">
           <button
             type="button"
             onClick={() => setAuthModalMode('signin')}
-            className="inline-flex items-center justify-center rounded-full border-[3px] border-black bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-black transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+            className="inline-flex min-h-10 items-center justify-center rounded-full border-[3px] border-black bg-white px-3 py-2 text-[11px] font-black uppercase tracking-[0.1em] text-black transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
           >
             Log In
           </button>
           <button
             type="button"
             onClick={() => setAuthModalMode('signup')}
-            className="landing-neo-shadow-sm inline-flex items-center justify-center rounded-full border-[3px] border-black bg-[var(--landing-neo-yellow)] px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-black transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+            className="landing-neo-shadow-sm inline-flex min-h-10 items-center justify-center rounded-full border-[3px] border-black bg-[var(--landing-neo-yellow)] px-3 py-2 text-[11px] font-black uppercase tracking-[0.1em] text-black transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
           >
             Sign Up
           </button>
@@ -691,39 +691,39 @@ export const LandingPage: React.FC = () => {
         </div>
       </nav>
 
-      <main className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-6 pb-20 pt-8 md:pb-24 md:pt-14 lg:grid-cols-2 lg:gap-6">
+      <main className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-8 px-4 pb-16 pt-6 sm:px-6 md:pb-24 md:pt-14 lg:grid-cols-2 lg:gap-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="z-10 flex flex-col gap-8"
+          className="z-10 flex flex-col gap-6 md:gap-8"
         >
-          <div className="landing-neo-shadow-sm inline-flex w-fit items-center gap-2 rounded-full border-[3px] border-black bg-[var(--landing-neo-green)] px-4 py-2 text-sm font-bold uppercase tracking-wider text-white">
+          <div className="landing-neo-shadow-sm inline-flex w-fit items-center gap-2 rounded-full border-[3px] border-black bg-[var(--landing-neo-green)] px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] text-white sm:px-4 sm:text-sm">
             <Flame className="h-4 w-4" />
             <span>The #1 Habit Tracker</span>
           </div>
 
-          <h1 className="font-serif text-5xl font-black leading-[0.92] tracking-tighter md:text-7xl">
+          <h1 className="font-serif text-4xl font-black leading-[0.92] tracking-tighter sm:text-5xl md:text-7xl">
             BUILD <span className="text-[var(--landing-neo-pink)]">HABITS</span><br />
             THAT <span className="text-[var(--landing-neo-blue)]">STICK.</span>
           </h1>
 
-          <p className="max-w-lg text-lg font-medium leading-relaxed md:text-xl">
+          <p className="max-w-lg text-base font-medium leading-relaxed sm:text-lg md:text-xl">
             Stop breaking your streaks. HabiCard turns your daily goals into visual, satisfying cards that you actually want to complete.
           </p>
 
-          <div className="mt-4 flex flex-col flex-wrap gap-4 sm:flex-row">
+          <div className="mt-2 flex flex-col flex-wrap gap-3 sm:mt-4 sm:flex-row sm:gap-4">
             <button
               type="button"
               onClick={() => setAuthModalMode('signup')}
-              className="landing-neo-shadow inline-flex items-center justify-center gap-3 rounded-xl border-[3px] border-black bg-[var(--landing-neo-yellow)] px-8 py-4 text-xl font-black text-black transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+              className="landing-neo-shadow inline-flex items-center justify-center gap-3 rounded-xl border-[3px] border-black bg-[var(--landing-neo-yellow)] px-6 py-4 text-lg font-black text-black transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] sm:px-8 sm:text-xl"
             >
               Start for Free <ArrowRight className="h-6 w-6" />
             </button>
           </div>
 
-          <div className="mt-4 flex items-center gap-4 text-sm font-bold">
-            <div className="flex -space-x-3">
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-sm font-bold sm:mt-4 sm:gap-4">
+            <div className="flex shrink-0 -space-x-3">
               {[
                 'var(--landing-neo-pink)',
                 'var(--landing-neo-blue)',
@@ -740,11 +740,11 @@ export const LandingPage: React.FC = () => {
                 </div>
               ))}
             </div>
-            <p>Join <span className="text-[var(--landing-neo-orange)] text-lg">900+</span> habit builders</p>
+            <p className="leading-tight">Join <span className="text-[var(--landing-neo-orange)] text-lg">900+</span> habit builders</p>
           </div>
         </motion.div>
 
-        <div className="relative flex h-[450px] w-full items-center justify-center [perspective:1000px]">
+        <div className="relative flex h-[560px] w-full items-center justify-center px-2 [perspective:1000px] sm:h-[430px] sm:px-0 md:h-[450px]">
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
@@ -759,8 +759,8 @@ export const LandingPage: React.FC = () => {
         </div>
       </main>
 
-      <section id="features" className="border-y-4 border-black bg-black py-20 text-white">
-        <div className="mx-auto max-w-7xl px-6">
+      <section id="features" className="border-y-4 border-black bg-black py-16 text-white sm:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
             {[
               {
@@ -803,21 +803,21 @@ export const LandingPage: React.FC = () => {
       <YearInReview />
       <StorySection />
 
-      <section className="relative overflow-hidden bg-[var(--landing-neo-pink)] px-6 py-32">
+      <section className="relative overflow-hidden bg-[var(--landing-neo-pink)] px-4 py-20 sm:px-6 sm:py-32">
         <div className="pointer-events-none absolute inset-0 flex flex-col justify-center overflow-hidden opacity-10">
           <h2 className="font-serif text-[15vw] font-black leading-none whitespace-nowrap">HABICARD HABICARD</h2>
           <h2 className="font-serif -ml-32 text-[15vw] font-black leading-none whitespace-nowrap">HABICARD HABICARD</h2>
         </div>
 
-        <div className="landing-neo-shadow relative z-10 mx-auto max-w-4xl rounded-3xl border-[3px] border-black bg-white p-12 text-center md:p-20">
-          <h2 className="mb-6 font-serif text-5xl font-black md:text-7xl">Ready to level up?</h2>
-          <p className="mx-auto mb-10 max-w-2xl text-xl font-medium md:text-2xl">
+        <div className="landing-neo-shadow relative z-10 mx-auto max-w-4xl rounded-3xl border-[3px] border-black bg-white p-8 text-center sm:p-12 md:p-20">
+          <h2 className="mb-6 font-serif text-4xl font-black sm:text-5xl md:text-7xl">Ready to level up?</h2>
+          <p className="mx-auto mb-8 max-w-2xl text-lg font-medium sm:mb-10 sm:text-xl md:text-2xl">
             Join 900+ users who have transformed their daily routines with HabiCard.
           </p>
           <button
             type="button"
             onClick={() => setAuthModalMode('signup')}
-            className="inline-flex items-center justify-center gap-3 rounded-xl border-[3px] border-black bg-black px-10 py-5 text-2xl font-black text-white transition-all hover:-translate-y-1 hover:bg-[var(--landing-neo-yellow)] hover:text-black hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
+            className="inline-flex items-center justify-center gap-3 rounded-xl border-[3px] border-black bg-black px-6 py-4 text-lg font-black text-white transition-all hover:-translate-y-1 hover:bg-[var(--landing-neo-yellow)] hover:text-black hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] sm:px-10 sm:py-5 sm:text-2xl"
           >
             Get HabiCard Now <ArrowRight className="h-8 w-8" />
           </button>

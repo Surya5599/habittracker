@@ -650,20 +650,36 @@ export const LandingPage: React.FC = () => {
         ['--landing-neo-bg' as string]: mixHex('#fcfbf7', theme.secondary, 0.12),
       }}
     >
-      <nav className="mx-auto flex max-w-7xl items-center justify-between p-6">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between gap-3 p-6">
         <div className="flex items-center">
           <span className="text-3xl font-black uppercase tracking-tighter md:text-4xl">
             <span className="text-[#404040]">HABI</span>
             <span className="text-[#c59b97]">CARD</span>
           </span>
         </div>
+        <div className="flex items-center gap-2 md:hidden">
+          <button
+            type="button"
+            onClick={() => setAuthModalMode('signin')}
+            className="inline-flex items-center justify-center rounded-full border-[3px] border-black bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-black transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+          >
+            Log In
+          </button>
+          <button
+            type="button"
+            onClick={() => setAuthModalMode('signup')}
+            className="landing-neo-shadow-sm inline-flex items-center justify-center rounded-full border-[3px] border-black bg-[var(--landing-neo-yellow)] px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-black transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+          >
+            Sign Up
+          </button>
+        </div>
         <div className="hidden items-center gap-3 md:flex">
           <button
             type="button"
             onClick={() => setAuthModalMode('signin')}
-            className="items-center gap-2 text-lg font-bold hover:underline decoration-4 underline-offset-4"
+            className="inline-flex items-center gap-2 text-lg font-bold hover:underline decoration-4 underline-offset-4"
           >
-          Log In
+            Log In
           </button>
           <button
             type="button"

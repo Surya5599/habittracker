@@ -159,20 +159,9 @@ export const MainScreen = ({
                 return;
             }
 
-            let deleteError = null;
             const fnResult = await supabase.functions.invoke('delete-account', { body: { userId: userIdValue } });
             if (fnResult.error) {
-                deleteError = fnResult.error;
-                const rpcResult = await supabase.rpc('delete_user_account');
-                if (rpcResult.error) {
-                    deleteError = rpcResult.error;
-                } else {
-                    deleteError = null;
-                }
-            }
-
-            if (deleteError) {
-                throw deleteError;
+                throw fnResult.error;
             }
 
             await clearLocalAppData();

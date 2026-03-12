@@ -1,8 +1,9 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "HabiCard",
+    "slug": "habicard",
     "version": "1.0.0",
+    "scheme": "habicard",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -13,14 +14,18 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.suryasingh.habicard",
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.suryasingh.habicard",
+      "versionCode": 1
     },
     "web": {
       "favicon": "./assets/favicon.png"

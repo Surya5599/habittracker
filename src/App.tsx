@@ -31,6 +31,7 @@ import { SearchModal } from './components/SearchModal';
 import { MonthlyTabSurveyModal } from './components/MonthlyTabSurveyModal';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
 import { LandingPage } from './pages/LandingPage';
+import { isBenignAuthError } from './utils/authErrors';
 
 const ADMIN_EMAILS = ((import.meta.env.VITE_ADMIN_EMAILS as string | undefined) || 'admin@habicard.com,knowheredeveloper@gmail.com')
   .split(',')
@@ -1198,7 +1199,16 @@ const AppContent: React.FC = () => {
   const handleLogout = async () => {
     try {
       setLoading(true);
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        if (isBenignAuthError(error)) {
+          await supabase.auth.signOut({ scope: 'local' });
+        } else {
+          throw error;
+        }
+      }
+
       setSession(null);
       setGuestMode(false);
       localStorage.removeItem('habit_guest_mode');

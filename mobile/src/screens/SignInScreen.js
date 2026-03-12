@@ -11,9 +11,59 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [isResetMode, setIsResetMode] = useState(false);
+
     const isInvalidRefreshTokenError = (error) => {
         const message = (error?.message || '').toLowerCase();
         return message.includes('invalid refresh token') || message.includes('refresh token not found');
+    };
+
+    const isExistingAccountError = (message = '') => {
+        const normalized = message.toLowerCase();
+        return normalized.includes('already registered')
+            || normalized.includes('already exists')
+            || normalized.includes('user already registered');
+    };
+
+    const isWrongPasswordError = (message = '') => {
+        const normalized = message.toLowerCase();
+        return normalized.includes('invalid login credentials')
+            || normalized.includes('invalid password')
+            || normalized.includes('wrong password');
+    };
+
+    const lookupEmailStatus = async (candidateEmail) => {
+        const { data, error } = await supabase.functions.invoke('auth-email-status', {
+            body: { email: candidateEmail }
+        });
+
+        if (error) throw error;
+
+        return {
+            exists: Boolean(data?.exists),
+            confirmed: Boolean(data?.confirmed),
+        };
+    };
+
+    const getFriendlyAuthMessage = (error, fallbackKey = 'auth.genericError') => {
+        const message = String(error?.message || '').toLowerCase();
+
+        if (isInvalidRefreshTokenError(error)) {
+            return t('auth.sessionExpired');
+        }
+
+        if (message.includes('email not confirmed')) {
+            return t('auth.checkEmail');
+        }
+
+        if (isWrongPasswordError(message)) {
+            return t('auth.incorrectPassword');
+        }
+
+        if (isExistingAccountError(message)) {
+            return t('auth.accountExists');
+        }
+
+        return t(fallbackKey);
     };
 
     const handleContinueAsGuest = () => {
@@ -31,11 +81,7 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
         if (isResetMode) {
             const { error } = await supabase.auth.resetPasswordForEmail(email);
             if (error) {
-                if (isInvalidRefreshTokenError(error)) {
-                    Alert.alert('Error', 'Session expired. Please sign in again.');
-                } else {
-                    Alert.alert('Error', error.message);
-                }
+                Alert.alert('Error', getFriendlyAuthMessage(error, 'auth.resetFailed'));
             }
             else Alert.alert('Success', t('auth.resetSent'));
             setLoading(false);
@@ -48,25 +94,54 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
             return;
         }
 
-        // 1. Try Login first
+        // Try logging in first. Only show the confirmation prompt when the account is truly unconfirmed.
         const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
 
         if (!loginError) {
-            // success, App.js should handle session change automatically via onAuthStateChange
-            // But we might need to manually trigger loading state if needed
             setLoading(false);
             return;
         }
 
-        // 2. If login fails, try Sign Up
+        if (loginError.message.toLowerCase().includes('email not confirmed')) {
+            Alert.alert('Info', t('auth.checkEmail'));
+            setLoading(false);
+            return;
+        }
+
+        if (isWrongPasswordError(loginError.message)) {
+            try {
+                const status = await lookupEmailStatus(email);
+                if (status.exists && !status.confirmed) {
+                    Alert.alert('Info', t('auth.checkEmail'));
+                } else {
+                    Alert.alert('Error', t('auth.incorrectPassword'));
+                }
+            } catch {
+                Alert.alert('Error', t('auth.incorrectPassword'));
+            }
+            setLoading(false);
+            return;
+        }
+
+        // If login failed because the account might not exist, try sign up.
         const { error: signUpError, data: signUpData } = await supabase.auth.signUp({ email, password });
 
         if (!signUpError) {
+            if (signUpData?.user && Array.isArray(signUpData.user.identities) && signUpData.user.identities.length === 0) {
+                Alert.alert('Error', getFriendlyAuthMessage(loginError));
+                setLoading(false);
+                return;
+            }
+
             if (!signUpData?.session) {
-                // Maybe just signed up but requires email confirmation?
-                // Try checking if we can sign in now (sometimes signup auto-logs in)
-                const { error: retryError } = await supabase.auth.signInWithPassword({ email, password });
-                if (retryError) {
+                try {
+                    const status = await lookupEmailStatus(email);
+                    if (status.exists && !status.confirmed) {
+                        Alert.alert('Info', t('auth.checkEmail'));
+                    } else {
+                        Alert.alert('Error', getFriendlyAuthMessage(loginError));
+                    }
+                } catch {
                     Alert.alert('Info', t('auth.checkEmail'));
                 }
             }
@@ -74,18 +149,10 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
             return;
         }
 
-        if (signUpError.message.toLowerCase().includes('already registered')) {
-            if (isInvalidRefreshTokenError(loginError)) {
-                Alert.alert('Error', 'Session expired. Please sign in again.');
-            } else {
-                Alert.alert('Error', loginError.message); // Show original login error
-            }
+        if (isExistingAccountError(signUpError.message)) {
+            Alert.alert('Error', getFriendlyAuthMessage(loginError));
         } else {
-            if (isInvalidRefreshTokenError(signUpError)) {
-                Alert.alert('Error', 'Session expired. Please sign in again.');
-            } else {
-                Alert.alert('Error', signUpError.message);
-            }
+            Alert.alert('Error', getFriendlyAuthMessage(signUpError));
         }
 
         setLoading(false);

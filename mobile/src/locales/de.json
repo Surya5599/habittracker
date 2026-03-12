@@ -20,6 +20,46 @@
         "support": {
             "title": "Support",
             "reportBug": "Fehler melden oder Vorschlag"
+        },
+        "appearance": {
+            "title": "Darstellung",
+            "light": "Hell",
+            "dark": "Dunkel"
+        },
+        "cardSize": {
+            "title": "Kartengrosse",
+            "compact": "Kompakt",
+            "large": "Gross"
+        },
+        "whatsNew": {
+            "title": "Neuigkeiten",
+            "tutorial": "Tutorial"
+        },
+        "onboardingEntry": {
+            "title": "Tutorial",
+            "open": "Offnen"
+        },
+        "privacy": {
+            "title": "Datenschutz",
+            "policy": "Richtlinie"
+        },
+        "account": {
+            "delete": "Konto loschen",
+            "noSession": "Keine Kontositzung gefunden.",
+            "deleteFailed": "Loschen fehlgeschlagen",
+            "unableDelete": "Das Konto konnte derzeit nicht geloscht werden.",
+            "prompts": {
+                "confirmTitle": "Konto loschen?",
+                "confirmBody": "Dadurch werden Ihr Konto und Ihre Daten dauerhaft entfernt.",
+                "sureTitle": "Sind Sie absolut sicher?",
+                "sureBody": "Diese Aktion kann nicht ruckgangig gemacht werden.",
+                "keep": "Konto behalten",
+                "forever": "Endgultig loschen"
+            }
+        },
+        "errors": {
+            "title": "Fehler",
+            "unableSignOut": "Abmelden nicht moglich"
         }
     },
     "header": {
@@ -262,5 +302,90 @@
         "insight": "Einblick",
         "mockTitle": "Muster & Energie",
         "mockContent": "Sie neigen dazu, mehr Gewohnheiten an Tagen zu erledigen, an denen Sie früh morgens eine \"produktive\" Stimmung aufzeichnen. Ihre Beständigkeit beim \"Lesen\" hat sich diese Woche um 15% verbessert."
+    },
+    "onboarding": {
+        "badge": "Tutorial",
+        "step": "Schritt",
+        "back": "Zuruck",
+        "next": "Weiter",
+        "finish": "Fertig",
+        "saving": "Speichern...",
+        "steps": {
+            "language": {
+                "title": "Sprache wahlen",
+                "subtitle": "Lege deine App-Sprache fest. Du kannst sie spater in den Einstellungen andern."
+            },
+            "theme": {
+                "title": "Farbe wahlen",
+                "subtitle": "Wahle dieselbe HabiCard-Farbkombination wie in der App."
+            },
+            "cardStyle": {
+                "title": "Kartengrosse wahlen",
+                "subtitle": "Sieh dir beide Kartenstile an und wahle deinen Standardstil."
+            },
+            "habitsDemo": {
+                "title": "Gewohnheiten an einem Ort",
+                "subtitle": "Hake alle deine Gewohnheiten an einem Ort ab."
+            },
+            "tasksDemo": {
+                "title": "Aufgaben einfach",
+                "subtitle": "Erstelle Aufgaben und hake sie ab, sobald du fertig bist."
+            },
+            "journalDemo": {
+                "title": "Jeden Tag schreiben",
+                "subtitle": "Aktualisiere dein tagliches Tagebuch im gleichen Kartenfluss."
+            },
+            "weekStart": {
+                "title": "Wochenstart",
+                "subtitle": "Wahle, ob deine Woche am Sonntag oder Montag beginnt."
+            }
+        },
+        "languageTitle": "Sprache",
+        "cardStyleTitle": "Kartengrosse",
+        "cardStyleLabels": {
+            "compact": "Kompakt",
+            "large": "Gross"
+        },
+        "habits": [
+            "Sport",
+            "Wasser trinken",
+            "10 Seiten lesen",
+            "Meditieren",
+            "Morgen planen"
+        ],
+        "taskSamples": [
+            "Morgen planen",
+            "Ziele prufen"
+        ],
+        "journalSample": "Hier kannst du in dein Tagebuch schreiben.",
+        "sampleDay": "Donnerstag",
+        "cardStyleDescriptions": {
+            "compact": "Kleines Fortschritts-Badge im Kopfbereich.",
+            "large": "Grosses Tagesfortschrittsfeld unter dem Datum."
+        },
+        "themeNames": {
+            "sageRose": "Salbei und Rose",
+            "oceanSky": "Ozean und Himmel",
+            "sunsetClay": "Sonnenuntergang und Ton",
+            "lavenderSlate": "Lavendel und Schiefer",
+            "forestEarth": "Wald und Erde",
+            "peachMint": "Pfirsich und Minze",
+            "lilacCream": "Flieder und Creme",
+            "dustyBlueMauve": "Staubblau und Mauve",
+            "coralSand": "Koralle und Sand",
+            "mintBlush": "Minze und Rosaton",
+            "honeyFog": "Honig und Nebel",
+            "plumSage": "Pflaume und Salbei",
+            "monochrome": "Monochrom"
+        },
+        "weekStartOptions": {
+            "sun": "SO",
+            "mon": "MO"
+        },
+        "habitInstructions": {
+            "tap": "Tippe, um eine Gewohnheit abzuhaken",
+            "hold": "Gedruckt halten, um die Gewohnheit zu uberspringen",
+            "empty": "Leer lassen, wenn du sie verpasst hast"
+        }
     }
 }

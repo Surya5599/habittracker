@@ -20,6 +20,46 @@
         "support": {
             "title": "Support",
             "reportBug": "Signaler un bug ou une suggestion"
+        },
+        "appearance": {
+            "title": "Apparence",
+            "light": "Clair",
+            "dark": "Sombre"
+        },
+        "cardSize": {
+            "title": "Taille de carte",
+            "compact": "Compact",
+            "large": "Grand"
+        },
+        "whatsNew": {
+            "title": "Nouveautes",
+            "tutorial": "Tutoriel"
+        },
+        "onboardingEntry": {
+            "title": "Tutoriel",
+            "open": "Ouvrir"
+        },
+        "privacy": {
+            "title": "Confidentialite",
+            "policy": "Politique"
+        },
+        "account": {
+            "delete": "Supprimer le compte",
+            "noSession": "Aucune session de compte trouvee.",
+            "deleteFailed": "Echec de suppression",
+            "unableDelete": "Impossible de supprimer le compte pour le moment.",
+            "prompts": {
+                "confirmTitle": "Supprimer le compte ?",
+                "confirmBody": "Cela supprime definitivement votre compte et vos donnees.",
+                "sureTitle": "Etes-vous absolument sur ?",
+                "sureBody": "Cette action est irreversible.",
+                "keep": "Conserver le compte",
+                "forever": "Supprimer definitivement"
+            }
+        },
+        "errors": {
+            "title": "Erreur",
+            "unableSignOut": "Impossible de se deconnecter"
         }
     },
     "header": {
@@ -263,5 +303,90 @@
         "insight": "Insight",
         "mockTitle": "Modèles et Énergie",
         "mockContent": "Vous avez tendance à compléter plus d'habitudes les jours où vous enregistrez une humeur \"productive\" tôt le matin. Votre cohérence avec la \"Lecture\" s'est améliorée de 15% cette semaine."
+    },
+    "onboarding": {
+        "badge": "Tutoriel",
+        "step": "Etape",
+        "back": "Retour",
+        "next": "Suivant",
+        "finish": "Terminer",
+        "saving": "Enregistrement...",
+        "steps": {
+            "language": {
+                "title": "Choisir la langue",
+                "subtitle": "Definissez la langue de l application. Vous pourrez la changer plus tard dans les reglages."
+            },
+            "theme": {
+                "title": "Choisir la couleur",
+                "subtitle": "Choisissez la meme palette HabiCard utilisee dans l application."
+            },
+            "cardStyle": {
+                "title": "Choisir la taille de carte",
+                "subtitle": "Previsualisez les deux styles de carte et choisissez celui par defaut."
+            },
+            "habitsDemo": {
+                "title": "Habitudes au meme endroit",
+                "subtitle": "Cochez toutes vos habitudes au meme endroit."
+            },
+            "tasksDemo": {
+                "title": "Taches simplifiees",
+                "subtitle": "Creez des taches et cochez-les quand elles sont terminees."
+            },
+            "journalDemo": {
+                "title": "Ecrire chaque jour",
+                "subtitle": "Mettez a jour votre journal quotidien dans le meme flux de carte."
+            },
+            "weekStart": {
+                "title": "Debut de semaine",
+                "subtitle": "Choisissez si votre semaine commence le dimanche ou le lundi."
+            }
+        },
+        "languageTitle": "Langue",
+        "cardStyleTitle": "Taille de carte",
+        "cardStyleLabels": {
+            "compact": "Compact",
+            "large": "Grand"
+        },
+        "habits": [
+            "Exercice",
+            "Boire de l eau",
+            "Lire 10 pages",
+            "Mediter",
+            "Planifier demain"
+        ],
+        "taskSamples": [
+            "Planifier demain",
+            "Revoir les objectifs"
+        ],
+        "journalSample": "Vous pouvez ecrire dans le journal ici.",
+        "sampleDay": "Jeudi",
+        "cardStyleDescriptions": {
+            "compact": "Petit badge de progression dans l en-tete.",
+            "large": "Grand panneau de progression du jour sous la date."
+        },
+        "themeNames": {
+            "sageRose": "Sauge et Rose",
+            "oceanSky": "Ocean et Ciel",
+            "sunsetClay": "Coucher et Terre",
+            "lavenderSlate": "Lavande et Ardoise",
+            "forestEarth": "Foret et Terre",
+            "peachMint": "Peche et Menthe",
+            "lilacCream": "Lilas et Creme",
+            "dustyBlueMauve": "Bleu Poudre et Mauve",
+            "coralSand": "Corail et Sable",
+            "mintBlush": "Menthe et Blush",
+            "honeyFog": "Miel et Brume",
+            "plumSage": "Prune et Sauge",
+            "monochrome": "Monochrome"
+        },
+        "weekStartOptions": {
+            "sun": "DIM",
+            "mon": "LUN"
+        },
+        "habitInstructions": {
+            "tap": "Touchez pour cocher une habitude",
+            "hold": "Maintenez pour ignorer l habitude",
+            "empty": "Laissez vide si vous l avez manquee"
+        }
     }
 }

@@ -1,16 +1,18 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Dimensions, Modal, PanResponder } from 'react-native';
 import tw from 'twrnc';
-import { ChevronLeft, ChevronRight, Settings, Check, Zap, Trophy, Target } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Settings, Check, Zap, Trophy, Target, X } from 'lucide-react-native';
 import Svg, { Path, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
 import { buildWeeklyStory, buildMonthlyStory, buildAnnualStory } from '../utils/storyGenerator';
 import { AnalyticsDashboard, HardShadowCardLocal } from '../components/AnalyticsDashboard';
 
 import { getHabitMonthStats } from '../utils/stats';
+import { safePercentage } from '../utils/progressMath';
 import { DatePickerModal } from '../components/DatePickerModal';
 import { MonthYearPickerModal } from '../components/MonthYearPickerModal';
 import { WeeklyCard } from '../components/WeeklyCard';
+import { DailyCard } from '../components/DailyCard';
 
 
 export const DashboardView = ({
@@ -23,8 +25,12 @@ export const DashboardView = ({
     completions,
     notes,
     toggleCompletion,
+    toggleHabitInactive,
+    isHabitInactive,
+    updateNote,
     weekStart = 'MON',
-    colorMode = 'light'
+    colorMode = 'light',
+    cardStyle = 'compact'
 }) => {
     const { t, i18n } = useTranslation();
     const [analyticsView, setAnalyticsView] = React.useState('WEEK'); // WEEK, MONTH, YEAR
@@ -34,14 +40,37 @@ export const DashboardView = ({
     const [pickerMode, setPickerMode] = React.useState('both'); // 'both' or 'year'
 
     const today = new Date();
-    const isHabitStartedByDate = React.useCallback((habit, date) => {
-        if (!habit?.createdAt) return true;
-        const createdDate = new Date(habit.createdAt);
-        createdDate.setHours(0, 0, 0, 0);
+    const isHabitActiveOnDate = React.useCallback((habit, date) => {
         const target = new Date(date);
         target.setHours(0, 0, 0, 0);
-        return target >= createdDate;
-    }, []);
+
+        if (habit?.createdAt) {
+            const createdDate = new Date(habit.createdAt);
+            createdDate.setHours(0, 0, 0, 0);
+            if (target < createdDate) return false;
+        }
+
+        if (habit?.archivedAt) {
+            const archivedDate = new Date(habit.archivedAt);
+            archivedDate.setHours(0, 0, 0, 0);
+            if (target > archivedDate) return false;
+        }
+
+        const dateKey = `${target.getFullYear()}-${String(target.getMonth() + 1).padStart(2, '0')}-${String(target.getDate()).padStart(2, '0')}`;
+        const dayData = notes?.[dateKey];
+        if (dayData && !Array.isArray(dayData) && Array.isArray(dayData.inactiveHabits) && dayData.inactiveHabits.includes(habit.id)) {
+            return false;
+        }
+
+        return true;
+    }, [notes]);
+
+    // Match web daily percentage logic: only daily (non-flexible), due, and active habits.
+    const isDailyHabitDueOnDate = React.useCallback((habit, date) => {
+        if (habit?.weeklyTarget) return false;
+        if (!isHabitActiveOnDate(habit, date)) return false;
+        return !habit.frequency || habit.frequency.includes(date.getDay());
+    }, [isHabitActiveOnDate]);
 
     // Mood Data Calculations
     const weeklyMoodData = React.useMemo(() => {
@@ -180,18 +209,19 @@ export const DashboardView = ({
             const currentDate = new Date(currentYear, currentMonth, d);
             habits.forEach(h => {
                 const dateKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                if (!isHabitStartedByDate(h, currentDate)) return;
+                if (!isDailyHabitDueOnDate(h, currentDate)) return;
                 if (completions[h.id]?.[dateKey]) dailyCount++;
             });
 
             const dayOfWeek = currentDate.getDay();
-            const possibleToday = habits.filter(h => isHabitStartedByDate(h, currentDate) && (!h.frequency || h.frequency.includes(dayOfWeek))).length;
-            const percentageToday = possibleToday > 0 ? Math.round((dailyCount / possibleToday) * 100) : 0;
+            const possibleToday = habits.filter(h => isDailyHabitDueOnDate(h, currentDate) && (!h.frequency || h.frequency.includes(dayOfWeek))).length;
+            const percentageToday = safePercentage(dailyCount, possibleToday);
 
             chartData.push({
                 label: d,
                 value: dailyCount,
-                percentage: percentageToday
+                percentage: percentageToday,
+                date: new Date(currentYear, currentMonth, d)
             });
 
             // For story
@@ -230,7 +260,47 @@ export const DashboardView = ({
             year: currentYear,
             totalPossible: totalPossibleInMonth
         };
-    }, [habits, completions, monthOffset, weekStart, i18n.language, t]);
+    }, [habits, completions, monthOffset, weekStart, i18n.language, t, isDailyHabitDueOnDate]);
+
+    const previousMonthComparison = React.useMemo(() => {
+        const baseDate = new Date(today.getFullYear(), today.getMonth() + monthOffset - 1, 1);
+        const year = baseDate.getFullYear();
+        const month = baseDate.getMonth();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        const series = [];
+        let completedTotal = 0;
+        let possibleTotal = 0;
+
+        for (let d = 1; d <= daysInMonth; d++) {
+            const currentDate = new Date(year, month, d);
+            const dayOfWeek = currentDate.getDay();
+            const dueHabits = habits.filter((h) => isDailyHabitDueOnDate(h, currentDate) && (!h.frequency || h.frequency.includes(dayOfWeek)));
+            const possible = dueHabits.length;
+
+            let completed = 0;
+            dueHabits.forEach((h) => {
+                const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                if (completions[h.id]?.[dateKey]) completed += 1;
+            });
+
+            completedTotal += completed;
+            possibleTotal += possible;
+            series.push({
+                label: String(d),
+                value: completed,
+                date: new Date(currentDate)
+            });
+        }
+
+        return {
+            series,
+            percentage: safePercentage(completedTotal, possibleTotal),
+            completed: completedTotal,
+            total: possibleTotal,
+            monthLabel: baseDate.toLocaleString(i18n.language, { month: 'short' }).toUpperCase()
+        };
+    }, [completions, habits, i18n.language, isDailyHabitDueOnDate, monthOffset]);
 
 
     // Annual Data Refined for Dashboard
@@ -313,6 +383,8 @@ export const DashboardView = ({
 
     }, [habits, completions, yearOffset, i18n.language, t]);
     const [showDatePicker, setShowDatePicker] = React.useState(false);
+    const [detailDate, setDetailDate] = React.useState(null);
+    const swipeLockRef = React.useRef(false);
 
     const onDateSelect = (selectedDate) => {
         // Calculate offset from today
@@ -380,7 +452,7 @@ export const DashboardView = ({
 
             // Check total possible habits for this specific day
             const dayOfWeek = d.getDay(); // 0-6
-            const possibleHabits = habits.filter(h => isHabitStartedByDate(h, d) && (!h.frequency || h.frequency.includes(dayOfWeek)));
+            const possibleHabits = habits.filter(h => isDailyHabitDueOnDate(h, d) && (!h.frequency || h.frequency.includes(dayOfWeek)));
             const totalPossible = possibleHabits.length;
 
             // Count completed
@@ -394,11 +466,99 @@ export const DashboardView = ({
 
             return {
                 day: dayName,
-                percentage: totalPossible > 0 ? Math.round((completed / totalPossible) * 100) : 0,
-                isToday: d.toDateString() === today.toDateString()
+                percentage: safePercentage(completed, totalPossible),
+                isToday: d.toDateString() === today.toDateString(),
+                date: new Date(d)
             };
         });
-    }, [habits, completions, weekOffset, weekStart, i18n.language]);
+    }, [habits, completions, weekOffset, weekStart, i18n.language, isDailyHabitDueOnDate]);
+
+    const previousWeekComparison = React.useMemo(() => {
+        const previousOffset = weekOffset - 1;
+        const base = new Date(today);
+        const baseDay = today.getDay();
+        const baseDiff = weekStart === 'SUN'
+            ? today.getDate() - baseDay + (previousOffset * 7)
+            : today.getDate() - (baseDay === 0 ? 6 : baseDay - 1) + (previousOffset * 7);
+        base.setDate(baseDiff);
+
+        let completedTotal = 0;
+        let possibleTotal = 0;
+
+        const series = Array.from({ length: 7 }).map((_, index) => {
+            const d = new Date(base);
+            d.setDate(base.getDate() + index);
+            const dayOfWeek = d.getDay();
+            const dueHabits = habits.filter((h) => isDailyHabitDueOnDate(h, d) && (!h.frequency || h.frequency.includes(dayOfWeek)));
+            const totalPossible = dueHabits.length;
+
+            let completed = 0;
+            dueHabits.forEach((h) => {
+                const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                if (completions[h.id]?.[dateKey]) completed += 1;
+            });
+
+            completedTotal += completed;
+            possibleTotal += totalPossible;
+
+            return {
+                label: d.toLocaleDateString(i18n.language, { weekday: 'short' }),
+                value: completed,
+                date: new Date(d)
+            };
+        });
+
+        const percentage = safePercentage(completedTotal, possibleTotal);
+        return {
+            series,
+            completed: completedTotal,
+            total: possibleTotal,
+            percentage
+        };
+    }, [completions, habits, i18n.language, isDailyHabitDueOnDate, weekOffset, weekStart]);
+
+    const handleRetrospectiveDayPress = (selectedDate) => {
+        if (!selectedDate) return;
+        const normalized = new Date(selectedDate);
+        if (Number.isNaN(normalized.getTime())) return;
+        normalized.setHours(0, 0, 0, 0);
+        setDetailDate(normalized);
+    };
+
+    const handleAnalyticsSwipe = React.useCallback((dx) => {
+        // Left swipe -> next period, Right swipe -> previous period
+        if (dx < 0) {
+            if (analyticsView === 'WEEK') setWeekOffset((prev) => prev + 1);
+            else if (analyticsView === 'MONTH') setMonthOffset((prev) => prev + 1);
+            else setYearOffset((prev) => prev + 1);
+        } else {
+            if (analyticsView === 'WEEK') setWeekOffset((prev) => prev - 1);
+            else if (analyticsView === 'MONTH') setMonthOffset((prev) => prev - 1);
+            else setYearOffset((prev) => prev - 1);
+        }
+    }, [analyticsView, setWeekOffset]);
+
+    const analyticsSwipeResponder = React.useMemo(() => PanResponder.create({
+        onStartShouldSetPanResponder: () => false,
+        onMoveShouldSetPanResponder: (_, gestureState) => {
+            const absDx = Math.abs(gestureState.dx);
+            const absDy = Math.abs(gestureState.dy);
+            return !swipeLockRef.current && absDx > 18 && absDx > absDy * 1.3;
+        },
+        onPanResponderRelease: (_, gestureState) => {
+            if (swipeLockRef.current) return;
+            const absDx = Math.abs(gestureState.dx);
+            if (absDx < 42) return;
+            swipeLockRef.current = true;
+            handleAnalyticsSwipe(gestureState.dx);
+            setTimeout(() => {
+                swipeLockRef.current = false;
+            }, 220);
+        },
+        onPanResponderTerminate: () => {
+            swipeLockRef.current = false;
+        }
+    }), [handleAnalyticsSwipe]);
 
 
     // Calculate days elapsed in the current view's week
@@ -464,9 +624,15 @@ export const DashboardView = ({
     const secondaryColor = theme.secondary;
 
     const isDark = colorMode === 'dark';
+    const detailDateKey = detailDate
+        ? `${detailDate.getFullYear()}-${String(detailDate.getMonth() + 1).padStart(2, '0')}-${String(detailDate.getDate()).padStart(2, '0')}`
+        : null;
 
     return (
-        <View style={[tw`flex-1`, { backgroundColor: isDark ? '#000000' : '#f3f4f6' }]}>
+        <View
+            style={[tw`flex-1`, { backgroundColor: isDark ? '#000000' : '#f3f4f6' }]}
+            {...analyticsSwipeResponder.panHandlers}
+        >
             <DatePickerModal
                 isVisible={showDatePicker}
                 onClose={() => setShowDatePicker(false)}
@@ -583,6 +749,13 @@ export const DashboardView = ({
                             periodType="MONTH"
                             story={monthlyData.story}
                             chartData={monthlyData.chartData}
+                            monthComparison={{
+                                current: monthlyData.chartData.map((d) => ({ label: String(d.label), value: d.value })),
+                                previous: previousMonthComparison.series,
+                                currentPercentage: monthlyData.story?.percentage || 0,
+                                previousPercentage: previousMonthComparison.percentage,
+                                previousLabel: previousMonthComparison.monthLabel
+                            }}
                             stats={monthlyData.stats}
                             theme={theme}
                             completionStats={{
@@ -596,6 +769,7 @@ export const DashboardView = ({
                             moodData={monthlyMoodData}
                             weekStart={weekStart}
                             colorMode={colorMode}
+                            onRetrospectiveDayPress={handleRetrospectiveDayPress}
                         />
                     </View>
                 )}
@@ -640,6 +814,12 @@ export const DashboardView = ({
                             periodType="WEEK"
                             story={story}
                             chartData={weeklyStats.map(d => ({ label: d.displayDay, value: d.count }))}
+                            weekComparison={{
+                                current: weeklyStats.map((d) => ({ label: d.displayDay, value: d.count })),
+                                previous: previousWeekComparison.series,
+                                currentPercentage: weekProgress.percentage,
+                                previousPercentage: previousWeekComparison.percentage
+                            }}
                             stats={{
                                 best: weeklyBestHabit ? { name: weeklyBestHabit.name, value: weeklyBestHabit.completed } : null,
                                 worst: weeklyLowHabit ? { name: weeklyLowHabit.name, value: weeklyLowHabit.completed } : null
@@ -655,10 +835,70 @@ export const DashboardView = ({
                             moodData={weeklyMoodData}
                             weekStart={weekStart}
                             colorMode={colorMode}
+                            onRetrospectiveDayPress={handleRetrospectiveDayPress}
                         />
                     </View>
                 )}
             </ScrollView>
+
+            <Modal
+                visible={!!detailDate}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setDetailDate(null)}
+            >
+                <View style={tw`flex-1 justify-end bg-black/50`}>
+                    <View style={[tw`rounded-t-3xl h-[90%] overflow-hidden`, { backgroundColor: isDark ? '#000000' : '#f5f5f4' }]}>
+                        <View style={[tw`p-5 border-b flex-row items-center justify-between`, { backgroundColor: isDark ? '#0b0b0b' : '#ffffff', borderColor: isDark ? '#2a2a2a' : '#e5e7eb' }]}>
+                            <Text style={[tw`text-xl font-black uppercase tracking-widest`, { color: isDark ? '#e5e7eb' : '#2a2a2a' }]}>Day Details</Text>
+                            <TouchableOpacity
+                                onPress={() => setDetailDate(null)}
+                                style={[tw`p-2 rounded-full`, { backgroundColor: isDark ? '#161616' : '#f3f4f6' }]}
+                            >
+                                <X size={20} color={isDark ? '#e5e7eb' : '#57534e'} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <ScrollView style={tw`flex-1`} showsVerticalScrollIndicator={false}>
+                            {detailDate && detailDateKey ? (
+                                <View style={tw`px-4 pt-4`}>
+                                    <DailyCard
+                                        date={detailDate}
+                                        habits={habits}
+                                        completions={completions}
+                                        theme={theme}
+                                        colorMode={colorMode}
+                                        cardStyle={cardStyle}
+                                        toggleCompletion={toggleCompletion}
+                                        toggleHabitInactive={toggleHabitInactive}
+                                        isHabitInactive={isHabitInactive}
+                                        onPrev={() => {
+                                            const prev = new Date(detailDate);
+                                            prev.setDate(prev.getDate() - 1);
+                                            prev.setHours(0, 0, 0, 0);
+                                            setDetailDate(prev);
+                                        }}
+                                        onNext={() => {
+                                            const next = new Date(detailDate);
+                                            next.setDate(next.getDate() + 1);
+                                            next.setHours(0, 0, 0, 0);
+                                            setDetailDate(next);
+                                        }}
+                                        onDateSelect={(d) => {
+                                            const selected = new Date(d);
+                                            selected.setHours(0, 0, 0, 0);
+                                            setDetailDate(selected);
+                                        }}
+                                        dayData={notes?.[detailDateKey] || {}}
+                                        dateKey={detailDateKey}
+                                        updateNote={updateNote}
+                                    />
+                                </View>
+                            ) : null}
+                        </ScrollView>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 };

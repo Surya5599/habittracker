@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { Home, BarChart2, BookOpen, Sparkles } from 'lucide-react-native';
+import { Home, BarChart2, BookOpen, Award } from 'lucide-react-native';
 import tw from 'twrnc';
 
 export const BottomNav = ({ view, setView, resetWeekOffset, theme, colorMode = 'light' }) => {
@@ -59,9 +59,9 @@ export const BottomNav = ({ view, setView, resetWeekOffset, theme, colorMode = '
             />
 
             <NavItem
-                label={t('bottomNav.analysis')}
-                icon={Sparkles}
-                targetView="analysis"
+                label="Badges"
+                icon={Award}
+                targetView="badges"
             />
 
         </View>

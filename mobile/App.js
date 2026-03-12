@@ -10,10 +10,12 @@ import { MainScreen } from './src/screens/MainScreen';
 import { useHabits } from './src/hooks/useHabits';
 import { useHabitStats } from './src/hooks/useHabitStats';
 import { useDailyNotes } from './src/hooks/useDailyNotes';
-import { useAIAnalysis } from './src/hooks/useAIAnalysis';
 import { THEMES } from './src/constants';
 import i18n from './src/i18n';
 import { OnboardingModal } from './src/components/OnboardingModal';
+import { AppErrorBoundary } from './src/components/AppErrorBoundary';
+import { initializeErrorReporting, reportError } from './src/lib/errorReporting';
+import { isBenignAuthError } from './src/utils/authErrors';
 // import { useTranslation } from 'react-i18next'; // Removing hook usage in App.js context
 
 const Stack = createStackNavigator();
@@ -29,6 +31,7 @@ export default function App() {
   const [weekOffset, setWeekOffset] = useState(0);
   const [weekStart, setWeekStart] = useState('MON'); // 'MON' or 'SUN'
   const [colorMode, setColorMode] = useState('light'); // 'light' or 'dark'
+  const [cardStyle, setCardStyle] = useState('compact'); // 'large' or 'compact'
   // const { i18n } = useTranslation(); // Use imported instance instead
   const [language, setLanguage] = useState('en');
 
@@ -68,14 +71,46 @@ export default function App() {
     await AsyncStorage.setItem('habit_tracker_color_mode', mode);
   };
 
+  const handleCardStyleChange = async (style) => {
+    setCardStyle(style);
+    await AsyncStorage.setItem('habit_card_style', style);
+  };
+
   // Initialize Session
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
+    initializeErrorReporting();
 
-    supabase.auth.onAuthStateChange((_event, session) => {
+    const bootstrapSession = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          if (isBenignAuthError(error)) {
+            // Stale local token; clear it quietly and continue signed-out.
+            await supabase.auth.signOut({ scope: 'local' });
+            setSession(null);
+          } else {
+            console.error('Failed to restore auth session:', error);
+            reportError(error, { scope: 'auth:getSession' });
+            setSession(null);
+          }
+        } else {
+          setSession(data?.session || null);
+        }
+      } catch (error) {
+        if (!isBenignAuthError(error)) {
+          console.error('Failed to restore auth session:', error);
+          reportError(error, { scope: 'auth:getSession:catch' });
+        }
+        setSession(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    bootstrapSession();
+
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session) setGuestMode(false);
     });
@@ -103,8 +138,17 @@ export default function App() {
       if (savedColorMode === 'light' || savedColorMode === 'dark') {
         setColorMode(savedColorMode);
       }
+
+      const savedCardStyle = await AsyncStorage.getItem('habit_card_style');
+      if (savedCardStyle === 'compact' || savedCardStyle === 'large') {
+        setCardStyle(savedCardStyle);
+      }
     };
     checkGuest();
+
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
 
   // Sync session language
@@ -141,8 +185,6 @@ export default function App() {
     weekProgress,
     monthProgress
   } = useHabitStats(habits, completions, currentMonthIndex, currentYear, daysInMonth, monthDates, weekOffset, weekStart);
-
-  const aiAnalysis = useAIAnalysis(session, guestMode);
 
   const handleGuestLogin = async () => {
     await AsyncStorage.setItem('habit_guest_mode', 'true');
@@ -195,10 +237,8 @@ export default function App() {
     setShowOnboarding(false);
   };
 
-  const handleOnboardingCreateFirstHabit = async ({ name, description, color }) => {
-    const trimmedName = (name || '').trim();
-    if (!trimmedName) return;
-    await addHabit(color || theme.primary, trimmedName, undefined, null, (description || '').trim(), color || theme.primary);
+  const handleOnboardingClose = () => {
+    setShowOnboarding(false);
   };
 
   const handleOpenOnboardingTutorial = () => {
@@ -210,67 +250,72 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          {session || guestMode ? (
-            <Stack.Screen name="Main">
-              {() => (
-                <>
-                  <MainScreen
-                    view={view}
-                    setView={setView}
-                    habits={habits}
-                    completions={completions}
-                    weekOffset={weekOffset}
-                    setWeekOffset={setWeekOffset}
-                    theme={theme}
-                    setTheme={handleThemeChange}
-                    toggleCompletion={toggleCompletion}
-                    weekProgress={weekProgress}
-                    resetWeekOffset={resetWeekOffset}
-                    notes={notes}
-                    updateNote={updateNote}
-                    addHabit={addHabit}
-                    updateHabit={updateHabit}
-                    removeHabit={removeHabit}
-                    reorderHabits={reorderHabits}
-                    toggleArchiveHabit={toggleArchiveHabit}
-                    weeklyStats={weeklyStats}
-                    isGuest={guestMode}
-                    onOpenSignIn={handleOpenSignIn}
-                    onOpenOnboardingTutorial={handleOpenOnboardingTutorial}
-                    weekStart={weekStart}
-                    setWeekStart={handleWeekStartChange}
-                    aiAnalysis={aiAnalysis}
-                    language={language}
-                    setLanguage={handleLanguageChange}
-                    colorMode={colorMode}
-                    setColorMode={handleColorModeChange}
-                    userId={session?.user?.id}
-                    userEmail={session?.user?.email}
-                  />
-                  <OnboardingModal
-                    visible={onboardingChecked && showOnboarding}
-                    isDark={colorMode === 'dark'}
-                    theme={theme}
-                    initialLanguage={language}
-                    initialWeekStart={weekStart}
-                    onLanguageChange={handleLanguageChange}
-                    onThemeChange={handleThemeChange}
-                    onWeekStartChange={handleWeekStartChange}
-                    onCreateFirstHabit={handleOnboardingCreateFirstHabit}
-                    onComplete={handleOnboardingComplete}
-                  />
-                </>
-              )}
-            </Stack.Screen>
-          ) : (
-            <Stack.Screen name="SignIn">
-              {props => <SignInScreen {...props} onGuestLogin={handleGuestLogin} />}
-            </Stack.Screen>
-          )}
-        </Stack.Navigator>
-      </NavigationContainer>
+      <AppErrorBoundary onReset={() => { }}>
+        <NavigationContainer>
+          <Stack.Navigator screenOptions={{ headerShown: false }}>
+            {session || guestMode ? (
+              <Stack.Screen name="Main">
+                {() => (
+                  <>
+                    <MainScreen
+                      view={view}
+                      setView={setView}
+                      habits={habits}
+                      completions={completions}
+                      weekOffset={weekOffset}
+                      setWeekOffset={setWeekOffset}
+                      theme={theme}
+                      setTheme={handleThemeChange}
+                      toggleCompletion={toggleCompletion}
+                      weekProgress={weekProgress}
+                      resetWeekOffset={resetWeekOffset}
+                      notes={notes}
+                      updateNote={updateNote}
+                      addHabit={addHabit}
+                      updateHabit={updateHabit}
+                      removeHabit={removeHabit}
+                      reorderHabits={reorderHabits}
+                      toggleArchiveHabit={toggleArchiveHabit}
+                      weeklyStats={weeklyStats}
+                      isGuest={guestMode}
+                      onOpenSignIn={handleOpenSignIn}
+                      onOpenOnboardingTutorial={handleOpenOnboardingTutorial}
+                      weekStart={weekStart}
+                      setWeekStart={handleWeekStartChange}
+                      language={language}
+                      setLanguage={handleLanguageChange}
+                      colorMode={colorMode}
+                      setColorMode={handleColorModeChange}
+                      cardStyle={cardStyle}
+                      setCardStyle={handleCardStyleChange}
+                      userId={session?.user?.id}
+                      userEmail={session?.user?.email}
+                    />
+                    <OnboardingModal
+                      visible={onboardingChecked && showOnboarding}
+                      isDark={colorMode === 'dark'}
+                      theme={theme}
+                      initialLanguage={language}
+                      initialCardStyle={cardStyle}
+                      initialWeekStart={weekStart}
+                      onLanguageChange={handleLanguageChange}
+                      onThemeChange={handleThemeChange}
+                      onCardStyleChange={handleCardStyleChange}
+                      onWeekStartChange={handleWeekStartChange}
+                      onComplete={handleOnboardingComplete}
+                      onClose={handleOnboardingClose}
+                    />
+                  </>
+                )}
+              </Stack.Screen>
+            ) : (
+              <Stack.Screen name="SignIn">
+                {props => <SignInScreen {...props} onGuestLogin={handleGuestLogin} />}
+              </Stack.Screen>
+            )}
+          </Stack.Navigator>
+        </NavigationContainer>
+      </AppErrorBoundary>
     </SafeAreaProvider>
   );
 }

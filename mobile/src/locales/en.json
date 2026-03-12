@@ -21,6 +21,46 @@
         "support": {
             "title": "Support",
             "reportBug": "Report Bug or Suggestion"
+        },
+        "appearance": {
+            "title": "Appearance",
+            "light": "Light",
+            "dark": "Dark"
+        },
+        "cardSize": {
+            "title": "Card Size",
+            "compact": "Compact",
+            "large": "Large"
+        },
+        "whatsNew": {
+            "title": "What's New",
+            "tutorial": "Tutorial"
+        },
+        "onboardingEntry": {
+            "title": "Tutorial",
+            "open": "Open"
+        },
+        "privacy": {
+            "title": "Privacy",
+            "policy": "Policy"
+        },
+        "account": {
+            "delete": "Delete Account",
+            "noSession": "No account session found.",
+            "deleteFailed": "Delete failed",
+            "unableDelete": "Unable to delete account right now.",
+            "prompts": {
+                "confirmTitle": "Delete account?",
+                "confirmBody": "This permanently removes your account and data.",
+                "sureTitle": "Are you absolutely sure?",
+                "sureBody": "This action cannot be undone.",
+                "keep": "Keep Account",
+                "forever": "Delete Forever"
+            }
+        },
+        "errors": {
+            "title": "Error",
+            "unableSignOut": "Unable to sign out"
         }
     },
     "header": {
@@ -276,5 +316,90 @@
         "insight": "Insight",
         "mockTitle": "Patterns & Energy",
         "mockContent": "You tend to complete more habits on days when you record a \"productive\" mood early in the morning. Your consistency with \"Reading\" has improved by 15% this week."
+    },
+    "onboarding": {
+        "badge": "Tutorial",
+        "step": "Step",
+        "back": "Back",
+        "next": "Next",
+        "finish": "Finish",
+        "saving": "Saving...",
+        "habitInstructions": {
+            "tap": "Tap to check off a habit",
+            "hold": "Hold to skip the habit",
+            "empty": "Leave empty if you missed it"
+        },
+        "steps": {
+            "language": {
+                "title": "Choose language",
+                "subtitle": "Set your app language. You can change this later in Settings."
+            },
+            "theme": {
+                "title": "Choose color",
+                "subtitle": "Pick the same HabiCard color pairing used across the app."
+            },
+            "cardStyle": {
+                "title": "Choose card size",
+                "subtitle": "Preview both card layouts and pick the one you want as default."
+            },
+            "habitsDemo": {
+                "title": "Habits in one place",
+                "subtitle": "Check off all your habits in one place."
+            },
+            "tasksDemo": {
+                "title": "Tasks made simple",
+                "subtitle": "Create tasks and check them off as you are done."
+            },
+            "journalDemo": {
+                "title": "Journal every day",
+                "subtitle": "Update your daily journal in the same card flow."
+            },
+            "weekStart": {
+                "title": "Start of week",
+                "subtitle": "Choose whether your week starts on Sunday or Monday."
+            }
+        },
+        "languageTitle": "Language",
+        "cardStyleTitle": "Card Size",
+        "cardStyleLabels": {
+            "compact": "Compact",
+            "large": "Large"
+        },
+        "habits": [
+            "Exercise",
+            "Drink Water",
+            "Read 10 pages",
+            "Meditate",
+            "Plan Tomorrow"
+        ],
+        "taskSamples": [
+            "Plan tomorrow",
+            "Review goals"
+        ],
+        "journalSample": "This is where you can type into the journal.",
+        "sampleDay": "Thursday",
+        "cardStyleDescriptions": {
+            "compact": "Small progress badge in the header.",
+            "large": "Big day progress panel under the date."
+        },
+        "themeNames": {
+            "sageRose": "Sage & Rose",
+            "oceanSky": "Ocean & Sky",
+            "sunsetClay": "Sunset & Clay",
+            "lavenderSlate": "Lavender & Slate",
+            "forestEarth": "Forest & Earth",
+            "peachMint": "Peach & Mint",
+            "lilacCream": "Lilac & Cream",
+            "dustyBlueMauve": "Dusty Blue & Mauve",
+            "coralSand": "Coral & Sand",
+            "mintBlush": "Mint & Blush",
+            "honeyFog": "Honey & Fog",
+            "plumSage": "Plum & Sage",
+            "monochrome": "Monochrome"
+        },
+        "weekStartOptions": {
+            "sun": "SUN",
+            "mon": "MON"
+        }
     }
 }

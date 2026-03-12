@@ -11,6 +11,10 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [isResetMode, setIsResetMode] = useState(false);
+    const isInvalidRefreshTokenError = (error) => {
+        const message = (error?.message || '').toLowerCase();
+        return message.includes('invalid refresh token') || message.includes('refresh token not found');
+    };
 
     const handleContinueAsGuest = () => {
         if (onGuestLogin) onGuestLogin();
@@ -26,7 +30,13 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
 
         if (isResetMode) {
             const { error } = await supabase.auth.resetPasswordForEmail(email);
-            if (error) Alert.alert('Error', error.message);
+            if (error) {
+                if (isInvalidRefreshTokenError(error)) {
+                    Alert.alert('Error', 'Session expired. Please sign in again.');
+                } else {
+                    Alert.alert('Error', error.message);
+                }
+            }
             else Alert.alert('Success', t('auth.resetSent'));
             setLoading(false);
             return;
@@ -65,9 +75,17 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
         }
 
         if (signUpError.message.toLowerCase().includes('already registered')) {
-            Alert.alert('Error', loginError.message); // Show original login error
+            if (isInvalidRefreshTokenError(loginError)) {
+                Alert.alert('Error', 'Session expired. Please sign in again.');
+            } else {
+                Alert.alert('Error', loginError.message); // Show original login error
+            }
         } else {
-            Alert.alert('Error', signUpError.message);
+            if (isInvalidRefreshTokenError(signUpError)) {
+                Alert.alert('Error', 'Session expired. Please sign in again.');
+            } else {
+                Alert.alert('Error', signUpError.message);
+            }
         }
 
         setLoading(false);

@@ -1,19 +1,15 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert } from 'react-native';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { Sparkles, Lock, ChevronRight, Zap } from 'lucide-react-native';
+import { Sparkles, ChevronRight } from 'lucide-react-native';
 import tw from 'twrnc';
 
 export const AIAnalysisView = ({
     theme,
     colorMode = 'light',
-    isPremium,
     analysisCount,
     maxAnalyses,
-    incrementAnalysis,
-    startPremiumCheckout,
-    checkoutLoading
+    incrementAnalysis
 }) => {
     const { t, i18n } = useTranslation();
     const primaryColor = theme?.primary || '#a18e78';
@@ -23,40 +19,6 @@ export const AIAnalysisView = ({
     const textPrimary = isDark ? '#f5f5f5' : '#1f2937';
     const textMuted = isDark ? '#a3a3a3' : '#6b7280';
     const subtleBg = isDark ? '#111111' : '#f3f4f6';
-
-    const renderPremiumGate = () => (
-        <View style={tw`flex-1 items-center justify-center px-6`}>
-            <View style={[tw`p-6 rounded-3xl border-[3px] items-center w-full relative`, { backgroundColor: panelBg, borderColor: panelBorder }]}>
-                <View style={[tw`absolute bg-black rounded-3xl`, { top: 8, left: 8, right: -8, bottom: -8, zIndex: -1 }]} />
-
-                <View style={[tw`w-16 h-16 rounded-full items-center justify-center mb-4`, { backgroundColor: primaryColor + '20' }]}>
-                    <Lock size={32} color={primaryColor} />
-                </View>
-
-                <Text style={[tw`text-2xl font-black uppercase text-center mb-2`, { color: textPrimary }]}>{t('aiAnalysis.premiumOnly')}</Text>
-                <Text style={[tw`text-center mb-8 font-medium`, { color: textMuted }]}>
-                    {t('aiAnalysis.premiumDesc')}
-                </Text>
-
-                <TouchableOpacity
-                    onPress={async () => {
-                        try {
-                            await startPremiumCheckout?.();
-                        } catch (err) {
-                            Alert.alert('Upgrade unavailable', err?.message || 'Unable to start checkout right now.');
-                        }
-                    }}
-                    disabled={checkoutLoading}
-                    style={[tw`w-full py-4 rounded-2xl flex-row items-center justify-center border-2`, { backgroundColor: primaryColor, borderColor: panelBorder, opacity: checkoutLoading ? 0.75 : 1 }]}
-                >
-                    <Zap size={20} color="white" fill="white" style={tw`mr-2`} />
-                    <Text style={tw`text-white font-black uppercase tracking-widest`}>
-                        {checkoutLoading ? 'Opening Checkout...' : t('aiAnalysis.upgrade')}
-                    </Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
 
     const renderAnalysis = () => (
         <ScrollView style={tw`flex-1 p-4`} showsVerticalScrollIndicator={false}>
@@ -153,7 +115,7 @@ export const AIAnalysisView = ({
 
     return (
         <View style={[tw`flex-1`, { backgroundColor: isDark ? '#000000' : '#f5f5f4' }]}>
-            {!isPremium ? renderPremiumGate() : renderAnalysis()}
+            {renderAnalysis()}
         </View>
     );
 };

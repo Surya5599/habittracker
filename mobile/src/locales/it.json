@@ -20,6 +20,46 @@
         "support": {
             "title": "Supporto",
             "reportBug": "Segnala Bug o Suggerimento"
+        },
+        "appearance": {
+            "title": "Aspetto",
+            "light": "Chiaro",
+            "dark": "Scuro"
+        },
+        "cardSize": {
+            "title": "Dimensione carta",
+            "compact": "Compatta",
+            "large": "Grande"
+        },
+        "whatsNew": {
+            "title": "Novita",
+            "tutorial": "Tutorial"
+        },
+        "onboardingEntry": {
+            "title": "Tutorial",
+            "open": "Apri"
+        },
+        "privacy": {
+            "title": "Privacy",
+            "policy": "Informativa"
+        },
+        "account": {
+            "delete": "Elimina account",
+            "noSession": "Nessuna sessione account trovata.",
+            "deleteFailed": "Eliminazione non riuscita",
+            "unableDelete": "Impossibile eliminare l account in questo momento.",
+            "prompts": {
+                "confirmTitle": "Eliminare l account?",
+                "confirmBody": "Questo rimuove definitivamente account e dati.",
+                "sureTitle": "Sei assolutamente sicuro?",
+                "sureBody": "Questa azione non puo essere annullata.",
+                "keep": "Mantieni account",
+                "forever": "Elimina per sempre"
+            }
+        },
+        "errors": {
+            "title": "Errore",
+            "unableSignOut": "Impossibile disconnettersi"
         }
     },
     "header": {
@@ -237,5 +277,90 @@
         "insight": "Intuizione",
         "mockTitle": "Schemi & Energia",
         "mockContent": "Tendi a completare più abitudini nei giorni in cui registri un umore \"produttivo\" la mattina presto. La tua coerenza con \"Lettura\" è migliorata del 15% questa settimana."
+    },
+    "onboarding": {
+        "badge": "Tutorial",
+        "step": "Passo",
+        "back": "Indietro",
+        "next": "Avanti",
+        "finish": "Fine",
+        "saving": "Salvataggio...",
+        "steps": {
+            "language": {
+                "title": "Scegli lingua",
+                "subtitle": "Imposta la lingua dell app. Potrai cambiarla piu tardi nelle Impostazioni."
+            },
+            "theme": {
+                "title": "Scegli colore",
+                "subtitle": "Scegli la stessa combinazione di colori HabiCard usata nell app."
+            },
+            "cardStyle": {
+                "title": "Scegli dimensione carta",
+                "subtitle": "Anteprima di entrambi gli stili carta e scegli quello predefinito."
+            },
+            "habitsDemo": {
+                "title": "Abitudini in un posto",
+                "subtitle": "Spunta tutte le tue abitudini in un solo posto."
+            },
+            "tasksDemo": {
+                "title": "Attivita semplici",
+                "subtitle": "Crea attivita e spuntale quando hai finito."
+            },
+            "journalDemo": {
+                "title": "Scrivi ogni giorno",
+                "subtitle": "Aggiorna il tuo diario quotidiano nello stesso flusso della carta."
+            },
+            "weekStart": {
+                "title": "Inizio settimana",
+                "subtitle": "Scegli se la settimana inizia di domenica o lunedi."
+            }
+        },
+        "languageTitle": "Lingua",
+        "cardStyleTitle": "Dimensione carta",
+        "cardStyleLabels": {
+            "compact": "Compatta",
+            "large": "Grande"
+        },
+        "habits": [
+            "Esercizio",
+            "Bere acqua",
+            "Leggere 10 pagine",
+            "Meditare",
+            "Pianificare domani"
+        ],
+        "taskSamples": [
+            "Pianificare domani",
+            "Rivedere obiettivi"
+        ],
+        "journalSample": "Qui puoi scrivere nel diario.",
+        "sampleDay": "Giovedi",
+        "cardStyleDescriptions": {
+            "compact": "Piccolo indicatore di progresso nell intestazione.",
+            "large": "Grande pannello di progresso del giorno sotto la data."
+        },
+        "themeNames": {
+            "sageRose": "Salvia e Rosa",
+            "oceanSky": "Oceano e Cielo",
+            "sunsetClay": "Tramonto e Argilla",
+            "lavenderSlate": "Lavanda e Ardesia",
+            "forestEarth": "Foresta e Terra",
+            "peachMint": "Pesca e Menta",
+            "lilacCream": "Lilla e Crema",
+            "dustyBlueMauve": "Blu Polvere e Malva",
+            "coralSand": "Corallo e Sabbia",
+            "mintBlush": "Menta e Rosa",
+            "honeyFog": "Miele e Foschia",
+            "plumSage": "Prugna e Salvia",
+            "monochrome": "Monocromo"
+        },
+        "weekStartOptions": {
+            "sun": "DOM",
+            "mon": "LUN"
+        },
+        "habitInstructions": {
+            "tap": "Tocca per segnare un abitudine",
+            "hold": "Tieni premuto per saltare l abitudine",
+            "empty": "Lascia vuoto se l hai mancata"
+        }
     }
 }

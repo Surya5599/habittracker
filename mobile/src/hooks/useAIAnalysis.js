@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AppState, Linking } from 'react-native';
+import { AppState } from 'react-native';
 import { supabase } from '../lib/supabase';
 
 const LOCAL_AI_KEY = 'habit_tracker_ai_usage';
@@ -8,9 +8,7 @@ const LOCAL_AI_KEY = 'habit_tracker_ai_usage';
 export const useAIAnalysis = (session, guestMode) => {
     const [profile, setProfile] = useState(null);
     const [analysisCount, setAnalysisCount] = useState(0);
-    const [isPremium, setIsPremium] = useState(false);
     const [loading, setLoading] = useState(true);
-    const [checkoutLoading, setCheckoutLoading] = useState(false);
 
     const getWeekKey = () => {
         const d = new Date();
@@ -36,7 +34,7 @@ export const useAIAnalysis = (session, guestMode) => {
 
             if (error && error.code === 'PGRST116') {
                 // Profile doesn't exist yet, handle_new_user trigger might not have run or migration is fresh
-                const { data: newData, error: insertError } = await supabase
+                const { data: newData } = await supabase
                     .from('profiles')
                     .insert({ id: session.user.id })
                     .select()
@@ -45,7 +43,6 @@ export const useAIAnalysis = (session, guestMode) => {
                 if (newData) setProfile(newData);
             } else if (data) {
                 setProfile(data);
-                setIsPremium(data.is_premium);
 
                 const currentWeek = getWeekKey();
                 if (data.last_analysis_week === currentWeek) {
@@ -92,7 +89,6 @@ export const useAIAnalysis = (session, guestMode) => {
                         setAnalysisCount(0);
                     }
                 }
-                setIsPremium(false); // Guest is never premium by default
                 setLoading(false);
             };
             loadGuestAI();
@@ -121,38 +117,10 @@ export const useAIAnalysis = (session, guestMode) => {
         }
     };
 
-    const startPremiumCheckout = async () => {
-        if (!session?.user?.id) {
-            throw new Error('Please sign in before upgrading.');
-        }
-
-        setCheckoutLoading(true);
-        try {
-            const { data, error } = await supabase.functions.invoke('create-premium-checkout', {
-                body: { source: 'mobile' }
-            });
-
-            if (error) {
-                throw new Error(error.message || 'Unable to start checkout.');
-            }
-
-            if (!data?.url) {
-                throw new Error('Checkout URL was not returned.');
-            }
-
-            await Linking.openURL(data.url);
-        } finally {
-            setCheckoutLoading(false);
-        }
-    };
-
     return {
-        isPremium,
         analysisCount,
         loading,
-        checkoutLoading,
         incrementAnalysis,
-        startPremiumCheckout,
         maxAnalyses: 3
     };
 };

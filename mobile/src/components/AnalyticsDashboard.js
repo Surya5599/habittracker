@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, ScrollView, Dimensions, Animated, Easing, PanResponder, FlatList } from 'react-native';
+import { View, Text, ScrollView, Dimensions, Animated, Easing, PanResponder, FlatList, TouchableOpacity } from 'react-native';
 import tw from 'twrnc';
 import Svg, { Path, Defs, LinearGradient, Stop, Circle, ClipPath, Rect, G, Text as SvgText } from 'react-native-svg';
 import { MOODS } from '../constants';
@@ -93,8 +93,11 @@ export const AnalyticsDashboard = ({
     gridPadding = 0, // Padding for start of month
     periodLabelSecondary = "", // e.g. "January 2026"
     moodData, // Mood aggregation
+    weekComparison, // { current, previous, currentPercentage, previousPercentage }
+    monthComparison, // { current, previous, currentPercentage, previousPercentage, previousLabel }
     weekStart = 'MON', // Start of week preference
     colorMode = 'light',
+    onRetrospectiveDayPress
 }) => {
     const { t } = useTranslation();
     const normalizedPeriod = periodType || ({
@@ -114,6 +117,7 @@ export const AnalyticsDashboard = ({
     const screenWidth = Dimensions.get('window').width;
     const chartWidth = screenWidth - 64;
     const chartHeight = 100;
+    const comparisonChartHeight = 86;
 
     const [activePoint, setActivePoint] = useState(null);
 
@@ -177,7 +181,12 @@ export const AnalyticsDashboard = ({
                 <View>
                     <View style={tw`flex-row justify-between gap-1`}>
                         {retrospectiveData.map((d, i) => (
-                            <View key={i} style={tw`flex-1 items-center`}>
+                            <TouchableOpacity
+                                key={i}
+                                onPress={() => d?.date && onRetrospectiveDayPress && onRetrospectiveDayPress(d.date)}
+                                activeOpacity={d?.date ? 0.8 : 1}
+                                style={tw`flex-1 items-center`}
+                            >
                                 <View style={[
                                     tw`w-full aspect-square rounded-lg border-2 border-black items-center justify-center overflow-hidden`
                                 ]}>
@@ -190,7 +199,7 @@ export const AnalyticsDashboard = ({
                                     )}
                                 </View>
                                 <Text style={[tw`text-[10px] font-black mt-1`, { color: textPrimary }]}>{d.day}</Text>
-                            </View>
+                            </TouchableOpacity>
                         ))}
                     </View>
                     {periodLabelSecondary ? (
@@ -245,34 +254,38 @@ export const AnalyticsDashboard = ({
 
                         {/* Actual Days */}
                         {retrospectiveData.map((d, i) => (
-                            <View key={i} style={[
+                            <TouchableOpacity
+                                key={i}
+                                onPress={() => d?.date && onRetrospectiveDayPress && onRetrospectiveDayPress(d.date)}
+                                activeOpacity={d?.date ? 0.8 : 1}
+                                style={[
                                 tw`w-[13.2%] h-[15.2%] aspect-square rounded-md border-2 border-black items-center justify-center overflow-hidden mb-1`,
                                 { backgroundColor: surfaceSoft, borderColor: isDark ? '#ffffff' : '#000000' }
-                            ]}>
+                            ]}
+                            >
                                 {d.percentage > 0 && (
                                     <AnimatedRetrospectiveBar percentage={d.percentage} color={theme.secondary} />
                                 )}
 
-                                <View style={tw`absolute top-1 left-1`}>
-                                    <Text style={[tw`text-[7px] font-black`, { color: isDark ? '#a3a3a3' : '#000000', opacity: 0.4 }]}>{d.label}</Text>
+                                <View style={tw`absolute top-1 left-0 right-0 items-center z-10`}>
+                                    <Text
+                                        style={[
+                                            tw`text-[8px] font-black leading-none`,
+                                            { color: d.percentage >= 100 ? '#ffffff' : (isDark ? '#d4d4d8' : '#111827') }
+                                        ]}
+                                    >
+                                        {d.label}
+                                    </Text>
                                 </View>
 
                                 <View style={tw`items-center`}>
-                                    <Text style={[tw`text-[10px] font-black leading-none`, { color: textPrimary }]}>{d.percentage}%</Text>
+                                    <Text style={[tw`text-[10px] font-black leading-none`, { color: d.percentage >= 100 ? '#ffffff' : textPrimary }]}>{d.percentage}%</Text>
                                 </View>
 
                                 {d.percentage >= 100 && (
                                     <View style={[tw`absolute inset-0`, { backgroundColor: theme.primary, zIndex: -2 }]} />
                                 )}
-                                {d.percentage >= 100 && (
-                                    <View style={tw`absolute inset-0 items-center justify-center`}>
-                                        <View style={tw`absolute top-1 left-1`}>
-                                            <Text style={[tw`text-[7px] font-black text-white/50`]}>{d.label}</Text>
-                                        </View>
-                                        <Text style={[tw`text-[10px] font-black leading-none`, { color: textPrimary }]}>{d.percentage}%</Text>
-                                    </View>
-                                )}
-                            </View>
+                            </TouchableOpacity>
                         ))}
 
                         {/* Filler Slots at End for consistent justify-between alignment */}
@@ -455,6 +468,55 @@ export const AnalyticsDashboard = ({
     const maxVal = Math.max(...chartData.map(d => d.value), 1);
     const dataPoints = chartData.length;
 
+    const wowCurrent = weekComparison?.current || [];
+    const wowPrevious = weekComparison?.previous || [];
+    const wowCurrentPct = Number(weekComparison?.currentPercentage || 0);
+    const wowPreviousPct = Number(weekComparison?.previousPercentage || 0);
+    const wowDelta = Math.round(wowCurrentPct - wowPreviousPct);
+    const wowMax = Math.max(
+        ...wowCurrent.map((d) => d.value || 0),
+        ...wowPrevious.map((d) => d.value || 0),
+        1
+    );
+
+    const buildPath = (series, width, height, maxValue) => {
+        if (!Array.isArray(series) || series.length === 0) return '';
+        if (series.length === 1) {
+            const y = height - ((series[0]?.value || 0) / Math.max(maxValue, 1)) * height;
+            return `M 0,${y} L ${width},${y}`;
+        }
+        let path = '';
+        series.forEach((d, i) => {
+            const x = (i / (series.length - 1)) * width;
+            const y = height - ((d?.value || 0) / Math.max(maxValue, 1)) * height;
+            if (i === 0) {
+                path = `M ${x},${y}`;
+            } else {
+                const prevX = ((i - 1) / (series.length - 1)) * width;
+                const prevY = height - (((series[i - 1]?.value || 0) / Math.max(maxValue, 1)) * height);
+                const controlX = (prevX + x) / 2;
+                path += ` C ${controlX},${prevY} ${controlX},${y} ${x},${y}`;
+            }
+        });
+        return path;
+    };
+
+    const wowCurrentPath = buildPath(wowCurrent, chartWidth, comparisonChartHeight, wowMax);
+    const wowPreviousPath = buildPath(wowPrevious, chartWidth, comparisonChartHeight, wowMax);
+
+    const momCurrent = monthComparison?.current || [];
+    const momPrevious = monthComparison?.previous || [];
+    const momCurrentPct = Number(monthComparison?.currentPercentage || 0);
+    const momPreviousPct = Number(monthComparison?.previousPercentage || 0);
+    const momDelta = Math.round(momCurrentPct - momPreviousPct);
+    const momMax = Math.max(
+        ...momCurrent.map((d) => d.value || 0),
+        ...momPrevious.map((d) => d.value || 0),
+        1
+    );
+    const momCurrentPath = buildPath(momCurrent, chartWidth, comparisonChartHeight, momMax);
+    const momPreviousPath = buildPath(momPrevious, chartWidth, comparisonChartHeight, momMax);
+
     let pathD = `M 0,${chartHeight}`;
     chartData.forEach((d, i) => {
         const x = (i / (dataPoints - 1)) * chartWidth;
@@ -472,101 +534,49 @@ export const AnalyticsDashboard = ({
 
     const radius = 30;
     const circumference = radius * 2 * Math.PI;
+    const comparisonDelta = normalizedPeriod === 'WEEK'
+        ? wowDelta
+        : normalizedPeriod === 'MONTH'
+            ? momDelta
+            : null;
 
     return (
         <View style={tw`flex-1`}>
 
-
-            {/* Story Card */}
-            <View style={tw`mb-6`}>
-                <HardShadowCardLocal style={{ height: 280 }} colorMode={colorMode}>
-                    {/* Header bar from image */}
-                    <View style={[tw`py-1.5 px-4 items-center`, { backgroundColor: theme.primary }]}>
-                        <Text style={tw`text-[10px] font-black uppercase text-white tracking-widest leading-none`}>{t('analytics.success', { period: periodLabel })}</Text>
-                    </View>
-
-                    <View style={tw`p-5 flex-1`}>
-                        <View style={tw`flex-row items-center justify-between mb-6`}>
-                            <View>
-                                <Text style={[tw`text-[10px] font-black uppercase tracking-widest mb-2 leading-none`, { color: textMuted }]}>{masteryLabel}</Text>
-                                <View style={tw`flex-row items-baseline gap-1`}>
-                                    <View style={tw`flex-row items-baseline`}>
-                                        <Text style={[tw`text-4xl font-black`, { color: textPrimary }]}>{completionStats.completed}</Text>
-                                        <Text style={[tw`text-2xl font-black ml-1`, { color: textFaint }]}>/ {completionStats.total}</Text>
-                                    </View>
-                                </View>
-                            </View>
-                            <View style={tw`items-center justify-center`}>
-                                {/* Mini Circular Progress */}
-                                <Svg width={70} height={70}>
-                                    <Circle cx={35} cy={35} r={radius} stroke={isDark ? '#262626' : '#f5f5f4'} strokeWidth={8} fill="none" />
-                                    <AnimatedCircle
-                                        cx={35}
-                                        cy={35}
-                                        r={radius}
-                                        stroke={theme.primary}
-                                        strokeWidth={8}
-                                        fill="none"
-                                        strokeDasharray={circumference}
-                                        strokeDashoffset={circleAnim.interpolate({
-                                            inputRange: [0, 100],
-                                            outputRange: [circumference, 0]
-                                        })}
-                                        strokeLinecap="round"
-                                        transform="rotate(-90 35 35)"
-                                    />
-                                </Svg>
-                                <View style={tw`absolute`}>
-                                    <Text style={[tw`text-sm font-black`, { color: theme.primary }]}>{Math.round(completionStats.percentage)}%</Text>
-                                </View>
-                            </View>
-                        </View>
-
-                        <ScrollView showsVerticalScrollIndicator={false} style={tw`flex-1`}>
-                            <View style={tw`gap-4 pb-4`}>
-                                {story.sections.map((section, idx) => (
-                                    <View key={idx}>
-                                        <Text style={[tw`text-[10px] font-black uppercase mb-1 leading-none`,
-                                        section.type === 'neglected' ? tw`text-rose-400` : { color: textMuted }
-                                        ]}>{section.type}</Text>
-                                        <FormattedText text={section.text} highlightColor={theme.secondary} colorMode={colorMode} />
-                                    </View>
-                                ))}
-                                {story.sections.length === 0 && (
-                                    <Text style={[tw`italic font-bold text-center py-4`, { color: textMuted }]}>{t('analytics.notEnoughData')}</Text>
-                                )}
-                            </View>
-                        </ScrollView>
-                    </View>
-                </HardShadowCardLocal>
-            </View>
-
-            {/* Retrospective Card (New) */}
+            {/* KPI Summary */}
             <View style={tw`mb-6`}>
                 <HardShadowCardLocal colorMode={colorMode}>
-                    <View style={tw`p-5`}>
-                        <View style={tw`flex-row justify-between items-center mb-6`}>
-                            <Text style={[tw`text-xs font-black uppercase tracking-widest leading-none`, { color: textMuted }]}>{t('analytics.retrospectiveGrid')}</Text>
-                            <Text style={[tw`text-xs font-black uppercase tracking-widest leading-none`, { color: theme.primary }]}>{Math.round(completionStats.percentage)}% {t('analytics.done')}</Text>
+                    <View style={tw`p-4`}>
+                        <Text style={[tw`text-[10px] font-black uppercase tracking-widest mb-3 leading-none`, { color: textMuted }]}>
+                            At a glance
+                        </Text>
+                        <View style={tw`flex-row flex-wrap`}>
+                            <View style={tw`w-1/2 pr-3 mb-3`}>
+                                <Text style={[tw`text-[9px] font-black uppercase tracking-wider`, { color: textMuted }]}>Completion</Text>
+                                <Text style={[tw`text-2xl font-black mt-1`, { color: theme.primary }]}>{Math.round(completionStats.percentage)}%</Text>
+                            </View>
+                            <View style={tw`w-1/2 pl-3 mb-3`}>
+                                <Text style={[tw`text-[9px] font-black uppercase tracking-wider`, { color: textMuted }]}>Done / Total</Text>
+                                <Text style={[tw`text-2xl font-black mt-1`, { color: textPrimary }]}>{completionStats.completed}/{completionStats.total}</Text>
+                            </View>
+                            <View style={tw`w-1/2 pr-3`}>
+                                <Text style={[tw`text-[9px] font-black uppercase tracking-wider`, { color: textMuted }]}>Vs Previous</Text>
+                                <Text style={[tw`text-lg font-black mt-1`, { color: comparisonDelta === null ? textFaint : (comparisonDelta >= 0 ? theme.primary : '#ef4444') }]}>
+                                    {comparisonDelta === null ? '--' : `${comparisonDelta >= 0 ? '+' : ''}${comparisonDelta}%`}
+                                </Text>
+                            </View>
+                            <View style={tw`w-1/2 pl-3`}>
+                                <Text style={[tw`text-[9px] font-black uppercase tracking-wider`, { color: textMuted }]}>Top Habit</Text>
+                                <Text style={[tw`text-sm font-black mt-1`, { color: textPrimary }]} numberOfLines={1}>
+                                    {stats.best?.name || t('analytics.noData')}
+                                </Text>
+                            </View>
                         </View>
-                        {renderRetrospectiveGrid()}
-                    </View>
-                </HardShadowCardLocal>
-            </View>
-            {/* Mood Analysis Card */}
-            <View style={tw`mb-6`}>
-                <HardShadowCardLocal colorMode={colorMode}>
-                    <View style={tw`p-5`}>
-                        <View style={tw`flex-row justify-between items-center mb-6`}>
-                            <Text style={[tw`text-xs font-black uppercase tracking-widest leading-none`, { color: textMuted }]}>{t('analytics.moodAnalysis')}</Text>
-                            <Text style={[tw`text-[10px] font-black uppercase tracking-widest leading-none`, { color: theme.primary }]}>{t('analytics.vibe', { period: periodLabel })}</Text>
-                        </View>
-                        {renderMoodAnalysis()}
                     </View>
                 </HardShadowCardLocal>
             </View>
 
-            {/* Area Chart Card */}
+            {/* Primary Trend */}
             <View style={tw`mb-6`}>
                 <HardShadowCardLocal colorMode={colorMode}>
                     <View style={tw`p-5`}>
@@ -669,6 +679,93 @@ export const AnalyticsDashboard = ({
                 </HardShadowCardLocal>
             </View>
 
+            {normalizedPeriod === 'WEEK' && wowCurrent.length > 0 && wowPrevious.length > 0 && (
+                <View style={tw`mb-6`}>
+                    <HardShadowCardLocal colorMode={colorMode}>
+                        <View style={tw`p-5`}>
+                            <View style={tw`flex-row justify-between items-center mb-4`}>
+                                <Text style={[tw`text-xs font-black uppercase tracking-widest leading-none`, { color: textMuted }]}>Week over week</Text>
+                                <View style={[tw`px-2 py-1 rounded-lg`, { backgroundColor: wowDelta >= 0 ? `${theme.primary}22` : '#ef444422' }]}>
+                                    <Text style={[tw`text-[10px] font-black uppercase`, { color: wowDelta >= 0 ? theme.primary : '#ef4444' }]}>
+                                        {wowDelta >= 0 ? `+${wowDelta}%` : `${wowDelta}%`} vs last week
+                                    </Text>
+                                </View>
+                            </View>
+
+                            <Svg width={chartWidth} height={comparisonChartHeight} style={tw`mb-4`}>
+                                <Path d={wowPreviousPath} fill="none" stroke={isDark ? '#a1a1aa' : '#9ca3af'} strokeWidth={2} strokeDasharray="4 4" strokeLinecap="round" />
+                                <Path d={wowCurrentPath} fill="none" stroke={theme.primary} strokeWidth={3} strokeLinecap="round" />
+                            </Svg>
+
+                            <View style={tw`flex-row items-center justify-between mb-3`}>
+                                <View style={tw`flex-row items-center`}>
+                                    <View style={[tw`w-3 h-0.5 mr-2`, { backgroundColor: theme.primary }]} />
+                                    <Text style={[tw`text-[10px] font-black uppercase`, { color: textPrimary }]}>This week</Text>
+                                </View>
+                                <Text style={[tw`text-[10px] font-black uppercase`, { color: theme.primary }]}>{Math.round(wowCurrentPct)}%</Text>
+                            </View>
+                            <View style={tw`flex-row items-center justify-between`}>
+                                <View style={tw`flex-row items-center`}>
+                                    <View style={[tw`w-3 h-0.5 mr-2`, { backgroundColor: isDark ? '#a1a1aa' : '#9ca3af' }]} />
+                                    <Text style={[tw`text-[10px] font-black uppercase`, { color: textPrimary }]}>Last week</Text>
+                                </View>
+                                <Text style={[tw`text-[10px] font-black uppercase`, { color: isDark ? '#a1a1aa' : '#6b7280' }]}>{Math.round(wowPreviousPct)}%</Text>
+                            </View>
+                        </View>
+                    </HardShadowCardLocal>
+                </View>
+            )}
+
+            {normalizedPeriod === 'MONTH' && momCurrent.length > 0 && momPrevious.length > 0 && (
+                <View style={tw`mb-6`}>
+                    <HardShadowCardLocal colorMode={colorMode}>
+                        <View style={tw`p-5`}>
+                            <View style={tw`flex-row justify-between items-center mb-4`}>
+                                <Text style={[tw`text-xs font-black uppercase tracking-widest leading-none`, { color: textMuted }]}>Month over month</Text>
+                                <View style={[tw`px-2 py-1 rounded-lg`, { backgroundColor: momDelta >= 0 ? `${theme.primary}22` : '#ef444422' }]}>
+                                    <Text style={[tw`text-[10px] font-black uppercase`, { color: momDelta >= 0 ? theme.primary : '#ef4444' }]}>
+                                        {momDelta >= 0 ? `+${momDelta}%` : `${momDelta}%`} vs last month
+                                    </Text>
+                                </View>
+                            </View>
+
+                            <Svg width={chartWidth} height={comparisonChartHeight} style={tw`mb-4`}>
+                                <Path d={momPreviousPath} fill="none" stroke={isDark ? '#a1a1aa' : '#9ca3af'} strokeWidth={2} strokeDasharray="4 4" strokeLinecap="round" />
+                                <Path d={momCurrentPath} fill="none" stroke={theme.primary} strokeWidth={3} strokeLinecap="round" />
+                            </Svg>
+
+                            <View style={tw`flex-row items-center justify-between mb-3`}>
+                                <View style={tw`flex-row items-center`}>
+                                    <View style={[tw`w-3 h-0.5 mr-2`, { backgroundColor: theme.primary }]} />
+                                    <Text style={[tw`text-[10px] font-black uppercase`, { color: textPrimary }]}>This month</Text>
+                                </View>
+                                <Text style={[tw`text-[10px] font-black uppercase`, { color: theme.primary }]}>{Math.round(momCurrentPct)}%</Text>
+                            </View>
+                            <View style={tw`flex-row items-center justify-between`}>
+                                <View style={tw`flex-row items-center`}>
+                                    <View style={[tw`w-3 h-0.5 mr-2`, { backgroundColor: isDark ? '#a1a1aa' : '#9ca3af' }]} />
+                                    <Text style={[tw`text-[10px] font-black uppercase`, { color: textPrimary }]}>{monthComparison?.previousLabel || 'Last month'}</Text>
+                                </View>
+                                <Text style={[tw`text-[10px] font-black uppercase`, { color: isDark ? '#a1a1aa' : '#6b7280' }]}>{Math.round(momPreviousPct)}%</Text>
+                            </View>
+                        </View>
+                    </HardShadowCardLocal>
+                </View>
+            )}
+
+            {/* Retrospective Grid */}
+            <View style={tw`mb-6`}>
+                <HardShadowCardLocal colorMode={colorMode}>
+                    <View style={tw`p-5`}>
+                        <View style={tw`flex-row justify-between items-center mb-6`}>
+                            <Text style={[tw`text-xs font-black uppercase tracking-widest leading-none`, { color: textMuted }]}>{t('analytics.retrospectiveGrid')}</Text>
+                            <Text style={[tw`text-xs font-black uppercase tracking-widest leading-none`, { color: theme.primary }]}>{Math.round(completionStats.percentage)}% {t('analytics.done')}</Text>
+                        </View>
+                        {renderRetrospectiveGrid()}
+                    </View>
+                </HardShadowCardLocal>
+            </View>
+
             {/* Stats Grid */}
             <View style={tw`gap-3 mb-6`}>
                 <HardShadowCardLocal colorMode={colorMode}>
@@ -694,6 +791,81 @@ export const AnalyticsDashboard = ({
                             <Text style={[tw`text-xl font-black`, { color: textPrimary }]}>{stats.worst?.value || "-"}</Text>
                             <View style={[tw`mt-1 w-8 h-1.5 rounded-full`, { backgroundColor: '#fca5a5' }]} />
                         </View>
+                    </View>
+                </HardShadowCardLocal>
+            </View>
+
+            {/* Mood Analysis */}
+            <View style={tw`mb-6`}>
+                <HardShadowCardLocal colorMode={colorMode}>
+                    <View style={tw`p-5`}>
+                        <View style={tw`flex-row justify-between items-center mb-6`}>
+                            <Text style={[tw`text-xs font-black uppercase tracking-widest leading-none`, { color: textMuted }]}>{t('analytics.moodAnalysis')}</Text>
+                            <Text style={[tw`text-[10px] font-black uppercase tracking-widest leading-none`, { color: theme.primary }]}>{t('analytics.vibe', { period: periodLabel })}</Text>
+                        </View>
+                        {renderMoodAnalysis()}
+                    </View>
+                </HardShadowCardLocal>
+            </View>
+
+            {/* Narrative Insights */}
+            <View style={tw`mb-6`}>
+                <HardShadowCardLocal style={{ height: 360 }} colorMode={colorMode}>
+                    <View style={[tw`py-1.5 px-4 items-center`, { backgroundColor: theme.primary }]}>
+                        <Text style={tw`text-[10px] font-black uppercase text-white tracking-widest leading-none`}>
+                            {t('analytics.success', { period: periodLabel })}
+                        </Text>
+                    </View>
+
+                    <View style={tw`p-5 flex-1`}>
+                        <View style={tw`flex-row items-center justify-between mb-6`}>
+                            <View>
+                                <Text style={[tw`text-[10px] font-black uppercase tracking-widest mb-2 leading-none`, { color: textMuted }]}>{masteryLabel}</Text>
+                                <View style={tw`flex-row items-baseline`}>
+                                    <Text style={[tw`text-4xl font-black`, { color: textPrimary }]}>{completionStats.completed}</Text>
+                                    <Text style={[tw`text-2xl font-black ml-1`, { color: textFaint }]}>/ {completionStats.total}</Text>
+                                </View>
+                            </View>
+                            <View style={tw`items-center justify-center`}>
+                                <Svg width={70} height={70}>
+                                    <Circle cx={35} cy={35} r={radius} stroke={isDark ? '#262626' : '#f5f5f4'} strokeWidth={8} fill="none" />
+                                    <AnimatedCircle
+                                        cx={35}
+                                        cy={35}
+                                        r={radius}
+                                        stroke={theme.primary}
+                                        strokeWidth={8}
+                                        fill="none"
+                                        strokeDasharray={circumference}
+                                        strokeDashoffset={circleAnim.interpolate({
+                                            inputRange: [0, 100],
+                                            outputRange: [circumference, 0]
+                                        })}
+                                        strokeLinecap="round"
+                                        transform="rotate(-90 35 35)"
+                                    />
+                                </Svg>
+                                <View style={tw`absolute`}>
+                                    <Text style={[tw`text-sm font-black`, { color: theme.primary }]}>{Math.round(completionStats.percentage)}%</Text>
+                                </View>
+                            </View>
+                        </View>
+
+                        <ScrollView showsVerticalScrollIndicator={false} style={tw`flex-1`} contentContainerStyle={tw`pb-6`}>
+                            <View style={tw`gap-4 pb-4`}>
+                                {story.sections.map((section, idx) => (
+                                    <View key={idx}>
+                                        <Text style={[tw`text-[10px] font-black uppercase mb-1 leading-none`, section.type === 'neglected' ? tw`text-rose-400` : { color: textMuted }]}>
+                                            {section.type}
+                                        </Text>
+                                        <FormattedText text={section.text} highlightColor={theme.secondary} colorMode={colorMode} />
+                                    </View>
+                                ))}
+                                {story.sections.length === 0 && (
+                                    <Text style={[tw`italic font-bold text-center py-4`, { color: textMuted }]}>{t('analytics.notEnoughData')}</Text>
+                                )}
+                            </View>
+                        </ScrollView>
                     </View>
                 </HardShadowCardLocal>
             </View>

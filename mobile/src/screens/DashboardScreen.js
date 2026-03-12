@@ -5,6 +5,8 @@ import tw from 'twrnc';
 import { supabase } from '../lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NeoButton } from '../components/NeoComponents';
+import { isBenignAuthError } from '../utils/authErrors';
+import { reportError } from '../lib/errorReporting';
 
 export const DashboardScreen = ({ onLogout }) => {
     const { t } = useTranslation();
@@ -12,18 +14,16 @@ export const DashboardScreen = ({ onLogout }) => {
         try {
             const { error } = await supabase.auth.signOut();
             if (error) {
-                const message = (error.message || '').toLowerCase();
-                const isMissingSessionError =
-                    message.includes('session not found') ||
-                    message.includes('auth session missing');
-                if (!isMissingSessionError) {
+                if (!isBenignAuthError(error)) {
                     console.error('Sign out failed:', error);
+                    reportError(error, { scope: 'dashboard-screen:sign-out' });
                 }
             }
             await AsyncStorage.removeItem('habit_guest_mode');
             if (onLogout) onLogout();
         } catch (err) {
             console.error('Sign out failed:', err);
+            reportError(err, { scope: 'dashboard-screen:sign-out-catch' });
         }
     };
 

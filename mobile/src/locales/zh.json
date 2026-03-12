@@ -20,6 +20,46 @@
         "support": {
             "title": "支持",
             "reportBug": "报告错误或建议"
+        },
+        "appearance": {
+            "title": "外观",
+            "light": "浅色",
+            "dark": "深色"
+        },
+        "cardSize": {
+            "title": "卡片尺寸",
+            "compact": "紧凑",
+            "large": "大号"
+        },
+        "whatsNew": {
+            "title": "新内容",
+            "tutorial": "教程"
+        },
+        "onboardingEntry": {
+            "title": "教程",
+            "open": "打开"
+        },
+        "privacy": {
+            "title": "隐私",
+            "policy": "政策"
+        },
+        "account": {
+            "delete": "删除账户",
+            "noSession": "未找到账户会话。",
+            "deleteFailed": "删除失败",
+            "unableDelete": "当前无法删除账户。",
+            "prompts": {
+                "confirmTitle": "删除账户？",
+                "confirmBody": "这将永久删除你的账户和数据。",
+                "sureTitle": "你确定吗？",
+                "sureBody": "此操作无法撤销。",
+                "keep": "保留账户",
+                "forever": "永久删除"
+            }
+        },
+        "errors": {
+            "title": "错误",
+            "unableSignOut": "无法退出登录"
         }
     },
     "header": {
@@ -263,5 +303,90 @@
         "insight": "洞察",
         "mockTitle": "模式与能量",
         "mockContent": "您倾向于在清晨记录“高效”心情的日子里完成更多习惯。本周您在“阅读”方面的一致性提高了15%。"
+    },
+    "onboarding": {
+        "badge": "教程",
+        "step": "步骤",
+        "back": "返回",
+        "next": "下一步",
+        "finish": "完成",
+        "saving": "保存中...",
+        "steps": {
+            "language": {
+                "title": "选择语言",
+                "subtitle": "设置应用语言，之后也可以在设置中更改。"
+            },
+            "theme": {
+                "title": "选择颜色",
+                "subtitle": "选择应用中使用的 HabiCard 配色。"
+            },
+            "cardStyle": {
+                "title": "选择卡片尺寸",
+                "subtitle": "预览两种卡片样式并选择默认样式。"
+            },
+            "habitsDemo": {
+                "title": "习惯集中管理",
+                "subtitle": "在一个地方勾选你的所有习惯。"
+            },
+            "tasksDemo": {
+                "title": "任务更简单",
+                "subtitle": "创建任务并在完成后勾选。"
+            },
+            "journalDemo": {
+                "title": "每天写日记",
+                "subtitle": "在同一卡片流程中更新每日记录。"
+            },
+            "weekStart": {
+                "title": "一周开始日",
+                "subtitle": "选择一周从周日还是周一开始。"
+            }
+        },
+        "languageTitle": "语言",
+        "cardStyleTitle": "卡片尺寸",
+        "cardStyleLabels": {
+            "compact": "紧凑",
+            "large": "大号"
+        },
+        "habits": [
+            "运动",
+            "喝水",
+            "读10页",
+            "冥想",
+            "计划明天"
+        ],
+        "taskSamples": [
+            "计划明天",
+            "检查目标"
+        ],
+        "journalSample": "你可以在这里写日记。",
+        "sampleDay": "星期四",
+        "cardStyleDescriptions": {
+            "compact": "在标题栏中显示小进度徽章。",
+            "large": "在日期下方显示更大的当日进度面板。"
+        },
+        "themeNames": {
+            "sageRose": "鼠尾草与玫瑰",
+            "oceanSky": "海洋与天空",
+            "sunsetClay": "日落与陶土",
+            "lavenderSlate": "薰衣草与石板",
+            "forestEarth": "森林与大地",
+            "peachMint": "蜜桃与薄荷",
+            "lilacCream": "丁香与奶油",
+            "dustyBlueMauve": "灰蓝与淡紫",
+            "coralSand": "珊瑚与沙色",
+            "mintBlush": "薄荷与粉晕",
+            "honeyFog": "蜂蜜与雾灰",
+            "plumSage": "李子与鼠尾草",
+            "monochrome": "单色"
+        },
+        "weekStartOptions": {
+            "sun": "日",
+            "mon": "一"
+        },
+        "habitInstructions": {
+            "tap": "点击可勾选一个习惯",
+            "hold": "长按可跳过这个习惯",
+            "empty": "如果没完成就留空"
+        }
     }
 }

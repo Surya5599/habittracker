@@ -5,15 +5,19 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { WeeklyScreen } from './WeeklyView';
 import { MonthlyView } from './MonthlyView';
 import { DashboardView } from './DashboardView';
-import { AIAnalysisView } from './AIAnalysisView';
+import { BadgesStreaksView } from './BadgesStreaksView';
 import { BottomNav } from '../components/BottomNav';
-import { Settings, X, Check, Plus, MessageSquare, Sun, Moon, Shield, Sparkles } from 'lucide-react-native';
+import { Settings, X, Check, Plus, MessageSquare, Sun, Moon, Shield, Sparkles, Trash2 } from 'lucide-react-native';
 import tw from 'twrnc';
 import { THEMES } from '../constants';
 import { HabitManager } from '../components/HabitManager';
 import { supabase } from '../lib/supabase';
 import { FeedbackModal } from '../components/FeedbackModal';
 import { PrivacyPolicyModal } from '../components/PrivacyPolicyModal';
+import { HelpTutorialModal } from '../components/HelpTutorialModal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { isBenignAuthError } from '../utils/authErrors';
+import { reportError } from '../lib/errorReporting';
 
 export const MainScreen = ({
     view,
@@ -39,12 +43,13 @@ export const MainScreen = ({
     onOpenOnboardingTutorial,
     weekStart,
     setWeekStart,
-    aiAnalysis,
     language,
     setLanguage,
     toggleArchiveHabit,
     colorMode,
     setColorMode,
+    cardStyle,
+    setCardStyle,
     userId,
     userEmail
 }) => {
@@ -54,6 +59,9 @@ export const MainScreen = ({
     const [isLanguagePickerOpen, setIsLanguagePickerOpen] = useState(false);
     const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
     const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
+    const [isHelpTutorialOpen, setIsHelpTutorialOpen] = useState(false);
+    const [tutorialBaselineHabitsCount, setTutorialBaselineHabitsCount] = useState(0);
+    const [tutorialBaselineHabitIds, setTutorialBaselineHabitIds] = useState([]);
     const [selectedDate, setSelectedDate] = useState(null);
     const { t } = useTranslation();
     const isDark = colorMode === 'dark';
@@ -110,11 +118,7 @@ export const MainScreen = ({
             } else {
                 const { error } = await supabase.auth.signOut();
                 if (error) {
-                    const message = (error.message || '').toLowerCase();
-                    const isMissingSessionError =
-                        message.includes('session not found') ||
-                        message.includes('auth session missing');
-                    if (!isMissingSessionError) {
+                    if (!isBenignAuthError(error)) {
                         throw error;
                     }
                 }
@@ -123,8 +127,90 @@ export const MainScreen = ({
             }
             setIsSettingsOpen(false);
         } catch (error) {
-            Alert.alert('Error', error?.message || 'Unable to sign out');
+            reportError(error, { scope: 'main-screen:sign-out' });
+            Alert.alert(t('settings.errors.title'), error?.message || t('settings.errors.unableSignOut'));
         }
+    };
+
+    const clearLocalAppData = async () => {
+        const keys = [
+            'habit_guest_mode',
+            'habit_tracker_habits',
+            'habit_tracker_completions',
+            'habit_tracker_notes',
+            'habit_tracker_habits_queue_v1',
+            'habit_tracker_notes_queue_v1'
+        ];
+        await AsyncStorage.multiRemove(keys);
+    };
+
+    const runDeleteAccount = async () => {
+        try {
+            if (isGuest) {
+                await clearLocalAppData();
+                await onOpenSignIn();
+                setIsSettingsOpen(false);
+                return;
+            }
+
+            const userIdValue = userId;
+            if (!userIdValue) {
+                Alert.alert(t('settings.errors.title'), t('settings.account.noSession'));
+                return;
+            }
+
+            let deleteError = null;
+            const fnResult = await supabase.functions.invoke('delete-account', { body: { userId: userIdValue } });
+            if (fnResult.error) {
+                deleteError = fnResult.error;
+                const rpcResult = await supabase.rpc('delete_user_account');
+                if (rpcResult.error) {
+                    deleteError = rpcResult.error;
+                } else {
+                    deleteError = null;
+                }
+            }
+
+            if (deleteError) {
+                throw deleteError;
+            }
+
+            await clearLocalAppData();
+            const { error: signOutError } = await supabase.auth.signOut({ scope: 'local' });
+            if (signOutError && !isBenignAuthError(signOutError)) {
+                reportError(signOutError, { scope: 'main-screen:delete-account-signout' });
+            }
+
+            setIsSettingsOpen(false);
+            await onOpenSignIn();
+        } catch (error) {
+            reportError(error, { scope: 'main-screen:delete-account' });
+            Alert.alert(t('settings.account.deleteFailed'), error?.message || t('settings.account.unableDelete'));
+        }
+    };
+
+    const handleDeleteAccount = () => {
+        Alert.alert(
+            t('settings.account.prompts.confirmTitle'),
+            t('settings.account.prompts.confirmBody'),
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: t('common.delete'),
+                    style: 'destructive',
+                    onPress: () => {
+                        Alert.alert(
+                            t('settings.account.prompts.sureTitle'),
+                            t('settings.account.prompts.sureBody'),
+                            [
+                                { text: t('settings.account.prompts.keep'), style: 'cancel' },
+                                { text: t('settings.account.prompts.forever'), style: 'destructive', onPress: runDeleteAccount }
+                            ]
+                        );
+                    }
+                }
+            ]
+        );
     };
 
     const getInactiveHabitsForDate = (dateKey) => {
@@ -187,8 +273,9 @@ export const MainScreen = ({
         <View style={{ flex: 1, backgroundColor: isDark ? '#000000' : '#f5f5f4' }}>
             <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
                 <View style={[tw`flex-row items-center justify-between px-4 py-3`, { backgroundColor: isDark ? '#000000' : '#f5f5f4' }]}>
-                    <TouchableOpacity onPress={() => setIsHabitManagerOpen(true)}>
-                        <Plus size={24} color={isDark ? '#e5e7eb' : '#57534e'} strokeWidth={2.5} />
+                    <TouchableOpacity onPress={() => setIsHabitManagerOpen(true)} style={tw`flex-row items-center`}>
+                        <Plus size={22} color={isDark ? '#e5e7eb' : '#57534e'} strokeWidth={2.5} />
+                        <Text style={[tw`ml-1.5 text-xs font-black uppercase tracking-widest`, { color: isDark ? '#e5e7eb' : '#57534e' }]}>Add</Text>
                     </TouchableOpacity>
                     <Text style={[tw`text-xl font-black uppercase tracking-widest`, { color: isDark ? '#e5e7eb' : '#57534e' }]}>
                         Habi<Text style={tw`text-[#C19A9A]`}>Card</Text>
@@ -280,7 +367,7 @@ export const MainScreen = ({
                                         </View>
 
                                         <View style={[tw`flex-row items-center justify-between p-4 border-b-[3px] border-black`, { borderBottomColor: outlineColor }]}>
-                                            <Text style={[tw`text-sm font-black uppercase tracking-tight`, { color: isDark ? '#e5e7eb' : '#161616' }]}>Appearance</Text>
+                                            <Text style={[tw`text-sm font-black uppercase tracking-tight`, { color: isDark ? '#e5e7eb' : '#161616' }]}>{t('settings.appearance.title')}</Text>
                                             <View style={[tw`flex-row p-1 rounded-xl border-2 border-black`, { backgroundColor: isDark ? '#161616' : '#f3f4f6', borderColor: outlineColor }]}>
                                                 <TouchableOpacity
                                                     onPress={() => setColorMode('light')}
@@ -297,6 +384,24 @@ export const MainScreen = ({
                                             </View>
                                         </View>
 
+                                        <View style={[tw`flex-row items-center justify-between p-4 border-b-[3px] border-black`, { borderBottomColor: outlineColor }]}>
+                                            <Text style={[tw`text-sm font-black uppercase tracking-tight`, { color: isDark ? '#e5e7eb' : '#161616' }]}>{t('settings.cardSize.title')}</Text>
+                                            <View style={[tw`flex-row p-1 rounded-xl border-2 border-black`, { backgroundColor: isDark ? '#161616' : '#f3f4f6', borderColor: outlineColor }]}>
+                                                <TouchableOpacity
+                                                    onPress={() => setCardStyle('compact')}
+                                                    style={[tw`px-3 py-1.5 rounded-lg`, cardStyle === 'compact' && { backgroundColor: theme.primary }]}
+                                                >
+                                                    <Text style={[tw`text-[10px] font-black uppercase`, cardStyle === 'compact' ? tw`text-white` : tw`text-gray-400`]}>{t('settings.cardSize.compact')}</Text>
+                                                </TouchableOpacity>
+                                                <TouchableOpacity
+                                                    onPress={() => setCardStyle('large')}
+                                                    style={[tw`px-3 py-1.5 rounded-lg`, cardStyle === 'large' && { backgroundColor: theme.primary }]}
+                                                >
+                                                    <Text style={[tw`text-[10px] font-black uppercase`, cardStyle === 'large' ? tw`text-white` : tw`text-gray-400`]}>{t('settings.cardSize.large')}</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                        </View>
+
                                         <TouchableOpacity
                                             style={[tw`flex-row items-center justify-between p-4 border-b-[3px] border-black`, { borderBottomColor: outlineColor }]}
                                             onPress={() => {
@@ -305,11 +410,11 @@ export const MainScreen = ({
                                             }}
                                         >
                                             <Text style={[tw`text-sm font-black uppercase tracking-tight`, { color: isDark ? '#e5e7eb' : '#1f2937' }]}>
-                                                What's New
+                                                {t('settings.onboardingEntry.title')}
                                             </Text>
                                             <View style={tw`flex-row items-center`}>
                                                 <Text style={[tw`text-xs font-black uppercase mr-2`, { color: isDark ? '#9ca3af' : '#6b7280' }]}>
-                                                    Tutorial
+                                                    {t('settings.onboardingEntry.open')}
                                                 </Text>
                                                 <Sparkles size={16} color={isDark ? '#a3a3a3' : '#57534e'} />
                                             </View>
@@ -341,11 +446,11 @@ export const MainScreen = ({
                                             }}
                                         >
                                             <Text style={[tw`text-sm font-black uppercase tracking-tight`, { color: isDark ? '#e5e7eb' : '#1f2937' }]}>
-                                                Privacy
+                                                {t('settings.privacy.title')}
                                             </Text>
                                             <View style={tw`flex-row items-center`}>
                                                 <Text style={[tw`text-xs font-black uppercase mr-2`, { color: isDark ? '#9ca3af' : '#6b7280' }]}>
-                                                    Policy
+                                                    {t('settings.privacy.policy')}
                                                 </Text>
                                                 <Shield size={16} color={isDark ? '#a3a3a3' : '#57534e'} />
                                             </View>
@@ -360,6 +465,16 @@ export const MainScreen = ({
                                                 {isGuest ? t('header.signIn') : t('header.logout')}
                                             </Text>
                                         </TouchableOpacity>
+
+                                        {!isGuest && (
+                                            <TouchableOpacity
+                                                style={[tw`flex-row items-center justify-between p-4 border-t-[3px] border-black`, { borderTopColor: outlineColor, backgroundColor: isDark ? '#161616' : '#f9fafb' }]}
+                                                onPress={handleDeleteAccount}
+                                            >
+                                                <Text style={tw`text-sm font-black text-red-500 uppercase tracking-tight`}>{t('settings.account.delete')}</Text>
+                                                <Trash2 size={16} color="#ef4444" />
+                                            </TouchableOpacity>
+                                        )}
                                     </View>
                                 </View>
                             </ScrollView>
@@ -500,6 +615,7 @@ export const MainScreen = ({
                         initialDate={selectedDate}
                         weekStart={weekStart}
                         colorMode={colorMode}
+                        cardStyle={cardStyle}
                     />
                 )}
                 {view === 'monthly' && (
@@ -513,6 +629,7 @@ export const MainScreen = ({
                         isHabitInactive={isHabitInactive}
                         updateNote={updateNote}
                         colorMode={colorMode}
+                        cardStyle={cardStyle}
                     />
                 )}
                 {view === 'dashboard' && (
@@ -527,16 +644,34 @@ export const MainScreen = ({
                         notes={notes}
                         weekStart={weekStart}
                         toggleCompletion={handleToggleCompletion}
+                        toggleHabitInactive={toggleHabitInactive}
+                        isHabitInactive={isHabitInactive}
+                        updateNote={updateNote}
                         colorMode={colorMode}
+                        cardStyle={cardStyle}
                     />
                 )}
-                {view === 'analysis' && (
-                    <AIAnalysisView
+                {view === 'badges' && (
+                    <BadgesStreaksView
+                        habits={habits}
+                        completions={completions}
                         theme={theme}
                         colorMode={colorMode}
-                        {...aiAnalysis}
                     />
                 )}
+                <HelpTutorialModal
+                    visible={isHelpTutorialOpen}
+                    onClose={() => setIsHelpTutorialOpen(false)}
+                    currentView={view}
+                    habitsCount={habits.length}
+                    baselineHabitsCount={tutorialBaselineHabitsCount}
+                    habitIds={habits.map((h) => h.id)}
+                    baselineHabitIds={tutorialBaselineHabitIds}
+                    completions={completions}
+                    notes={notes}
+                    colorMode={colorMode}
+                    theme={theme}
+                />
             </SafeAreaView>
             <BottomNav
                 view={view}

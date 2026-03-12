@@ -20,6 +20,46 @@
         "support": {
             "title": "Suporte",
             "reportBug": "Reportar erro ou sugestão"
+        },
+        "appearance": {
+            "title": "Aparencia",
+            "light": "Claro",
+            "dark": "Escuro"
+        },
+        "cardSize": {
+            "title": "Tamanho do card",
+            "compact": "Compacto",
+            "large": "Grande"
+        },
+        "whatsNew": {
+            "title": "Novidades",
+            "tutorial": "Tutorial"
+        },
+        "onboardingEntry": {
+            "title": "Tutorial",
+            "open": "Abrir"
+        },
+        "privacy": {
+            "title": "Privacidade",
+            "policy": "Politica"
+        },
+        "account": {
+            "delete": "Excluir conta",
+            "noSession": "Nenhuma sessao de conta encontrada.",
+            "deleteFailed": "Falha ao excluir",
+            "unableDelete": "Nao foi possivel excluir a conta agora.",
+            "prompts": {
+                "confirmTitle": "Excluir conta?",
+                "confirmBody": "Isso remove permanentemente sua conta e seus dados.",
+                "sureTitle": "Tem certeza absoluta?",
+                "sureBody": "Esta acao nao pode ser desfeita.",
+                "keep": "Manter conta",
+                "forever": "Excluir para sempre"
+            }
+        },
+        "errors": {
+            "title": "Erro",
+            "unableSignOut": "Nao foi possivel sair"
         }
     },
     "header": {
@@ -263,5 +303,90 @@
         "insight": "Insight",
         "mockTitle": "Padrões & Energia",
         "mockContent": "Você tende a completar mais hábitos nos dias em que registra um humor \"produtivo\" de manhã cedo. Sua consistência com \"Leitura\" melhorou 15% esta semana."
+    },
+    "onboarding": {
+        "badge": "Tutorial",
+        "step": "Passo",
+        "back": "Voltar",
+        "next": "Proximo",
+        "finish": "Concluir",
+        "saving": "Salvando...",
+        "steps": {
+            "language": {
+                "title": "Escolher idioma",
+                "subtitle": "Defina o idioma do app. Voce pode mudar depois em Configuracoes."
+            },
+            "theme": {
+                "title": "Escolher cor",
+                "subtitle": "Escolha a mesma combinacao de cores do HabiCard usada no app."
+            },
+            "cardStyle": {
+                "title": "Escolher tamanho do card",
+                "subtitle": "Veja os dois estilos de card e escolha o padrao."
+            },
+            "habitsDemo": {
+                "title": "Habitos em um lugar",
+                "subtitle": "Marque todos os seus habitos em um so lugar."
+            },
+            "tasksDemo": {
+                "title": "Tarefas simples",
+                "subtitle": "Crie tarefas e marque quando terminar."
+            },
+            "journalDemo": {
+                "title": "Escreva todo dia",
+                "subtitle": "Atualize seu diario diario no mesmo fluxo do card."
+            },
+            "weekStart": {
+                "title": "Inicio da semana",
+                "subtitle": "Escolha se sua semana comeca no domingo ou na segunda."
+            }
+        },
+        "languageTitle": "Idioma",
+        "cardStyleTitle": "Tamanho do card",
+        "cardStyleLabels": {
+            "compact": "Compacto",
+            "large": "Grande"
+        },
+        "habits": [
+            "Exercicio",
+            "Beber agua",
+            "Ler 10 paginas",
+            "Meditar",
+            "Planejar amanha"
+        ],
+        "taskSamples": [
+            "Planejar amanha",
+            "Revisar metas"
+        ],
+        "journalSample": "Aqui voce pode escrever no diario.",
+        "sampleDay": "Quinta",
+        "cardStyleDescriptions": {
+            "compact": "Pequeno indicador de progresso no cabecalho.",
+            "large": "Painel grande de progresso diario abaixo da data."
+        },
+        "themeNames": {
+            "sageRose": "Savia e Rosa",
+            "oceanSky": "Oceano e Ceu",
+            "sunsetClay": "Por do Sol e Argila",
+            "lavenderSlate": "Lavanda e Ardósia",
+            "forestEarth": "Floresta e Terra",
+            "peachMint": "Pessego e Menta",
+            "lilacCream": "Lilás e Creme",
+            "dustyBlueMauve": "Azul Fosco e Malva",
+            "coralSand": "Coral e Areia",
+            "mintBlush": "Menta e Blush",
+            "honeyFog": "Mel e Nevoa",
+            "plumSage": "Ameixa e Savia",
+            "monochrome": "Monocromatico"
+        },
+        "weekStartOptions": {
+            "sun": "DOM",
+            "mon": "SEG"
+        },
+        "habitInstructions": {
+            "tap": "Toque para marcar um habito",
+            "hold": "Segure para pular o habito",
+            "empty": "Deixe vazio se voce nao conseguiu fazer"
+        }
     }
 }

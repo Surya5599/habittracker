@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, TouchableOpacity, ScrollView, Animated, TextInput, Easing, Modal, useWindowDimensions, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
-import { Check, ChevronLeft, ChevronRight, BookOpen, Save, Plus, X, Share, Meh, Frown, Smile, Laugh, Angry, Minus } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, ScrollView, Animated, TextInput, Easing, Modal, useWindowDimensions, KeyboardAvoidingView, Platform, Keyboard, PanResponder } from 'react-native';
+import { Check, ChevronLeft, ChevronRight, BookOpen, Save, Plus, X, Meh, Frown, Smile, Laugh, Angry, Minus } from 'lucide-react-native';
 import tw from 'twrnc';
 import { isCompleted as checkCompleted } from '../utils/stats';
 import { DAYS_OF_WEEK } from '../constants';
@@ -39,7 +39,8 @@ export const DailyCard = ({
     dayData,
     dateKey,
     updateNote,
-    colorMode = 'light'
+    colorMode = 'light',
+    cardStyle = 'large'
 }) => {
     const [isFlipped, setIsFlipped] = useState(false);
     const [backView, setBackView] = useState('journal');
@@ -50,10 +51,19 @@ export const DailyCard = ({
     const longPressTriggeredRef = useRef(false);
     const [keyboardInset, setKeyboardInset] = useState(0);
     const viewSwitchAnim = useRef(new Animated.Value(1)).current;
+    const [switchPhase, setSwitchPhase] = useState('idle'); // idle | out | in
     const isSwitchingRef = useRef(false);
     const journalScrollRef = useRef(null);
+    const swipeLockRef = useRef(false);
+    const onPrevRef = useRef(onPrev);
+    const onNextRef = useRef(onNext);
     const { t, i18n } = useTranslation();
     const isDark = colorMode === 'dark';
+    const isLargeLayout = cardStyle === 'large';
+    const isCompact = !isLargeLayout;
+    const activeTab = isFlipped ? backView : 'habits';
+    const [statusRowWidth, setStatusRowWidth] = useState(0);
+    const statusIndicatorAnim = useRef(new Animated.Value(0)).current;
 
     const finalDayData = dayData || { tasks: [], mood: undefined, journal: '' };
 
@@ -65,6 +75,11 @@ export const DailyCard = ({
         setLocalJournal(finalDayData.journal || '');
         setLocalMood(finalDayData.mood);
     }, [finalDayData.journal, finalDayData.mood]);
+
+    useEffect(() => {
+        onPrevRef.current = onPrev;
+        onNextRef.current = onNext;
+    }, [onPrev, onNext]);
 
     useEffect(() => {
         const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
@@ -140,19 +155,24 @@ export const DailyCard = ({
     const animateViewChange = (applyStateChange) => {
         if (isSwitchingRef.current) return;
         isSwitchingRef.current = true;
+
+        setSwitchPhase('out');
         Animated.timing(viewSwitchAnim, {
             toValue: 0,
-            duration: 110,
+            duration: 120,
             easing: Easing.out(Easing.quad),
             useNativeDriver: true
         }).start(() => {
             applyStateChange();
+            setSwitchPhase('in');
+            viewSwitchAnim.setValue(0);
             Animated.timing(viewSwitchAnim, {
                 toValue: 1,
-                duration: 170,
+                duration: 200,
                 easing: Easing.out(Easing.cubic),
                 useNativeDriver: true
             }).start(() => {
+                setSwitchPhase('idle');
                 isSwitchingRef.current = false;
             });
         });
@@ -176,12 +196,25 @@ export const DailyCard = ({
     const openTasksView = () => switchCardView('tasks');
     const flipToFront = () => switchCardView('habits');
 
+    useEffect(() => {
+        if (!statusRowWidth) return;
+        const tabIndex = activeTab === 'habits' ? 0 : activeTab === 'tasks' ? 1 : 2;
+        const targetX = (statusRowWidth / 3) * tabIndex;
+        Animated.timing(statusIndicatorAnim, {
+            toValue: targetX,
+            duration: 180,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true
+        }).start();
+    }, [activeTab, statusRowWidth, statusIndicatorAnim]);
+
     const handleSaveJournalOld = () => {
         // Deprecated, using the one above
         flipToFront();
     };
 
     const dayName = date.toLocaleDateString(i18n.language, { weekday: 'long' });
+    const shortDayName = date.toLocaleDateString(i18n.language, { weekday: 'short' });
     const dateString = date.toLocaleDateString(i18n.language, { month: 'short', day: 'numeric', year: 'numeric' });
     const isToday = date.toDateString() === new Date().toDateString();
 
@@ -268,9 +301,34 @@ export const DailyCard = ({
     const borderSoft = isDark ? '#262626' : '#f3f4f6';
     const outlineColor = isDark ? '#ffffff' : '#000000';
     const dateHeaderBg = isDark ? '#000000' : theme.secondary;
+    const headerCircleSize = 64;
+    const headerCircleRadius = 29;
+    const headerCircleStroke = 6;
+    const headerTitleSize = isLargeLayout ? 26 : 30;
+    const headerDateSize = 10;
+    const listItemTextSize = isLargeLayout ? 16 : 17;
+    const listItemSpacing = isLargeLayout ? 7 : 8;
+    const checkBoxSize = isLargeLayout ? 23 : 24;
 
     const StatusRow = () => (
-        <View style={[tw`flex-row border-t-[3px] border-b-[3px] border-black`, { backgroundColor: panelSoftBg, borderColor: outlineColor }]}>
+        <View
+            onLayout={(e) => setStatusRowWidth(e.nativeEvent.layout.width)}
+            style={[tw`relative flex-row border-t-[3px] border-b-[3px] border-black`, { backgroundColor: panelSoftBg, borderColor: outlineColor }]}
+        >
+            {statusRowWidth > 0 ? (
+                <Animated.View
+                    style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        width: statusRowWidth / 3,
+                        alignItems: 'center',
+                        transform: [{ translateX: statusIndicatorAnim }]
+                    }}
+                >
+                    <View style={{ height: 3, width: 28, borderRadius: 999, backgroundColor: theme.primary }} />
+                </Animated.View>
+            ) : null}
             <TouchableOpacity
                 onPress={flipToFront}
                 style={[tw`flex-1 px-2 py-2 border-r border-black items-center justify-center`, { borderRightColor: outlineColor }]}
@@ -343,33 +401,133 @@ export const DailyCard = ({
     });
 
     const { height: screenHeight } = useWindowDimensions();
+    const { width: screenWidth } = useWindowDimensions();
     const cardHeight = screenHeight - 220; // Corrected height to stay above bottom nav
+    const journalInputHeight = Math.max(250, Math.floor(cardHeight * 0.46));
+    const swipeX = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        swipeX.setValue(0);
+    }, [dateKey, swipeX]);
+
+    const runDaySwipe = (direction) => {
+        const isNext = direction === 'next';
+        const exitTo = isNext ? -screenWidth * 1.05 : screenWidth * 1.05;
+        const enterFrom = isNext ? screenWidth * 0.65 : -screenWidth * 0.65;
+
+        Animated.timing(swipeX, {
+            toValue: exitTo,
+            duration: 180,
+            easing: Easing.in(Easing.cubic),
+            useNativeDriver: true
+        }).start(() => {
+            if (isNext) {
+                onNextRef.current && onNextRef.current();
+            } else {
+                onPrevRef.current && onPrevRef.current();
+            }
+
+            swipeX.setValue(enterFrom);
+            Animated.spring(swipeX, {
+                toValue: 0,
+                useNativeDriver: true,
+                damping: 16,
+                stiffness: 180,
+                mass: 0.9
+            }).start(() => {
+                swipeLockRef.current = false;
+            });
+        });
+    };
+
+    const snapBackSwipe = () => {
+        Animated.spring(swipeX, {
+            toValue: 0,
+            useNativeDriver: true,
+            damping: 14,
+            stiffness: 220,
+            mass: 0.8
+        }).start();
+    };
+
+    const swipeResponder = useRef(
+        PanResponder.create({
+            onMoveShouldSetPanResponder: (_, gestureState) => {
+                const absDx = Math.abs(gestureState.dx);
+                const absDy = Math.abs(gestureState.dy);
+                return !swipeLockRef.current && absDx > 14 && absDx > absDy * 1.3;
+            },
+            onPanResponderMove: (_, gestureState) => {
+                if (swipeLockRef.current) return;
+                swipeX.setValue(gestureState.dx);
+            },
+            onPanResponderRelease: (_, gestureState) => {
+                if (swipeLockRef.current) return;
+                const dx = gestureState.dx;
+                const vx = gestureState.vx;
+                const isStrongSwipe = Math.abs(dx) > 48 || Math.abs(vx) > 0.55;
+                if (!isStrongSwipe) {
+                    snapBackSwipe();
+                    return;
+                }
+
+                swipeLockRef.current = true;
+                if (dx < 0) {
+                    runDaySwipe('next');
+                } else {
+                    runDaySwipe('prev');
+                }
+            },
+            onPanResponderTerminate: () => {
+                snapBackSwipe();
+            }
+        })
+    ).current;
+
+    const swipeCardStyle = {
+        transform: [
+            { translateX: swipeX },
+            {
+                rotateZ: swipeX.interpolate({
+                    inputRange: [-screenWidth, 0, screenWidth],
+                    outputRange: ['-8deg', '0deg', '8deg']
+                })
+            },
+            {
+                scale: swipeX.interpolate({
+                    inputRange: [-screenWidth, 0, screenWidth],
+                    outputRange: [0.96, 1, 0.96]
+                })
+            }
+        ],
+        opacity: swipeX.interpolate({
+            inputRange: [-screenWidth, 0, screenWidth],
+            outputRange: [0.86, 1, 0.86]
+        })
+    };
     const viewSwitchStyle = {
-        opacity: viewSwitchAnim,
         transform: [
             {
                 translateX: viewSwitchAnim.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [26, 0]
+                    outputRange: switchPhase === 'out' ? [-6, 0] : [10, 0]
                 })
             },
             {
                 scale: viewSwitchAnim.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [0.96, 1]
-                })
-            },
-            {
-                rotateZ: viewSwitchAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: ['1.2deg', '0deg']
+                    outputRange: [0.995, 1]
                 })
             }
-        ]
+        ],
+        opacity: viewSwitchAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0.86, 1]
+        })
     };
 
     return (
-        <View style={[tw`pb-0 pr-0`, { height: cardHeight }]}>
+        <Animated.View style={[tw`pb-0 pr-0`, { height: cardHeight }, swipeCardStyle]} {...swipeResponder.panHandlers}>
             <DatePickerModal
                 isVisible={showDatePicker}
                 onClose={() => setShowDatePicker(false)}
@@ -443,51 +601,52 @@ export const DailyCard = ({
             <Animated.View style={[tw`w-full h-full`, viewSwitchStyle]}>
                 <HardShadowCard style={tw`h-full`} isDark={isDark}>
                     {/* Header */}
-                    <View style={[tw`p-4 flex-row items-center justify-between border-b-[3px] border-black`, { backgroundColor: dateHeaderBg, borderBottomColor: outlineColor }]}>
+                    <View style={[tw`flex-row items-center justify-between border-b-[3px] border-black`, { paddingHorizontal: isLargeLayout ? 14 : 16, paddingVertical: isLargeLayout ? 12 : 16, backgroundColor: dateHeaderBg, borderBottomColor: outlineColor }]}>
                         <TouchableOpacity onPress={onPrev}>
                             <ChevronLeft size={24} color="white" />
                         </TouchableOpacity>
 
                         <View style={tw`flex-row items-center gap-3`}>
                             <View style={tw`items-center`}>
-                                <Text style={tw`text-white font-black uppercase text-xl tracking-tighter`}>{dayName}</Text>
+                                <Text style={[tw`text-white font-black uppercase tracking-tighter`, { fontSize: headerTitleSize, lineHeight: headerTitleSize + 2 }]}>{dayName}</Text>
                                 <TouchableOpacity onPress={() => setShowDatePicker(true)} activeOpacity={0.8}>
-                                    <Text style={tw`text-white/80 font-bold text-[10px] tracking-widest`}>{dateString}</Text>
+                                    <Text style={[tw`text-white/80 font-bold tracking-widest`, { fontSize: headerDateSize }]}>{dateString}</Text>
                                 </TouchableOpacity>
                             </View>
 
-                            {/* Header Progress (No Background) */}
-                            <View style={tw`flex-row items-center gap-2`}>
-                                <View style={{ width: 64, height: 64, alignItems: 'center', justifyContent: 'center' }}>
-                                    <Svg width={64} height={64} style={{ transform: [{ rotate: '-90deg' }] }}>
-                                        <Circle
-                                            stroke="rgba(255,255,255,0.2)"
-                                            cx={32}
-                                            cy={32}
-                                            r={29}
-                                            strokeWidth={6}
-                                            fill="transparent"
-                                        />
-                                        <AnimatedCircle
-                                            stroke="white"
-                                            cx={32}
-                                            cy={32}
-                                            r={29}
-                                            strokeWidth={6}
-                                            fill="transparent"
-                                            strokeDasharray={29 * 2 * Math.PI}
-                                            strokeDashoffset={progressAnim.interpolate({
-                                                inputRange: [0, 100],
-                                                outputRange: [29 * 2 * Math.PI, 0],
-                                            })}
-                                            strokeLinecap="round"
-                                        />
-                                    </Svg>
-                                    <View style={tw`absolute inset-0 items-center justify-center`}>
-                                        <Text style={tw`text-sm font-black text-white`}>{Math.round(actualProgress)}%</Text>
+                            {!isLargeLayout && (
+                                <View style={tw`flex-row items-center gap-2`}>
+                                    <View style={{ width: headerCircleSize, height: headerCircleSize, alignItems: 'center', justifyContent: 'center' }}>
+                                        <Svg width={headerCircleSize} height={headerCircleSize} style={{ transform: [{ rotate: '-90deg' }] }}>
+                                            <Circle
+                                                stroke="rgba(255,255,255,0.2)"
+                                                cx={headerCircleSize / 2}
+                                                cy={headerCircleSize / 2}
+                                                r={headerCircleRadius}
+                                                strokeWidth={headerCircleStroke}
+                                                fill="transparent"
+                                            />
+                                            <AnimatedCircle
+                                                stroke="white"
+                                                cx={headerCircleSize / 2}
+                                                cy={headerCircleSize / 2}
+                                                r={headerCircleRadius}
+                                                strokeWidth={headerCircleStroke}
+                                                fill="transparent"
+                                                strokeDasharray={headerCircleRadius * 2 * Math.PI}
+                                                strokeDashoffset={progressAnim.interpolate({
+                                                    inputRange: [0, 100],
+                                                    outputRange: [headerCircleRadius * 2 * Math.PI, 0],
+                                                })}
+                                                strokeLinecap="round"
+                                            />
+                                        </Svg>
+                                        <View style={tw`absolute inset-0 items-center justify-center`}>
+                                            <Text style={tw`text-sm font-black text-white`}>{Math.round(actualProgress)}%</Text>
+                                        </View>
                                     </View>
                                 </View>
-                            </View>
+                            )}
                         </View>
 
                         <TouchableOpacity onPress={onNext}>
@@ -495,95 +654,125 @@ export const DailyCard = ({
                         </TouchableOpacity>
                     </View>
 
-                    <ScrollView
-                        style={[tw`flex-1`, { backgroundColor: panelBg }]}
-                        contentContainerStyle={{ paddingBottom: 12 }}
-                        showsVerticalScrollIndicator={false}
-                    >
+                    <View style={[tw`flex-1`, { backgroundColor: panelBg }]}>
+                        {isLargeLayout && (
+                            <View style={[tw`items-center pt-4 pb-3 border-b`, { borderColor: borderSoft }]}>
+                                <View style={{ width: 110, height: 110, alignItems: 'center', justifyContent: 'center' }}>
+                                    <Svg width={110} height={110} style={{ transform: [{ rotate: '-90deg' }] }}>
+                                        <Circle
+                                            stroke={isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.12)'}
+                                            cx={55}
+                                            cy={55}
+                                            r={48}
+                                            strokeWidth={10}
+                                            fill="transparent"
+                                        />
+                                        <AnimatedCircle
+                                            stroke={theme.primary}
+                                            cx={55}
+                                            cy={55}
+                                            r={48}
+                                            strokeWidth={10}
+                                            fill="transparent"
+                                            strokeDasharray={48 * 2 * Math.PI}
+                                            strokeDashoffset={progressAnim.interpolate({
+                                                inputRange: [0, 100],
+                                                outputRange: [48 * 2 * Math.PI, 0],
+                                            })}
+                                            strokeLinecap="round"
+                                        />
+                                    </Svg>
+                                    <View style={tw`absolute inset-0 items-center justify-center`}>
+                                        <Text style={[tw`font-black`, { color: textPrimary, fontSize: 24 }]}>{Math.round(actualProgress)}%</Text>
+                                    </View>
+                                </View>
+                            </View>
+                        )}
 
-
-                        <View style={tw`px-5 pb-6 pt-4`}>
-                            <View style={[tw`border-b mb-2 pb-2 flex-row justify-between items-center`, { borderColor: borderSoft }]}>
+                        <View style={[tw`px-5 pt-3 pb-2 border-b`, { borderColor: borderSoft }]}>
+                            <View style={tw`flex-row justify-between items-center`}>
                                 <Text style={[tw`text-xs font-black uppercase tracking-widest`, { color: textSecondary }]}>{t('common.myHabits')}</Text>
                                 <Text style={[tw`text-xs font-black mr-2`, { color: textSecondary }]}>{completedHabitsCount}/{totalHabitsCount}</Text>
                             </View>
+                        </View>
 
+                        <ScrollView
+                            style={tw`flex-1 px-5`}
+                            contentContainerStyle={{ paddingTop: 10, paddingBottom: 12 }}
+                            showsVerticalScrollIndicator={false}
+                        >
                             {visibleHabitsForDate.length === 0 ? (
-                                <Text style={[tw`text-center italic py-2 text-xs`, { color: textMuted }]}>{t('dailyCard.noDailyHabits')}</Text>
+                                <Text style={[tw`text-center italic py-2 text-xs`, { color: textMuted }]}>
+                                    {habits.length === 0
+                                        ? 'Click the + Add on the top right to view and add habits'
+                                        : t('dailyCard.noDailyHabits')}
+                                </Text>
                             ) : (
                                 <View style={tw`mb-2`}>
-                    {visibleHabitsForDate
-                        .map(habit => ({
-                            ...habit,
-                            done: checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear()),
-                            weeklyDone: habit.weeklyTarget ? getFlexibleProgress(habit.id) : null,
-                            inactive: isHabitInactiveOnDate(habit.id)
-                        }))
-                        .map(habit => (
-                            <TouchableOpacity
-                                key={habit.id}
-                                delayLongPress={450}
-                                onPressIn={() => { longPressTriggeredRef.current = false; }}
-                                onLongPress={() => {
-                                    longPressTriggeredRef.current = true;
-                                    if (toggleHabitInactive) {
-                                        toggleHabitInactive(habit.id, dateKey);
-                                    }
-                                }}
-                                onPress={() => {
-                                    if (longPressTriggeredRef.current) {
-                                        longPressTriggeredRef.current = false;
-                                        return;
-                                    }
-                                    toggleCompletion(habit.id, dateKey);
-                                }}
-                                style={tw`flex-row items-center justify-between mb-2 mr-2`}
-                                activeOpacity={0.7}
-                            >
-                                <View style={tw`flex-row items-center flex-1 mr-2`}>
-                                    <Text style={[
-                                        tw`text-base font-bold flex-shrink`,
-                                        habit.inactive
-                                            ? { color: '#b45309' }
-                                            : (habit.done ? { color: textMuted, textDecorationLine: 'line-through' } : { color: textPrimary })
-                                    ]}>
-                                        {habit.name || t('common.untitled')}
-                                    </Text>
-                                    {habit.weeklyTarget ? (
+                                    {visibleHabitsForDate
+                                        .map(habit => ({
+                                            ...habit,
+                                            done: checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear()),
+                                            weeklyDone: habit.weeklyTarget ? getFlexibleProgress(habit.id) : null,
+                                            inactive: isHabitInactiveOnDate(habit.id)
+                                        }))
+                                        .map(habit => (
+                                            <TouchableOpacity
+                                                key={habit.id}
+                                                delayLongPress={450}
+                                                onPressIn={() => { longPressTriggeredRef.current = false; }}
+                                                onLongPress={() => {
+                                                    longPressTriggeredRef.current = true;
+                                                    if (toggleHabitInactive) {
+                                                        toggleHabitInactive(habit.id, dateKey);
+                                                    }
+                                                }}
+                                                onPress={() => {
+                                                    if (longPressTriggeredRef.current) {
+                                                        longPressTriggeredRef.current = false;
+                                                        return;
+                                                    }
+                                                    toggleCompletion(habit.id, dateKey);
+                                                }}
+                                                style={[tw`flex-row items-center justify-between mr-2`, { marginBottom: listItemSpacing }]}
+                                                activeOpacity={0.7}
+                                            >
+                                                <View style={tw`flex-row items-center flex-1 mr-2`}>
+                                                    <Text style={[
+                                                        tw`font-bold flex-shrink`,
+                                                        { fontSize: listItemTextSize },
+                                                        habit.inactive
+                                                            ? { color: '#b45309' }
+                                                            : (habit.done ? { color: textMuted, textDecorationLine: 'line-through' } : { color: textPrimary })
+                                                    ]}>
+                                                        {habit.name || t('common.untitled')}
+                                                    </Text>
+                                                    {habit.weeklyTarget ? (
                                                         <Text style={[tw`ml-2 text-[10px] font-black uppercase`, { color: textSecondary }]}>
                                                             {habit.weeklyDone}/{habit.weeklyTarget}
                                                         </Text>
                                                     ) : null}
                                                 </View>
 
-                                <View style={[
-                                    tw`w-6 h-6 border-[2.5px] border-black items-center justify-center rounded-sm`,
-                                    habit.inactive
-                                        ? { backgroundColor: '#fcd34d', borderColor: '#b45309' }
-                                        : { backgroundColor: habit.done ? '#000000' : panelBg, borderColor: outlineColor }
-                                ]}>
-                                    {habit.inactive
-                                        ? <Minus size={16} color="#78350f" strokeWidth={4} />
-                                        : (habit.done && <Check size={16} color="white" strokeWidth={4} />)}
-                                </View>
-                            </TouchableOpacity>
-                        ))
-                    }
+                                                <View style={[
+                                                    tw`border-[2.5px] border-black items-center justify-center rounded-sm`,
+                                                    { width: checkBoxSize, height: checkBoxSize },
+                                                    habit.inactive
+                                                        ? { backgroundColor: '#fcd34d', borderColor: '#b45309' }
+                                                        : { backgroundColor: habit.done ? '#000000' : panelBg, borderColor: outlineColor }
+                                                ]}>
+                                                    {habit.inactive
+                                                        ? <Minus size={16} color="#78350f" strokeWidth={4} />
+                                                        : (habit.done && <Check size={16} color="white" strokeWidth={4} />)}
+                                                </View>
+                                            </TouchableOpacity>
+                                        ))
+                                    }
                                 </View>
                             )}
-                        </View>
-
-                    </ScrollView>
+                        </ScrollView>
+                    </View>
                     <StatusRow />
-
-                    {actualProgress === 100 && (
-                        <TouchableOpacity
-                            onPress={() => onShareClick && onShareClick({ date, dayName, dateString, completedCount, totalCount, progress: actualProgress })}
-                            style={[tw`absolute right-4 bg-black p-3 rounded-full shadow-lg z-50`, { bottom: 64 }]}
-                        >
-                            <Share size={20} color="white" />
-                        </TouchableOpacity>
-                    )}
 
                 </HardShadowCard>
             </Animated.View>
@@ -594,26 +783,29 @@ export const DailyCard = ({
             <Animated.View style={[tw`w-full h-full`, viewSwitchStyle]}>
                 <HardShadowCard style={tw`h-full`} isDark={isDark}>
                     {/* Header */}
-                    <View style={[tw`p-5 flex-row items-center border-b-[3px] border-black`, { backgroundColor: dateHeaderBg, borderBottomColor: outlineColor }]}>
+                    <View style={[tw`flex-row items-center border-b-[3px] border-black`, { paddingHorizontal: isCompact ? 14 : 20, paddingVertical: isCompact ? 10 : 20, backgroundColor: dateHeaderBg, borderBottomColor: outlineColor }]}>
                         <TouchableOpacity onPress={onPrev} style={tw`absolute left-4 z-10`}>
-                            <ChevronLeft size={28} color="white" />
+                            <ChevronLeft size={isCompact ? 24 : 28} color="white" />
                         </TouchableOpacity>
                         <View style={tw`flex-1 items-center`}>
-                            <Text style={tw`text-white font-black uppercase text-2xl tracking-tighter`}>
+                            <Text style={[tw`text-white font-black uppercase tracking-tighter`, { fontSize: isCompact ? 24 : 30, lineHeight: isCompact ? 26 : 32 }]}>
                                 {backView === 'tasks' ? t('dailyCard.tasks') : t('journal.title')}
                             </Text>
                             <TouchableOpacity onPress={() => setShowDatePicker(true)} activeOpacity={0.8}>
-                                <Text style={tw`text-white/90 font-bold text-sm tracking-widest mt-1`}>{dateString}</Text>
+                                <Text style={[tw`text-white/90 font-bold tracking-widest mt-1`, { fontSize: isCompact ? 12 : 14 }]}>
+                                    <Text style={{ opacity: 0.9 }}>{shortDayName}</Text>
+                                    <Text>{`, ${dateString}`}</Text>
+                                </Text>
                             </TouchableOpacity>
                         </View>
                         <View style={tw`absolute right-4 z-10 flex-row items-center`}>
                             {backView === 'tasks' ? (
                                 <TouchableOpacity onPress={handleAddTask} style={tw`mr-3`}>
-                                    <Plus size={24} color="white" />
+                                    <Plus size={isCompact ? 22 : 24} color="white" />
                                 </TouchableOpacity>
                             ) : null}
                             <TouchableOpacity onPress={onNext}>
-                                <ChevronRight size={28} color="white" />
+                                <ChevronRight size={isCompact ? 24 : 28} color="white" />
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -667,7 +859,7 @@ export const DailyCard = ({
                         <ScrollView
                             ref={journalScrollRef}
                             style={tw`flex-1 p-6`}
-                            contentContainerStyle={{ paddingBottom: 16 + keyboardInset }}
+                            contentContainerStyle={{ paddingBottom: 32 + keyboardInset }}
                             keyboardShouldPersistTaps="handled"
                             keyboardDismissMode="interactive"
                             showsVerticalScrollIndicator={false}
@@ -698,19 +890,28 @@ export const DailyCard = ({
 
                             <View style={tw`relative mb-4`}>
                                 <TextInput
-                                    style={[tw`border-[3px] p-4 pb-14 rounded-xl h-60 text-base font-medium leading-relaxed`, { backgroundColor: panelSoftBg, borderColor: isDark ? '#262626' : '#e5e7eb', color: textPrimary }]}
+                                    style={[
+                                        tw`border-[3px] p-4 pb-14 rounded-xl text-base font-medium leading-relaxed`,
+                                        {
+                                            height: journalInputHeight,
+                                            backgroundColor: panelSoftBg,
+                                            borderColor: isDark ? '#262626' : '#e5e7eb',
+                                            color: textPrimary
+                                        }
+                                    ]}
                                     placeholder={t('journal.placeholder')}
                                     placeholderTextColor={textMuted}
                                     multiline
+                                    keyboardType="default"
                                     textAlignVertical="top"
                                     value={localJournal}
                                     onChangeText={setLocalJournal}
                                     onFocus={() => {
                                         setTimeout(() => {
-                                            journalScrollRef.current?.scrollTo({ y: 80, animated: true });
+                                            journalScrollRef.current?.scrollTo({ y: 140, animated: true });
                                         }, 80);
                                     }}
-                                    returnKeyType="done"
+                                    returnKeyType="default"
                                     blurOnSubmit={false}
                                 />
                                 <TouchableOpacity
@@ -726,6 +927,6 @@ export const DailyCard = ({
                 </HardShadowCard>
             </Animated.View>
             )}
-        </View>
+        </Animated.View>
     );
 };

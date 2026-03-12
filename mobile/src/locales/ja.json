@@ -20,6 +20,46 @@
         "support": {
             "title": "サポート",
             "reportBug": "バグ報告・ご提案"
+        },
+        "appearance": {
+            "title": "表示",
+            "light": "ライト",
+            "dark": "ダーク"
+        },
+        "cardSize": {
+            "title": "カードサイズ",
+            "compact": "コンパクト",
+            "large": "大きい"
+        },
+        "whatsNew": {
+            "title": "新着情報",
+            "tutorial": "チュートリアル"
+        },
+        "onboardingEntry": {
+            "title": "チュートリアル",
+            "open": "開く"
+        },
+        "privacy": {
+            "title": "プライバシー",
+            "policy": "ポリシー"
+        },
+        "account": {
+            "delete": "アカウントを削除",
+            "noSession": "アカウントのセッションが見つかりません。",
+            "deleteFailed": "削除に失敗しました",
+            "unableDelete": "現在アカウントを削除できません。",
+            "prompts": {
+                "confirmTitle": "アカウントを削除しますか？",
+                "confirmBody": "アカウントとデータが完全に削除されます。",
+                "sureTitle": "本当に削除してもよろしいですか？",
+                "sureBody": "この操作は元に戻せません。",
+                "keep": "アカウントを維持",
+                "forever": "完全に削除"
+            }
+        },
+        "errors": {
+            "title": "エラー",
+            "unableSignOut": "サインアウトできませんでした"
         }
     },
     "header": {
@@ -263,5 +303,90 @@
         "insight": "インサイト",
         "mockTitle": "パターン＆エネルギー",
         "mockContent": "早朝に「生産的」な気分を記録した日に、より多くの習慣を完了する傾向があります。「読書」の一貫性は今週15％向上しました。"
+    },
+    "onboarding": {
+        "badge": "チュートリアル",
+        "step": "ステップ",
+        "back": "戻る",
+        "next": "次へ",
+        "finish": "完了",
+        "saving": "保存中...",
+        "steps": {
+            "language": {
+                "title": "言語を選択",
+                "subtitle": "アプリの言語を設定します。後で設定から変更できます。"
+            },
+            "theme": {
+                "title": "色を選択",
+                "subtitle": "アプリで使われているHabiCardの配色を選びます。"
+            },
+            "cardStyle": {
+                "title": "カードサイズを選択",
+                "subtitle": "2つのカードスタイルを確認して、デフォルトを選んでください。"
+            },
+            "habitsDemo": {
+                "title": "習慣を1か所に",
+                "subtitle": "すべての習慣を1か所でチェックできます。"
+            },
+            "tasksDemo": {
+                "title": "タスクをシンプルに",
+                "subtitle": "タスクを作成して、完了したらチェックできます。"
+            },
+            "journalDemo": {
+                "title": "毎日日記を書く",
+                "subtitle": "同じカードの流れで毎日の記録を更新できます。"
+            },
+            "weekStart": {
+                "title": "週の始まり",
+                "subtitle": "週の始まりを日曜または月曜から選びます。"
+            }
+        },
+        "languageTitle": "言語",
+        "cardStyleTitle": "カードサイズ",
+        "cardStyleLabels": {
+            "compact": "コンパクト",
+            "large": "大きい"
+        },
+        "habits": [
+            "運動",
+            "水を飲む",
+            "10ページ読む",
+            "瞑想",
+            "明日の計画"
+        ],
+        "taskSamples": [
+            "明日の計画",
+            "目標を見直す"
+        ],
+        "journalSample": "ここに日記を書けます。",
+        "sampleDay": "木曜日",
+        "cardStyleDescriptions": {
+            "compact": "ヘッダー内に小さな進捗バッジを表示。",
+            "large": "日付の下に大きな1日の進捗パネルを表示。"
+        },
+        "themeNames": {
+            "sageRose": "セージとローズ",
+            "oceanSky": "オーシャンとスカイ",
+            "sunsetClay": "サンセットとクレイ",
+            "lavenderSlate": "ラベンダーとスレート",
+            "forestEarth": "フォレストとアース",
+            "peachMint": "ピーチとミント",
+            "lilacCream": "ライラックとクリーム",
+            "dustyBlueMauve": "ダスティブルーとモーブ",
+            "coralSand": "コーラルとサンド",
+            "mintBlush": "ミントとブラッシュ",
+            "honeyFog": "ハニーとフォグ",
+            "plumSage": "プラムとセージ",
+            "monochrome": "モノクローム"
+        },
+        "weekStartOptions": {
+            "sun": "日",
+            "mon": "月"
+        },
+        "habitInstructions": {
+            "tap": "タップして習慣を完了にする",
+            "hold": "長押しして習慣をスキップする",
+            "empty": "できなかった場合は空のままにする"
+        }
     }
 }

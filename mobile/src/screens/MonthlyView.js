@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, ScrollView, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Modal, TextInput } from 'react-native';
 import tw from 'twrnc';
-import { ChevronRight, BookOpen, Cookie, X, Meh } from 'lucide-react-native';
+import { ChevronRight, BookOpen, CheckSquare, X, Meh, ListTodo, Search } from 'lucide-react-native';
 import { isCompleted as checkCompleted } from '../utils/stats';
 import { DailyCard } from '../components/DailyCard';
 import { MOODS } from '../constants';
@@ -17,11 +17,21 @@ export const MonthlyView = ({
     toggleHabitInactive,
     isHabitInactive,
     updateNote,
-    colorMode = 'light'
+    colorMode = 'light',
+    cardStyle = 'large',
+    initialSelectedDate = null
 }) => {
     const { t, i18n } = useTranslation();
-    const [mode, setMode] = useState('journals'); // 'journals' or 'habits'
+    const [mode, setMode] = useState('journals'); // 'journals' | 'habits' | 'tasks'
     const [selectedDate, setSelectedDate] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
+
+    useEffect(() => {
+        if (!initialSelectedDate) return;
+        const d = new Date(initialSelectedDate);
+        if (Number.isNaN(d.getTime())) return;
+        setSelectedDate(d);
+    }, [initialSelectedDate]);
 
     const generateLast30Days = () => {
         const days = [];
@@ -52,6 +62,55 @@ export const MonthlyView = ({
         return target >= createdDate;
     };
 
+    const getHabitActivityForDate = (date) => {
+        const dailyDue = habits.filter(h =>
+            isHabitStartedByDate(h, date) &&
+            !h.weeklyTarget &&
+            (!h.frequency || h.frequency.includes(date.getDay()))
+        );
+        const flexibleDone = habits.filter(h =>
+            isHabitStartedByDate(h, date) &&
+            h.weeklyTarget &&
+            checkCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear())
+        );
+        return [...dailyDue, ...flexibleDone];
+    };
+
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    const visibleDays = days.filter((date) => {
+        const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        const dayData = notes?.[dateKey] || {};
+        const tasks = Array.isArray(dayData.tasks) ? dayData.tasks : [];
+        const journalText = (dayData.journal || '').trim();
+        const habitActivity = getHabitActivityForDate(date);
+
+        const hasJournal = journalText.length > 0;
+        const hasHabits = habitActivity.length > 0;
+        const hasTasks = tasks.length > 0;
+
+        const modeMatch =
+            mode === 'journals' ? hasJournal :
+                mode === 'habits' ? hasHabits :
+                    hasTasks;
+
+        if (!modeMatch) return false;
+        if (!normalizedQuery) return true;
+
+        const dateLabel = date.toLocaleDateString(i18n.language, {
+            weekday: 'long',
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        }).toLowerCase();
+        const taskText = tasks.map(task => task.text || '').join(' ').toLowerCase();
+        const habitText = habitActivity.map(h => h.name || '').join(' ').toLowerCase();
+
+        return dateLabel.includes(normalizedQuery)
+            || journalText.toLowerCase().includes(normalizedQuery)
+            || taskText.includes(normalizedQuery)
+            || habitText.includes(normalizedQuery);
+    });
+
     return (
         <View style={[tw`flex-1`, { backgroundColor: isDark ? '#000000' : '#f9fafb' }]}>
             {/* Header / Toggle */}
@@ -68,9 +127,26 @@ export const MonthlyView = ({
                         onPress={() => setMode('habits')}
                         style={[tw`flex-1 py-3 rounded-xl items-center flex-row justify-center gap-2`, mode === 'habits' && { backgroundColor: panelBg }]}
                     >
-                        <Cookie size={16} color={mode === 'habits' ? theme.primary : '#a1a1aa'} />
+                        <CheckSquare size={16} color={mode === 'habits' ? theme.primary : '#a1a1aa'} />
                         <Text style={[tw`font-black uppercase text-[11px] tracking-widest`, mode === 'habits' ? { color: theme.primary } : { color: textMuted }]}>{t('monthlyView.habits')}</Text>
                     </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={() => setMode('tasks')}
+                        style={[tw`flex-1 py-3 rounded-xl items-center flex-row justify-center gap-2`, mode === 'tasks' && { backgroundColor: panelBg }]}
+                    >
+                        <ListTodo size={16} color={mode === 'tasks' ? theme.primary : '#a1a1aa'} />
+                        <Text style={[tw`font-black uppercase text-[11px] tracking-widest`, mode === 'tasks' ? { color: theme.primary } : { color: textMuted }]}>Tasks</Text>
+                    </TouchableOpacity>
+                </View>
+                <View style={[tw`mt-3 flex-row items-center rounded-xl border px-3`, { borderColor: panelBorder, backgroundColor: panelSoftBg }]}>
+                    <Search size={14} color={textMuted} />
+                    <TextInput
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        placeholder="Search logs..."
+                        placeholderTextColor={textMuted}
+                        style={[tw`flex-1 ml-2 py-2.5 text-sm font-bold`, { color: textPrimary }]}
+                    />
                 </View>
             </View>
 
@@ -79,12 +155,16 @@ export const MonthlyView = ({
                 contentContainerStyle={tw`pb-32 pt-2`}
                 showsVerticalScrollIndicator={false}
             >
-                {days.map((date, idx) => {
+                {visibleDays.map((date, idx) => {
                     const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
                     const dayData = notes?.[dateKey] || {};
                     const dayName = date.toLocaleDateString(i18n.language, { weekday: 'short' });
                     const dayNum = date.getDate();
                     const monthName = date.toLocaleDateString(i18n.language, { month: 'short' });
+                    const year = date.getFullYear();
+                    const tasks = Array.isArray(dayData.tasks) ? dayData.tasks : [];
+                    const completedTasks = tasks.filter(task => task.completed).length;
+                    const activityHabits = getHabitActivityForDate(date);
 
                     return (
                         <TouchableOpacity
@@ -94,10 +174,13 @@ export const MonthlyView = ({
                             activeOpacity={0.7}
                         >
                             {/* Date Column */}
-                            <View style={tw`items-center mr-4 w-12`}>
-                                <Text style={[tw`text-[10px] font-black uppercase mb-0.5`, { color: textMuted }]}>{dayName}</Text>
-                                <Text style={[tw`text-xl font-black`, { color: textPrimary }]}>{dayNum}</Text>
-                                <Text style={[tw`text-[10px] font-black uppercase mt-0.5`, { color: textMuted }]}>{monthName}</Text>
+                            <View style={[tw`mr-4 w-[70px] rounded-xl border px-2.5 py-2 items-center`, { backgroundColor: panelSoftBg, borderColor: panelBorder }]}>
+                                <View style={[tw`rounded-full px-2 py-0.5 mb-1`, { backgroundColor: theme.primary }]}>
+                                    <Text style={tw`text-[9px] font-black uppercase tracking-widest text-white`}>{dayName}</Text>
+                                </View>
+                                <Text style={[tw`text-2xl font-black leading-none`, { color: textPrimary }]}>{dayNum}</Text>
+                                <Text style={[tw`text-[10px] font-black uppercase mt-1 tracking-wide`, { color: textMuted }]}>{monthName}</Text>
+                                <Text style={[tw`text-[9px] font-black`, { color: textMuted }]}>{year}</Text>
                             </View>
 
                             {/* Content Column */}
@@ -122,20 +205,10 @@ export const MonthlyView = ({
                                             </Text>
                                         </View>
                                     </View>
-                                ) : (
+                                ) : mode === 'habits' ? (
                                     <View style={tw`flex-row flex-wrap gap-1.5`}>
                                         {(() => {
-                                            const dailyDue = habits.filter(h =>
-                                                isHabitStartedByDate(h, date) &&
-                                                !h.weeklyTarget &&
-                                                (!h.frequency || h.frequency.includes(date.getDay()))
-                                            );
-                                            const flexibleDone = habits.filter(h =>
-                                                isHabitStartedByDate(h, date) &&
-                                                h.weeklyTarget &&
-                                                checkCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear())
-                                            );
-                                            const allToShow = [...dailyDue, ...flexibleDone];
+                                            const allToShow = activityHabits;
 
                                             if (allToShow.length === 0) {
                                                 return <Text style={[tw`text-xs font-bold italic`, { color: isDark ? '#6b7280' : '#d1d5db' }]}>{t('monthlyView.noActivity')}</Text>;
@@ -159,6 +232,18 @@ export const MonthlyView = ({
                                             });
                                         })()}
                                     </View>
+                                ) : (
+                                    <View style={tw`flex-row items-center justify-between`}>
+                                        <Text
+                                            style={[tw`text-sm font-bold flex-1 mr-2`, { color: isDark ? '#d1d5db' : '#4b5563' }]}
+                                            numberOfLines={1}
+                                        >
+                                            {tasks[0]?.text || 'Task'}
+                                        </Text>
+                                        <Text style={[tw`text-[11px] font-black uppercase`, { color: textMuted }]}>
+                                            {completedTasks}/{tasks.length}
+                                        </Text>
+                                    </View>
                                 )}
                             </View>
 
@@ -168,6 +253,13 @@ export const MonthlyView = ({
                         </TouchableOpacity>
                     );
                 })}
+                {visibleDays.length === 0 && (
+                    <View style={tw`px-6 pt-8`}>
+                        <Text style={[tw`text-center text-sm font-bold`, { color: textMuted }]}>
+                            No logs found for this section.
+                        </Text>
+                    </View>
+                )}
             </ScrollView>
 
             {/* Popup Modal */}
@@ -216,6 +308,7 @@ export const MonthlyView = ({
                                         dayData={notes?.[`${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`] || {}}
                                         dateKey={`${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`}
                                         updateNote={updateNote}
+                                        cardStyle={cardStyle}
                                     />
                                 </View>
                             )}

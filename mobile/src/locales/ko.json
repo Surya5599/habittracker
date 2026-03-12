@@ -20,6 +20,46 @@
         "support": {
             "title": "지원",
             "reportBug": "버그 신고 또는 제안"
+        },
+        "appearance": {
+            "title": "화면 설정",
+            "light": "라이트",
+            "dark": "다크"
+        },
+        "cardSize": {
+            "title": "카드 크기",
+            "compact": "컴팩트",
+            "large": "크게"
+        },
+        "whatsNew": {
+            "title": "새 소식",
+            "tutorial": "튜토리얼"
+        },
+        "onboardingEntry": {
+            "title": "튜토리얼",
+            "open": "열기"
+        },
+        "privacy": {
+            "title": "개인정보",
+            "policy": "정책"
+        },
+        "account": {
+            "delete": "계정 삭제",
+            "noSession": "계정 세션을 찾을 수 없습니다.",
+            "deleteFailed": "삭제 실패",
+            "unableDelete": "지금은 계정을 삭제할 수 없습니다.",
+            "prompts": {
+                "confirmTitle": "계정을 삭제할까요?",
+                "confirmBody": "계정과 데이터가 영구적으로 삭제됩니다.",
+                "sureTitle": "정말로 삭제하시겠습니까?",
+                "sureBody": "이 작업은 되돌릴 수 없습니다.",
+                "keep": "계정 유지",
+                "forever": "영구 삭제"
+            }
+        },
+        "errors": {
+            "title": "오류",
+            "unableSignOut": "로그아웃할 수 없습니다"
         }
     },
     "header": {
@@ -263,5 +303,90 @@
         "insight": "인사이트",
         "mockTitle": "패턴 & 에너지",
         "mockContent": "이른 아침에 '생산적'인 기분을 기록한 날에 습관을 더 많이 완료하는 경향이 있습니다. 이번 주 '독서' 일관성이 15% 향상되었습니다."
+    },
+    "onboarding": {
+        "badge": "튜토리얼",
+        "step": "단계",
+        "back": "뒤로",
+        "next": "다음",
+        "finish": "완료",
+        "saving": "저장 중...",
+        "steps": {
+            "language": {
+                "title": "언어 선택",
+                "subtitle": "앱 언어를 설정하세요. 나중에 설정에서 변경할 수 있습니다."
+            },
+            "theme": {
+                "title": "색상 선택",
+                "subtitle": "앱에서 사용하는 HabiCard 색상 조합을 선택하세요."
+            },
+            "cardStyle": {
+                "title": "카드 크기 선택",
+                "subtitle": "두 가지 카드 스타일을 미리 보고 기본값을 선택하세요."
+            },
+            "habitsDemo": {
+                "title": "습관을 한곳에",
+                "subtitle": "모든 습관을 한곳에서 체크하세요."
+            },
+            "tasksDemo": {
+                "title": "간단한 할 일",
+                "subtitle": "할 일을 만들고 끝나면 체크하세요."
+            },
+            "journalDemo": {
+                "title": "매일 기록하기",
+                "subtitle": "같은 카드 흐름에서 매일 저널을 업데이트하세요."
+            },
+            "weekStart": {
+                "title": "한 주의 시작",
+                "subtitle": "주 시작을 일요일 또는 월요일로 선택하세요."
+            }
+        },
+        "languageTitle": "언어",
+        "cardStyleTitle": "카드 크기",
+        "cardStyleLabels": {
+            "compact": "컴팩트",
+            "large": "크게"
+        },
+        "habits": [
+            "운동",
+            "물 마시기",
+            "10페이지 읽기",
+            "명상",
+            "내일 계획"
+        ],
+        "taskSamples": [
+            "내일 계획",
+            "목표 검토"
+        ],
+        "journalSample": "여기에 저널을 작성할 수 있습니다.",
+        "sampleDay": "목요일",
+        "cardStyleDescriptions": {
+            "compact": "헤더에 작은 진행 배지가 표시됩니다.",
+            "large": "날짜 아래에 큰 일일 진행 패널이 표시됩니다."
+        },
+        "themeNames": {
+            "sageRose": "세이지와 로즈",
+            "oceanSky": "오션과 스카이",
+            "sunsetClay": "선셋과 클레이",
+            "lavenderSlate": "라벤더와 슬레이트",
+            "forestEarth": "포레스트와 어스",
+            "peachMint": "피치와 민트",
+            "lilacCream": "라일락과 크림",
+            "dustyBlueMauve": "더스티 블루와 모브",
+            "coralSand": "코랄과 샌드",
+            "mintBlush": "민트와 블러시",
+            "honeyFog": "허니와 포그",
+            "plumSage": "플럼과 세이지",
+            "monochrome": "모노크롬"
+        },
+        "weekStartOptions": {
+            "sun": "일",
+            "mon": "월"
+        },
+        "habitInstructions": {
+            "tap": "탭해서 습관을 완료로 표시하세요",
+            "hold": "길게 눌러 습관을 건너뛰세요",
+            "empty": "놓쳤다면 비워 두세요"
+        }
     }
 }

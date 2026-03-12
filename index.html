@@ -9,7 +9,7 @@
     <script>
         (function () {
             try {
-                var mode = localStorage.getItem('habit_color_mode') || 'dark';
+                var mode = localStorage.getItem('habit_color_mode') || 'light';
                 document.documentElement.setAttribute('data-color-mode', mode);
                 document.documentElement.style.colorScheme = mode;
             } catch (e) { }

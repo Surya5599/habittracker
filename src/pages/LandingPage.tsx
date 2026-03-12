@@ -613,6 +613,19 @@ export const LandingPage: React.FC = () => {
   }, [navigate]);
 
   useEffect(() => {
+    const previousMode = document.documentElement.getAttribute('data-color-mode') || 'light';
+    const previousColorScheme = document.documentElement.style.colorScheme;
+
+    document.documentElement.setAttribute('data-color-mode', 'light');
+    document.documentElement.style.colorScheme = 'light';
+
+    return () => {
+      document.documentElement.setAttribute('data-color-mode', previousMode);
+      document.documentElement.style.colorScheme = previousColorScheme || previousMode;
+    };
+  }, []);
+
+  useEffect(() => {
     if (location.pathname === '/signin') {
       setAuthModalMode('signin');
     }

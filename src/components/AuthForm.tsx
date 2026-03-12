@@ -117,10 +117,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
                 } else if (isWrongPasswordError(error.message)) {
                     try {
                         const status = await lookupEmailStatus(email);
-                        if (!status.exists) {
-                            setAuthMode('signup');
-                            setMessage('info', 'Email does not exist. Please sign up.');
-                        } else if (!status.confirmed) {
+                        if (!status.confirmed && status.exists) {
                             setMessage('error', 'Confirm your email before logging in.', true);
                         } else {
                             setMessage('error', 'Incorrect password. Please fix your password and try again.');

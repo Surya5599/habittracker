@@ -1060,30 +1060,30 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.48, ease: 'easeOut' }}
-                className="w-full h-[min(78svh,900px)] md:h-[600px] grid grid-cols-1 md:grid-cols-3 md:auto-rows-fr gap-3 overflow-y-auto md:overflow-hidden pr-1 touch-pan-y"
+                className="w-full h-[min(78svh,900px)] md:h-[600px] grid grid-cols-1 md:grid-cols-3 md:auto-rows-fr md:items-stretch gap-3 overflow-y-auto md:overflow-hidden pr-1 touch-pan-y"
                 style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
             >
                 <motion.div
                     initial={{ opacity: 0, scale: 0.8, y: 14 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     transition={{ duration: 0.58, ease: [0.22, 1, 0.36, 1] }}
-                    className="order-1 relative z-20 min-h-[360px] md:order-2 md:min-h-0"
+                    className="order-1 relative z-20 min-h-[360px] h-full md:order-2 md:min-h-0"
                 >
                     {FrontFace}
                 </motion.div>
                 <motion.div
                     initial={{ opacity: 0, x: 95, y: 10, scale: 0.84 }}
-                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                    animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
                     transition={{ duration: 0.62, delay: 0.42, ease: [0.22, 1, 0.36, 1] }}
-                    className="order-3 relative z-10 min-h-[320px] md:order-1 md:min-h-0"
+                    className="order-3 relative z-10 min-h-[320px] h-full md:order-1 md:min-h-0"
                 >
                     {JournalFace}
                 </motion.div>
                 <motion.div
                     initial={{ opacity: 0, x: -95, y: 10, scale: 0.84 }}
-                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                    animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
                     transition={{ duration: 0.62, delay: 0.42, ease: [0.22, 1, 0.36, 1] }}
-                    className="order-2 relative z-10 min-h-[320px] md:order-3 md:min-h-0"
+                    className="order-2 relative z-10 min-h-[320px] h-full md:order-3 md:min-h-0"
                 >
                     {TasksFace}
                 </motion.div>

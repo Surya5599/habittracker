@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, LayoutDashboard, Calendar, Clock, LogIn, LogOut, ArrowUp, ArrowDown, Minus, Trophy, BarChart2, Activity, Sparkles, Search, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LayoutDashboard, Calendar, Clock, LogIn, LogOut, ArrowUp, ArrowDown, Minus, Trophy, BarChart2, Activity, Sparkles, Search, Plus, BookOpen } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 import { MONTHS } from '../constants';
 import { Habit, Theme, MonthStats, MonthlyGoal, MonthlyGoals } from '../types';
@@ -42,7 +42,9 @@ interface HeaderProps {
     monthProgress: any;
     annualStats: any;
     dailyStats: any[];
+    previousDailyStats: any[];
     weeklyStats: any[];
+    previousWeeklyStats: any[];
     weekProgress: any;
     habits: Habit[];
     defaultView: 'daily' | 'monthly' | 'dashboard';
@@ -59,9 +61,11 @@ interface HeaderProps {
     setWeekOffset?: (offset: number) => void;
     weekDelta: number;
     monthDelta: number;
+    annualDelta: number;
     monthlyGoals: MonthlyGoals;
     updateMonthlyGoals: (key: string, goals: MonthlyGoal[]) => void;
     topHabitsThisMonth: any[];
+    previousAnnualMonthlySummaries: any[];
     weekOffset: number;
     isHabitModalOpen: boolean;
     setIsHabitModalOpen: (open: boolean) => void;
@@ -75,6 +79,7 @@ interface HeaderProps {
     onOpenWhatsNew: () => void;
     onOpenTutorial: () => void;
     onExportData: () => void;
+    onViewJournal: () => void;
     isExportingData: boolean;
     hasUnreadFeedback: boolean;
     hasUnseenWhatsNew: boolean;
@@ -110,7 +115,9 @@ export const Header: React.FC<HeaderProps> = ({
     monthProgress,
     annualStats,
     dailyStats,
+    previousDailyStats,
     weeklyStats,
+    previousWeeklyStats,
     weekProgress,
     habits,
     defaultView,
@@ -127,9 +134,11 @@ export const Header: React.FC<HeaderProps> = ({
     setWeekOffset,
     weekDelta,
     monthDelta,
+    annualDelta,
     monthlyGoals,
     updateMonthlyGoals,
     topHabitsThisMonth,
+    previousAnnualMonthlySummaries,
     weekOffset,
     isHabitModalOpen,
     setIsHabitModalOpen,
@@ -143,6 +152,7 @@ export const Header: React.FC<HeaderProps> = ({
     onOpenWhatsNew,
     onOpenTutorial,
     onExportData,
+    onViewJournal,
     isExportingData,
     hasUnreadFeedback,
     hasUnseenWhatsNew,
@@ -178,6 +188,34 @@ export const Header: React.FC<HeaderProps> = ({
     const streakCardClass = `${utilityCardClass} flex min-h-[78px] cursor-pointer flex-col items-center justify-center bg-white text-center hover:bg-orange-50 group/streak`;
     const utilityTitleClass = "text-[13px] font-black uppercase tracking-widest leading-none";
     const utilityMetaClass = "mt-auto pt-2 text-[11px] font-black uppercase tracking-wide leading-none";
+    const trendDelta = view === 'weekly' ? weekDelta : view === 'monthly' ? monthDelta : annualDelta;
+    const trendDeltaLabel = view === 'weekly' ? t('header.vsLW') : view === 'monthly' ? t('header.vsLM') : 'vs LY';
+    const trendLegendCurrent = view === 'weekly' ? 'This week' : view === 'monthly' ? 'This month' : 'This year';
+    const trendLegendPrevious = view === 'weekly' ? 'Prev week' : view === 'monthly' ? 'Prev month' : 'Prev year';
+
+    const trendChartData = React.useMemo(() => {
+        if (view === 'weekly') {
+            return weeklyStats.map((item, index) => ({
+                label: item.displayDay,
+                current: item.count,
+                previous: previousWeeklyStats[index]?.count ?? null
+            }));
+        }
+
+        if (view === 'monthly') {
+            return dailyStats.map((item, index) => ({
+                label: String(item.day),
+                current: item.count,
+                previous: previousDailyStats[index]?.count ?? null
+            }));
+        }
+
+        return annualStats.monthlySummaries.map((item: any, index: number) => ({
+            label: item.month,
+            current: item.completed,
+            previous: previousAnnualMonthlySummaries[index]?.completed ?? null
+        }));
+    }, [view, weeklyStats, previousWeeklyStats, dailyStats, previousDailyStats, annualStats.monthlySummaries, previousAnnualMonthlySummaries]);
 
     React.useEffect(() => {
         localStorage.setItem('habit_chart_type', chartType);
@@ -373,6 +411,7 @@ export const Header: React.FC<HeaderProps> = ({
                                 onOpenWhatsNew={onOpenWhatsNew}
                                 onOpenTutorial={onOpenTutorial}
                                 onExportData={onExportData}
+                                onViewJournal={onViewJournal}
                                 isExportingData={isExportingData}
                                 hasUnreadFeedback={hasUnreadFeedback}
                                 hasUnseenWhatsNew={hasUnseenWhatsNew}
@@ -442,7 +481,7 @@ export const Header: React.FC<HeaderProps> = ({
                             </button>
                         ) : null}
 
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-3 gap-2">
                             <button
                                 onClick={() => {
                                     setAutoAddHabitOnOpen(true);
@@ -459,6 +498,13 @@ export const Header: React.FC<HeaderProps> = ({
                             >
                                 <Clock size={14} />
                                 {t('common.logToday')}
+                            </button>
+                            <button
+                                onClick={onViewJournal}
+                                className={quickActionMutedClass}
+                            >
+                                <BookOpen size={14} />
+                                My Journal
                             </button>
                         </div>
 
@@ -494,7 +540,7 @@ export const Header: React.FC<HeaderProps> = ({
                             </button>
                         ) : null}
 
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-3 gap-2">
                             <button
                                 onClick={() => {
                                     setAutoAddHabitOnOpen(true);
@@ -511,6 +557,13 @@ export const Header: React.FC<HeaderProps> = ({
                             >
                                 <Clock size={14} />
                                 {t('common.logToday')}
+                            </button>
+                            <button
+                                onClick={onViewJournal}
+                                className={quickActionMutedClass}
+                            >
+                                <BookOpen size={14} />
+                                My Journal
                             </button>
                         </div>
 
@@ -546,7 +599,7 @@ export const Header: React.FC<HeaderProps> = ({
                             </button>
                         ) : null}
 
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-3 gap-2">
                             <button
                                 onClick={() => {
                                     setAutoAddHabitOnOpen(true);
@@ -563,6 +616,13 @@ export const Header: React.FC<HeaderProps> = ({
                             >
                                 <Clock size={14} />
                                 {t('common.logToday')}
+                            </button>
+                            <button
+                                onClick={onViewJournal}
+                                className={quickActionMutedClass}
+                            >
+                                <BookOpen size={14} />
+                                My Journal
                             </button>
                         </div>
 
@@ -595,14 +655,22 @@ export const Header: React.FC<HeaderProps> = ({
                         {view === 'monthly' ? t('header.monthlyTrends') : (view === 'weekly' ? t('header.weeklyTrends') : t('header.annualTrends'))}
                     </h4>
                     <div className="flex items-center gap-2">
-                        {view !== 'dashboard' && (
-                            <div className={`text-xs font-bold px-2 py-1 neo-border ${(view === 'weekly' ? weekDelta : monthDelta) >= 0
+                        <div className={`text-xs font-bold px-2 py-1 neo-border ${trendDelta >= 0
                                 ? 'bg-green-100 text-green-700'
                                 : 'bg-red-100 text-red-700'
                                 }`}>
-                                {Math.abs(view === 'weekly' ? weekDelta : monthDelta).toFixed(0)}% {view === 'weekly' ? t('header.vsLW') : t('header.vsLM')}
-                            </div>
-                        )}
+                            {Math.abs(trendDelta).toFixed(0)}% {trendDeltaLabel}
+                        </div>
+                        <div className="hidden sm:flex items-center gap-2 rounded-full border border-stone-200 bg-white/70 px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-stone-500">
+                            <span className="inline-flex items-center gap-1">
+                                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: theme.primary }} />
+                                {trendLegendCurrent}
+                            </span>
+                            <span className="inline-flex items-center gap-1">
+                                <span className="h-[2px] w-3 rounded-full" style={{ backgroundColor: theme.secondary }} />
+                                {trendLegendPrevious}
+                            </span>
+                        </div>
                         <button
                             onClick={() => setChartType(prev => prev === 'area' ? 'bar' : 'area')}
                             className="p-1 hover:bg-stone-200 rounded-sm transition-colors text-stone-400 hover:text-stone-600"
@@ -614,7 +682,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
                 <ResponsiveContainer width="100%" height="100%" minHeight={120} key={view + chartType}>
                     {chartType === 'area' ? (
-                        <AreaChart data={view === 'monthly' ? dailyStats : (view === 'weekly' ? weeklyStats : annualStats.monthlySummaries)} margin={{ right: 20, left: 20, bottom: 0, top: 10 }}>
+                        <AreaChart data={trendChartData} margin={{ right: 20, left: 20, bottom: 0, top: 10 }}>
                             <defs>
                                 <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor={theme.primary} stopOpacity={0.8} />
@@ -623,7 +691,7 @@ export const Header: React.FC<HeaderProps> = ({
                             </defs>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? "rgba(255, 255, 255, 0.14)" : "#ddd"} />
                             <XAxis
-                                dataKey={view === 'monthly' ? "day" : (view === 'weekly' ? "displayDay" : "month")}
+                                dataKey="label"
                                 axisLine={false}
                                 tickLine={false}
                                 tick={{ fontSize: 10, fontWeight: 'bold', fill: isDarkMode ? '#a8a8a8' : '#666' }}
@@ -639,11 +707,25 @@ export const Header: React.FC<HeaderProps> = ({
                                     color: isDarkMode ? '#ededed' : '#111',
                                     fontWeight: 'bold'
                                 }}
-                                formatter={(value: any) => [`${value} completed`, view === 'dashboard' ? 'Total' : 'Habits']}
+                                formatter={(value: any, name: string) => [
+                                    `${value} completed`,
+                                    name === 'current' ? trendLegendCurrent : trendLegendPrevious
+                                ]}
                             />
                             <Area
                                 type="monotone"
-                                dataKey={view === 'dashboard' ? "completed" : "count"}
+                                dataKey="previous"
+                                name="previous"
+                                stroke={theme.secondary}
+                                strokeWidth={2}
+                                strokeDasharray="6 6"
+                                fillOpacity={0}
+                                fill="transparent"
+                            />
+                            <Area
+                                type="monotone"
+                                dataKey="current"
+                                name="current"
                                 stroke={isDarkMode ? "#d6d6d6" : "#000"}
                                 strokeWidth={2.5}
                                 fillOpacity={1}
@@ -651,10 +733,10 @@ export const Header: React.FC<HeaderProps> = ({
                             />
                         </AreaChart>
                     ) : (
-                        <BarChart data={view === 'monthly' ? dailyStats : (view === 'weekly' ? weeklyStats : annualStats.monthlySummaries)} margin={{ right: 20, left: 20, bottom: 20, top: 10 }}>
+                        <BarChart data={trendChartData} margin={{ right: 20, left: 20, bottom: 20, top: 10 }}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? "rgba(255, 255, 255, 0.14)" : "#ddd"} />
                             <XAxis
-                                dataKey={view === 'monthly' ? "day" : (view === 'weekly' ? "displayDay" : "month")}
+                                dataKey="label"
                                 tick={{ fontSize: 9, fontWeight: 'bold', fill: isDarkMode ? '#a8a8a8' : '#666' }}
                                 stroke={isDarkMode ? "#3a3a3a" : "#999"}
                                 tickLine={false}
@@ -673,9 +755,8 @@ export const Header: React.FC<HeaderProps> = ({
                                 stroke={isDarkMode ? "#3a3a3a" : "#999"}
                                 tickLine={false}
                                 width={25}
-                                domain={[0, habits.length || 1]}
-                                ticks={[0, (habits.length || 0) / 2, habits.length || 1]}
-                                allowDecimals={true}
+                                domain={[0, 'dataMax + 1']}
+                                allowDecimals={false}
                             />
                             <Tooltip
                                 cursor={{ fill: 'rgba(0,0,0,0.05)' }}
@@ -687,10 +768,26 @@ export const Header: React.FC<HeaderProps> = ({
                                     fontWeight: 'bold',
                                     boxShadow: isDarkMode ? '0 10px 30px rgba(0,0,0,0.45)' : '4px 4px 0px rgba(0,0,0,0.1)'
                                 }}
-                                formatter={(value: any) => [`${value} completed`, view === 'dashboard' ? 'Total' : 'Habits']}
+                                formatter={(value: any, name: string) => [
+                                    `${value} completed`,
+                                    name === 'current' ? trendLegendCurrent : trendLegendPrevious
+                                ]}
                             />
                             <Bar
-                                dataKey={view === 'dashboard' ? "completed" : "count"}
+                                dataKey="previous"
+                                name="previous"
+                                fill={theme.secondary}
+                                fillOpacity={0.55}
+                                radius={[4, 4, 0, 0]}
+                                stroke={isDarkMode ? "#2d2d2d" : "#000"}
+                                strokeWidth={1}
+                                animationDuration={900}
+                                animationBegin={0}
+                                isAnimationActive={true}
+                            />
+                            <Bar
+                                dataKey="current"
+                                name="current"
                                 fill={theme.primary}
                                 radius={[4, 4, 0, 0]}
                                 stroke={isDarkMode ? "#2d2d2d" : "#000"}

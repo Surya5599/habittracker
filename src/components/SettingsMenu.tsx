@@ -25,6 +25,7 @@ interface SettingsMenuProps {
     onOpenWhatsNew: () => void;
     onOpenTutorial: () => void;
     onExportData: () => void;
+    onViewJournal: () => void;
     isExportingData?: boolean;
     hasUnreadFeedback?: boolean;
     hasUnseenWhatsNew?: boolean;
@@ -51,6 +52,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     onOpenWhatsNew,
     onOpenTutorial,
     onExportData,
+    onViewJournal,
     isExportingData = false,
     hasUnreadFeedback = false,
     hasUnseenWhatsNew = false,
@@ -298,6 +300,20 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                             <span className="text-[10px] font-bold uppercase text-stone-500 group-hover:text-stone-700">Export Data</span>
                             <div className="flex items-center gap-1.5 text-stone-400 group-hover:text-black transition-colors">
                                 <span className="text-[10px] font-bold">{isExportingData ? 'Preparing...' : 'Download'}</span>
+                                <Download size={12} />
+                            </div>
+                        </button>
+
+                        <button
+                            onClick={() => {
+                                onViewJournal();
+                                setSettingsOpen(false);
+                            }}
+                            className="flex items-center justify-between p-2 rounded-lg hover:bg-white transition-colors w-full text-left group"
+                        >
+                            <span className="text-[10px] font-bold uppercase text-stone-500 group-hover:text-stone-700">View Journal</span>
+                            <div className="flex items-center gap-1.5 text-stone-400 group-hover:text-black transition-colors">
+                                <span className="text-[10px] font-bold">Preview + Download</span>
                                 <Download size={12} />
                             </div>
                         </button>

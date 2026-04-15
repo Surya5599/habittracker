@@ -28,6 +28,7 @@ import { LoadingScreen } from './components/LoadingScreen';
 import { FeedbackModal } from './components/FeedbackModal';
 import { StreakModal } from './components/StreakModal';
 import { SearchModal } from './components/SearchModal';
+import { JournalExportModal } from './components/JournalExportModal';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
 import { LandingPage } from './pages/LandingPage';
 import { isBenignAuthError } from './utils/authErrors';
@@ -125,6 +126,7 @@ const AppContent: React.FC = () => {
   const [showWhatsNewModal, setShowWhatsNewModal] = useState(false);
   const [hasUnseenWhatsNew, setHasUnseenWhatsNew] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isJournalExportOpen, setIsJournalExportOpen] = useState(false);
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Cmd+K or Ctrl+K
@@ -582,18 +584,22 @@ const AppContent: React.FC = () => {
   const daysInMonth = useMemo(() => new Date(currentYear, currentMonthIndex + 1, 0).getDate(), [currentYear, currentMonthIndex]);
   const monthDates = useMemo(() => Array.from({ length: daysInMonth }, (_, i) => i + 1), [daysInMonth]);
 
-  const {
-    dailyStats,
-    weeklyStats,
-    weekProgress,
-    prevWeekProgress,
-    weekDelta,
-    monthDelta,
-    allTimeBestWeek,
-    monthProgress,
-    topHabitsThisMonth,
-    annualStats
-  } = useHabitStats(
+    const {
+      dailyStats,
+      previousDailyStats,
+      weeklyStats,
+      previousWeeklyStats,
+      weekProgress,
+      prevWeekProgress,
+      weekDelta,
+      monthDelta,
+      allTimeBestWeek,
+      monthProgress,
+      topHabitsThisMonth,
+      annualStats,
+      previousAnnualMonthlySummaries,
+      annualDelta
+    } = useHabitStats(
     habits,
     completions,
     notes,
@@ -1109,6 +1115,10 @@ const AppContent: React.FC = () => {
     }
   };
 
+  const handleOpenJournalExport = () => {
+    setIsJournalExportOpen(true);
+  };
+
   const weeks = useMemo(() => {
     const result: number[][] = [];
     let currentWeek: number[] = [];
@@ -1213,6 +1223,14 @@ const AppContent: React.FC = () => {
         onFinish={handleWhatsNewFinish}
       />
 
+      <JournalExportModal
+        isOpen={isJournalExportOpen}
+        onClose={() => setIsJournalExportOpen(false)}
+        notes={notes}
+        theme={theme}
+        userName={session?.user?.email || 'You'}
+      />
+
       <div className="max-w-full md:h-full mx-auto bg-white border-[2px] sm:border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] p-2 sm:p-4 flex flex-col gap-4 overflow-visible md:overflow-hidden">
 
         <Header
@@ -1242,11 +1260,14 @@ const AppContent: React.FC = () => {
           monthProgress={monthProgress}
           annualStats={annualStats}
           dailyStats={dailyStats}
+          previousDailyStats={previousDailyStats}
           weeklyStats={weeklyStats}
+          previousWeeklyStats={previousWeeklyStats}
           weekProgress={weekProgress}
           prevWeekProgress={prevWeekProgress}
           weekDelta={weekDelta}
           monthDelta={monthDelta}
+          annualDelta={annualDelta}
           allTimeBestWeek={allTimeBestWeek}
           habits={habits}
           defaultView={defaultView}
@@ -1264,6 +1285,7 @@ const AppContent: React.FC = () => {
           monthlyGoals={monthlyGoals}
           updateMonthlyGoals={updateMonthlyGoals}
           topHabitsThisMonth={topHabitsThisMonth}
+          previousAnnualMonthlySummaries={previousAnnualMonthlySummaries}
           weekOffset={weekOffset}
           isHabitModalOpen={isHabitModalOpen}
           setIsHabitModalOpen={setIsHabitModalOpen}
@@ -1273,12 +1295,13 @@ const AppContent: React.FC = () => {
           setIsStreakModalOpen={setIsStreakModalOpen}
           onReportBug={() => setIsFeedbackModalOpen(true)}
           hasUnreadFeedback={hasUnreadFeedback}
-          onOpenWhatsNew={handleOpenWhatsNew}
-          onOpenTutorial={handleOpenTutorial}
-          onExportData={handleExportData}
-          isExportingData={isExportingData}
-          hasUnseenWhatsNew={hasUnseenWhatsNew}
-          onSearch={() => setIsSearchOpen(true)}
+            onOpenWhatsNew={handleOpenWhatsNew}
+            onOpenTutorial={handleOpenTutorial}
+            onExportData={handleExportData}
+            onViewJournal={handleOpenJournalExport}
+            isExportingData={isExportingData}
+            hasUnseenWhatsNew={hasUnseenWhatsNew}
+            onSearch={() => setIsSearchOpen(true)}
           onLogToday={() => {
             setSelectedDateForCard(new Date());
             setCardOpenFlipped(false);
@@ -1568,25 +1591,27 @@ const SignInPage: React.FC = () => {
             settingsOpen={false} setSettingsOpen={() => { }} settingsRef={{ current: null } as any}
             guestMode={true} setGuestMode={() => { }} handleLogout={() => { }}
             monthProgress={{ completed: 140, total: 200, percentage: 70, remaining: 60 }}
-            annualStats={DEMO_ANNUAL_STATS}
-            dailyStats={[]} weeklyStats={[]} weekProgress={{ completed: 25, total: 28, percentage: 89 }}
-            habits={DEMO_HABITS} defaultView="dashboard" setDefaultView={() => { }}
-            colorMode={colorMode} setColorMode={setColorMode}
-            cardStyle={cardStyle} setCardStyle={setCardStyle}
-            addHabit={async () => ''} updateHabit={async () => { }} removeHabit={async () => { }}
-            weekDelta={12} monthDelta={5} monthlyGoals={{}} updateMonthlyGoals={() => { }}
-            topHabitsThisMonth={[]} weekOffset={0}
+              annualStats={DEMO_ANNUAL_STATS}
+              dailyStats={[]} previousDailyStats={[]} weeklyStats={[]} previousWeeklyStats={[]} weekProgress={{ completed: 25, total: 28, percentage: 89 }}
+              habits={DEMO_HABITS} defaultView="dashboard" setDefaultView={() => { }}
+              colorMode={colorMode} setColorMode={setColorMode}
+              cardStyle={cardStyle} setCardStyle={setCardStyle}
+              addHabit={async () => ''} updateHabit={async () => { }} removeHabit={async () => { }}
+              weekDelta={12} monthDelta={5} annualDelta={9} monthlyGoals={{}} updateMonthlyGoals={() => { }}
+              previousAnnualMonthlySummaries={DEMO_ANNUAL_STATS.monthlySummaries}
+              topHabitsThisMonth={[]} weekOffset={0}
             isHabitModalOpen={false} setIsHabitModalOpen={() => { }}
             isResolutionsModalOpen={false} setIsResolutionsModalOpen={() => { }}
             isStreakModalOpen={false} setIsStreakModalOpen={() => { }}
             reorderHabits={async () => { }}
-            onReportBug={() => { }}
-            onOpenWhatsNew={() => { }}
-            onOpenTutorial={() => { }}
-            onExportData={() => { }}
-            isExportingData={false}
-            hasUnseenWhatsNew={false}
-            hasUnreadFeedback={false}
+              onReportBug={() => { }}
+              onOpenWhatsNew={() => { }}
+              onOpenTutorial={() => { }}
+              onExportData={() => { }}
+              onViewJournal={() => { }}
+              isExportingData={false}
+              hasUnseenWhatsNew={false}
+              hasUnreadFeedback={false}
             onSearch={() => { }}
             onLogToday={() => { }}
             logTodayStatus="empty"

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, LayoutDashboard, Calendar, Clock, LogIn, LogOut, ArrowUp, ArrowDown, Minus, Trophy, BarChart2, Activity, Sparkles, Search, Plus, BookOpen } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LayoutDashboard, Calendar, Clock, LogIn, LogOut, ArrowUp, ArrowDown, Minus, BarChart2, Activity, Sparkles, Search, Plus, BookOpen } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 import { MONTHS } from '../constants';
 import { Habit, Theme, MonthStats, MonthlyGoal, MonthlyGoals } from '../types';
@@ -13,7 +13,7 @@ import { DailyQuote } from './DailyQuote';
 import { DailyTips } from './DailyTips';
 import { WeekPicker, MonthPicker, YearPicker } from './DateSelectors';
 import { buildAchievements } from './StreakModal';
-import { buildWeeklyStory, buildMonthlyStory } from '../utils/storyGenerator';
+import { buildAnnualStory, buildWeeklyStory, buildMonthlyStory } from '../utils/storyGenerator';
 
 interface HeaderProps {
     view: 'monthly' | 'dashboard' | 'weekly';
@@ -216,6 +216,15 @@ export const Header: React.FC<HeaderProps> = ({
             previous: previousAnnualMonthlySummaries[index]?.completed ?? null
         }));
     }, [view, weeklyStats, previousWeeklyStats, dailyStats, previousDailyStats, annualStats.monthlySummaries, previousAnnualMonthlySummaries]);
+
+    const annualStory = React.useMemo(() => {
+        const monthsElapsed = currentYear === currentFullYear ? currentMonthOfYear + 1 : 12;
+        return buildAnnualStory(annualStats, t, monthsElapsed);
+    }, [annualStats, currentYear, currentFullYear, currentMonthOfYear, t]);
+
+    const annualCompletionRate = annualStats.totalPossible > 0
+        ? (annualStats.totalCompletions / annualStats.totalPossible) * 100
+        : 0;
 
     React.useEffect(() => {
         localStorage.setItem('habit_chart_type', chartType);
@@ -924,80 +933,112 @@ export const Header: React.FC<HeaderProps> = ({
                             </div>
                         </div>
                     ) : (
-                        <>
-                            <div className="w-full h-24 sm:h-24 min-h-[96px] relative">
-                                <ResponsiveContainer width="100%" height="100%" minHeight={96} key={view}>
-                                    <PieChart>
-                                        <Pie
-                                            data={view === 'monthly'
-                                                ? [{ value: monthProgress.completed || 0.1 }, { value: monthProgress.remaining || 0 }]
-                                                : [{ value: annualStats.totalCompletions || 0.1 }, { value: Math.max(0, annualStats.totalPossible - annualStats.totalCompletions) }]
-                                            }
-                                            innerRadius="80%" outerRadius="100%" paddingAngle={2} dataKey="value" startAngle={90} endAngle={450}
-                                            isAnimationActive={true}
-                                            animationDuration={1000}
-                                            animationBegin={0}
-                                        >
-                                            <Cell fill={theme.primary} /><Cell fill={isDarkMode ? "#2a2a2a" : "#f0f0f0"} />
-                                        </Pie>
-                                    </PieChart>
-                                </ResponsiveContainer>
-                                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                    <span className="text-2xl font-black leading-none" style={{ color: theme.primary }}>
-                                        {view === 'monthly'
-                                            ? monthProgress.percentage.toFixed(0)
-                                            : (annualStats.totalPossible > 0 ? (annualStats.totalCompletions / annualStats.totalPossible * 100).toFixed(0) : 0)}%
-                                    </span>
+                        <div className="w-full h-full flex flex-col gap-1 overflow-hidden">
+                            <div className="flex items-start justify-between gap-3 px-2 pt-1">
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Sparkles size={12} className="text-amber-500" />
+                                        <span className="text-[9px] font-black uppercase tracking-widest text-stone-500">{t('annualUi.story.title')}</span>
+                                    </div>
+                                    {annualStory.annualSummary ? (
+                                        <div className="space-y-1">
+                                            <div className="text-[12px] font-black text-stone-900 truncate">
+                                                {annualStory.annualSummary.support.strongestHabit?.name || 'Year story'}
+                                            </div>
+                                            <p className="text-[10px] leading-relaxed font-bold text-stone-500">
+                                                {annualStory.annualSummary.support.momentumLabel} · {annualStory.annualSummary.support.rhythmLabel}
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <p className="text-[11px] leading-relaxed font-bold text-stone-500">
+                                            {t('annualUi.story.noSignificantOutcomes')}
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="w-20 h-20 relative shrink-0">
+                                    <ResponsiveContainer width="100%" height="100%" minHeight={80}>
+                                        <PieChart>
+                                            <Pie
+                                                data={[
+                                                    { value: annualStats.totalCompletions || 0.1 },
+                                                    { value: Math.max(0, annualStats.totalPossible - annualStats.totalCompletions) }
+                                                ]}
+                                                innerRadius="75%" outerRadius="100%" paddingAngle={2} dataKey="value" startAngle={90} endAngle={450}
+                                                isAnimationActive={true}
+                                                animationDuration={1000}
+                                                animationBegin={0}
+                                            >
+                                                <Cell fill={theme.primary} /><Cell fill={isDarkMode ? "#2a2a2a" : "#f0f0f0"} />
+                                            </Pie>
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                        <span className="text-sm font-black leading-none" style={{ color: theme.primary }}>
+                                            {annualCompletionRate.toFixed(0)}%
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="text-[9px] font-bold text-stone-500 uppercase tracking-wider mt-1">
-                                {view === 'monthly'
-                                    ? `${monthProgress.completed} / ${monthProgress.completed + monthProgress.remaining} Completed`
-                                    : `${Math.round(annualStats.totalCompletions)} / ${Math.round(annualStats.totalPossible)} Completed`
-                                }
+
+                            <div className="grid grid-cols-3 gap-2 px-2">
+                                <div className="rounded-xl bg-stone-50 border border-stone-200 px-2 py-1.5 text-center">
+                                    <div className="text-[8px] font-black uppercase tracking-[0.2em] text-stone-400">Rate</div>
+                                    <div className="mt-0.5 text-sm font-black text-stone-900">{annualCompletionRate.toFixed(0)}%</div>
+                                </div>
+                                <div className="rounded-xl bg-stone-50 border border-stone-200 px-2 py-1.5 text-center">
+                                    <div className="text-[8px] font-black uppercase tracking-[0.2em] text-stone-400">Volume</div>
+                                    <div className="mt-0.5 text-sm font-black text-stone-900">{Math.round(annualStats.totalCompletions)}</div>
+                                </div>
+                                <div className="rounded-xl bg-stone-50 border border-stone-200 px-2 py-1.5 text-center">
+                                    <div className="text-[8px] font-black uppercase tracking-[0.2em] text-stone-400">vs LY</div>
+                                    {(() => {
+                                        const delta = annualDelta;
+                                        const isPositive = delta > 0;
+                                        const isNeutral = Math.abs(delta) < 0.1;
+                                        return (
+                                            <div className={`mt-0.5 flex items-center justify-center gap-1 text-sm font-black ${isNeutral ? 'text-stone-400' : (isPositive ? 'text-emerald-500' : 'text-rose-500')}`}>
+                                                {isNeutral ? <Minus size={12} strokeWidth={4} /> : (isPositive ? <ArrowUp size={12} strokeWidth={4} /> : <ArrowDown size={12} strokeWidth={4} />)}
+                                                <span>{Math.abs(delta).toFixed(isNeutral ? 0 : 1)}%</span>
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
+                            </div>
+
+                            <div className="h-[76px] mx-2 rounded-xl border border-stone-200 bg-stone-50/70 px-3 py-2 flex items-start gap-3 overflow-hidden">
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-[8px] font-black uppercase tracking-[0.22em] text-stone-400">Strongest month</div>
+                                    <div className="mt-1 text-[11px] font-black text-stone-900 truncate">
+                                        {annualStory.annualSummary?.support.strongestMonth?.month || 'Still emerging'}
+                                    </div>
+                                    <div className="text-[10px] font-bold text-stone-500 leading-tight">
+                                        {annualStory.annualSummary?.support.strongestMonth?.rate
+                                            ? `${Math.round(annualStory.annualSummary.support.strongestMonth.rate)}% completion`
+                                            : annualStory.annualSummary?.support.momentumLabel || 'Watch for the trend that lasts'}
+                                    </div>
+                                </div>
+                                <div className="w-px self-stretch bg-stone-200" />
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-[8px] font-black uppercase tracking-[0.22em] text-stone-400">Strongest habit</div>
+                                    <div className="mt-1 text-[11px] font-black text-stone-900 truncate">
+                                        {annualStory.annualSummary?.support.strongestHabit?.name || 'No clear anchor yet'}
+                                    </div>
+                                    <div className="text-[10px] font-bold text-stone-500 leading-tight">
+                                        {annualStory.annualSummary?.support.rhythmLabel || 'Find the rhythm that repeats'}
+                                    </div>
+                                </div>
                             </div>
 
                             {currentYear === new Date().getFullYear() && (
                                 <button
                                     onClick={() => setIsResolutionsModalOpen(true)}
-                                    className="mt-3 w-full min-h-[44px] flex items-center justify-center gap-1.5 text-[11px] font-black uppercase tracking-wider bg-black text-white px-2 py-2 rounded-xl hover:bg-stone-800 transition-colors shadow-sm"
+                                    className="mx-2 mt-1 w-auto min-h-[36px] flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-wider bg-black text-white px-2 py-1.5 rounded-xl hover:bg-stone-800 transition-colors shadow-sm"
                                 >
-                                    <Sparkles size={14} />
-                                    This Year Resolutions
+                                    <Sparkles size={12} />
+                                    {t('header.thisYearResolutions')}
                                 </button>
                             )}
-
-                            {view === 'monthly' && (
-                                <div className="w-full grid grid-cols-2 gap-2 mt-2 px-2 border-t border-stone-100 pt-2">
-                                    <div className="flex flex-col items-center justify-center">
-                                        <span className="text-[8px] font-black uppercase text-stone-400 tracking-wider mb-0.5">vs Prev</span>
-                                        {(() => {
-                                            const delta = monthDelta;
-                                            const isPositive = delta > 0;
-                                            const isNeutral = Math.abs(delta) < 0.1;
-                                            return (
-                                                <div className={`flex items-center gap-1 text-[10px] font-black ${isNeutral ? 'text-stone-400' : (isPositive ? 'text-emerald-500' : 'text-rose-500')}`}>
-                                                    {isNeutral ? <Minus size={10} strokeWidth={4} /> : (isPositive ? <ArrowUp size={10} strokeWidth={4} /> : <ArrowDown size={10} strokeWidth={4} />)}
-                                                    <span>{Math.abs(delta).toFixed(isNeutral ? 0 : 1)}%</span>
-                                                </div>
-                                            );
-                                        })()}
-                                    </div>
-                                    <div className="flex flex-col items-center justify-center border-l border-stone-100">
-                                        <span className="text-[8px] font-black uppercase text-stone-400 tracking-wider mb-0.5">Best</span>
-                                        <div className="flex items-center gap-1 text-[10px] font-black text-amber-500">
-                                            <Trophy size={10} strokeWidth={4} />
-                                            <span>{annualStats.allTimeBest?.rate?.toFixed(0) || 0}%</span>
-                                        </div>
-                                        {annualStats.allTimeBest && (
-                                            <span className="text-[7px] font-bold text-stone-400 mt-0.5">
-                                                {MONTHS[annualStats.allTimeBest.monthIdx]} {annualStats.allTimeBest.year}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-                        </>
+                        </div>
                     )}
                 </div>
             </div>

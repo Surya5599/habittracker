@@ -13,6 +13,20 @@ export interface StoryResult {
         promise?: any;
         streak?: any;
     };
+    annualSummary?: {
+        review: string;
+        defining: string[];
+        attention: string;
+        support: {
+            completionRate: number;
+            totalCompletions: number;
+            totalPossible: number;
+            strongestHabit: any;
+            strongestMonth: any;
+            rhythmLabel: string;
+            momentumLabel: string;
+        };
+    };
 }
 
 const daysSince = (dateString: string): number => {
@@ -107,6 +121,64 @@ export const buildAnnualStory = (annualStats: any, t: any, monthsElapsed: number
 
     const growth = annualStats.topHabits.find((h: any) => h.badge === "Highest Growth");
     const promise = growth || annualStats.topHabits.find((h: any) => h.badge === "Identity Driver") || annualStats.topHabits[1];
+    const strongestMonthLabel = annualStats.strongestMonth?.month || null;
+    const strongestMonthRate = Math.round(annualStats.strongestMonth?.rate || 0);
+    const roundedRate = Math.round(consistencyRate || 0);
+    const roundedFocusedRate = Math.round(focused.rate || 0);
+    const roundedFocusedCompletions = Math.round(focused.completed || 0);
+
+    const review = annualStats.totalCompletions <= Math.max(6, monthsElapsed)
+        ? `This year was light on logged momentum, but [[${focused.name.toUpperCase()}]] still gave you a starting point to rebuild from.`
+        : annualStats.momentum === 'ascending' && consistencyRate >= 65
+            ? `This year built real traction, and [[${focused.name.toUpperCase()}]] helped you finish stronger than you started.`
+            : annualStats.momentum === 'descending' && consistencyRate >= 45
+                ? `This year had a solid base, but the second half lost some sharpness after [[${focused.name.toUpperCase()}]] carried much of the load early on.`
+                : consistencyRate >= 60
+                    ? `This year was steady overall, with [[${focused.name.toUpperCase()}]] doing most of the work to keep your routine reliable.`
+                    : consistencyRate >= 35
+                        ? `This year showed a workable routine, even if execution stayed uneven. [[${focused.name.toUpperCase()}]] was the clearest habit keeping you anchored.`
+                        : `This year was more about keeping a foothold than building flow, and [[${focused.name.toUpperCase()}]] was the habit most worth protecting.`;
+
+    const rhythmLabel = annualStats.weekendRate > annualStats.weekdayRate * 1.2
+        ? 'Weekend rhythm'
+        : annualStats.weekdayRate > annualStats.weekendRate * 1.2
+            ? 'Weekday rhythm'
+            : 'Balanced rhythm';
+
+    const momentumLabel = annualStats.momentum === 'ascending'
+        ? 'Improving finish'
+        : annualStats.momentum === 'descending'
+            ? 'Cooling finish'
+            : 'Steady finish';
+
+    const defining = [
+        `[[${focused.name.toUpperCase()}]] led the year with ${roundedFocusedCompletions} completions at ${roundedFocusedRate}% follow-through, making it your clearest anchor habit.`,
+        annualStats.weekendRate > annualStats.weekdayRate * 1.2
+            ? `Your best consistency showed up on weekends, which suggests you do better when the schedule is looser and more self-directed.`
+            : annualStats.weekdayRate > annualStats.weekendRate * 1.2
+                ? `Your strongest rhythm lived on weekdays, which means structure is helping you more than motivation alone.`
+                : `Your weekday and weekend performance stayed fairly even, which points to a routine that can travel across different kinds of days.`,
+        strongestMonthLabel
+            ? `Your best stretch came in [[${strongestMonthLabel.toUpperCase()}]], where you reached ${strongestMonthRate}% completion and set the tone for your strongest month.`
+            : annualStats.momentum === 'ascending'
+                ? `The year improved as it went, so your recent months are giving you a stronger base than the year average suggests.`
+                : annualStats.momentum === 'descending'
+                    ? `The year cooled later on, so protecting a smaller version of your core routine would matter more than adding anything new.`
+                    : `The year stayed relatively even from month to month, giving you a dependable baseline to build on next.`
+    ];
+
+    let attention = '';
+    if (annualStats.fadingHabit) {
+        attention = `[[${annualStats.fadingHabit.name.toUpperCase()}]] cooled off compared with earlier in the year. If it still matters, bring it back in a smaller, easier version.`;
+    } else if (neglected) {
+        attention = `[[${neglected.name.toUpperCase()}]] has been quiet for ${daysSince(neglected.lastCompletedDate)} days. One low-friction rep is probably enough to reopen that loop.`;
+    } else if (annualStats.activeHabitsCount > 7 && consistencyRate < 45) {
+        attention = `You spread effort across a lot of habits this year. Narrowing the next cycle to fewer priorities should make your follow-through easier to protect.`;
+    } else if (consistencyRate < 45) {
+        attention = `The main opportunity is not intensity, it is repeatability. A smaller daily floor would likely do more for next year than bigger goals.`;
+    } else {
+        attention = `The next step is protecting the habits that already work. Keep [[${focused.name.toUpperCase()}]] stable and let the rest of the system grow around it.`;
+    }
 
     return {
         focused,
@@ -114,6 +186,20 @@ export const buildAnnualStory = (annualStats: any, t: any, monthsElapsed: number
         highlights: {
             promise,
             streak: annualStats.longestHabitStreak
+        },
+        annualSummary: {
+            review,
+            defining,
+            attention,
+            support: {
+                completionRate: roundedRate,
+                totalCompletions: Math.round(annualStats.totalCompletions || 0),
+                totalPossible: Math.round(annualStats.totalPossible || 0),
+                strongestHabit: focused,
+                strongestMonth: annualStats.strongestMonth || (strongestMonthLabel ? { month: strongestMonthLabel, rate: strongestMonthRate } : null),
+                rhythmLabel,
+                momentumLabel
+            }
         }
     };
 };

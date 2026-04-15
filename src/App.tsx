@@ -338,6 +338,40 @@ const AppContent: React.FC = () => {
       )
     },
     {
+      id: 'journal-view-export',
+      title: 'My Journal View And Export',
+      description: 'Open your personal journal and download it as a PDF.',
+      bullets: [
+        'Tap My Journal or Settings → View Journal, then use Download PDF inside the preview.'
+      ],
+      image: (
+        <div className="w-full rounded-sm border border-stone-200 bg-stone-100 p-3">
+          <div className="mx-auto max-w-[320px] rounded-[28px] border border-black bg-[#f8f3ea] p-3 shadow-[4px_4px_0_0_rgba(0,0,0,0.08)]">
+            <div className="rounded-[20px] border border-stone-200 bg-white p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[8px] font-black uppercase tracking-[0.22em] text-stone-400">My Journal</p>
+                  <p className="mt-1 text-sm font-black text-stone-800">Monday, January 12</p>
+                </div>
+                <span className="rounded-full border border-stone-200 bg-stone-50 px-2 py-1 text-[8px] font-black uppercase tracking-wider text-stone-600">
+                  Calm
+                </span>
+              </div>
+              <div className="mt-3 space-y-2">
+                <div className="h-2 rounded-full bg-stone-200" />
+                <div className="h-2 rounded-full bg-stone-200" />
+                <div className="h-2 w-4/5 rounded-full bg-stone-200" />
+              </div>
+              <div className="mt-4 flex items-center justify-between rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2">
+                <span className="text-[9px] font-black uppercase tracking-[0.18em] text-stone-500">Preview</span>
+                <span className="text-[9px] font-black uppercase tracking-[0.18em] text-stone-800">Download PDF</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
       id: 'daily-view-combined',
       title: 'Daily View Together',
       description: 'See Habits, Tasks, and Journal in one daily view.',

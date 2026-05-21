@@ -152,6 +152,10 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
     };
 
     const getThreadBucket = (thread: Feedback): AdminThreadBucket => {
+        if (thread.status === 'closed') {
+            return 'completed';
+        }
+
         const latestUserMessageTime = getLatestUserMessageTime(thread);
         const latestAdminReplyTime = getLatestAdminReplyTime(thread);
         const completedAt = getAdminCompletedTime(thread);
@@ -653,12 +657,12 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
             };
             const { error } = await supabase
                 .from('feedback')
-                .update({ metadata: updatedMetadata })
+                .update({ metadata: updatedMetadata, status: 'closed' })
                 .eq('id', thread.id);
 
             if (error) throw error;
 
-            const updatedThread = { ...thread, metadata: updatedMetadata };
+            const updatedThread = { ...thread, metadata: updatedMetadata, status: 'closed' as const };
             setSelectedThread(updatedThread);
             setHistory(prev => sortThreadsByLatestActivity(prev.map(item => item.id === thread.id ? updatedThread : item)));
             toast.success('Marked as complete.');

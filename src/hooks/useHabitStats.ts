@@ -461,6 +461,7 @@ export const useHabitStats = (
                 const dayIdx = dayDate.getDay();
 
                 habits.forEach(h => {
+                    if (h.weeklyTarget) return;
                     const isDue = isHabitDueOnDate(h, dayDate);
                     if (isDue) dailyPossibleCount++;
                     if (isDue && isCompleted(h.id, d, completions, idx, currentYear)) dailyCompletedCount++;

@@ -291,7 +291,11 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
         }
     };
 
-    const visibleHabitsForDate = habits.filter(h => isHabitActiveOnDate(h, date));
+    const visibleHabitsForDate = habits.filter(h => {
+        if (!isHabitActiveOnDate(h, date)) return false;
+        if (h.weeklyTarget) return true;
+        return !h.frequency || h.frequency.includes(date.getDay());
+    });
     const dailyHabits = visibleHabitsForDate.filter(h => !h.weeklyTarget);
 
     const getDayProgress = () => {

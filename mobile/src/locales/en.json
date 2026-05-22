@@ -298,6 +298,8 @@
         "tagline": "A calming analytical tracker to build your habits",
         "email": "Email",
         "password": "Password",
+        "signIn": "Sign In",
+        "createAccount": "Create Account",
         "or": "OR"
     },
     "dashboardScreen": {

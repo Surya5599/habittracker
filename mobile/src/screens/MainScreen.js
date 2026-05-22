@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, TouchableOpacity, Modal, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WeeklyScreen } from './WeeklyView';
 import { MonthlyView } from './MonthlyView';
@@ -55,8 +55,7 @@ export const MainScreen = ({
 }) => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isHabitManagerOpen, setIsHabitManagerOpen] = useState(false);
-    const [isThemePickerOpen, setIsThemePickerOpen] = useState(false);
-    const [isLanguagePickerOpen, setIsLanguagePickerOpen] = useState(false);
+    const [expandedSection, setExpandedSection] = useState(null); // 'theme' | 'language' | null
     const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
     const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
     const [isHelpTutorialOpen, setIsHelpTutorialOpen] = useState(false);
@@ -159,12 +158,14 @@ export const MainScreen = ({
                 return;
             }
 
+            // Clear the local queue before calling the server so pending operations
+            // can't race with the server-side deletion and cause FK violations.
+            await clearLocalAppData();
+
             const fnResult = await supabase.functions.invoke('delete-account', { body: { userId: userIdValue } });
             if (fnResult.error) {
                 throw fnResult.error;
             }
-
-            await clearLocalAppData();
             const { error: signOutError } = await supabase.auth.signOut({ scope: 'local' });
             if (signOutError && !isBenignAuthError(signOutError)) {
                 reportError(signOutError, { scope: 'main-screen:delete-account-signout' });
@@ -312,7 +313,7 @@ export const MainScreen = ({
                                         {/* Theme Setting */}
                                         <TouchableOpacity
                                             style={[tw`flex-row items-center justify-between p-4 border-b-[3px] border-black`, { borderBottomColor: outlineColor }]}
-                                            onPress={() => setIsThemePickerOpen(true)}
+                                            onPress={() => setExpandedSection(expandedSection === 'theme' ? null : 'theme')}
                                         >
                                             <Text style={[tw`text-sm font-black uppercase tracking-tight`, { color: isDark ? '#e5e7eb' : '#161616' }]}>{t('settings.theme.title')}</Text>
                                             <View style={tw`flex-row items-center`}>
@@ -323,11 +324,38 @@ export const MainScreen = ({
                                                 </View>
                                             </View>
                                         </TouchableOpacity>
+                                        {expandedSection === 'theme' && (
+                                            <View style={[tw`p-4 border-b-[3px] border-black`, { borderBottomColor: outlineColor, backgroundColor: isDark ? '#161616' : '#f9fafb' }]}>
+                                                <View style={tw`flex-row flex-wrap justify-between`}>
+                                                    {THEMES.map((thm) => (
+                                                        <TouchableOpacity
+                                                            key={thm.name}
+                                                            onPress={() => { setTheme(thm); setExpandedSection(null); }}
+                                                            style={[
+                                                                tw`w-[31%] aspect-square rounded-2xl items-center justify-center border-2 mb-3`,
+                                                                theme.name === thm.name ? tw`border-black bg-gray-50` : tw`border-gray-100 bg-white`
+                                                            ]}
+                                                        >
+                                                            <View style={tw`flex-row mb-2`}>
+                                                                <View style={[tw`w-5 h-5 rounded-full border border-black z-10`, { backgroundColor: thm.primary }]} />
+                                                                <View style={[tw`w-5 h-5 rounded-full border border-black -ml-2`, { backgroundColor: thm.secondary }]} />
+                                                            </View>
+                                                            <Text style={[tw`text-[10px] font-black uppercase`, { color: thm.primary }]}>{thm.name}</Text>
+                                                            {theme.name === thm.name && (
+                                                                <View style={tw`absolute top-1 right-1`}>
+                                                                    <Check size={10} color="black" strokeWidth={4} />
+                                                                </View>
+                                                            )}
+                                                        </TouchableOpacity>
+                                                    ))}
+                                                </View>
+                                            </View>
+                                        )}
 
                                         {/* Language Setting */}
                                         <TouchableOpacity
                                             style={[tw`flex-row items-center justify-between p-4 border-b-[3px] border-black`, { borderBottomColor: outlineColor }]}
-                                            onPress={() => setIsLanguagePickerOpen(true)}
+                                            onPress={() => setExpandedSection(expandedSection === 'language' ? null : 'language')}
                                         >
                                             <Text style={[tw`text-sm font-black uppercase tracking-tight`, { color: isDark ? '#e5e7eb' : '#161616' }]}>{t('settings.language.title')}</Text>
                                             <View style={tw`flex-row items-center`}>
@@ -336,6 +364,30 @@ export const MainScreen = ({
                                                 </Text>
                                             </View>
                                         </TouchableOpacity>
+                                        {expandedSection === 'language' && (
+                                            <View style={[tw`p-4 border-b-[3px] border-black`, { borderBottomColor: outlineColor, backgroundColor: isDark ? '#161616' : '#f9fafb' }]}>
+                                                <View style={tw`flex-row flex-wrap justify-between`}>
+                                                    {LANGUAGES.map((lang) => (
+                                                        <TouchableOpacity
+                                                            key={lang.code}
+                                                            onPress={() => { setLanguage(lang.code); setExpandedSection(null); }}
+                                                            style={[
+                                                                tw`w-[31%] aspect-square rounded-2xl items-center justify-center border-2 mb-3`,
+                                                                language === lang.code ? tw`border-black bg-gray-50` : tw`border-gray-100 bg-white`
+                                                            ]}
+                                                        >
+                                                            <Text style={[tw`text-md font-black uppercase mb-1`, { color: theme.primary }]}>{lang.code.toUpperCase()}</Text>
+                                                            <Text style={tw`text-[10px] font-bold text-gray-500 text-center`}>{lang.label}</Text>
+                                                            {language === lang.code && (
+                                                                <View style={tw`absolute top-1 right-1`}>
+                                                                    <Check size={10} color="black" strokeWidth={4} />
+                                                                </View>
+                                                            )}
+                                                        </TouchableOpacity>
+                                                    ))}
+                                                </View>
+                                            </View>
+                                        )}
 
                                         <View style={[tw`flex-row items-center justify-between p-4 border-b-[3px] border-black`, { borderBottomColor: outlineColor }]}>
                                             <Text style={[tw`text-sm font-black uppercase tracking-tight`, { color: isDark ? '#e5e7eb' : '#161616' }]}>{t('settings.general.startOfWeek')}</Text>
@@ -469,94 +521,6 @@ export const MainScreen = ({
                             </ScrollView>
                         </View>
 
-                        {/* Theme Picker Overlay - Moved up to avoid clipping */}
-                        {isThemePickerOpen && (
-                            <View style={[StyleSheet.absoluteFill, tw`items-center justify-center bg-black/80 px-6`, { zIndex: 1000 }]}>
-                                <View style={tw`w-full`}>
-                                    <View style={[tw`absolute bg-black rounded-3xl`, { top: 8, left: 8, right: -8, bottom: -8, zIndex: -1 }]} />
-                                    <View style={[tw`bg-white rounded-3xl w-full border-[3px] border-black overflow-hidden`, { borderColor: outlineColor }]}>
-                                        <View style={[tw`p-4 border-b-[3px] border-black flex-row justify-between items-center`, { backgroundColor: theme.primary, borderBottomColor: outlineColor }]}>
-                                            <Text style={tw`text-lg font-black uppercase text-white tracking-widest`}>{t('settings.theme.select')}</Text>
-                                            <TouchableOpacity onPress={() => setIsThemePickerOpen(false)}>
-                                                <X size={24} color="white" strokeWidth={3} />
-                                            </TouchableOpacity>
-                                        </View>
-
-                                        <ScrollView style={tw`p-4 max-h-[400px]`} showsVerticalScrollIndicator={false}>
-                                            <View style={tw`flex-row flex-wrap justify-between`}>
-                                                {THEMES.map((t) => (
-                                                    <TouchableOpacity
-                                                        key={t.name}
-                                                        onPress={() => {
-                                                            setTheme(t);
-                                                            setIsThemePickerOpen(false);
-                                                        }}
-                                                        style={[
-                                                            tw`w-[31%] aspect-square rounded-2xl items-center justify-center border-2 mb-3`,
-                                                            theme.name === t.name ? tw`border-black bg-gray-50` : tw`border-gray-100 bg-white`
-                                                        ]}
-                                                    >
-                                                        <View style={tw`flex-row mb-2`}>
-                                                            <View style={[tw`w-5 h-5 rounded-full border border-black z-10`, { backgroundColor: t.primary }]} />
-                                                            <View style={[tw`w-5 h-5 rounded-full border border-black -ml-2`, { backgroundColor: t.secondary }]} />
-                                                        </View>
-                                                        <Text style={[tw`text-[10px] font-black uppercase`, { color: t.primary }]}>{t.name}</Text>
-                                                        {theme.name === t.name && (
-                                                            <View style={tw`absolute top-1 right-1`}>
-                                                                <Check size={10} color="black" strokeWidth={4} />
-                                                            </View>
-                                                        )}
-                                                    </TouchableOpacity>
-                                                ))}
-                                            </View>
-                                        </ScrollView>
-                                    </View>
-                                </View>
-                            </View>
-                        )}
-
-                        {/* Language Picker Overlay */}
-                        {isLanguagePickerOpen && (
-                            <View style={[StyleSheet.absoluteFill, tw`items-center justify-center bg-black/80 px-6`, { zIndex: 1000 }]}>
-                                <View style={tw`w-full`}>
-                                    <View style={[tw`absolute bg-black rounded-3xl`, { top: 8, left: 8, right: -8, bottom: -8, zIndex: -1 }]} />
-                                    <View style={[tw`bg-white rounded-3xl w-full border-[3px] border-black overflow-hidden`, { borderColor: outlineColor }]}>
-                                        <View style={[tw`p-4 border-b-[3px] border-black flex-row justify-between items-center`, { backgroundColor: theme.primary, borderBottomColor: outlineColor }]}>
-                                            <Text style={tw`text-lg font-black uppercase text-white tracking-widest`}>{t('settings.language.title')}</Text>
-                                            <TouchableOpacity onPress={() => setIsLanguagePickerOpen(false)}>
-                                                <X size={24} color="white" strokeWidth={3} />
-                                            </TouchableOpacity>
-                                        </View>
-
-                                        <ScrollView style={tw`p-4 max-h-[400px]`} showsVerticalScrollIndicator={false}>
-                                            <View style={tw`flex-row flex-wrap justify-between`}>
-                                                {LANGUAGES.map((l) => (
-                                                    <TouchableOpacity
-                                                        key={l.code}
-                                                        onPress={() => {
-                                                            setLanguage(l.code);
-                                                            setIsLanguagePickerOpen(false);
-                                                        }}
-                                                        style={[
-                                                            tw`w-[31%] aspect-square rounded-2xl items-center justify-center border-2 mb-3`,
-                                                            language === l.code ? tw`border-black bg-gray-50` : tw`border-gray-100 bg-white`
-                                                        ]}
-                                                    >
-                                                        <Text style={[tw`text-md font-black uppercase mb-1`, { color: theme.primary }]}>{l.code.toUpperCase()}</Text>
-                                                        <Text style={tw`text-[10px] font-bold text-gray-500 text-center`}>{l.label}</Text>
-                                                        {language === l.code && (
-                                                            <View style={tw`absolute top-1 right-1`}>
-                                                                <Check size={10} color="black" strokeWidth={4} />
-                                                            </View>
-                                                        )}
-                                                    </TouchableOpacity>
-                                                ))}
-                                            </View>
-                                        </ScrollView>
-                                    </View>
-                                </View>
-                            </View>
-                        )}
                     </View>
                 </Modal>
 

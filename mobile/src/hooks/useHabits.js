@@ -241,7 +241,18 @@ export const useHabits = (session, guestMode) => {
             let queue = [...queueRef.current];
             while (queue.length > 0) {
                 const op = queue[0];
-                await executeOp(op, session.user.id);
+                try {
+                    await executeOp(op, session.user.id);
+                } catch (opError) {
+                    // FK violation (23503): the referenced row is gone — stale op, drop it silently.
+                    // PGRST116: row not found — same treatment.
+                    const code = opError?.code;
+                    if (code === '23503' || code === 'PGRST116') {
+                        // intentionally swallowed — op is no longer valid
+                    } else {
+                        throw opError;
+                    }
+                }
                 queue = queue.slice(1);
                 await persistQueue(queue);
             }

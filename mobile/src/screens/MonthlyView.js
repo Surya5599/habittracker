@@ -174,13 +174,10 @@ export const MonthlyView = ({
                             activeOpacity={0.7}
                         >
                             {/* Date Column */}
-                            <View style={[tw`mr-4 w-[70px] rounded-xl border px-2.5 py-2 items-center`, { backgroundColor: panelSoftBg, borderColor: panelBorder }]}>
-                                <View style={[tw`rounded-full px-2 py-0.5 mb-1`, { backgroundColor: theme.primary }]}>
-                                    <Text style={tw`text-[9px] font-black uppercase tracking-widest text-white`}>{dayName}</Text>
-                                </View>
-                                <Text style={[tw`text-2xl font-black leading-none`, { color: textPrimary }]}>{dayNum}</Text>
-                                <Text style={[tw`text-[10px] font-black uppercase mt-1 tracking-wide`, { color: textMuted }]}>{monthName}</Text>
-                                <Text style={[tw`text-[9px] font-black`, { color: textMuted }]}>{year}</Text>
+                            <View style={[tw`mr-3 w-[44px] rounded-xl border py-2 items-center`, { backgroundColor: panelSoftBg, borderColor: panelBorder }]}>
+                                <Text style={[tw`text-[9px] font-black uppercase`, { color: theme.primary }]} numberOfLines={1}>{dayName}</Text>
+                                <Text style={[tw`text-xl font-black leading-tight`, { color: textPrimary }]}>{dayNum}</Text>
+                                <Text style={[tw`text-[9px] font-black uppercase`, { color: textMuted }]} numberOfLines={1}>{monthName}</Text>
                             </View>
 
                             {/* Content Column */}

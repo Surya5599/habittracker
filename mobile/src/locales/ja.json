@@ -280,6 +280,8 @@
         "tagline": "習慣を構築するための落ち着いた分析トラッカー",
         "email": "メール",
         "password": "パスワード",
+        "signIn": "サインイン",
+        "createAccount": "アカウント作成",
         "or": "または"
     },
     "dashboardScreen": {

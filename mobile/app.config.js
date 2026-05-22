@@ -49,7 +49,6 @@ module.exports = {
     ios: {
       supportsTablet: true,
       bundleIdentifier: selectedVariant.iosBundleIdentifier,
-      buildNumber: '1',
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
       },

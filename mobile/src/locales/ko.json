@@ -280,6 +280,8 @@
         "tagline": "습관 형성을 위한 차분한 분석 트래커",
         "email": "이메일",
         "password": "비밀번호",
+        "signIn": "로그인",
+        "createAccount": "계정 만들기",
         "or": "또는"
     },
     "dashboardScreen": {

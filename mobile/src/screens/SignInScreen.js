@@ -11,6 +11,7 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [isResetMode, setIsResetMode] = useState(false);
+    const [isNewAccount, setIsNewAccount] = useState(false);
 
     const isInvalidRefreshTokenError = (error) => {
         const message = (error?.message || '').toLowerCase();
@@ -177,6 +178,26 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
 
                     <NeoCard className="w-full max-w-sm">
                         <View style={tw`gap-4`}>
+                            {!isResetMode && (
+                                <View style={[tw`flex-row p-1 rounded-xl border-2 border-black`, { backgroundColor: '#f3f4f6' }]}>
+                                    <TouchableOpacity
+                                        onPress={() => setIsNewAccount(false)}
+                                        style={[tw`flex-1 py-2.5 rounded-lg items-center`, !isNewAccount && { backgroundColor: '#000000' }]}
+                                    >
+                                        <Text style={[tw`text-[10px] font-black uppercase tracking-widest`, !isNewAccount ? tw`text-white` : tw`text-gray-400`]}>
+                                            {t('auth.signIn') || 'Sign In'}
+                                        </Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        onPress={() => setIsNewAccount(true)}
+                                        style={[tw`flex-1 py-2.5 rounded-lg items-center`, isNewAccount && { backgroundColor: '#000000' }]}
+                                    >
+                                        <Text style={[tw`text-[10px] font-black uppercase tracking-widest`, isNewAccount ? tw`text-white` : tw`text-gray-400`]}>
+                                            {t('auth.createAccount') || 'Create Account'}
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
+                            )}
                             <View>
                                 <Text style={tw`text-[10px] font-black uppercase tracking-widest text-[#999] mb-1`}>
                                     {t('auth.email')}
@@ -218,7 +239,7 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
                             ) : (
                                 <>
                                     <NeoButton onPress={handleSubmit} style={tw`mt-2`}>
-                                        {loading ? t('auth.verifying') : t('auth.signInSignUp')}
+                                        {loading ? t('auth.verifying') : isNewAccount ? (t('auth.createAccount') || 'Create Account') : (t('auth.signIn') || 'Sign In')}
                                     </NeoButton>
 
                                     <TouchableOpacity onPress={() => setIsResetMode(true)} style={tw`mt-2`}>

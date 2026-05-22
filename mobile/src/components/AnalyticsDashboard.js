@@ -1,12 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, ScrollView, Dimensions, Animated, Easing, PanResponder, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, Dimensions, Animated, Easing, FlatList, TouchableOpacity } from 'react-native';
 import tw from 'twrnc';
-import Svg, { Path, Defs, LinearGradient, Stop, Circle, ClipPath, Rect, G, Text as SvgText } from 'react-native-svg';
+import Svg, { Path, Circle } from 'react-native-svg';
 import { MOODS } from '../constants';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
-const AnimatedRect = Animated.createAnimatedComponent(Rect);
 
 // Local component for animated fill bar in retrospective
 const AnimatedRetrospectiveBar = ({ percentage, color }) => {
@@ -119,58 +118,18 @@ export const AnalyticsDashboard = ({
     const chartHeight = 100;
     const comparisonChartHeight = 86;
 
-    const [activePoint, setActivePoint] = useState(null);
-
     // Animation values
     const circleAnim = useRef(new Animated.Value(0)).current;
-    const chartPathAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-        // Reset and trigger animations when period or data changes
         circleAnim.setValue(0);
-        chartPathAnim.setValue(0);
-        setActivePoint(null); // Reset tooltip
-
-        Animated.parallel([
-            Animated.timing(circleAnim, {
-                toValue: completionStats.percentage || 0,
-                duration: 1200,
-                easing: Easing.out(Easing.cubic),
-                useNativeDriver: false,
-            }),
-            Animated.timing(chartPathAnim, {
-                toValue: chartWidth,
-                duration: 1500,
-                easing: Easing.inOut(Easing.quad),
-                useNativeDriver: false,
-            })
-        ]).start();
-    }, [normalizedPeriod, completionStats.percentage, chartData]);
-
-    // PanResponder for Tooltip
-    const panResponder = useRef(
-        PanResponder.create({
-            onStartShouldSetPanResponder: () => true,
-            onMoveShouldSetPanResponder: () => true,
-            onPanResponderGrant: (evt) => {
-                const touchX = evt.nativeEvent.locationX;
-                const index = Math.round((touchX / chartWidth) * (chartData.length - 1));
-                const safeIndex = Math.max(0, Math.min(chartData.length - 1, index));
-                setActivePoint(chartData[safeIndex]);
-            },
-            onPanResponderMove: (evt) => {
-                const touchX = evt.nativeEvent.locationX;
-                const index = Math.round((touchX / chartWidth) * (chartData.length - 1));
-                const safeIndex = Math.max(0, Math.min(chartData.length - 1, index));
-                setActivePoint(chartData[safeIndex]);
-            },
-            onPanResponderRelease: () => {
-                // Keep tooltip visible for 2 seconds after release
-                setTimeout(() => setActivePoint(null), 2000);
-            },
-            onPanResponderTerminate: () => setActivePoint(null),
-        })
-    ).current;
+        Animated.timing(circleAnim, {
+            toValue: completionStats.percentage || 0,
+            duration: 1200,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: false,
+        }).start();
+    }, [normalizedPeriod, completionStats.percentage]);
 
     // Retrospective Grid Rendering Logic
     const renderRetrospectiveGrid = () => {
@@ -464,10 +423,6 @@ export const AnalyticsDashboard = ({
         }
     };
 
-    // Chart Logic
-    const maxVal = Math.max(...chartData.map(d => d.value), 1);
-    const dataPoints = chartData.length;
-
     const wowCurrent = weekComparison?.current || [];
     const wowPrevious = weekComparison?.previous || [];
     const wowCurrentPct = Number(weekComparison?.currentPercentage || 0);
@@ -517,21 +472,6 @@ export const AnalyticsDashboard = ({
     const momCurrentPath = buildPath(momCurrent, chartWidth, comparisonChartHeight, momMax);
     const momPreviousPath = buildPath(momPrevious, chartWidth, comparisonChartHeight, momMax);
 
-    let pathD = `M 0,${chartHeight}`;
-    chartData.forEach((d, i) => {
-        const x = (i / (dataPoints - 1)) * chartWidth;
-        const y = chartHeight - (d.value / maxVal) * chartHeight;
-        if (i === 0) pathD = `M ${x},${y}`;
-        else {
-            // Cubic bezier for smoothness
-            const prevX = ((i - 1) / (dataPoints - 1)) * chartWidth;
-            const prevY = chartHeight - (chartData[i - 1].value / maxVal) * chartHeight;
-            const controlX = (prevX + x) / 2;
-            pathD += ` C ${controlX},${prevY} ${controlX},${y} ${x},${y}`;
-        }
-    });
-    const areaPath = `${pathD} L ${chartWidth},${chartHeight} L 0,${chartHeight} Z`;
-
     const radius = 30;
     const circumference = radius * 2 * Math.PI;
     const comparisonDelta = normalizedPeriod === 'WEEK'
@@ -571,109 +511,6 @@ export const AnalyticsDashboard = ({
                                     {stats.best?.name || t('analytics.noData')}
                                 </Text>
                             </View>
-                        </View>
-                    </View>
-                </HardShadowCardLocal>
-            </View>
-
-            {/* Primary Trend */}
-            <View style={tw`mb-6`}>
-                <HardShadowCardLocal colorMode={colorMode}>
-                    <View style={tw`p-5`}>
-                        <View style={tw`flex-row justify-between items-center mb-6`}>
-                            <Text style={[tw`text-xs font-black uppercase tracking-widest leading-none`, { color: textMuted }]}>{t('analytics.activityMomentum')}</Text>
-                            {activePoint && (
-                                <Text style={[tw`text-[10px] font-black uppercase tracking-widest leading-none`, { color: theme.primary }]}>
-                                    {activePoint.label}: {activePoint.value} {t('analytics.done')}
-                                </Text>
-                            )}
-                        </View>
-
-                        <View {...panResponder.panHandlers}>
-                            <Svg width={chartWidth} height={chartHeight} style={tw`mb-4`}>
-                                <Defs>
-                                    <ClipPath id="chartClip">
-                                        <AnimatedRect x="0" y="0" width={chartPathAnim} height={chartHeight} />
-                                    </ClipPath>
-                                    <LinearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
-                                        <Stop offset="0" stopColor={theme.primary} stopOpacity="0.3" />
-                                        <Stop offset="1" stopColor={theme.primary} stopOpacity="0" />
-                                    </LinearGradient>
-                                </Defs>
-
-                                <G clipPath="url(#chartClip)">
-                                    <Path
-                                        d={areaPath}
-                                        fill="url(#grad)"
-                                    />
-                                    <Path
-                                        d={pathD}
-                                        fill="none"
-                                        stroke={theme.primary}
-                                        strokeWidth={3}
-                                        strokeLinecap="round"
-                                    />
-                                </G>
-
-                                {activePoint && (
-                                    <G>
-                                        <Rect
-                                            x={(chartData.indexOf(activePoint) / (chartData.length - 1)) * chartWidth - 0.5}
-                                            y={0}
-                                            width={1}
-                                            height={chartHeight}
-                                            fill={theme.primary}
-                                            opacity={0.3}
-                                        />
-                                        <Circle
-                                            cx={(chartData.indexOf(activePoint) / (chartData.length - 1)) * chartWidth}
-                                            cy={chartHeight - (activePoint.value / maxVal) * chartHeight}
-                                            r={5}
-                                            fill={theme.primary}
-                                            stroke="white"
-                                            strokeWidth={2}
-                                        />
-                                        {/* Value Bubble */}
-                                        <G
-                                            transform={`translate(${Math.max(20, Math.min(chartWidth - 20, (chartData.indexOf(activePoint) / (chartData.length - 1)) * chartWidth))}, ${Math.max(15, chartHeight - (activePoint.value / maxVal) * chartHeight - 15)})`}
-                                        >
-                                            <Rect
-                                                x="-15"
-                                                y="-12"
-                                                width="30"
-                                                height="18"
-                                                rx="4"
-                                                fill="black"
-                                            />
-                                            <SvgText
-                                                x="0"
-                                                y="1"
-                                                fill="white"
-                                                fontSize="10"
-                                                fontWeight="900"
-                                                textAnchor="middle"
-                                                alignmentBaseline="middle"
-                                            >
-                                                {activePoint.value}
-                                            </SvgText>
-                                        </G>
-                                    </G>
-                                )}
-                            </Svg>
-                        </View>
-
-                        {/* X-Axis labels */}
-                        <View style={tw`flex-row justify-between px-1`}>
-                            {chartData.filter((_, i) => {
-                                if (normalizedPeriod === 'WEEK') return true;
-                                if (normalizedPeriod === 'YEAR') return true;
-                                if (normalizedPeriod === 'MONTH') return i % 5 === 0 || i === chartData.length - 1;
-                                return true;
-                            }).map((d, i) => (
-                                <Text key={i} style={[tw`text-[9px] font-black leading-none uppercase`, { color: textMuted }]}>
-                                    {normalizedPeriod === 'MONTH' ? (i === 0 ? '1' : d.label) : d.label.substring(0, 3)}
-                                </Text>
-                            ))}
                         </View>
                     </View>
                 </HardShadowCardLocal>

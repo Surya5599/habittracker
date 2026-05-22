@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
+import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
-import { View, Text, TouchableOpacity, ScrollView, Animated, TextInput, Easing, Modal, useWindowDimensions, KeyboardAvoidingView, Platform, Keyboard, PanResponder } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Animated, TextInput, Easing, useWindowDimensions, Platform, Keyboard, PanResponder, Alert } from 'react-native';
 import { Check, ChevronLeft, ChevronRight, BookOpen, Save, Plus, X, Meh, Frown, Smile, Laugh, Angry, Minus } from 'lucide-react-native';
 import tw from 'twrnc';
 import { isCompleted as checkCompleted } from '../utils/stats';
@@ -45,10 +46,8 @@ export const DailyCard = ({
     const [isFlipped, setIsFlipped] = useState(false);
     const [backView, setBackView] = useState('journal');
     const [showDatePicker, setShowDatePicker] = useState(false);
-    const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
     const [newTaskText, setNewTaskText] = useState('');
     const [editingTaskId, setEditingTaskId] = useState(null);
-    const longPressTriggeredRef = useRef(false);
     const [keyboardInset, setKeyboardInset] = useState(0);
     const viewSwitchAnim = useRef(new Animated.Value(1)).current;
     const [switchPhase, setSwitchPhase] = useState('idle'); // idle | out | in
@@ -108,21 +107,12 @@ export const DailyCard = ({
         flipToFront();
     };
 
-    const handleAddTask = () => {
-        setIsTaskModalOpen(true);
-        setNewTaskText('');
-    };
-
     const confirmAddTask = () => {
-        if (newTaskText.trim() === '') {
-            setIsTaskModalOpen(false);
-            return;
-        }
+        if (newTaskText.trim() === '') return;
         const taskId = Date.now().toString();
         const newTask = { id: taskId, text: newTaskText.trim(), completed: false };
         const currentTasks = finalDayData.tasks || [];
         updateNote && updateNote(dateKey, { tasks: [...currentTasks, newTask] });
-        setIsTaskModalOpen(false);
         setNewTaskText('');
     };
 
@@ -142,6 +132,20 @@ export const DailyCard = ({
         const currentTasks = finalDayData.tasks || [];
         const newTasks = currentTasks.filter(t => t.id !== taskId);
         updateNote && updateNote(dateKey, { tasks: newTasks });
+    };
+
+    const handleHabitTap = (habit) => {
+        if (habit.inactive) {
+            // skip → empty: clear rest day
+            if (toggleHabitInactive) toggleHabitInactive(habit.id, dateKey);
+        } else if (habit.done) {
+            // complete → skip: undo completion then mark as rest
+            toggleCompletion(habit.id, dateKey);
+            if (toggleHabitInactive) toggleHabitInactive(habit.id, dateKey);
+        } else {
+            // empty → complete
+            toggleCompletion(habit.id, dateKey);
+        }
     };
 
     const MOODS = [
@@ -385,6 +389,8 @@ export const DailyCard = ({
     const circumference = radius * 2 * Math.PI;
     const AnimatedCircle = Animated.createAnimatedComponent(Circle);
     const progressAnim = useRef(new Animated.Value(0)).current;
+    const pulseAnim = useRef(new Animated.Value(1)).current;
+    const prevProgressRef = useRef(actualProgress);
 
     useEffect(() => {
         Animated.timing(progressAnim, {
@@ -394,6 +400,17 @@ export const DailyCard = ({
             easing: Easing.out(Easing.cubic),
         }).start();
     }, [actualProgress]);
+
+    useEffect(() => {
+        if (actualProgress === 100 && prevProgressRef.current < 100 && totalCount > 0) {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            Animated.sequence([
+                Animated.timing(pulseAnim, { toValue: 1.12, duration: 160, useNativeDriver: true, easing: Easing.out(Easing.quad) }),
+                Animated.spring(pulseAnim, { toValue: 1, useNativeDriver: true, damping: 6, stiffness: 180 }),
+            ]).start();
+        }
+        prevProgressRef.current = actualProgress;
+    }, [actualProgress, totalCount]);
 
     const strokeDashoffset = progressAnim.interpolate({
         inputRange: [0, 100],
@@ -537,64 +554,6 @@ export const DailyCard = ({
                 colorMode={colorMode}
             />
 
-            {/* Task Entry Modal */}
-            <Modal
-                animationType="fade"
-                transparent={true}
-                visible={isTaskModalOpen}
-                onRequestClose={() => setIsTaskModalOpen(false)}
-            >
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    style={tw`flex-1 justify-start items-center bg-black/60 px-6 pt-24`}
-                >
-                        <View style={tw`w-full`}>
-                            <View style={[tw`absolute bg-black rounded-3xl`, { top: 8, left: 8, right: -8, bottom: -8, zIndex: -1 }]} />
-                        <View style={[tw`rounded-3xl w-full border-[3px] border-black overflow-hidden`, { backgroundColor: panelBg, borderColor: outlineColor }]}>
-                            <View style={[tw`p-4 border-b-[3px] border-black items-center`, { backgroundColor: theme.primary, borderBottomColor: outlineColor }]}>
-                                <Text style={tw`text-lg font-black uppercase text-white tracking-widest`}>{t('tasks.enterTask') || 'Enter your task'}</Text>
-                            </View>
-
-                            <View style={tw`p-6`}>
-                                <TextInput
-                                    style={[
-                                        tw`border-[3px] border-black p-4 rounded-xl text-lg font-bold mb-6`,
-                                        { borderColor: outlineColor },
-                                        { backgroundColor: panelSoftBg, color: textPrimary },
-                                        {
-                                            lineHeight: 24,
-                                            paddingVertical: Platform.OS === 'android' ? 8 : 10,
-                                            includeFontPadding: false,
-                                            textAlignVertical: 'center'
-                                        }
-                                    ]}
-                                    placeholder={t('tasks.placeholder') || "Type something..."}
-                                    placeholderTextColor={textMuted}
-                                    autoFocus={true}
-                                    value={newTaskText}
-                                    onChangeText={setNewTaskText}
-                                    onSubmitEditing={confirmAddTask}
-                                />
-
-                                <View style={tw`flex-row gap-3`}>
-                                    <TouchableOpacity
-                                        onPress={() => setIsTaskModalOpen(false)}
-                                        style={[tw`flex-1 py-4 rounded-xl border-[3px] border-black items-center`, { backgroundColor: panelSoftBg, borderColor: outlineColor }]}
-                                    >
-                                        <Text style={[tw`font-black uppercase text-xs tracking-widest`, { color: textPrimary }]}>{t('common.cancel')}</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        onPress={confirmAddTask}
-                                        style={[tw`flex-2 py-4 rounded-xl border-[3px] border-black items-center`, { backgroundColor: theme.primary, borderColor: outlineColor }]}
-                                    >
-                                        <Text style={tw`text-white font-black uppercase text-xs tracking-widest`}>{t('tasks.addTask') || 'Add Task'}</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                        </View>
-                    </View>
-                </KeyboardAvoidingView>
-            </Modal>
 
             {/* Front Face */}
             {!isFlipped && (
@@ -657,7 +616,7 @@ export const DailyCard = ({
                     <View style={[tw`flex-1`, { backgroundColor: panelBg }]}>
                         {isLargeLayout && (
                             <View style={[tw`items-center pt-4 pb-3 border-b`, { borderColor: borderSoft }]}>
-                                <View style={{ width: 110, height: 110, alignItems: 'center', justifyContent: 'center' }}>
+                                <Animated.View style={{ width: 110, height: 110, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pulseAnim }] }}>
                                     <Svg width={110} height={110} style={{ transform: [{ rotate: '-90deg' }] }}>
                                         <Circle
                                             stroke={isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.12)'}
@@ -685,7 +644,7 @@ export const DailyCard = ({
                                     <View style={tw`absolute inset-0 items-center justify-center`}>
                                         <Text style={[tw`font-black`, { color: textPrimary, fontSize: 24 }]}>{Math.round(actualProgress)}%</Text>
                                     </View>
-                                </View>
+                                </Animated.View>
                             </View>
                         )}
 
@@ -704,7 +663,7 @@ export const DailyCard = ({
                             {visibleHabitsForDate.length === 0 ? (
                                 <Text style={[tw`text-center italic py-2 text-xs`, { color: textMuted }]}>
                                     {habits.length === 0
-                                        ? 'Click the + Add on the top right to view and add habits'
+                                        ? 'Tap + Add, then type your first habit name'
                                         : t('dailyCard.noDailyHabits')}
                                 </Text>
                             ) : (
@@ -719,21 +678,7 @@ export const DailyCard = ({
                                         .map(habit => (
                                             <TouchableOpacity
                                                 key={habit.id}
-                                                delayLongPress={450}
-                                                onPressIn={() => { longPressTriggeredRef.current = false; }}
-                                                onLongPress={() => {
-                                                    longPressTriggeredRef.current = true;
-                                                    if (toggleHabitInactive) {
-                                                        toggleHabitInactive(habit.id, dateKey);
-                                                    }
-                                                }}
-                                                onPress={() => {
-                                                    if (longPressTriggeredRef.current) {
-                                                        longPressTriggeredRef.current = false;
-                                                        return;
-                                                    }
-                                                    toggleCompletion(habit.id, dateKey);
-                                                }}
+                                                onPress={() => handleHabitTap(habit)}
                                                 style={[tw`flex-row items-center justify-between mr-2`, { marginBottom: listItemSpacing }]}
                                                 activeOpacity={0.7}
                                             >
@@ -748,14 +693,16 @@ export const DailyCard = ({
                                                         {habit.name || t('common.untitled')}
                                                     </Text>
                                                     {habit.weeklyTarget ? (
-                                                        <Text style={[tw`ml-2 text-[10px] font-black uppercase`, { color: textSecondary }]}>
-                                                            {habit.weeklyDone}/{habit.weeklyTarget}
-                                                        </Text>
+                                                        <View style={[tw`ml-2 px-1.5 py-0.5 rounded`, { backgroundColor: theme.primary + '22' }]}>
+                                                            <Text style={[tw`text-[9px] font-black`, { color: theme.primary }]}>
+                                                                {habit.weeklyDone}/{habit.weeklyTarget} wk
+                                                            </Text>
+                                                        </View>
                                                     ) : null}
                                                 </View>
 
                                                 <View style={[
-                                                    tw`border-[2.5px] border-black items-center justify-center rounded-sm`,
+                                                    tw`border-[2.5px] items-center justify-center rounded-sm`,
                                                     { width: checkBoxSize, height: checkBoxSize },
                                                     habit.inactive
                                                         ? { backgroundColor: '#fcd34d', borderColor: '#b45309' }
@@ -772,6 +719,25 @@ export const DailyCard = ({
                             )}
                         </ScrollView>
                     </View>
+
+                    {/* Habit state legend */}
+                    {visibleHabitsForDate.length > 0 && (
+                        <View style={[tw`flex-row items-center justify-center gap-4 pb-2 pt-1`, { borderTopWidth: 1, borderColor: borderSoft }]}>
+                            {[
+                                { label: 'To do', bg: panelBg, borderColor: outlineColor, icon: null },
+                                { label: 'Done', bg: '#000000', borderColor: outlineColor, icon: <Check size={10} color="white" strokeWidth={4} /> },
+                                { label: 'Rest', bg: '#fcd34d', borderColor: '#b45309', icon: <Minus size={10} color="#78350f" strokeWidth={4} /> },
+                            ].map(({ label, bg, borderColor, icon }) => (
+                                <View key={label} style={tw`flex-row items-center gap-1.5`}>
+                                    <View style={[tw`border-[2px] rounded-sm items-center justify-center`, { width: 14, height: 14, backgroundColor: bg, borderColor }]}>
+                                        {icon}
+                                    </View>
+                                    <Text style={[tw`text-[9px] font-black uppercase tracking-widest`, { color: textMuted }]}>{label}</Text>
+                                </View>
+                            ))}
+                        </View>
+                    )}
+
                     <StatusRow />
 
                 </HardShadowCard>
@@ -799,11 +765,6 @@ export const DailyCard = ({
                             </TouchableOpacity>
                         </View>
                         <View style={tw`absolute right-4 z-10 flex-row items-center`}>
-                            {backView === 'tasks' ? (
-                                <TouchableOpacity onPress={handleAddTask} style={tw`mr-3`}>
-                                    <Plus size={isCompact ? 22 : 24} color="white" />
-                                </TouchableOpacity>
-                            ) : null}
                             <TouchableOpacity onPress={onNext}>
                                 <ChevronRight size={isCompact ? 24 : 28} color="white" />
                             </TouchableOpacity>
@@ -811,7 +772,22 @@ export const DailyCard = ({
                     </View>
 
                     {backView === 'tasks' ? (
-                        <ScrollView style={tw`flex-1 p-6`} showsVerticalScrollIndicator={false}>
+                        <ScrollView style={tw`flex-1 p-6`} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                            {/* Inline task input */}
+                            <View style={[tw`flex-row items-center gap-3 mb-3 pb-3 border-b-[2px]`, { borderColor: borderSoft }]}>
+                                <View style={[tw`w-6 h-6 border-[2px] rounded-sm items-center justify-center`, { borderColor: textMuted, borderStyle: 'dashed' }]} />
+                                <TextInput
+                                    style={[tw`flex-1 font-bold text-base`, { color: textPrimary, lineHeight: 22, paddingVertical: 0, minHeight: 24, includeFontPadding: false, textAlignVertical: 'center' }]}
+                                    value={newTaskText}
+                                    onChangeText={setNewTaskText}
+                                    onSubmitEditing={confirmAddTask}
+                                    placeholder={t('tasks.addTask') || 'Add a task...'}
+                                    placeholderTextColor={textMuted}
+                                    returnKeyType="done"
+                                    blurOnSubmit={false}
+                                />
+                            </View>
+
                             {(finalDayData.tasks && finalDayData.tasks.length > 0) ? (
                                 finalDayData.tasks.map(task => (
                                     <View key={task.id} style={tw`w-full flex-row items-center gap-3 mb-3`}>

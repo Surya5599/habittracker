@@ -280,6 +280,8 @@
         "tagline": "Un traqueur analytique apaisant pour construire vos habitudes",
         "email": "Email",
         "password": "Mot de passe",
+        "signIn": "Se connecter",
+        "createAccount": "Créer un compte",
         "or": "OU"
     },
     "dashboardScreen": {

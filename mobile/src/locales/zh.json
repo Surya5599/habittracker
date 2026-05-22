@@ -280,6 +280,8 @@
         "tagline": "一个平静的分析追踪器，助你养成习惯",
         "email": "邮箱",
         "password": "密码",
+        "signIn": "登录",
+        "createAccount": "创建账户",
         "or": "或"
     },
     "dashboardScreen": {

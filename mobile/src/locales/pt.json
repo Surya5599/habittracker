@@ -280,6 +280,8 @@
         "tagline": "Um rastreador analítico relaxante para construir seus hábitos",
         "email": "Email",
         "password": "Senha",
+        "signIn": "Entrar",
+        "createAccount": "Criar conta",
         "or": "OU"
     },
     "dashboardScreen": {

@@ -279,6 +279,8 @@
         "tagline": "Ein beruhigender analytischer Tracker zum Aufbau Ihrer Gewohnheiten",
         "email": "E-Mail",
         "password": "Passwort",
+        "signIn": "Anmelden",
+        "createAccount": "Konto erstellen",
         "or": "ODER"
     },
     "dashboardScreen": {

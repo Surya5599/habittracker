@@ -730,6 +730,8 @@ export const LandingPage: React.FC = () => {
             Stop breaking your streaks. HabiCard turns your daily goals into visual, satisfying cards that you actually want to complete.
           </p>
 
+          <div className="flex flex-col gap-2">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-stone-400">Multiple themes — pick your own</p>
           <div className="flex flex-wrap gap-1.5">
             {THEMES.map((t) => (
               <button
@@ -741,6 +743,7 @@ export const LandingPage: React.FC = () => {
                 style={{ background: `linear-gradient(135deg, ${t.primary} 50%, ${t.secondary} 50%)` }}
               />
             ))}
+          </div>
           </div>
 
           <div className="flex flex-col flex-wrap gap-3 sm:flex-row sm:gap-4">

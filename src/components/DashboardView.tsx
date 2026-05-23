@@ -87,7 +87,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         <div className="rounded-2xl border border-stone-200 bg-white p-5 space-y-4">
                             <div className="flex items-center gap-2">
                                 <div className="p-1.5 bg-stone-100 text-black rounded-lg"><Zap size={14} strokeWidth={2.5} /></div>
-                                <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">Year in review</span>
+                                <span className="font-serif text-[10px] font-black uppercase tracking-widest text-stone-500">Year in review</span>
                             </div>
                             <p className="text-base leading-relaxed font-bold text-stone-900">
                                 <FormattedText text={story.annualSummary.review} highlightColor={theme.secondary} />

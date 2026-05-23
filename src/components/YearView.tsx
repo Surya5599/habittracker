@@ -81,7 +81,7 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
             <div className="relative z-10 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 pb-4 border-b border-stone-100">
                 <div>
                     <span className="text-[10px] font-black uppercase tracking-[0.28em] text-stone-400 block mb-1">{t('annualUi.yearView.label')}</span>
-                    <h4 className="font-black uppercase text-lg sm:text-xl tracking-tight leading-tight">{t('annualUi.yearView.inReview', { year: currentYear })}</h4>
+                    <h4 className="font-serif font-black uppercase text-xl sm:text-2xl tracking-tight leading-tight">{t('annualUi.yearView.inReview', { year: currentYear })}</h4>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                     <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 ${momentumCopy.bg}`}>

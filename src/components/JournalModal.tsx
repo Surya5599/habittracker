@@ -45,25 +45,27 @@ export const JournalModal: React.FC<JournalModalProps> = ({
     ];
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/55 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="neo-border neo-shadow bg-white rounded-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
                 {/* Header */}
-                <div className="p-4 border-b border-stone-100 flex items-center justify-between bg-stone-50">
+                <div className="px-5 py-4 border-b-[3px] border-black flex items-center justify-between" style={{ backgroundColor: theme.primary }}>
                     <div>
-                        <h3 className="text-sm font-black uppercase tracking-widest text-stone-500">Daily Journal</h3>
-                        <p className="text-xl font-black">{date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/70">Daily Journal</p>
+                        <h3 className="font-serif text-xl font-black text-white leading-tight mt-0.5">
+                            {date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                        </h3>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-stone-200 rounded-full transition-colors">
-                        <X size={20} />
+                    <button onClick={onClose} className="p-2 rounded-full border-2 border-white/40 text-white hover:bg-white/20 transition-colors">
+                        <X size={16} />
                     </button>
                 </div>
 
                 {/* Content */}
-                <div className="p-6 space-y-8 overflow-y-auto">
+                <div className="p-5 space-y-6 overflow-y-auto">
                     {/* Mood Selector */}
                     <div className="space-y-3">
-                        <label className="text-xs font-black uppercase tracking-widest text-stone-400">How did today go?</label>
-                        <div className="flex justify-between gap-1">
+                        <label className="text-[10px] font-black uppercase tracking-[0.18em] text-stone-400">How did today go?</label>
+                        <div className="flex justify-between gap-1.5">
                             {MOODS.map((m) => {
                                 const isSelected = mood === m.value;
                                 const Icon = m.icon;
@@ -71,14 +73,14 @@ export const JournalModal: React.FC<JournalModalProps> = ({
                                     <button
                                         key={m.value}
                                         onClick={() => setMood(m.value)}
-                                        className={`flex-1 flex flex-col items-center gap-2 p-3 rounded-xl transition-all ${isSelected ? 'bg-stone-100 scale-110 shadow-inner' : 'hover:bg-stone-50 hover:scale-105'
-                                            }`}
+                                        className={`flex-1 flex flex-col items-center gap-2 py-3 transition-all border-2 rounded-xl ${isSelected ? 'border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5' : 'border-stone-200 hover:border-black hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.15)]'}`}
+                                        style={isSelected ? { backgroundColor: m.color + '22' } : {}}
                                     >
-                                        <div className={`p-2 rounded-full transition-colors ${isSelected ? 'text-white' : 'text-stone-300'}`}
+                                        <div className={`p-1.5 rounded-full transition-colors ${isSelected ? 'text-white' : 'text-stone-300'}`}
                                             style={{ backgroundColor: isSelected ? m.color : 'transparent' }}>
-                                            <Icon size={24} strokeWidth={isSelected ? 2.5 : 2} />
+                                            <Icon size={22} strokeWidth={isSelected ? 2.5 : 2} />
                                         </div>
-                                        <span className={`text-[10px] font-bold uppercase tracking-wider ${isSelected ? 'text-stone-800' : 'text-stone-300'}`}>
+                                        <span className={`text-[9px] font-black uppercase tracking-wider ${isSelected ? 'text-stone-800' : 'text-stone-300'}`}>
                                             {m.label}
                                         </span>
                                     </button>
@@ -88,31 +90,31 @@ export const JournalModal: React.FC<JournalModalProps> = ({
                     </div>
 
                     {/* Journal Entry */}
-                    <div className="space-y-3 flex-1">
-                        <label className="text-xs font-black uppercase tracking-widest text-stone-400">Notes & Reflections</label>
+                    <div className="space-y-2 flex-1">
+                        <label className="text-[10px] font-black uppercase tracking-[0.18em] text-stone-400">Notes & Reflections</label>
                         <textarea
                             value={journal}
                             onChange={(e) => setJournal(e.target.value)}
                             placeholder="Write about your day..."
-                            className="w-full h-40 p-4 bg-stone-50 border-2 border-transparent focus:border-black rounded-xl resize-none text-sm leading-relaxed placeholder:text-stone-300 outline-none transition-all font-medium"
+                            className="w-full h-40 p-4 bg-stone-50 border-2 border-stone-200 focus:border-black rounded-xl resize-none text-sm leading-relaxed placeholder:text-stone-300 outline-none transition-all font-medium"
                         />
                     </div>
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 border-t border-stone-100 flex justify-end gap-2 bg-stone-50">
+                <div className="p-4 border-t-[3px] border-black flex justify-end gap-2 bg-stone-50">
                     <button
                         onClick={onClose}
-                        className="px-6 py-2.5 text-xs font-black uppercase tracking-widest text-stone-500 hover:bg-stone-200 rounded-xl transition-colors"
+                        className="px-5 py-2.5 text-[11px] font-black uppercase tracking-widest text-stone-500 border-2 border-stone-200 hover:border-black rounded-xl transition-all"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={handleSave}
-                        className="px-6 py-2.5 bg-black text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-stone-800 transition-transform active:scale-95 flex items-center gap-2"
+                        className="px-5 py-2.5 text-white text-[11px] font-black uppercase tracking-widest border-2 border-black rounded-xl transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 flex items-center gap-2"
                         style={{ backgroundColor: theme.primary }}
                     >
-                        <Save size={14} />
+                        <Save size={13} />
                         Save Entry
                     </button>
                 </div>

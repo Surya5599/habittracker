@@ -118,7 +118,7 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
         <>
             <div className="space-y-4">
                 <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-                    <div className="rounded-2xl border border-stone-200 bg-white p-4">
+                    <div className="rounded-2xl border-[3px] border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] bg-white p-4">
                         <div className="mb-4 flex items-center justify-between gap-3">
                             <div>
                                 <p className="text-[10px] font-black uppercase tracking-[0.22em] text-stone-400">Weekly Snapshot</p>
@@ -190,7 +190,8 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                     <div
                                         key={wIndex}
                                         ref={isCurrentWeek ? currentWeekRef : null}
-                                        className={`rounded-2xl border p-3 transition-colors ${isCurrentWeek ? 'border-stone-900 bg-stone-50' : 'border-stone-200 bg-white'}`}
+                                        className={`rounded-2xl border-[2px] border-black p-3 transition-colors shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] ${isCurrentWeek ? 'bg-stone-50' : 'bg-white'}`}
+                                        style={isCurrentWeek ? { backgroundColor: theme.primary + '15' } : {}}
                                     >
                                         <div className="flex items-start justify-between gap-3">
                                             <div>
@@ -251,7 +252,7 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                     </div>
 
                     <div className="space-y-4">
-                        <div className="rounded-2xl border border-stone-200 bg-white p-4">
+                        <div className="rounded-2xl border-[3px] border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] bg-white p-4">
                             <button
                                 onClick={() => setShowTopHabits(prev => !prev)}
                                 className="flex w-full items-center justify-between gap-3 text-left"
@@ -269,7 +270,7 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                         const stats = h.stats;
                                         const p = h.percentage;
                                         return (
-                                            <div key={h.id} className="flex items-center justify-between gap-3 rounded-xl bg-stone-50 px-3 py-2">
+                                            <div key={h.id} className="flex items-center justify-between gap-3 rounded-xl border border-stone-200 hover:border-black bg-stone-50 px-3 py-2 transition-colors">
                                                 <div className="min-w-0">
                                                     <p className="text-[10px] font-black uppercase tracking-[0.18em] text-stone-300">#{i + 1}</p>
                                                     <p className="truncate text-sm font-black uppercase text-stone-800">{h.name || 'Untitled'}</p>
@@ -292,7 +293,7 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                             )}
                         </div>
 
-                        <div className="rounded-2xl border border-stone-200 bg-white p-4">
+                        <div className="rounded-2xl border-[3px] border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] bg-white p-4">
                             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-stone-400">Grid Guide</p>
                             <div className="mt-3 space-y-2 text-sm font-medium text-stone-600">
                                 <p><span className="font-black text-stone-900">Click</span> a square to mark completion.</p>
@@ -304,37 +305,30 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                 </div>
             </div>
 
-            <div className={`border border-stone-200 bg-white flex flex-col overflow-hidden relative w-full rounded-2xl transition-opacity duration-300 ${isModalOpen ? 'opacity-30 pointer-events-none grayscale-[0.5]' : 'opacity-100'}`}>
+            <div className={`border-[3px] border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] bg-white flex flex-col overflow-hidden relative w-full rounded-2xl transition-opacity duration-300 ${isModalOpen ? 'opacity-30 pointer-events-none grayscale-[0.5]' : 'opacity-100'}`}>
                 <div ref={scrollContainerRef} className="overflow-x-auto w-full">
                     <table className="w-full border-separate border-spacing-0">
                         <thead>
-                            <tr className="text-[10px] font-black uppercase tracking-widest text-stone-700" style={{ backgroundColor: theme.secondary + '40' }}>
-                                <th className="p-2 border-r border-stone-200 text-left min-w-[100px] sm:min-w-[180px] sticky left-0 z-20 bg-stone-50" style={{ backgroundImage: isModalOpen ? 'none' : `linear-gradient(${theme.secondary}40, ${theme.secondary}40)` }}>
-                                    <div className="flex items-center">
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-stone-700">Habits</span>
-                                    </div>
+                            <tr className="text-[10px] font-black uppercase text-stone-700" style={{ backgroundColor: theme.secondary + '40' }}>
+                                <th className="p-2 border-r border-stone-200 text-left min-w-[100px] sm:min-w-[180px] sticky left-0 z-40 font-black" style={{ backgroundColor: theme.secondary + '40' }}>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-stone-700">Habits</span>
                                 </th>
                                 <th className="p-1 border-r border-stone-200 w-12 text-center font-black">Goal</th>
-                                {weeks.map((week, i) => (<th key={i} colSpan={week.length} className="p-1 border-r border-stone-200 text-center font-black">Week {i + 1}</th>))}
-                                <th colSpan={2} className="p-1 text-center bg-[#f0f0f0] border-l border-stone-200 font-black">Monthly Summary</th>
-                            </tr>
-                            <tr className="bg-stone-100 text-[9px] font-black uppercase text-stone-500">
-                                <th className="p-1 border-r border-stone-200 sticky left-0 z-40 bg-stone-100"></th><th className="p-1 border-r border-stone-200"></th>
                                 {monthDates.map(day => {
                                     const isToday = day === new Date().getDate() && currentMonthIndex === new Date().getMonth() && currentYear === new Date().getFullYear();
                                     const isFull = isDayFullyCompleted(day);
                                     return (
                                         <th key={day}
                                             ref={isToday ? todayRef : null}
-                                            className={`p-1 border-r border-stone-100 min-w-[28px] text-center transition-colors duration-300 ${isToday ? 'z-10 font-black' : ''}`}
+                                            className={`p-1 border-r border-stone-100 min-w-[28px] text-center transition-colors duration-300 ${isToday ? 'z-10 font-black border-[3px] border-black' : ''}`}
                                             style={{
                                                 backgroundColor: isToday ? theme.primary : (isFull ? theme.primary + '30' : undefined),
                                                 color: isToday ? 'white' : undefined
                                             }}
                                         >
                                             <div className="flex flex-col">
-                                                <span className="font-black">{DAYS_OF_WEEK_SHORT[new Date(currentYear, currentMonthIndex, day).getDay()][0]}</span>
-                                                <span className={`font-black ${isToday ? 'scale-110' : 'text-stone-600'}`}>{day}</span>
+                                                <span className="font-black text-[8px]">{DAYS_OF_WEEK_SHORT[new Date(currentYear, currentMonthIndex, day).getDay()][0]}</span>
+                                                <span className={`font-black text-sm ${isToday ? '' : 'text-stone-600'}`}>{day}</span>
                                             </div>
                                         </th>
                                     );
@@ -439,8 +433,8 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                 const isEditingName = editingHabitId === habit.id;
                                 const isEditingGoal = editingGoalId === habit.id;
                                 return (
-                                    <tr key={habit.id} className="hover:bg-stone-50 transition-colors group">
-                                        <td className="p-0 border-r border-stone-200 text-[11px] font-bold text-stone-700 sticky left-0 z-30 bg-stone-50 group-hover:bg-stone-100 transition-colors">
+                                    <tr key={habit.id} className="hover:bg-stone-50 transition-colors group" style={{ height: '36px' }}>
+                                        <td className="p-0 border-r border-stone-200 text-[12px] font-bold text-stone-700 sticky left-0 z-30 bg-stone-50 group-hover:bg-stone-100 transition-colors border-l-4" style={{ borderLeftColor: theme.secondary }}>
                                             <div className="flex items-center justify-between gap-2 p-1.5 px-3 h-full transition-colors">
                                                 {isEditingName ? (
                                                     <div className="flex items-center gap-2 flex-1">
@@ -550,8 +544,8 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                                             longPressTimerRef.current = null;
                                                             toggleHabitInactive(habit.id, dateKey);
                                                         }}
-                                                        className={`w-full aspect-square flex items-center justify-center border transition-all duration-200 ${inactive ? 'text-amber-900 bg-amber-300 border-amber-700' : (done ? 'text-white shadow-sm' : 'bg-white border-stone-200 shadow-none')} hover:border-black`}
-                                                        style={{ backgroundColor: inactive ? undefined : (done ? theme.secondary : undefined), borderColor: inactive ? undefined : (done ? theme.secondary : undefined) }}
+                                                        className={`w-5 h-5 mx-auto flex items-center justify-center border-2 transition-all duration-200 ${inactive ? 'text-amber-900 bg-amber-300 border-amber-700' : (done ? 'text-white border-black' : 'bg-white border-black hover:bg-stone-100')}`}
+                                                        style={{ backgroundColor: inactive ? undefined : (done ? theme.secondary : undefined) }}
                                                     >
                                                         {inactive ? <Minus size={10} strokeWidth={4} /> : (done && <Check size={10} strokeWidth={4} />)}
                                                     </button>

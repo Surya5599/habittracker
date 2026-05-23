@@ -197,7 +197,13 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
     const dayNameShort = date.toLocaleDateString(i18n.language, { weekday: 'short' });
     const dateString = date.toLocaleDateString(i18n.language, { month: 'short', day: 'numeric', year: 'numeric' });
     const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-    const isToday = date.toDateString() === new Date().toDateString();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dateNorm = new Date(date);
+    dateNorm.setHours(0, 0, 0, 0);
+    const isToday = dateNorm.getTime() === today.getTime();
+    const isPast = dateNorm < today;
+    const isFuture = dateNorm > today;
     const hasDayNav = Boolean(onPrev || onNext);
 
     useEffect(() => {
@@ -489,11 +495,11 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
 
     const HeaderTitle = (
         <div className={`min-w-0 overflow-hidden ${cardStyle === 'large' ? 'text-center px-4' : 'text-left pl-4 pr-1'}`}>
-            <h3 className="text-white font-black tracking-tight text-sm sm:text-base leading-tight truncate">
+            <h3 className={`text-white font-black tracking-wide leading-tight truncate uppercase drop-shadow-sm ${isToday ? 'font-serif text-2xl sm:text-3xl' : 'text-xl sm:text-2xl'}`}>
                 <span className="sm:hidden">{dayNameShort}</span>
                 <span className="hidden sm:inline">{dayName}</span>
             </h3>
-            <p className="text-white/80 font-bold text-[9px] sm:text-[10px] tracking-wide whitespace-nowrap truncate">{dateString}</p>
+            <p className="text-white/80 font-bold text-[9px] sm:text-[11px] tracking-widest whitespace-nowrap truncate uppercase">{dateString}</p>
         </div>
     );
 
@@ -561,12 +567,15 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
 
     const FrontFace = (
         <div
-            className={`relative w-full h-full bg-white neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans ${isToday ? 'ring-2 ring-black ring-offset-0' : ''}`}
+            className={`relative w-full h-full bg-white neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans ${isToday ? 'ring-[3px] ring-black ring-offset-2' : ''}`}
         >
             {/* Header */}
             <div
-                className={`day-date-header py-2 px-0 text-center border-b-[2px] border-black relative ${onDateClick && !combinedView ? 'cursor-pointer' : ''}`}
-                style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}
+                className={`day-date-header py-3 px-0 text-center ${isToday ? 'border-b-[4px]' : 'border-b-[3px]'} border-black relative ${onDateClick && !combinedView ? 'cursor-pointer' : ''}`}
+                style={{
+                    backgroundColor: isToday ? theme.primary : isFuture ? theme.secondary + 'B3' : theme.secondary,
+                    opacity: isPast ? 0.88 : 1,
+                }}
                 onClick={() => {
                     if (onDateClick && !combinedView) onDateClick(date);
                 }}
@@ -613,6 +622,11 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                     </div>
                     ) : null}
                 </div>
+                {isToday && (
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 font-serif text-5xl font-black text-white/20 leading-none pointer-events-none select-none">
+                        {date.getDate()}
+                    </div>
+                )}
             </div>
 
             {cardStyle === 'large' ? LargeProgressPanel : null}
@@ -698,11 +712,11 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                     clearLongPress();
                                     toggleHabitInactive(habit.id, dateKey);
                                 }}
-                                className="flex items-center justify-between group cursor-pointer hover:bg-black/5 rounded p-1 -mx-1 transition-colors touch-pan-y"
+                                className="flex items-center justify-between group cursor-pointer hover:bg-black/5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] rounded-lg py-2 px-2 -mx-2 transition-all touch-pan-y"
                                 style={{ touchAction: 'pan-y' }}
                             >
                                 <div className="flex items-center flex-1 min-w-0">
-                                    <span className={`text-[11px] font-bold truncate ${inactive ? 'text-amber-700' : (done ? 'text-stone-400 line-through' : 'text-stone-700')}`}>
+                                    <span className={`text-[11px] font-bold truncate transition-all duration-300 ${inactive ? 'text-amber-700' : (done ? 'text-stone-400 line-through' : 'text-stone-700')}`}>
                                         {habit.name || t('dailyCard.untitled')}
                                     </span>
                                     {habit.weeklyTarget && (
@@ -711,12 +725,14 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                         </span>
                                     )}
                                 </div>
-                                <div
-                                    className={`w-4 h-4 border-2 border-black flex items-center justify-center transition-all ${inactive ? 'bg-amber-300 text-amber-900 border-amber-700' : (done ? 'bg-black text-white' : 'bg-white')}`}
+                                <motion.div
+                                    animate={{ scale: done ? [1, 1.25, 1] : 1 }}
+                                    transition={{ duration: 0.18 }}
+                                    className={`w-5 h-5 border-[2px] border-black flex items-center justify-center transition-all ${inactive ? 'bg-amber-300 text-amber-900 border-amber-700' : (done ? 'bg-black text-white' : 'bg-white')}`}
                                     data-onboarding={habitIndex === 0 ? 'habit-checkbox' : undefined}
                                 >
-                                    {inactive ? <Minus size={10} strokeWidth={4} /> : (done && <Check size={10} strokeWidth={4} />)}
-                                </div>
+                                    {inactive ? <Minus size={11} strokeWidth={4} /> : (done && <Check size={11} strokeWidth={4} />)}
+                                </motion.div>
                             </div>
                         );
                     }) : (

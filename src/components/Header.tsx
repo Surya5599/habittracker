@@ -327,75 +327,15 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
             <div className="md:col-span-3 bg-white neo-border neo-shadow rounded-2xl p-3 flex flex-col gap-3 h-full justify-between relative min-h-[160px]">
                 <div className="flex flex-col gap-3">
-                    <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-3 flex-1">
-                            <div className="flex-1">
-                                {view === 'monthly' ? (
-                                    <div className="flex items-center justify-between bg-white border border-stone-300 px-2 py-1 relative date-selector-container">
-                                        <button onClick={() => navigateMonth('prev')} className="hover:text-black active:scale-95 transition-transform"><ChevronLeft size={16} /></button>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); setShowMonthSelector(!showMonthSelector); setShowWeekSelector(false); setShowYearSelector(false); }}
-                                            className="flex-1 min-w-0 font-bold uppercase select-none hover:bg-stone-50 px-2 py-0.5 rounded-sm transition-colors whitespace-nowrap text-center"
-                                            style={{ fontSize: getSelectorFontSize(monthLabel), letterSpacing: getSelectorLetterSpacing(monthLabel), lineHeight: 1.1 }}
-                                        >
-                                            {monthLabel}
-                                        </button>
-                                        <MonthPicker
-                                            isOpen={showMonthSelector}
-                                            onClose={() => setShowMonthSelector(false)}
-                                            currentMonthIndex={currentMonthIndex}
-                                            currentYear={currentYear}
-                                            onMonthSelect={handleMonthSelect}
-                                            themePrimary={theme.primary}
-                                        />
-                                        <button onClick={() => navigateMonth('next')} className="hover:text-black active:scale-95 transition-transform"><ChevronRight size={16} /></button>
-                                    </div>
-                                ) : view === 'dashboard' ? (
-                                    <div className="flex items-center justify-between bg-white border border-stone-300 px-2 py-1 relative date-selector-container">
-                                        <button onClick={() => setCurrentYear(prev => prev - 1)} className="hover:text-black active:scale-95 transition-transform"><ChevronLeft size={16} /></button>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); setShowYearSelector(!showYearSelector); setShowWeekSelector(false); setShowMonthSelector(false); }}
-                                            className="flex-1 min-w-0 font-bold uppercase select-none hover:bg-stone-50 px-2 py-0.5 rounded-sm transition-colors whitespace-nowrap text-center"
-                                            style={{ fontSize: getSelectorFontSize(dashboardLabel), letterSpacing: getSelectorLetterSpacing(dashboardLabel), lineHeight: 1.1 }}
-                                        >
-                                            {dashboardLabel}
-                                        </button>
-                                        <YearPicker
-                                            isOpen={showYearSelector}
-                                            onClose={() => setShowYearSelector(false)}
-                                            currentYear={currentYear}
-                                            onYearSelect={handleYearSelect}
-                                            themePrimary={theme.primary}
-                                        />
-                                        <button onClick={() => setCurrentYear(prev => prev + 1)} className="hover:text-black active:scale-95 transition-transform"><ChevronRight size={16} /></button>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center justify-between bg-white border border-stone-300 px-2 py-1 relative date-selector-container">
-                                        <button onClick={() => navigateWeek('prev')} className="hover:text-black active:scale-95 transition-transform"><ChevronLeft size={16} /></button>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); setShowWeekSelector(!showWeekSelector); setShowMonthSelector(false); setShowYearSelector(false); }}
-                                            className="flex-1 min-w-0 font-bold uppercase select-none hover:bg-stone-50 px-2 py-0.5 rounded-sm transition-colors whitespace-nowrap text-center"
-                                            style={{ fontSize: getSelectorFontSize(weekLabel), letterSpacing: getSelectorLetterSpacing(weekLabel), lineHeight: 1.1 }}
-                                        >
-                                            {weekLabel}
-                                        </button>
-                                        <WeekPicker
-                                            isOpen={showWeekSelector}
-                                            onClose={() => setShowWeekSelector(false)}
-                                            currentDate={getCurrentWeekStart()}
-                                            onWeekSelect={handleWeekSelect}
-                                            themePrimary={theme.primary}
-                                        />
-                                        <button onClick={() => navigateWeek('next')} className="hover:text-black active:scale-95 transition-transform"><ChevronRight size={16} /></button>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
+                    <div className="flex items-center justify-between border-b-[3px] border-black pb-2 mb-1">
+                        <span className="font-serif text-xl font-black uppercase tracking-tighter leading-none select-none">
+                            <span className="text-[#404040]">HABI</span>
+                            <span style={{ color: theme.secondary }}>CARD</span>
+                        </span>
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={onSearch}
-                                className="p-1.5 rounded-full border border-stone-200 text-stone-400 hover:text-black hover:bg-stone-50 transition-colors"
+                                className="p-1.5 rounded-full border-2 border-black text-stone-400 hover:text-black hover:bg-stone-50 transition-colors"
                             >
                                 <Search size={14} />
                             </button>
@@ -425,11 +365,10 @@ export const Header: React.FC<HeaderProps> = ({
                                 hasUnreadFeedback={hasUnreadFeedback}
                                 hasUnseenWhatsNew={hasUnseenWhatsNew}
                             />
-
                             {!guestMode && (
                                 <button
                                     onClick={handleLogout}
-                                    className="p-1.5 rounded-full border border-stone-200 text-stone-300 hover:text-rose-500 transition-colors"
+                                    className="p-1.5 rounded-full border-2 border-black text-stone-300 hover:text-rose-500 transition-colors"
                                     title={t('header.logout')}
                                 >
                                     <LogOut size={14} />
@@ -437,15 +376,78 @@ export const Header: React.FC<HeaderProps> = ({
                             )}
                         </div>
                     </div>
+                    <div className="flex items-center gap-2">
+                        <div className="flex-1 relative date-selector-container">
+                            {view === 'monthly' ? (
+                                <div className="flex items-center justify-between bg-stone-50 border-2 border-black px-2 py-1 relative">
+                                    <button onClick={() => navigateMonth('prev')} className="hover:text-black active:scale-95 transition-transform"><ChevronLeft size={16} /></button>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setShowMonthSelector(!showMonthSelector); setShowWeekSelector(false); setShowYearSelector(false); }}
+                                        className="flex-1 min-w-0 font-black uppercase select-none hover:bg-stone-100 px-2 py-0.5 transition-colors whitespace-nowrap text-center"
+                                        style={{ fontSize: getSelectorFontSize(monthLabel), letterSpacing: getSelectorLetterSpacing(monthLabel), lineHeight: 1.1 }}
+                                    >
+                                        {monthLabel}
+                                    </button>
+                                    <MonthPicker
+                                        isOpen={showMonthSelector}
+                                        onClose={() => setShowMonthSelector(false)}
+                                        currentMonthIndex={currentMonthIndex}
+                                        currentYear={currentYear}
+                                        onMonthSelect={handleMonthSelect}
+                                        themePrimary={theme.primary}
+                                    />
+                                    <button onClick={() => navigateMonth('next')} className="hover:text-black active:scale-95 transition-transform"><ChevronRight size={16} /></button>
+                                </div>
+                            ) : view === 'dashboard' ? (
+                                <div className="flex items-center justify-between bg-stone-50 border-2 border-black px-2 py-1 relative">
+                                    <button onClick={() => setCurrentYear(prev => prev - 1)} className="hover:text-black active:scale-95 transition-transform"><ChevronLeft size={16} /></button>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setShowYearSelector(!showYearSelector); setShowWeekSelector(false); setShowMonthSelector(false); }}
+                                        className="flex-1 min-w-0 font-black uppercase select-none hover:bg-stone-100 px-2 py-0.5 transition-colors whitespace-nowrap text-center"
+                                        style={{ fontSize: getSelectorFontSize(dashboardLabel), letterSpacing: getSelectorLetterSpacing(dashboardLabel), lineHeight: 1.1 }}
+                                    >
+                                        {dashboardLabel}
+                                    </button>
+                                    <YearPicker
+                                        isOpen={showYearSelector}
+                                        onClose={() => setShowYearSelector(false)}
+                                        currentYear={currentYear}
+                                        onYearSelect={handleYearSelect}
+                                        themePrimary={theme.primary}
+                                    />
+                                    <button onClick={() => setCurrentYear(prev => prev + 1)} className="hover:text-black active:scale-95 transition-transform"><ChevronRight size={16} /></button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center justify-between bg-stone-50 border-2 border-black px-2 py-1 relative">
+                                    <button onClick={() => navigateWeek('prev')} className="hover:text-black active:scale-95 transition-transform"><ChevronLeft size={16} /></button>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setShowWeekSelector(!showWeekSelector); setShowMonthSelector(false); setShowYearSelector(false); }}
+                                        className="flex-1 min-w-0 font-black uppercase select-none hover:bg-stone-100 px-2 py-0.5 transition-colors whitespace-nowrap text-center"
+                                        style={{ fontSize: getSelectorFontSize(weekLabel), letterSpacing: getSelectorLetterSpacing(weekLabel), lineHeight: 1.1 }}
+                                    >
+                                        {weekLabel}
+                                    </button>
+                                    <WeekPicker
+                                        isOpen={showWeekSelector}
+                                        onClose={() => setShowWeekSelector(false)}
+                                        currentDate={getCurrentWeekStart()}
+                                        onWeekSelect={handleWeekSelect}
+                                        themePrimary={theme.primary}
+                                    />
+                                    <button onClick={() => navigateWeek('next')} className="hover:text-black active:scale-95 transition-transform"><ChevronRight size={16} /></button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
 
                     <div className="flex items-center gap-2 w-full">
-                        <div className="flex-1 rounded-xl border-2 border-black bg-stone-100 p-1 relative flex items-center shadow-[2px_2px_0px_0px_rgba(0,0,0,0.12)]">
+                        <div className="flex-1 border-[3px] border-black bg-stone-100 p-1 relative flex items-center shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                             <button
                                 onClick={() => { resetWeekOffset(); setView('weekly'); }}
-                                className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-[0.12em] transition-all z-10 relative border ${view === 'weekly' ? 'bg-black text-white border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,0.18)]' : 'border-transparent text-stone-500 hover:text-black'}`}
+                                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-black uppercase tracking-[0.12em] transition-all z-10 relative border-2 ${view === 'weekly' ? 'bg-black text-white border-black' : 'border-transparent text-stone-500 hover:text-black hover:bg-white'}`}
                                 title="Week"
                             >
-                                <Clock size={11} strokeWidth={3} className={view === 'weekly' ? 'opacity-100' : 'opacity-70'} />
+                                <Clock size={12} strokeWidth={3} />
                                 <span>Week</span>
                             </button>
 
@@ -456,10 +458,10 @@ export const Header: React.FC<HeaderProps> = ({
                                     setCurrentMonthIndex(now.getMonth());
                                     setCurrentYear(now.getFullYear());
                                 }}
-                                className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-[0.12em] transition-all z-10 relative border ${view === 'monthly' ? 'bg-black text-white border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,0.18)]' : 'border-transparent text-stone-500 hover:text-black'}`}
+                                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-black uppercase tracking-[0.12em] transition-all z-10 relative border-2 ${view === 'monthly' ? 'bg-black text-white border-black' : 'border-transparent text-stone-500 hover:text-black hover:bg-white'}`}
                                 title="Month"
                             >
-                                <Calendar size={11} strokeWidth={3} className={view === 'monthly' ? 'opacity-100' : 'opacity-70'} />
+                                <Calendar size={12} strokeWidth={3} />
                                 <span>Month</span>
                             </button>
 
@@ -468,10 +470,10 @@ export const Header: React.FC<HeaderProps> = ({
                                     setView('dashboard');
                                     setCurrentYear(new Date().getFullYear());
                                 }}
-                                className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-[0.12em] transition-all z-10 relative border ${view === 'dashboard' ? 'bg-black text-white border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,0.18)]' : 'border-transparent text-stone-500 hover:text-black'}`}
+                                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-black uppercase tracking-[0.12em] transition-all z-10 relative border-2 ${view === 'dashboard' ? 'bg-black text-white border-black' : 'border-transparent text-stone-500 hover:text-black hover:bg-white'}`}
                                 title="Year"
                             >
-                                <LayoutDashboard size={11} strokeWidth={3} className={view === 'dashboard' ? 'opacity-100' : 'opacity-70'} />
+                                <LayoutDashboard size={12} strokeWidth={3} />
                                 <span>Year</span>
                             </button>
                         </div>
@@ -658,19 +660,21 @@ export const Header: React.FC<HeaderProps> = ({
                 )}
             </div>
 
-            <div className={`md:col-span-6 neo-border neo-shadow rounded-2xl p-2 min-h-[160px] h-auto relative overflow-hidden flex flex-col ${isDarkMode ? 'bg-[#151515]' : 'bg-[#f9f9f9]'}`}>
+            <div className={`md:col-span-6 neo-border neo-shadow rounded-2xl min-h-[160px] h-auto relative overflow-hidden flex flex-col ${isDarkMode ? 'bg-[#151515]' : 'bg-[#f9f9f9]'}`}>
+                <div className="h-[3px] shrink-0 rounded-t-2xl" style={{ backgroundColor: theme.primary }} />
+                <div className="flex flex-col flex-1 p-2">
                 <div className="flex justify-between items-center mb-6">
-                    <h4 className="font-black uppercase text-sm tracking-widest">
+                    <h4 className="font-serif font-black uppercase text-base tracking-widest">
                         {view === 'monthly' ? t('header.monthlyTrends') : (view === 'weekly' ? t('header.weeklyTrends') : t('header.annualTrends'))}
                     </h4>
                     <div className="flex items-center gap-2">
-                        <div className={`text-xs font-bold px-2 py-1 neo-border ${trendDelta >= 0
+                        <div className={`text-sm font-black px-3 py-1.5 border-[3px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] ${trendDelta >= 0
                                 ? 'bg-green-100 text-green-700'
                                 : 'bg-red-100 text-red-700'
                                 }`}>
                             {Math.abs(trendDelta).toFixed(0)}% {trendDeltaLabel}
                         </div>
-                        <div className="hidden sm:flex items-center gap-2 rounded-full border border-stone-200 bg-white/70 px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-stone-500">
+                        <div className="hidden sm:flex items-center gap-2 rounded-full border-2 border-black bg-white/70 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-stone-500">
                             <span className="inline-flex items-center gap-1">
                                 <span className="h-2 w-2 rounded-full" style={{ backgroundColor: theme.primary }} />
                                 {trendLegendCurrent}
@@ -810,10 +814,11 @@ export const Header: React.FC<HeaderProps> = ({
                 </ResponsiveContainer>
                 <DailyQuote />
                 <DailyTips />
+                </div>
             </div>
 
             <div className="md:col-span-3 bg-white neo-border neo-shadow rounded-2xl relative flex flex-col overflow-hidden min-h-[160px]">
-                <div className="text-white text-[9px] font-bold uppercase py-1 text-center tracking-widest" style={{ backgroundColor: theme.primary }}>
+                <div className="text-white text-[11px] font-black uppercase py-2 text-center tracking-widest border-b-[3px] border-black drop-shadow-sm" style={{ backgroundColor: theme.primary }}>
                     {view === 'monthly' ? t('header.monthlySuccess') : (view === 'weekly' ? t('header.weeklySuccess') : t('header.annualPerformance'))}
                 </div>
                 <div className="flex-1 flex flex-col items-center justify-center p-2 relative">
@@ -849,7 +854,7 @@ export const Header: React.FC<HeaderProps> = ({
                                     </div>
                                 </div>
                             </div>
-                            <div className="h-[140px] bg-stone-50/50 neo-border rounded-xl p-2 overflow-y-auto custom-scrollbar">
+                            <div className="min-h-[140px] max-h-[180px] bg-stone-50/50 neo-border rounded-xl p-2 overflow-y-auto custom-scrollbar">
                                 {(() => {
                                     const isCurrentMonth = currentMonthIndex === currentMonthOfYear && currentYear === currentFullYear;
                                     const daysElapsed = isCurrentMonth ? currentDayOfMonth : new Date(currentYear, currentMonthIndex + 1, 0).getDate();
@@ -858,10 +863,10 @@ export const Header: React.FC<HeaderProps> = ({
                                         <div className="space-y-3">
                                             <div className="flex items-center gap-2 mb-1">
                                                 <Sparkles size={12} className="text-amber-500" />
-                                                <span className="text-[9px] font-black uppercase tracking-widest text-stone-500">{t('header.yourStoryMonth')}</span>
+                                                <span className="font-serif text-[10px] font-black uppercase tracking-widest text-stone-500">{t('header.yourStoryMonth')}</span>
                                             </div>
                                             {story.sections.map((section: any, idx: number) => (
-                                                <p key={idx} className="text-[11px] leading-relaxed font-bold">
+                                                <p key={idx} className="text-[13px] leading-relaxed font-bold">
                                                     <FormattedText
                                                         text={section.text}
                                                         highlightColor={theme.secondary}
@@ -906,7 +911,7 @@ export const Header: React.FC<HeaderProps> = ({
                                     </div>
                                 </div>
                             </div>
-                            <div className="h-[140px] bg-stone-50/50 neo-border rounded-xl p-2 overflow-y-auto custom-scrollbar">
+                            <div className="min-h-[140px] max-h-[180px] bg-stone-50/50 neo-border rounded-xl p-2 overflow-y-auto custom-scrollbar">
                                 {(() => {
                                     const daysElapsed = weekOffset === 0
                                         ? (startOfWeek === 'sunday' ? today.getDay() + 1 : (today.getDay() === 0 ? 7 : today.getDay()))
@@ -916,10 +921,10 @@ export const Header: React.FC<HeaderProps> = ({
                                         <div className="space-y-3">
                                             <div className="flex items-center gap-2 mb-1">
                                                 <Sparkles size={12} className="text-amber-500" />
-                                                <span className="text-[9px] font-black uppercase tracking-widest text-stone-500">{t('header.yourStoryWeek')}</span>
+                                                <span className="font-serif text-[10px] font-black uppercase tracking-widest text-stone-500">{t('header.yourStoryWeek')}</span>
                                             </div>
                                             {story.sections.map((section: any, idx: number) => (
-                                                <p key={idx} className="text-[11px] leading-relaxed font-bold">
+                                                <p key={idx} className="text-[13px] leading-relaxed font-bold">
                                                     <FormattedText
                                                         text={section.text}
                                                         primaryColor={theme.primary}
@@ -938,7 +943,7 @@ export const Header: React.FC<HeaderProps> = ({
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-2">
                                         <Sparkles size={12} className="text-amber-500" />
-                                        <span className="text-[9px] font-black uppercase tracking-widest text-stone-500">{t('annualUi.story.title')}</span>
+                                        <span className="font-serif text-[10px] font-black uppercase tracking-widest text-stone-500">{t('annualUi.story.title')}</span>
                                     </div>
                                     {annualStory.annualSummary ? (
                                         <div className="space-y-1">
@@ -950,7 +955,7 @@ export const Header: React.FC<HeaderProps> = ({
                                             </p>
                                         </div>
                                     ) : (
-                                        <p className="text-[11px] leading-relaxed font-bold text-stone-500">
+                                        <p className="text-[13px] leading-relaxed font-bold text-stone-500">
                                             {t('annualUi.story.noSignificantOutcomes')}
                                         </p>
                                     )}
@@ -981,15 +986,15 @@ export const Header: React.FC<HeaderProps> = ({
                             </div>
 
                             <div className="grid grid-cols-3 gap-2 px-2">
-                                <div className="rounded-xl bg-stone-50 border border-stone-200 px-2 py-1.5 text-center">
+                                <div className="rounded-xl bg-stone-50 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] px-2 py-1.5 text-center">
                                     <div className="text-[8px] font-black uppercase tracking-[0.2em] text-stone-400">Rate</div>
-                                    <div className="mt-0.5 text-sm font-black text-stone-900">{annualCompletionRate.toFixed(0)}%</div>
+                                    <div className="mt-0.5 font-serif text-sm font-black text-stone-900">{annualCompletionRate.toFixed(0)}%</div>
                                 </div>
-                                <div className="rounded-xl bg-stone-50 border border-stone-200 px-2 py-1.5 text-center">
+                                <div className="rounded-xl bg-stone-50 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] px-2 py-1.5 text-center">
                                     <div className="text-[8px] font-black uppercase tracking-[0.2em] text-stone-400">Volume</div>
-                                    <div className="mt-0.5 text-sm font-black text-stone-900">{Math.round(annualStats.totalCompletions)}</div>
+                                    <div className="mt-0.5 font-serif text-sm font-black text-stone-900">{Math.round(annualStats.totalCompletions)}</div>
                                 </div>
-                                <div className="rounded-xl bg-stone-50 border border-stone-200 px-2 py-1.5 text-center">
+                                <div className="rounded-xl bg-stone-50 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] px-2 py-1.5 text-center">
                                     <div className="text-[8px] font-black uppercase tracking-[0.2em] text-stone-400">vs LY</div>
                                     {(() => {
                                         const delta = annualDelta;
@@ -1005,10 +1010,10 @@ export const Header: React.FC<HeaderProps> = ({
                                 </div>
                             </div>
 
-                            <div className="h-[76px] mx-2 rounded-xl border border-stone-200 bg-stone-50/70 px-3 py-2 flex items-start gap-3 overflow-hidden">
+                            <div className="h-[76px] mx-2 rounded-xl border-[2px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] bg-stone-50/70 px-3 py-2 flex items-start gap-3 overflow-hidden">
                                 <div className="flex-1 min-w-0">
                                     <div className="text-[8px] font-black uppercase tracking-[0.22em] text-stone-400">Strongest month</div>
-                                    <div className="mt-1 text-[11px] font-black text-stone-900 truncate">
+                                    <div className="mt-1 font-serif text-[11px] font-black text-stone-900 truncate">
                                         {annualStory.annualSummary?.support.strongestMonth?.month || 'Still emerging'}
                                     </div>
                                     <div className="text-[10px] font-bold text-stone-500 leading-tight">
@@ -1020,7 +1025,7 @@ export const Header: React.FC<HeaderProps> = ({
                                 <div className="w-px self-stretch bg-stone-200" />
                                 <div className="flex-1 min-w-0">
                                     <div className="text-[8px] font-black uppercase tracking-[0.22em] text-stone-400">Strongest habit</div>
-                                    <div className="mt-1 text-[11px] font-black text-stone-900 truncate">
+                                    <div className="mt-1 font-serif text-[11px] font-black text-stone-900 truncate">
                                         {annualStory.annualSummary?.support.strongestHabit?.name || 'No clear anchor yet'}
                                     </div>
                                     <div className="text-[10px] font-bold text-stone-500 leading-tight">

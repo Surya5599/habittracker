@@ -69,7 +69,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
         <div ref={settingsRef} className="relative inline-block">
             <button
                 onClick={() => setSettingsOpen(!settingsOpen)}
-                className={`p-1.5 rounded-full border border-stone-200 transition-colors relative ${settingsOpen ? 'bg-stone-100 text-stone-900' : 'text-stone-800 hover:text-black'}`}
+                className={`p-1.5 rounded-full border-2 border-black transition-colors relative ${settingsOpen ? 'bg-stone-100 text-stone-900' : 'text-stone-800 hover:text-black'}`}
                 title={t('settings.title')}
             >
                 <Settings size={14} className={settingsOpen ? 'animate-spin-slow' : ''} />
@@ -79,7 +79,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
             </button>
 
             {settingsOpen && (
-                <div className="absolute top-10 right-0 z-50 bg-white border border-stone-200 shadow-xl rounded-xl p-2 w-72 animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col gap-2">
+                <div className="absolute top-10 right-0 z-50 bg-white border-[3px] border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] rounded-xl p-2 w-72 animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col gap-2">
                     <div className="rounded-xl border border-stone-200 bg-stone-50/70 p-2">
                         <div className="flex items-center gap-2 px-2 pb-2">
                             <SlidersHorizontal size={12} className="text-stone-400" />

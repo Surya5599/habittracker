@@ -1179,7 +1179,7 @@ const AppContent: React.FC = () => {
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('source') === 'extension' && session) {
     return (
-      <div className="min-h-screen bg-[#e5e5e5] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#F4F4F0] flex items-center justify-center p-4">
         <div className="max-w-sm w-full bg-white border-[3px] border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] p-8 text-center space-y-5">
           <img src="/habicard-icon.png" alt="HabiCard" className="w-14 h-14 mx-auto" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
           <div>
@@ -1215,7 +1215,7 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-[100svh] md:h-[100svh] overflow-y-auto md:overflow-hidden bg-[#e5e5e5] p-2 sm:p-4 pb-20 sm:pb-4 font-sans text-[#444] relative w-full max-w-full">
+    <div className="min-h-[100svh] md:h-[100svh] overflow-y-auto md:overflow-hidden bg-[#F4F4F0] p-2 sm:p-4 pb-20 sm:pb-4 font-sans text-[#444] relative w-full max-w-full">
 
       <Toaster position="top-center" reverseOrder={false} />
 
@@ -1264,7 +1264,7 @@ const AppContent: React.FC = () => {
         userName={session?.user?.email || 'You'}
       />
 
-      <div className="max-w-full md:h-full mx-auto bg-white border-[2px] sm:border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] p-2 sm:p-4 flex flex-col gap-4 overflow-visible md:overflow-hidden">
+      <div className="max-w-full md:h-full mx-auto bg-white border-[3px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] p-2 sm:p-4 flex flex-col gap-4 overflow-visible md:overflow-hidden">
 
         <Header
           view={view}
@@ -1609,7 +1609,7 @@ const SignInPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-x-hidden overflow-y-auto bg-[#e5e5e5]">
+    <div className="min-h-screen relative overflow-x-hidden overflow-y-auto bg-[#F4F4F0]">
       <Toaster position="top-center" reverseOrder={false} />
 
       {/* Showcase Background */}

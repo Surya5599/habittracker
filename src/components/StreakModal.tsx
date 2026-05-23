@@ -366,25 +366,25 @@ export const StreakModal: React.FC<StreakModalProps> = ({
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
             <div
-                className="bg-white w-full max-w-4xl neo-border neo-shadow-lg rounded-3xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
+                className="bg-white w-full max-w-4xl neo-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] rounded-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="p-6 border-b-2 border-black flex items-center justify-between relative" style={{ backgroundColor: theme.primary }}>
+                <div className="px-6 py-5 border-b-[3px] border-black flex items-center justify-between relative" style={{ backgroundColor: theme.primary }}>
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-white rounded-xl neo-border shadow-sm">
+                        <div className="p-2 bg-white rounded-xl border-2 border-white/40">
                             <Flame size={24} className="text-orange-500 fill-orange-500" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-black text-white uppercase tracking-tighter leading-tight">Streak Master</h2>
-                            <p className="text-white/80 text-[10px] font-bold uppercase tracking-widest">Your consistency records</p>
+                            <h2 className="font-serif text-xl font-black text-white uppercase tracking-tighter leading-tight">Streak Master</h2>
+                            <p className="text-white/70 text-[10px] font-black uppercase tracking-widest">Your consistency records</p>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-black/10 rounded-full transition-colors text-white"
+                        className="p-2 rounded-full border-2 border-white/40 hover:bg-black/10 transition-colors text-white"
                     >
-                        <X size={24} strokeWidth={3} />
+                        <X size={20} strokeWidth={3} />
                     </button>
                 </div>
 

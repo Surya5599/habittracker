@@ -162,10 +162,10 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-start justify-center p-2 pt-4 sm:p-4 sm:pt-8 md:pt-16 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white border-[2px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-full max-w-md overflow-hidden flex flex-col min-h-0 max-h-[calc(100svh-1rem)] sm:max-h-[calc(100svh-2rem)] md:max-h-[88vh] animate-in zoom-in-95 duration-200">
-                <div className="p-3 border-b-[2px] border-black flex items-center justify-between gap-2 bg-white">
+            <div className="bg-white border-[3px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] w-full max-w-md overflow-hidden flex flex-col min-h-0 max-h-[calc(100svh-1rem)] sm:max-h-[calc(100svh-2rem)] md:max-h-[88vh] animate-in zoom-in-95 duration-200">
+                <div className="p-3 border-b-[3px] border-black flex items-center justify-between gap-2 bg-white">
                     <div>
-                        <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tighter text-black">{t('habitManager.title')}</h2>
+                        <h2 className="font-serif text-2xl sm:text-3xl font-black uppercase tracking-tighter text-black">{t('habitManager.title')}</h2>
                         <p className="mt-1 hidden sm:block text-[11px] font-bold uppercase tracking-wider text-stone-500">
                             Review habits first, expand a card only when you want to edit.
                         </p>

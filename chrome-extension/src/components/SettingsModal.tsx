@@ -8,6 +8,8 @@ interface SettingsModalProps {
     onClose: () => void;
     currentTheme: Theme;
     onSelectTheme: (theme: Theme) => void;
+    cardStyle: 'compact' | 'large';
+    onCardStyleChange: (style: 'compact' | 'large') => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -15,6 +17,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     onClose,
     currentTheme,
     onSelectTheme,
+    cardStyle,
+    onCardStyleChange,
 }) => {
     if (!isOpen) return null;
 
@@ -39,6 +43,42 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
 
                 <div className="p-6">
+                    {/* Card View */}
+                    <div className="mb-6">
+                        <h3 className="text-xs font-black uppercase tracking-widest text-stone-500 mb-3">Card View</h3>
+                        <div className="grid grid-cols-2 gap-2">
+                            {(['compact', 'large'] as const).map((style) => (
+                                <button
+                                    key={style}
+                                    onClick={() => onCardStyleChange(style)}
+                                    className={`px-4 py-3 flex flex-col items-center gap-1 border-[2px] transition-all ${cardStyle === style
+                                        ? 'border-black bg-stone-50 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] translate-x-[2px] translate-y-[2px]'
+                                        : 'border-stone-200 hover:border-black hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5'
+                                    }`}
+                                >
+                                    {/* Mini preview */}
+                                    <div className="w-10 h-7 border border-stone-300 rounded overflow-hidden flex flex-col">
+                                        <div className="h-2 bg-stone-800 w-full" />
+                                        {style === 'compact' ? (
+                                            <div className="flex-1 flex items-center px-1 gap-0.5">
+                                                <div className="flex-1 h-0.5 bg-stone-200 rounded" />
+                                                <div className="w-2.5 h-2.5 rounded-full border border-stone-300" />
+                                            </div>
+                                        ) : (
+                                            <div className="flex-1 flex items-center justify-center">
+                                                <div className="w-3 h-3 rounded-full border border-stone-300" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <span className={`text-[10px] font-black uppercase tracking-widest ${cardStyle === style ? 'text-black' : 'text-stone-500'}`}>
+                                        {style}
+                                    </span>
+                                    {cardStyle === style && <Check size={12} className="text-black" />}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
                     <div className="mb-6">
                         <h3 className="text-xs font-black uppercase tracking-widest text-stone-500 mb-3">Theme Selection</h3>
                         <div className="grid grid-cols-1 gap-2">

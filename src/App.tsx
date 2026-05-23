@@ -1180,30 +1180,29 @@ const AppContent: React.FC = () => {
   if (urlParams.get('source') === 'extension' && session) {
     return (
       <div className="min-h-screen bg-[#e5e5e5] flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white border-[2px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-8 text-center space-y-4">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto border-2 border-green-500">
-            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
-            </svg>
+        <div className="max-w-sm w-full bg-white border-[3px] border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] p-8 text-center space-y-5">
+          <img src="/habicard-icon.png" alt="HabiCard" className="w-14 h-14 mx-auto" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 mb-1">You're all set</p>
+            <h2 className="text-2xl font-black uppercase tracking-tight text-[#333]">
+              Thank you for<br />signing in.
+            </h2>
           </div>
-          <h2 className="text-xl font-black uppercase tracking-widest text-[#444]">
-            Signed in!
-          </h2>
-          <p className="text-stone-500">
-            You are now signed in to HabiCard. You can close this tab and return to the extension.
+          <p className="text-sm text-stone-500 leading-relaxed">
+            Open the extension to log your habits, or stay here for the full experience.
           </p>
-          <div className="flex flex-col gap-2 mt-4">
+          <div className="flex flex-col gap-2 pt-2">
             <button
               onClick={() => window.close()}
-              className="px-6 py-2 bg-black text-white text-sm font-bold uppercase tracking-widest hover:opacity-80 transition-opacity"
+              className="w-full px-6 py-3 bg-black text-white text-xs font-black uppercase tracking-widest border-[2px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all"
             >
-              Close Tab
+              Close & open extension
             </button>
             <button
               onClick={() => window.location.href = `${window.location.origin}/app`}
-              className="px-6 py-2 bg-white text-black border-2 border-black text-sm font-bold uppercase tracking-widest hover:bg-stone-50 transition-colors"
+              className="w-full px-6 py-3 bg-white text-black text-xs font-black uppercase tracking-widest border-[2px] border-black hover:bg-stone-50 transition-colors"
             >
-              See Web App
+              Go to full website
             </button>
           </div>
         </div>

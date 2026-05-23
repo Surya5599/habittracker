@@ -6,19 +6,23 @@
     "action": {
         "default_popup": "index.html",
         "default_icon": {
-            "16": "habicard_favicon.png",
-            "48": "habicard_favicon.png",
-            "128": "habicard_favicon.png"
+            "16": "icon-16.png",
+            "48": "icon-48.png",
+            "128": "icon-128.png"
         }
     },
     "icons": {
-        "16": "habicard_favicon.png",
-        "48": "habicard_favicon.png",
-        "128": "habicard_favicon.png"
+        "16": "icon-16.png",
+        "48": "icon-48.png",
+        "128": "icon-128.png"
     },
     "permissions": [
-        "storage"
+        "storage",
+        "tabs"
     ],
+    "content_security_policy": {
+        "extension_pages": "script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src https://ogduktbkmjfvygzhvqdr.supabase.co https://habicard.com wss://ogduktbkmjfvygzhvqdr.supabase.co"
+    },
     "content_scripts": [
         {
             "matches": [

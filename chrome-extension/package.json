@@ -1,7 +1,7 @@
 {
-  "name": "annual-habit-tracker-extension",
+  "name": "habicard-extension",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,11 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@capacitor/cli": "^7.4.4",
-    "@capacitor/core": "^8.0.0",
-    "@capacitor/ios": "^8.0.0",
     "@supabase/supabase-js": "^2.49.1",
-    "exceljs": "^4.4.0",
     "framer-motion": "^12.23.26",
     "lucide-react": "^0.562.0",
     "react": "^19.2.3",

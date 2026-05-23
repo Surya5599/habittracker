@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Check, Plus, Share2, Trash2, Pencil, ChevronLeft, ChevronRight, BookOpen, Save, Meh, Frown, Smile, Laugh, Angry } from 'lucide-react';
+import { Check, Plus, Trash2, Pencil, ChevronLeft, ChevronRight, BookOpen, Save, Meh, Frown, Smile, Laugh, Angry, Share2 } from 'lucide-react';
 import { Habit, HabitCompletion, Theme, DailyNote, Task, DayData } from '../types';
 import { DAYS_OF_WEEK } from '../constants';
 import { isCompleted as checkCompleted } from '../utils/stats';
@@ -29,7 +29,19 @@ interface DailyCardProps {
     editingHabitId?: string | null;
     setEditingHabitId?: (id: string | null) => void;
     addHabit?: () => Promise<string | null>;
+    cardStyle?: 'compact' | 'large';
+    headerActions?: React.ReactNode;
 }
+
+const MOODS = [
+    { value: 1, icon: Angry,  color: '#ef4444', tooltip: 'Very Bad'  },
+    { value: 2, icon: Frown,  color: '#f97316', tooltip: 'Bad'       },
+    { value: 3, icon: Meh,    color: '#eab308', tooltip: 'Neutral'   },
+    { value: 4, icon: Smile,  color: '#84cc16', tooltip: 'Good'      },
+    { value: 5, icon: Laugh,  color: '#10b981', tooltip: 'Very Good' },
+];
+
+type Tab = 'habits' | 'tasks' | 'journal';
 
 export const DailyCard: React.FC<DailyCardProps> = ({
     date,
@@ -43,18 +55,20 @@ export const DailyCard: React.FC<DailyCardProps> = ({
     onPrev,
     onNext,
     onDateSelect,
-    removeHabit,
-    editingHabitId,
-    setEditingHabitId,
-    addHabit,
+    cardStyle = 'large',
+    headerActions,
 }) => {
+    const [activeTab, setActiveTab] = useState<Tab>('habits');
     const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
     const [editingTaskText, setEditingTaskText] = useState('');
     const [showDatePicker, setShowDatePicker] = useState(false);
-    const [isFlipped, setIsFlipped] = useState(false);
+    const [journalDraft, setJournalDraft] = useState('');
+    const [moodDraft, setMoodDraft] = useState<number | undefined>(undefined);
     const taskInputRef = useRef<HTMLInputElement>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
 
     const dayName = DAYS_OF_WEEK[date.getDay()];
+    const dayNameShort = dayName.slice(0, 3);
     const dateString = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     const isToday = date.toDateString() === new Date().toDateString();
@@ -66,530 +80,333 @@ export const DailyCard: React.FC<DailyCardProps> = ({
         if ('tasks' in data) return data;
         return { tasks: [] };
     };
-
     const dayData = getDayData();
 
-    // Local state for Journal/Mood (synced with date transition)
-    const [mood, setMood] = useState<number | undefined>(dayData.mood);
-    const [journal, setJournal] = useState(dayData.journal || '');
-
     useEffect(() => {
-        setMood(dayData.mood);
-        setJournal(dayData.journal || '');
-    }, [dateKey, dayData.mood, dayData.journal]);
+        setJournalDraft(dayData.journal || '');
+        setMoodDraft(dayData.mood);
+    }, [dateKey]);
 
-    const handleSaveJournal = () => {
-        updateNote(dateKey, { mood, journal });
-        setIsFlipped(false);
-    };
-
-    const dailyHabits = habits.filter(h => !h.weeklyTarget);
-    const flexibleHabits = habits.filter(h => !!h.weeklyTarget);
-
-    const getDayProgress = () => {
-        if (dailyHabits.length === 0) return 0;
-        const monthIdx = date.getMonth();
-        const day = date.getDate();
-        const year = date.getFullYear();
-        let doneCount = 0;
-        dailyHabits.forEach(h => {
-            if (checkCompleted(h.id, day, completions, monthIdx, year)) {
-                doneCount++;
-            }
-        });
-        return (doneCount / dailyHabits.length) * 100;
-    };
-
-    const actualProgress = getDayProgress();
+    // Progress
+    const allHabits = habits;
+    const totalCount = allHabits.length;
+    const completedCount = allHabits.reduce((acc, h) =>
+        checkCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear()) ? acc + 1 : acc, 0);
+    const actualProgress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
     const [progress, setProgress] = useState(0);
-
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setProgress(actualProgress);
-        }, 0);
-        return () => clearTimeout(timer);
+        const t = setTimeout(() => setProgress(actualProgress), 0);
+        return () => clearTimeout(t);
     }, [actualProgress]);
 
-    const dailyCompletedCount = dailyHabits.reduce((acc, h) => {
-        const doneToday = checkCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
-        return doneToday ? acc + 1 : acc;
-    }, 0);
+    // Tasks
+    const tasks = dayData.tasks || [];
+    const completedTasksCount = tasks.filter(t => t.completed).length;
 
-    const totalDailyCount = dailyHabits.length;
+    // Journal
+    const activeMood = MOODS.find(m => m.value === dayData.mood);
+    const hasJournalEntry = !!(dayData.journal?.trim());
 
     const handleFinishEditing = (taskId: string) => {
         const currentTasks = dayData.tasks || [];
         const task = currentTasks.find(t => t.id === taskId);
-        if (!task) {
-            setEditingTaskId(null);
-            return;
-        }
-
-        const trimmedText = editingTaskText.trim();
-
-        if (!trimmedText) {
+        if (!task) { setEditingTaskId(null); return; }
+        const trimmed = editingTaskText.trim();
+        if (!trimmed) {
             updateNote(dateKey, { tasks: currentTasks.filter(t => t.id !== taskId) });
-            setEditingTaskId(null);
-            return;
+        } else {
+            updateNote(dateKey, { tasks: currentTasks.map(t => t.id === taskId ? { ...t, text: trimmed } : t) });
         }
-
-        const isDuplicate = currentTasks.some(t =>
-            t.id !== taskId &&
-            t.text.trim().toLowerCase() === trimmedText.toLowerCase()
-        );
-
-        if (isDuplicate) {
-            if (!task.text) {
-                updateNote(dateKey, { tasks: currentTasks.filter(t => t.id !== taskId) });
-            }
-            setEditingTaskId(null);
-            return;
-        }
-
-        const newTasks = currentTasks.map(t =>
-            t.id === taskId ? { ...t, text: trimmedText } : t
-        );
-        updateNote(dateKey, { tasks: newTasks });
         setEditingTaskId(null);
     };
 
-    const MOODS = [
-        { value: 1, icon: Angry, label: 'Very Bad', color: '#ef4444', tooltip: 'Very Bad' },
-        { value: 2, icon: Frown, label: 'Bad', color: '#f97316', tooltip: 'Bad' },
-        { value: 3, icon: Meh, label: 'Neutral', color: '#eab308', tooltip: 'Neutral' },
-        { value: 4, icon: Smile, label: 'Good', color: '#84cc16', tooltip: 'Good' },
-        { value: 5, icon: Laugh, label: 'Very Good', color: '#10b981', tooltip: 'Very Good' },
-    ];
+    const handleSaveJournal = () => {
+        updateNote(dateKey, { mood: moodDraft, journal: journalDraft });
+    };
+
+    const addTask = () => {
+        const newTask: Task = { id: generateUUID(), text: '', completed: false };
+        updateNote(dateKey, { tasks: [...tasks, newTask] });
+        setEditingTaskId(newTask.id);
+        setEditingTaskText('');
+    };
+
+    // Smooth scroll for content area
+    useEffect(() => {
+        const el = contentRef.current;
+        if (!el) return;
+        const handleWheel = (e: WheelEvent) => {
+            if (el.scrollHeight <= el.clientHeight + 1) return;
+            e.preventDefault();
+            e.stopPropagation();
+            el.scrollTop += e.deltaY;
+        };
+        el.addEventListener('wheel', handleWheel, { passive: false });
+        return () => el.removeEventListener('wheel', handleWheel);
+    }, [activeTab]);
+
+    // ── Small progress ring (compact: inside header) ──
+    const SmallRing = (
+        <div className="relative w-11 h-11 flex-shrink-0">
+            <svg className="w-full h-full -rotate-90">
+                <circle cx="22" cy="22" r="17" stroke="rgba(255,255,255,0.3)" strokeWidth="4" fill="transparent" />
+                <circle cx="22" cy="22" r="17" stroke="white" strokeWidth="4" fill="transparent"
+                    strokeDasharray={2 * Math.PI * 17}
+                    strokeDashoffset={2 * Math.PI * 17 * (1 - progress / 100)}
+                    strokeLinecap="round" className="transition-all duration-1000 ease-out" />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-[9px] font-black text-white">{Math.round(progress)}%</span>
+            </div>
+        </div>
+    );
+
+    // ── Large progress ring (large: below header) ──
+    const LargeRing = (
+        <div className="flex justify-center pt-3 pb-2 bg-white border-b border-stone-100 flex-shrink-0">
+            <div className="relative w-[110px] h-[110px]">
+                <svg className="w-full h-full -rotate-90">
+                    <circle cx="55" cy="55" r="44" stroke="rgba(0,0,0,0.06)" strokeWidth="10" fill="transparent" />
+                    <circle cx="55" cy="55" r="44" stroke={theme.secondary} strokeWidth="10" fill="transparent"
+                        strokeDasharray={2 * Math.PI * 44}
+                        strokeDashoffset={2 * Math.PI * 44 * (1 - progress / 100)}
+                        strokeLinecap="round" className="transition-all duration-1000 ease-out" />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-2xl font-black text-stone-800">{Math.round(progress)}%</span>
+                </div>
+            </div>
+        </div>
+    );
+
+    // ── Status / Tab row pinned at bottom ──
+    const StatusBar = (
+        <div className="flex flex-col border-t-[2px] border-black bg-white flex-shrink-0">
+        <div className="grid grid-cols-3">
+            <button
+                onClick={() => setActiveTab('habits')}
+                className={`py-2 px-1 flex flex-col items-center justify-center border-r border-black transition-colors ${activeTab === 'habits' ? 'bg-stone-100' : 'hover:bg-stone-50'}`}
+            >
+                <span className="text-[8px] font-black uppercase tracking-wider text-stone-500">My Habits</span>
+                <span className="text-[10px] font-black text-stone-700 mt-0.5">{completedCount}/{totalCount}</span>
+            </button>
+            <button
+                onClick={() => setActiveTab('tasks')}
+                className={`py-2 px-1 flex flex-col items-center justify-center border-r border-black transition-colors ${activeTab === 'tasks' ? 'bg-stone-100' : 'hover:bg-stone-50'}`}
+            >
+                <span className="text-[8px] font-black uppercase tracking-wider text-stone-500">Tasks</span>
+                <span className="text-[10px] font-black text-stone-700 mt-0.5">
+                    {tasks.length > 0 ? `${completedTasksCount}/${tasks.length}` : '+'}
+                </span>
+            </button>
+            <button
+                onClick={() => setActiveTab('journal')}
+                className={`py-2 px-1 flex flex-col items-center justify-center transition-colors ${activeTab === 'journal' ? 'bg-stone-100' : 'hover:bg-stone-50'}`}
+            >
+                <span className="text-[8px] font-black uppercase tracking-wider text-stone-500">Journal</span>
+                <div className="mt-0.5">
+                    {activeMood
+                        ? <activeMood.icon size={14} strokeWidth={2.5} style={{ color: activeMood.color }} />
+                        : <BookOpen size={14} strokeWidth={2.5} className={hasJournalEntry ? 'text-green-600' : 'text-stone-400'} />
+                    }
+                </div>
+            </button>
+        </div>
+        <div className="flex justify-center py-1 border-t border-stone-100">
+            <a href="https://habicard.com/privacy" target="_blank" rel="noopener noreferrer"
+                className="text-[8px] text-stone-300 hover:text-stone-500 uppercase tracking-widest font-bold transition-colors">
+                Privacy Policy
+            </a>
+        </div>
+        </div>
+    );
+
+    // ── Habits view ──
+    const HabitsView = (
+        <>
+            <div className="flex-1 min-h-0 overflow-y-auto" ref={contentRef} style={{ overscrollBehavior: 'contain' }}>
+                <div className="py-1 px-3">
+                    {allHabits.length > 0 ? allHabits.map(habit => {
+                        const done = checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
+                        const today = date;
+                        const day = today.getDay();
+                        const diff = today.getDate() - (day === 0 ? 6 : day - 1);
+                        const monday = new Date(today.getFullYear(), today.getMonth(), diff);
+                        let weekCount = 0;
+                        if (habit.weeklyTarget) {
+                            for (let i = 0; i < 7; i++) {
+                                const d = new Date(monday);
+                                d.setDate(monday.getDate() + i);
+                                if (checkCompleted(habit.id, d.getDate(), completions, d.getMonth(), d.getFullYear())) weekCount++;
+                            }
+                        }
+                        const goalMet = habit.weeklyTarget ? weekCount >= habit.weeklyTarget : false;
+                        return (
+                            <div key={habit.id} onClick={() => toggleCompletion(habit.id, dateKey)}
+                                className="flex items-center justify-between cursor-pointer hover:bg-black/5 rounded px-1 py-1.5 -mx-1 transition-colors">
+                                <div className="flex items-center gap-1.5 flex-1 min-w-0 mr-2">
+                                    <span className={`text-[11px] font-bold truncate ${done ? 'text-stone-400 line-through' : 'text-stone-700'}`}>
+                                        {habit.name || 'Untitled'}
+                                    </span>
+                                    {habit.weeklyTarget && (
+                                        <span className={`text-[8px] px-1 border font-black flex-shrink-0 ${goalMet ? 'bg-black text-white border-black' : 'bg-stone-50 text-stone-400 border-stone-200'}`}>
+                                            {weekCount}/{habit.weeklyTarget}wk
+                                        </span>
+                                    )}
+                                </div>
+                                <div className={`w-4 h-4 border-2 border-black flex items-center justify-center flex-shrink-0 transition-all ${done ? 'bg-black text-white' : 'bg-white'}`}>
+                                    {done && <Check size={10} strokeWidth={4} />}
+                                </div>
+                            </div>
+                        );
+                    }) : (
+                        <div className="text-[9px] text-stone-300 text-center py-4 italic">No habits due today</div>
+                    )}
+                </div>
+            </div>
+
+            {/* Share strip — only when all done */}
+            {totalCount > 0 && completedCount === totalCount && (
+                <button
+                    onClick={() => onShareClick({ date, dayName, dateString, completedCount, totalCount, progress: actualProgress })}
+                    className="w-full p-2.5 bg-black text-white font-black uppercase tracking-widest text-[10px] hover:bg-stone-800 transition-all flex items-center justify-center gap-2 border-t border-black flex-shrink-0"
+                >
+                    <Share2 size={12} />
+                    Share Achievement
+                </button>
+            )}
+        </>
+    );
+
+    // ── Tasks view ──
+    const TasksView = (
+        <div ref={contentRef} className="flex-1 min-h-0 overflow-y-auto p-2 space-y-1.5" style={{ overscrollBehavior: 'contain' }}>
+            <div onClick={addTask}
+                className="flex items-center gap-2 p-1.5 border border-dashed border-stone-200 rounded cursor-pointer hover:border-stone-400 transition-colors">
+                <Plus size={10} strokeWidth={3} className="text-stone-300 flex-shrink-0" />
+                <span className="text-[10px] text-stone-300 font-medium">Add a task...</span>
+            </div>
+            {tasks.map(task => (
+                <div key={task.id}
+                    className={`flex items-start gap-2 group bg-white border p-1.5 rounded transition-all ${editingTaskId === task.id ? 'border-black' : 'border-stone-100 hover:border-stone-200'}`}>
+                    <button onClick={() => updateNote(dateKey, { tasks: tasks.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t) })}
+                        className="flex-shrink-0 mt-0.5">
+                        <div className={`w-3 h-3 border border-black flex items-center justify-center transition-all ${task.completed ? 'bg-black text-white' : 'bg-white hover:bg-stone-100'}`}>
+                            {task.completed && <Check size={8} strokeWidth={4} />}
+                        </div>
+                    </button>
+                    {editingTaskId === task.id ? (
+                        <input ref={taskInputRef} type="text" value={editingTaskText}
+                            onChange={(e) => setEditingTaskText(e.target.value)}
+                            onBlur={() => handleFinishEditing(task.id)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') handleFinishEditing(task.id); }}
+                            className="flex-1 text-[10px] font-medium bg-transparent outline-none text-stone-800 min-w-0"
+                            autoFocus />
+                    ) : (
+                        <span onDoubleClick={() => { setEditingTaskId(task.id); setEditingTaskText(task.text); }}
+                            className={`flex-1 text-[10px] font-medium break-words min-w-0 ${task.completed ? 'text-stone-400 line-through' : 'text-stone-800'}`}>
+                            {task.text || <span className="italic text-stone-300">empty</span>}
+                        </span>
+                    )}
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                        <button onClick={() => { setEditingTaskId(task.id); setEditingTaskText(task.text); }} className="text-stone-400 hover:text-black"><Pencil size={9} /></button>
+                        <button onClick={() => updateNote(dateKey, { tasks: tasks.filter(t => t.id !== task.id) })} className="text-stone-400 hover:text-red-500"><Trash2 size={9} /></button>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+
+    // ── Journal view ──
+    const JournalView = (
+        <div ref={contentRef} className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 p-3" style={{ overscrollBehavior: 'contain' }}>
+            <div>
+                <label className="text-[9px] font-black uppercase tracking-widest text-stone-400 block mb-1.5">Mood</label>
+                <div className="grid grid-cols-5 gap-1">
+                    {MOODS.map(m => {
+                        const isSelected = moodDraft === m.value;
+                        const Icon = m.icon;
+                        return (
+                            <button key={m.value} onClick={() => setMoodDraft(isSelected ? undefined : m.value)}
+                                title={m.tooltip}
+                                className={`flex items-center justify-center p-2 rounded-lg transition-all ${isSelected ? 'scale-110' : 'hover:bg-stone-50 hover:scale-105'}`}
+                                style={{ backgroundColor: isSelected ? m.color + '25' : undefined }}>
+                                <Icon size={18} strokeWidth={isSelected ? 2.5 : 2}
+                                    style={{ color: isSelected ? m.color : '#d1d5db' }} />
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+            <div className="flex-1 flex flex-col min-h-0">
+                <label className="text-[9px] font-black uppercase tracking-widest text-stone-400 block mb-1.5">Notes</label>
+                <textarea value={journalDraft} onChange={(e) => setJournalDraft(e.target.value)}
+                    placeholder="Write about today..."
+                    className="flex-1 min-h-[80px] p-2.5 bg-stone-50 border-2 border-transparent focus:border-black rounded-xl resize-none text-[11px] leading-relaxed placeholder:text-stone-300 outline-none font-medium" />
+            </div>
+            <button onClick={handleSaveJournal}
+                className="w-full py-2 text-white text-[10px] font-black uppercase tracking-widest rounded-lg flex items-center justify-center gap-1.5 flex-shrink-0 hover:opacity-80 transition-opacity"
+                style={{ backgroundColor: theme.primary }}>
+                <Save size={11} /> Save Entry
+            </button>
+        </div>
+    );
 
     return (
-        <div className="relative w-full h-full group" style={{ perspective: '1000px' }}>
-            <div
-                className={`relative w-full h-full transition-transform duration-700`}
-                style={{ transformStyle: 'preserve-3d', transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
-            >
-                {/* --- FRONT FACE --- */}
-                <div
-                    className={`relative w-full h-full bg-white neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans ${isToday ? 'ring-2 ring-black ring-offset-2' : ''}`}
-                    style={{ backfaceVisibility: 'hidden' }}
-                >
-                    {/* Header */}
-                    <div className="p-3 text-center border-b-[2px] border-black relative" style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}>
-                        {onPrev && (
-                            <button
-                                onClick={onPrev}
-                                className="absolute left-2 top-1/2 -translate-y-1/2 p-1 text-white hover:bg-white/20 rounded transition-colors"
-                            >
-                                <ChevronLeft size={20} strokeWidth={3} />
-                            </button>
-                        )}
+        <div className={`relative w-full bg-white overflow-hidden flex flex-col font-sans border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] ${cardStyle === 'large' ? 'h-[540px]' : 'h-[460px]'}`}>
 
-                        <h3 className="text-white font-black uppercase tracking-tighter text-lg leading-tight">{dayName}</h3>
+            {/* Header */}
+            <div className="border-b-[2px] border-black flex-shrink-0"
+                style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}>
+                <div className={`w-full grid items-center py-2 ${cardStyle === 'compact'
+                    ? 'grid-cols-[28px_minmax(0,1fr)_48px_28px]'
+                    : 'grid-cols-[28px_minmax(0,1fr)_28px]'}`}>
+                    <button onClick={onPrev} className="flex items-center justify-center p-1 text-white hover:bg-white/20 rounded transition-colors">
+                        <ChevronLeft size={18} strokeWidth={3} />
+                    </button>
+
+                    <div className="text-left pl-1 min-w-0 overflow-hidden">
+                        <h3 className="text-white font-black tracking-tight text-sm leading-tight truncate">{dayName}</h3>
                         <div className="relative">
-                            <button
-                                onClick={() => setShowDatePicker(!showDatePicker)}
-                                className="text-white/80 font-bold text-[10px] tracking-widest hover:text-white transition-colors"
-                            >
+                            <button onClick={() => setShowDatePicker(!showDatePicker)}
+                                className="text-white/80 font-bold text-[9px] tracking-wide hover:text-white transition-colors truncate block">
                                 {dateString}
                             </button>
                             {onDateSelect && (
-                                <WeekPicker
-                                    isOpen={showDatePicker}
-                                    onClose={() => setShowDatePicker(false)}
-                                    currentDate={date}
-                                    onWeekSelect={onDateSelect}
-                                    themePrimary={theme.primary}
-                                />
-                            )}
-                        </div>
-
-                        {onNext && (
-                            <button
-                                onClick={onNext}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-white hover:bg-white/20 rounded transition-colors"
-                            >
-                                <ChevronRight size={20} strokeWidth={3} />
-                            </button>
-                        )}
-                    </div>
-
-                    {/* Progress Circle */}
-                    <div className="py-1.5 px-4 flex flex-col items-center justify-center border-b border-stone-100">
-                        <div className="relative w-24 h-24">
-                            <svg className="w-full h-full transform -rotate-90">
-                                <circle
-                                    cx="48"
-                                    cy="48"
-                                    r="40"
-                                    stroke="currentColor"
-                                    strokeWidth="8"
-                                    fill="transparent"
-                                    className="text-stone-100"
-                                />
-                                <circle
-                                    cx="48"
-                                    cy="48"
-                                    r="40"
-                                    stroke="currentColor"
-                                    strokeWidth="8"
-                                    fill="transparent"
-                                    strokeDasharray={2 * Math.PI * 40}
-                                    strokeDashoffset={2 * Math.PI * 40 * (1 - progress / 100)}
-                                    strokeLinecap="round"
-                                    className="transition-all duration-1000 ease-out"
-                                    style={{ color: isToday ? theme.primary : theme.secondary }}
-                                />
-                            </svg>
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <span className="text-xl font-black">{Math.round(progress)}%</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Daily Habits List */}
-                    <div className="py-1 px-3 bg-stone-50/50 flex flex-col border-b border-stone-100">
-                        <div className="flex items-center justify-between mb-1 pb-1 border-b border-black/5 flex-shrink-0">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">Daily Habits</span>
-                            <span className="text-[10px] font-black text-stone-400">{dailyHabits.length}</span>
-                        </div>
-                        <div
-                            className="space-y-1 overflow-y-auto max-h-[120px] pr-1 overscroll-y-contain relative z-10"
-                            style={{ overscrollBehavior: 'contain', transform: 'translateZ(1px)' }}
-                            onWheel={(e) => e.stopPropagation()}
-                        >
-                            {dailyHabits.length > 0 ? dailyHabits.map(habit => {
-                                const done = checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
-                                return (
-                                    <div
-                                        key={habit.id}
-                                        onClick={() => toggleCompletion(habit.id, dateKey)}
-                                        className="flex items-center justify-between group cursor-pointer hover:bg-black/5 rounded p-1 -mx-1 transition-colors"
-                                    >
-                                        <div className="flex items-center flex-1 min-w-0">
-                                            <span className={`text-[11px] font-bold truncate ${done ? 'text-stone-400 line-through' : 'text-stone-700'}`}>
-                                                {habit.name || 'Untitled'}
-                                            </span>
-                                        </div>
-                                        <div
-                                            className={`w-4 h-4 border-2 border-black flex items-center justify-center transition-all ${done ? 'bg-black text-white' : 'bg-white'}`}
-                                        >
-                                            {done && <Check size={10} strokeWidth={4} />}
-                                        </div>
-                                    </div>
-                                );
-                            }) : (
-                                <div className="text-[9px] text-stone-300 italic py-1">No daily habits due today</div>
+                                <WeekPicker isOpen={showDatePicker} onClose={() => setShowDatePicker(false)}
+                                    currentDate={date} onWeekSelect={onDateSelect} themePrimary={theme.primary} />
                             )}
                         </div>
                     </div>
 
-                    {/* Flexible Habits List */}
-                    {flexibleHabits.length > 0 && (
-                        <div className="py-1 px-3 bg-white flex flex-col">
-                            <div className="flex items-center justify-between mb-1 pb-1 border-b border-black/5 flex-shrink-0">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">Flexible Habits</span>
-                                <span className="text-[10px] font-black text-stone-400">{flexibleHabits.length}</span>
-                            </div>
-                            <div
-                                className="space-y-1 overflow-y-auto max-h-[100px] pr-1 overscroll-y-contain relative z-10"
-                                style={{ overscrollBehavior: 'contain', transform: 'translateZ(1px)' }}
-                                onWheel={(e) => e.stopPropagation()}
-                            >
-                                {flexibleHabits.map(habit => {
-                                    const done = checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
+                    {cardStyle === 'compact' && SmallRing}
 
-                                    // Calculate weekly progress
-                                    const today = date;
-                                    const day = today.getDay();
-                                    const diff = today.getDate() - (day === 0 ? 6 : day - 1); // Monday-based week
-                                    const monday = new Date(today.getFullYear(), today.getMonth(), diff);
-
-                                    let weekCompletions = 0;
-                                    for (let i = 0; i < 7; i++) {
-                                        const d = new Date(monday);
-                                        d.setDate(monday.getDate() + i);
-                                        if (checkCompleted(habit.id, d.getDate(), completions, d.getMonth(), d.getFullYear())) {
-                                            weekCompletions++;
-                                        }
-                                    }
-
-                                    const goalMet = habit.weeklyTarget ? weekCompletions >= habit.weeklyTarget : false;
-
-                                    return (
-                                        <div
-                                            key={habit.id}
-                                            onClick={() => toggleCompletion(habit.id, dateKey)}
-                                            className="flex items-center justify-between group cursor-pointer hover:bg-black/5 rounded p-1 -mx-1 transition-colors"
-                                        >
-                                            <div className="flex items-center flex-1 min-w-0">
-                                                <span className={`text-[11px] font-bold truncate ${done ? 'text-stone-400 line-through' : 'text-stone-700'}`}>
-                                                    {habit.name || 'Untitled'}
-                                                </span>
-                                                <span className={`ml-1 text-[9px] px-1 py-0 border-[1px] font-black uppercase tracking-tighter ${goalMet ? 'bg-black text-white border-black' : 'bg-stone-50 text-stone-400 border-stone-200'}`}>
-                                                    {weekCompletions}/{habit.weeklyTarget}
-                                                </span>
-                                            </div>
-                                            <div
-                                                className={`w-4 h-4 border-2 border-black flex items-center justify-center transition-all ${done ? 'bg-black text-white' : 'bg-white'}`}
-                                            >
-                                                {done && <Check size={10} strokeWidth={4} />}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
-
-                    {dailyCompletedCount === totalDailyCount && totalDailyCount > 0 ? (
-                        <div className="border-t border-black flex-shrink-0">
-                            <button
-                                onClick={() => onShareClick({ date, dayName, dateString, completedCount: dailyCompletedCount, totalCount: totalDailyCount, progress: actualProgress })}
-                                className="w-full p-3 bg-black text-white font-black uppercase tracking-widest text-[11px] hover:bg-stone-800 transition-all flex items-center justify-center gap-2 group"
-                            >
-                                <Share2 size={14} className="group-hover:scale-110 transition-transform" />
-                                Share Achievement
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-2 text-center text-[9px] font-black uppercase tracking-tight border-t border-black flex-shrink-0">
-                            <div className="p-1 px-2 border-r border-black" style={{ backgroundColor: (isToday ? theme.primary : theme.secondary) + '20' }}>
-                                <span className="text-stone-500 block">Daily Done</span>
-                                <span className="text-lg leading-none">{dailyCompletedCount}</span>
-                            </div>
-                            <div className="p-1 px-2" style={{ backgroundColor: '#f0f0f0' }}>
-                                <span className="text-stone-500 block">Remaining</span>
-                                <span className="text-lg leading-none">{totalDailyCount - dailyCompletedCount}</span>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Tasks */}
-                    <div
-                        className="border-t-2 border-black flex flex-col min-h-[90px]"
-                        onDragOver={(e) => e.preventDefault()}
-                        onDrop={(e) => {
-                            e.preventDefault();
-                            const data = e.dataTransfer.getData('application/json');
-                            if (!data) return;
-                            const { taskId, sourceDateKey } = JSON.parse(data);
-                            if (sourceDateKey === dateKey) return;
-
-                            const getSourceData = (): DayData => {
-                                const d = notes[sourceDateKey];
-                                if (Array.isArray(d)) return { tasks: d };
-                                if (d && 'tasks' in d) return d;
-                                return { tasks: [] };
-                            };
-                            const sourceData = getSourceData();
-                            const sourceTasks = sourceData.tasks || [];
-                            const targetTasks = dayData.tasks || [];
-
-                            const taskToMove = sourceTasks.find(t => t.id === taskId);
-                            if (!taskToMove) return;
-
-                            updateNote(sourceDateKey, { tasks: sourceTasks.filter(t => t.id !== taskId) });
-                            updateNote(dateKey, { tasks: [...targetTasks, taskToMove] });
-                        }}
-                    >
-                        <div className="p-2 bg-stone-100 border-b-2 border-black text-[9px] font-black uppercase tracking-widest text-stone-500 flex items-center justify-center relative flex-shrink-0">
-                            <span>Tasks</span>
-
-                            {/* Journal Trigger */}
-                            {(() => {
-                                const activeMood = MOODS.find(m => m.value === dayData.mood);
-                                return (
-                                    <button
-                                        onClick={() => setIsFlipped(true)}
-                                        className={`absolute left-2 p-1.5 rounded transition-colors ${activeMood ? '' : (dayData.journal ? 'text-black bg-stone-200' : 'text-stone-400 hover:text-black hover:bg-stone-200')}`}
-                                        title={activeMood ? activeMood.tooltip : "Daily Journal & Mood"}
-                                    >
-                                        {activeMood ? <activeMood.icon size={16} fill={activeMood.color} className="text-stone-700" /> : <BookOpen size={12} strokeWidth={3} />}
-                                    </button>
-                                );
-                            })()}
-
-                            <button
-                                onClick={() => {
-                                    const currentTasks = dayData.tasks || [];
-                                    const newTask: Task = { id: generateUUID(), text: '', completed: false };
-                                    updateNote(dateKey, { tasks: [...currentTasks, newTask] });
-                                    setEditingTaskId(newTask.id);
-                                    setEditingTaskText('');
-                                }}
-                                className="absolute right-2 hover:bg-stone-200 p-1.5 rounded transition-colors"
-                            >
-                                <Plus size={12} strokeWidth={3} />
-                            </button>
-                        </div>
-                        <div
-                            className="p-2 space-y-2 overflow-y-auto max-h-[160px] pr-1 overscroll-y-contain relative z-10"
-                            style={{ overscrollBehavior: 'contain', transform: 'translateZ(1px)' }}
-                            onWheel={(e) => e.stopPropagation()}
-                        >
-                            {(dayData.tasks || []).map((task) => (
-                                <div
-                                    key={task.id}
-                                    draggable={editingTaskId !== task.id}
-                                    onDragStart={(e) => {
-                                        e.dataTransfer.setData('application/json', JSON.stringify({ taskId: task.id, sourceDateKey: dateKey }));
-                                        e.dataTransfer.effectAllowed = 'move';
-                                    }}
-                                    className={`flex items-start gap-2 group bg-white border border-transparent hover:border-stone-200 p-1 rounded shadow-sm hover:shadow-md transition-all ${editingTaskId === task.id ? 'ring-2 ring-black' : 'cursor-move'}`}
-                                >
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            const currentTasks = dayData.tasks || [];
-                                            const newTasks = currentTasks.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t);
-                                            updateNote(dateKey, { tasks: newTasks });
-                                        }}
-                                        className="p-2 -m-2 flex-shrink-0 flex items-center justify-center focus:outline-none"
-                                    >
-                                        <div className={`w-3 h-3 border border-black flex items-center justify-center transition-all ${task.completed ? 'bg-black text-white' : 'bg-white hover:bg-stone-100'}`}>
-                                            {task.completed && <Check size={8} strokeWidth={4} />}
-                                        </div>
-                                    </button>
-
-                                    {editingTaskId === task.id ? (
-                                        <input
-                                            ref={taskInputRef}
-                                            type="text"
-                                            value={editingTaskText}
-                                            onChange={(e) => setEditingTaskText(e.target.value)}
-                                            onBlur={() => handleFinishEditing(task.id)}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter') {
-                                                    handleFinishEditing(task.id);
-                                                }
-                                            }}
-                                            className="w-full text-[10px] font-medium bg-transparent outline-none leading-tight border-none p-0 focus:ring-0 text-stone-800"
-                                            autoFocus
-                                        />
-                                    ) : (
-                                        <span
-                                            className={`flex-1 text-[10px] font-medium leading-tight break-all ${task.completed ? 'text-stone-400 line-through' : 'text-stone-800'}`}
-                                            onDoubleClick={() => {
-                                                setEditingTaskId(task.id);
-                                                setEditingTaskText(task.text);
-                                            }}
-                                        >
-                                            {task.text}
-                                        </span>
-                                    )}
-
-                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button
-                                            onClick={() => {
-                                                setEditingTaskId(task.id);
-                                                setEditingTaskText(task.text);
-                                            }}
-                                            className="text-stone-400 hover:text-black transition-colors"
-                                            title="Edit task"
-                                        >
-                                            <Pencil size={10} />
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                const currentTasks = dayData.tasks || [];
-                                                const newTasks = currentTasks.filter(t => t.id !== task.id);
-                                                updateNote(dateKey, { tasks: newTasks });
-                                            }}
-                                            className="text-stone-400 hover:text-red-500 transition-colors"
-                                            title="Delete task"
-                                        >
-                                            <Trash2 size={10} />
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                            {(!dayData.tasks || dayData.tasks.length === 0) && (
-                                <div className="text-[9px] text-stone-300 text-center py-2 italic cursor-pointer" onClick={() => {
-                                    const currentTasks = dayData.tasks || [];
-                                    const newTask: Task = { id: generateUUID(), text: '', completed: false };
-                                    updateNote(dateKey, { tasks: [...currentTasks, newTask] });
-                                    setEditingTaskId(newTask.id);
-                                    setEditingTaskText('');
-                                }}>
-                                    Click + to add a task
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* --- BACK FACE (JOURNAL) --- */}
-                <div
-                    className={`absolute inset-0 w-full h-full bg-white neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans ${isToday ? 'ring-2 ring-black ring-offset-2' : ''}`}
-                    style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
-                >
-                    {/* Header */}
-                    <div className="p-3 text-center border-b-[2px] border-black relative" style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}>
-                        <button
-                            onClick={handleSaveJournal}
-                            className="absolute left-2 top-1/2 -translate-y-1/2 p-1 text-white hover:bg-white/20 rounded transition-colors"
-                            title="Save & Back"
-                        >
-                            <ChevronLeft size={20} strokeWidth={3} />
-                        </button>
-
-                        <h3 className="text-white font-black uppercase tracking-tighter text-lg leading-tight">Journal</h3>
-                        <p className="text-white/80 font-bold text-[10px] tracking-widest">{dateString}</p>
-                    </div>
-
-                    <div
-                        className="p-4 flex-1 flex flex-col gap-4 overflow-y-auto overscroll-y-contain relative z-10"
-                        style={{ overscrollBehavior: 'contain', transform: 'translateZ(1px)' }}
-                        onWheel={(e) => e.stopPropagation()}
-                    >
-                        {/* Mood Selector */}
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-stone-400 block text-center">Mood</label>
-                            <div className="grid grid-cols-5 gap-1 px-2">
-                                {MOODS.map((m) => {
-                                    const isSelected = mood === m.value;
-                                    const Icon = m.icon;
-                                    return (
-                                        <button
-                                            key={m.value}
-                                            onClick={() => setMood(m.value)}
-                                            title={m.tooltip}
-                                            className={`flex flex-col items-center justify-center gap-1 p-2 rounded-lg transition-all ${isSelected ? 'bg-stone-100 scale-105 shadow-inner' : 'hover:bg-stone-50 hover:scale-105'
-                                                }`}
-                                        >
-                                            <div className={`p-1.5 rounded-full transition-colors ${isSelected ? 'text-white' : 'text-stone-300'}`}
-                                                style={{ backgroundColor: isSelected ? m.color : 'transparent' }}>
-                                                <Icon size={18} strokeWidth={isSelected ? 2.5 : 2} />
-                                            </div>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        {/* Journal Textarea */}
-                        <div className="flex-1 flex flex-col gap-2 min-h-0">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-stone-400 block text-center">Notes</label>
-                            <textarea
-                                value={journal}
-                                onChange={(e) => setJournal(e.target.value)}
-                                placeholder="Write regarding today..."
-                                className="w-full flex-1 p-3 bg-stone-50 border-2 border-transparent focus:border-black rounded-xl resize-none text-xs leading-relaxed placeholder:text-stone-300 outline-none transition-all font-medium"
-                            />
-                        </div>
-
-                        <div className="flex-shrink-0">
-                            <button
-                                onClick={handleSaveJournal}
-                                className="w-full py-2 bg-black text-white text-xs font-black uppercase tracking-widest rounded-lg hover:bg-stone-800 transition-transform active:scale-95 flex items-center justify-center gap-2"
-                                style={{ backgroundColor: theme.primary }}
-                            >
-                                <Save size={12} />
-                                Save Entry
-                            </button>
-                        </div>
-                    </div>
+                    <button onClick={onNext} className="flex items-center justify-center p-1 text-white hover:bg-white/20 rounded transition-colors">
+                        <ChevronRight size={18} strokeWidth={3} />
+                    </button>
                 </div>
             </div>
-        </div >
+
+            {/* Action strip — analytics, habits, settings */}
+            {headerActions && (
+                <div className="flex items-center justify-end gap-1 px-2 py-1 border-b border-black/10 flex-shrink-0"
+                    style={{ backgroundColor: (isToday ? theme.primary : theme.secondary) + 'dd' }}>
+                    {headerActions}
+                </div>
+            )}
+
+            {/* Large ring — only in large mode */}
+            {cardStyle === 'large' && LargeRing}
+
+            {/* Content — flex-1, switches by active tab */}
+            <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+                {activeTab === 'habits'  && HabitsView}
+                {activeTab === 'tasks'   && TasksView}
+                {activeTab === 'journal' && JournalView}
+            </div>
+
+            {/* Status bar — pinned at bottom */}
+            {StatusBar}
+        </div>
     );
 };

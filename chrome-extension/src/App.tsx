@@ -36,6 +36,13 @@ const App: React.FC = () => {
   } | null>(null);
 
   const { theme, setTheme } = useTheme();
+  const [cardStyle, setCardStyle] = useState<'compact' | 'large'>(() =>
+    (localStorage.getItem('ext_card_style') as 'compact' | 'large') || 'large'
+  );
+  const handleCardStyleChange = (style: 'compact' | 'large') => {
+    setCardStyle(style);
+    localStorage.setItem('ext_card_style', style);
+  };
   const {
     habits,
     completions,
@@ -218,36 +225,8 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="bg-[#e5e5e5] min-h-screen p-2 font-sans text-[#444]">
+    <div className="font-sans text-[#444] p-2">
       <Toaster position="top-center" />
-
-      <div className="flex items-center justify-between mb-2 px-1">
-        <h1 className="text-xs font-black uppercase tracking-widest text-stone-500">Today's Focus</h1>
-        <div className="flex gap-2">
-          <button
-            onClick={openFullSite}
-            className="px-3 py-1.5 bg-black text-white text-[10px] font-black uppercase tracking-widest hover:bg-stone-800 transition-all flex items-center gap-1.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)]"
-            title="View Analytics"
-          >
-            <BarChart3 size={12} strokeWidth={3} />
-            Analytics
-          </button>
-          <button
-            onClick={() => setHabitManagerModalOpen(true)}
-            className="p-1 hover:bg-stone-200 rounded text-stone-500"
-            title="Manage Habits"
-          >
-            <List size={14} />
-          </button>
-          <button
-            onClick={() => setSettingsModalOpen(true)}
-            className="p-1 hover:bg-stone-200 rounded text-stone-500"
-            title="Settings"
-          >
-            <Settings size={14} />
-          </button>
-        </div>
-      </div>
 
       <DailyCard
         date={currentDate}
@@ -277,6 +256,24 @@ const App: React.FC = () => {
         removeHabit={removeHabit}
         editingHabitId={editingHabitId}
         setEditingHabitId={setEditingHabitId}
+        cardStyle={cardStyle}
+        headerActions={
+          <>
+            <button onClick={openFullSite} title="Analytics"
+              className="p-1.5 text-white/80 hover:text-white hover:bg-white/20 rounded transition-colors flex items-center gap-1">
+              <BarChart3 size={13} strokeWidth={3} />
+              <span className="text-[9px] font-black uppercase tracking-widest">Analytics</span>
+            </button>
+            <button onClick={() => setHabitManagerModalOpen(true)} title="Manage Habits"
+              className="p-1.5 text-white/80 hover:text-white hover:bg-white/20 rounded transition-colors">
+              <List size={14} />
+            </button>
+            <button onClick={() => setSettingsModalOpen(true)} title="Settings"
+              className="p-1.5 text-white/80 hover:text-white hover:bg-white/20 rounded transition-colors">
+              <Settings size={14} />
+            </button>
+          </>
+        }
       />
 
       <ShareCustomizationModal
@@ -290,6 +287,8 @@ const App: React.FC = () => {
         onClose={() => setSettingsModalOpen(false)}
         currentTheme={theme}
         onSelectTheme={setTheme}
+        cardStyle={cardStyle}
+        onCardStyleChange={handleCardStyleChange}
       />
 
       <HabitManagerModal

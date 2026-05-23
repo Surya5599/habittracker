@@ -747,7 +747,7 @@ export const LandingPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setAuthModalMode('signup')}
-              className="landing-neo-shadow inline-flex items-center justify-center gap-3 rounded-xl border-[3px] border-black bg-[var(--landing-neo-yellow)] px-6 py-4 text-lg font-black text-black transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] sm:px-8 sm:text-xl"
+              className="landing-neo-shadow inline-flex items-center justify-center gap-3 rounded-xl border-[3px] border-black bg-[var(--landing-neo-yellow)] px-6 py-4 text-lg font-black text-white transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] sm:px-8 sm:text-xl"
             >
               Start for Free <ArrowRight className="h-6 w-6" />
             </button>

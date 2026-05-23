@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, LogIn, Mail, User, UserPlus } from 'lucide-react';
+import { Check, Lock, LogIn, Mail, User, UserPlus } from 'lucide-react';
 import { supabase } from '../supabase';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -165,7 +165,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
         ? 'Enter your email and we will send a reset link.'
         : authMode === 'signin'
             ? 'Pick up right where your streak left off.'
-            : 'Start tracking habits with the same card-based flow as the app.';
+            : 'Build habits that actually stick.';
     const actionLabel = isResetMode
         ? (loading ? 'Sending Protocol...' : 'Request Pin Reset')
         : loading
@@ -247,7 +247,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
                                                 <label htmlFor="password" className="mb-2 block text-[10px] font-black uppercase tracking-[0.18em] text-stone-500">Password</label>
                                                 <div className="flex items-center gap-3 rounded-2xl border-[3px] border-black bg-white px-4 py-3">
                                                     <div className={`flex h-8 w-8 items-center justify-center rounded-xl border-[2px] border-black ${fieldFilled(password) ? 'bg-black text-white' : 'bg-stone-100 text-black'}`}>
-                                                        {fieldFilled(password) ? <Check size={14} strokeWidth={3} /> : <LogIn size={14} strokeWidth={2.5} />}
+                                                        {fieldFilled(password) ? <Check size={14} strokeWidth={3} /> : <Lock size={14} strokeWidth={2.5} />}
                                                     </div>
                                                     <input
                                                         id="password"
@@ -314,11 +314,6 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
                                         </div>
                                     ) : (
                                         <div className="space-y-4 pt-2">
-                                            {authMode === 'signup' && (
-                                                <div className="rounded-2xl border-[2px] border-black px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-stone-700" style={{ backgroundColor: `${theme.secondary}20` }}>
-                                                    You&apos;ll need to confirm your email before logging in.
-                                                </div>
-                                            )}
                                             <button
                                                 type="submit"
                                                 className="flex w-full items-center justify-center gap-2 rounded-2xl border-[3px] border-black bg-black px-6 py-3.5 text-xs font-black uppercase tracking-widest text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:opacity-50"
@@ -328,19 +323,21 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
                                                 {actionLabel}
                                             </button>
 
-                                            <div className="flex justify-center">
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        setIsResetMode(true);
-                                                        resetPanelState();
-                                                    }}
-                                                    className="text-[9px] font-black uppercase tracking-widest text-stone-400 hover:text-black transition-colors"
-                                                >
-                                                    Forgot your password?
-                                                </button>
-                                            </div>
+                                            {authMode === 'signin' && (
+                                                <div className="flex justify-center">
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            setIsResetMode(true);
+                                                            resetPanelState();
+                                                        }}
+                                                        className="text-[9px] font-black uppercase tracking-widest text-stone-400 hover:text-black transition-colors"
+                                                    >
+                                                        Forgot your password?
+                                                    </button>
+                                                </div>
+                                            )}
 
                                             <div className="relative flex items-center py-1">
                                                 <div className="flex-grow border-t border-stone-100/50"></div>
@@ -374,8 +371,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
                                             className={`border-r-[3px] border-black p-3 transition-colors ${authMode === 'signup' ? 'bg-stone-100' : 'bg-white'}`}
                                             disabled={loading}
                                         >
-                                            <span className="mb-1 flex items-center justify-center gap-1 text-[10px] font-black tracking-wider text-stone-500"><UserPlus size={12} /> ACCOUNT</span>
-                                            <span className="text-sm font-bold text-black">Sign Up</span>
+                                            <span className="flex items-center justify-center gap-1.5 text-xs font-black tracking-wider text-black"><UserPlus size={13} /> Sign Up</span>
                                         </button>
                                         <button
                                             type="button"
@@ -386,8 +382,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
                                             className={`p-3 transition-colors ${authMode === 'signin' ? 'bg-stone-100' : 'bg-white'}`}
                                             disabled={loading}
                                         >
-                                            <span className="mb-1 flex items-center justify-center gap-1 text-[10px] font-black tracking-wider text-stone-500"><LogIn size={12} /> ACCESS</span>
-                                            <span className="text-sm font-bold text-black">Log In</span>
+                                            <span className="flex items-center justify-center gap-1.5 text-xs font-black tracking-wider text-black"><LogIn size={13} /> Log In</span>
                                         </button>
                                     </div>
                                 )}

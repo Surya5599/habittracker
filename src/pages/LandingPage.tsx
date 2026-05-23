@@ -234,14 +234,15 @@ const MonthCard: React.FC<MonthCardProps> = ({
           }
 
           if (day.active) {
-            let bgColor = 'bg-[#86efac]';
-            if (day.active.percent === 100) bgColor = 'bg-[#14532d] text-white';
-            else if (day.active.percent >= 80) bgColor = 'bg-[#16a34a] text-white';
-            else if (day.active.percent >= 50) bgColor = 'bg-[#4ade80] text-black';
-            else bgColor = 'bg-[#bbf7d0] text-black';
+            const opacity = day.active.percent === 100 ? 1 : day.active.percent >= 80 ? 0.75 : day.active.percent >= 50 ? 0.5 : 0.25;
+            const textColor = day.active.percent >= 50 ? 'white' : 'black';
 
             return (
-              <div key={i} className={`aspect-square cursor-pointer rounded-xl border border-transparent shadow-sm transition-transform hover:scale-105 ${bgColor} flex flex-col items-center justify-center`}>
+              <div
+                key={i}
+                className="aspect-square cursor-pointer rounded-xl border border-transparent shadow-sm transition-transform hover:scale-105 flex flex-col items-center justify-center"
+                style={{ backgroundColor: `color-mix(in srgb, var(--landing-neo-green) ${opacity * 100}%, white)`, color: textColor }}
+              >
                 <span className="mb-0.5 text-[9px] font-bold leading-none opacity-80">{day.dayNum}</span>
                 <span className="text-[10px] font-black leading-none">{day.active.percent}%</span>
               </div>
@@ -428,7 +429,8 @@ const InteractiveCard: React.FC = () => {
                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
               />
               <path
-                className="text-[#9cb4a4] transition-all duration-500 ease-out"
+                className="transition-all duration-500 ease-out"
+                style={{ color: 'var(--landing-neo-green)' }}
                 strokeWidth="4"
                 strokeDasharray={`${percentage}, 100`}
                 strokeLinecap="round"
@@ -514,7 +516,7 @@ const InteractiveCard: React.FC = () => {
             {LANDING_MOODS.map((item, i) => {
               const Icon = item.icon;
               return (
-              <div key={item.value} className={`flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 ${i === mood ? 'scale-110 border-2 border-black bg-[#9cb4a4] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'opacity-60'}`}>
+              <div key={item.value} className={`flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 ${i === mood ? 'scale-110 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'opacity-60'}`} style={i === mood ? { backgroundColor: 'var(--landing-neo-green)' } : {}}>
                 <Icon
                   size={20}
                   strokeWidth={i === mood ? 2.8 : 2}
@@ -555,7 +557,7 @@ const InteractiveCard: React.FC = () => {
           transition={{ duration: 0.3, ease: 'easeInOut' }}
           className="landing-neo-shadow flex h-full w-full flex-col overflow-hidden rounded-[22px] border-[4px] border-black bg-white md:rounded-2xl"
         >
-          <div className="shrink-0 border-b-[4px] border-black bg-[#9cb4a4] p-4 text-center text-white md:p-5">
+          <div className="shrink-0 border-b-[4px] border-black p-4 text-center text-white md:p-5" style={{ backgroundColor: 'var(--landing-neo-green)' }}>
             <h2 className="text-[1.7rem] font-black uppercase tracking-wide drop-shadow-sm md:text-3xl">Sunday</h2>
             <p className="mt-1 text-xs font-bold opacity-90 md:text-sm">Mar 8, 2026</p>
           </div>
@@ -769,7 +771,7 @@ export const LandingPage: React.FC = () => {
                 </div>
               ))}
             </div>
-            <p className="leading-tight">Join <span className="text-[var(--landing-neo-orange)] text-lg">900+</span> habit builders</p>
+            <p className="leading-tight">Join <span className="text-[var(--landing-neo-orange)] text-lg">1000+</span> habit builders</p>
           </div>
         </motion.div>
 
@@ -841,7 +843,7 @@ export const LandingPage: React.FC = () => {
         <div className="landing-neo-shadow relative z-10 mx-auto max-w-4xl rounded-3xl border-[3px] border-black bg-white p-8 text-center sm:p-12 md:p-20">
           <h2 className="mb-6 font-serif text-4xl font-black sm:text-5xl md:text-7xl">Ready to level up?</h2>
           <p className="mx-auto mb-8 max-w-2xl text-lg font-medium sm:mb-10 sm:text-xl md:text-2xl">
-            Join 900+ users who have transformed their daily routines with HabiCard.
+            Join 1000+ users who have transformed their daily routines with HabiCard.
           </p>
           <button
             type="button"

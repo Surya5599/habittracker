@@ -21,6 +21,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthForm } from '../components/AuthForm';
 import { useTheme } from '../hooks/useTheme';
+import { THEMES } from '../constants';
 import { supabase } from '../supabase';
 
 type ActiveDay = {
@@ -586,23 +587,25 @@ const InteractiveCard: React.FC = () => {
 export const LandingPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { theme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup' | null>(null);
 
   useEffect(() => {
     let active = true;
+    const source = new URLSearchParams(location.search).get('source');
+    const appPath = source === 'extension' ? '/app?source=extension' : '/app';
 
     setMounted(true);
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (active && session) {
-        navigate('/app', { replace: true });
+        navigate(appPath, { replace: true });
       }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       if (session) {
-        navigate('/app', { replace: true });
+        navigate(appPath, { replace: true });
       }
     });
 
@@ -725,7 +728,20 @@ export const LandingPage: React.FC = () => {
             Stop breaking your streaks. HabiCard turns your daily goals into visual, satisfying cards that you actually want to complete.
           </p>
 
-          <div className="mt-2 flex flex-col flex-wrap gap-3 sm:mt-4 sm:flex-row sm:gap-4">
+          <div className="flex flex-wrap gap-1.5">
+            {THEMES.map((t) => (
+              <button
+                key={t.name}
+                type="button"
+                title={t.name}
+                onClick={() => setTheme(t)}
+                className={`h-5 w-5 rounded-full overflow-hidden shrink-0 transition-transform hover:scale-125 ${theme.name === t.name ? 'ring-2 ring-black ring-offset-1 scale-125' : 'border-2 border-black/20'}`}
+                style={{ background: `linear-gradient(135deg, ${t.primary} 50%, ${t.secondary} 50%)` }}
+              />
+            ))}
+          </div>
+
+          <div className="flex flex-col flex-wrap gap-3 sm:flex-row sm:gap-4">
             <button
               type="button"
               onClick={() => setAuthModalMode('signup')}
@@ -838,7 +854,21 @@ export const LandingPage: React.FC = () => {
       </section>
 
       <footer className="border-t-4 border-black bg-white px-6 py-8 text-center font-bold">
-        <p className="mt-3 text-xs font-black uppercase tracking-[0.18em] text-stone-500">
+        <div className="flex items-center justify-center gap-6 mb-3">
+          <Link
+            to="/privacy"
+            className="text-xs font-black uppercase tracking-[0.18em] text-stone-500 hover:text-black transition-colors"
+          >
+            Privacy Policy
+          </Link>
+          <a
+            href="mailto:support@habicard.com"
+            className="text-xs font-black uppercase tracking-[0.18em] text-stone-500 hover:text-black transition-colors"
+          >
+            Support
+          </a>
+        </div>
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-stone-500">
           Copyright © 2026 HabiCard. All rights reserved.
         </p>
       </footer>

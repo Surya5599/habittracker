@@ -197,13 +197,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
     const dayNameShort = date.toLocaleDateString(i18n.language, { weekday: 'short' });
     const dateString = date.toLocaleDateString(i18n.language, { month: 'short', day: 'numeric', year: 'numeric' });
     const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const dateNorm = new Date(date);
-    dateNorm.setHours(0, 0, 0, 0);
-    const isToday = dateNorm.getTime() === today.getTime();
-    const isPast = dateNorm < today;
-    const isFuture = dateNorm > today;
+    const isToday = date.toDateString() === new Date().toDateString();
     const hasDayNav = Boolean(onPrev || onNext);
 
     useEffect(() => {
@@ -501,11 +495,11 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
 
     const HeaderTitle = (
         <div className={`min-w-0 overflow-hidden ${cardStyle === 'large' ? 'text-center px-4' : 'text-left pl-4 pr-1'}`}>
-            <h3 className={`text-white font-black tracking-wide leading-tight truncate uppercase drop-shadow-sm ${isToday ? 'font-serif text-2xl sm:text-3xl' : 'text-xl sm:text-2xl'}`}>
+            <h3 className="text-white font-black tracking-tight text-sm sm:text-base leading-tight truncate">
                 <span className="sm:hidden">{dayNameShort}</span>
                 <span className="hidden sm:inline">{dayName}</span>
             </h3>
-            <p className="text-white/80 font-bold text-[9px] sm:text-[11px] tracking-widest whitespace-nowrap truncate uppercase">{dateString}</p>
+            <p className="text-white/80 font-bold text-[9px] sm:text-[10px] tracking-wide whitespace-nowrap truncate">{dateString}</p>
         </div>
     );
 
@@ -573,15 +567,12 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
 
     const FrontFace = (
         <div
-            className={`relative w-full h-full bg-white neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans ${isToday ? 'ring-[3px] ring-black ring-offset-2' : ''}`}
+            className={`relative w-full h-full bg-white neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans ${isToday ? 'ring-2 ring-black ring-offset-0' : ''}`}
         >
             {/* Header */}
             <div
-                className={`day-date-header py-3 px-0 text-center ${isToday ? 'border-b-[4px]' : 'border-b-[3px]'} border-black relative ${onDateClick && !combinedView ? 'cursor-pointer' : ''}`}
-                style={{
-                    backgroundColor: isToday ? theme.primary : isFuture ? theme.secondary + 'B3' : theme.secondary,
-                    opacity: isPast ? 0.88 : 1,
-                }}
+                className={`day-date-header py-2 px-0 text-center border-b-[2px] border-black relative ${onDateClick && !combinedView ? 'cursor-pointer' : ''}`}
+                style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}
                 onClick={() => {
                     if (onDateClick && !combinedView) onDateClick(date);
                 }}
@@ -628,11 +619,6 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                     </div>
                     ) : null}
                 </div>
-                {isToday && (
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 font-serif text-5xl font-black text-white/20 leading-none pointer-events-none select-none">
-                        {date.getDate()}
-                    </div>
-                )}
             </div>
 
             {cardStyle === 'large' ? LargeProgressPanel : null}

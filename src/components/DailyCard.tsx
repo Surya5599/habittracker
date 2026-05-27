@@ -238,12 +238,18 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
 
     const dayData = getDayData();
 
+    const normalizeJournal = (j: string | any[] | undefined): string => {
+        if (!j) return '';
+        if (Array.isArray(j)) return j.map((e: any) => (typeof e === 'string' ? e : e?.text || '')).filter(Boolean).join('\n\n');
+        return String(j);
+    };
+
     const [mood, setMood] = useState<number | undefined>(dayData.mood);
-    const [journal, setJournal] = useState(dayData.journal || '');
+    const [journal, setJournal] = useState(() => normalizeJournal(dayData.journal));
 
     useEffect(() => {
         setMood(dayData.mood);
-        setJournal(dayData.journal || '');
+        setJournal(normalizeJournal(dayData.journal));
     }, [dateKey, dayData.mood, dayData.journal]);
 
     // Lazy save effect
@@ -251,7 +257,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
         const timeoutId = setTimeout(() => {
             // Only save if the state differs from the prop (DB) state
             const currentJournal = journal || '';
-            const propJournal = dayData.journal || '';
+            const propJournal = normalizeJournal(dayData.journal);
 
             if (mood !== dayData.mood || currentJournal !== propJournal) {
                 updateNote(dateKey, { mood, journal });
@@ -331,7 +337,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
     const totalHabitsCount = visibleHabitsForDate.filter(h => !isHabitInactive(h.id, dateKey)).length;
     const totalTasksCount = (dayData.tasks || []).length;
     const completedTasksCount = (dayData.tasks || []).filter(task => task.completed).length;
-    const hasJournalEntry = Boolean((dayData.journal || '').trim());
+    const hasJournalEntry = Boolean(normalizeJournal(dayData.journal).trim());
     const hasMoodTracked = typeof mood === 'number';
 
     const clearLongPress = () => {

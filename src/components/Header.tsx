@@ -613,15 +613,15 @@ export const Header: React.FC<HeaderProps> = ({
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-3 gap-1.5">
-                                        <div className="rounded-lg bg-stone-50 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] px-2 py-1.5 text-center">
+                                        <div className="rounded-lg bg-stone-50 border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] px-2 py-1.5 text-center">
                                             <div className="text-[8px] font-black uppercase tracking-[0.2em] text-stone-400">Rate</div>
                                             <div className="font-serif text-sm font-black text-stone-900">{annualCompletionRate.toFixed(0)}%</div>
                                         </div>
-                                        <div className="rounded-lg bg-stone-50 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] px-2 py-1.5 text-center">
+                                        <div className="rounded-lg bg-stone-50 border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] px-2 py-1.5 text-center">
                                             <div className="text-[8px] font-black uppercase tracking-[0.2em] text-stone-400">Done</div>
                                             <div className="font-serif text-sm font-black text-stone-900">{Math.round(annualStats.totalCompletions)}</div>
                                         </div>
-                                        <div className="rounded-lg bg-stone-50 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] px-2 py-1.5 text-center">
+                                        <div className="rounded-lg bg-stone-50 border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] px-2 py-1.5 text-center">
                                             <div className="text-[8px] font-black uppercase tracking-[0.2em] text-stone-400">vs LY</div>
                                             {(() => {
                                                 const d = annualDelta;
@@ -633,7 +633,7 @@ export const Header: React.FC<HeaderProps> = ({
                                             })()}
                                         </div>
                                     </div>
-                                    <div className="rounded-lg border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] bg-stone-50/70 px-3 py-2 flex items-start gap-2">
+                                    <div className="rounded-lg border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-stone-50/70 px-3 py-2 flex items-start gap-2">
                                         <div className="flex-1 min-w-0">
                                             <div className="text-[8px] font-black uppercase tracking-[0.2em] text-stone-400">Strongest month</div>
                                             <div className="font-serif text-[11px] font-black text-stone-900 truncate">{annualStory.annualSummary?.support.strongestMonth?.month || 'Still emerging'}</div>

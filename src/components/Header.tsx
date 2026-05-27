@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, LayoutDashboard, Calendar, Clock, LogIn, LogOut, ArrowUp, ArrowDown, Minus, BarChart2, Activity, Sparkles, Search, Plus, BookOpen } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, LayoutDashboard, Calendar, Clock, LogIn, LogOut, ArrowUp, ArrowDown, Minus, BarChart2, Activity, Sparkles, Search, Plus, BookOpen, Flame } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 import { MONTHS } from '../constants';
 import { Habit, Theme, MonthStats, MonthlyGoal, MonthlyGoals } from '../types';
@@ -169,28 +169,21 @@ export const Header: React.FC<HeaderProps> = ({
     const [chartType, setChartType] = React.useState<'area' | 'bar'>(() => {
         return (localStorage.getItem('habit_chart_type') as 'area' | 'bar') || 'area';
     });
-    const [headerCollapsed, setHeaderCollapsed] = React.useState<boolean>(() => {
-        return localStorage.getItem('header_collapsed') === 'true';
+    const [statsOpen, setStatsOpen] = React.useState<boolean>(() => {
+        return localStorage.getItem('header_stats_open') === 'true';
     });
 
     const [showWeekSelector, setShowWeekSelector] = React.useState(false);
     const [showMonthSelector, setShowMonthSelector] = React.useState(false);
     const [showYearSelector, setShowYearSelector] = React.useState(false);
     const [autoAddHabitOnOpen, setAutoAddHabitOnOpen] = React.useState(false);
-    const leftPanelClass = "flex flex-col gap-2 mt-2 h-full";
-    const authButtonClass = "w-full min-h-[60px] flex items-center justify-center gap-2 text-[12px] font-black uppercase tracking-wider bg-black text-white px-2 py-2 rounded-xl hover:bg-stone-800 transition-colors shadow-sm";
-    const quickActionButtonClass = "flex min-h-[60px] items-center justify-center gap-2 rounded-2xl border border-stone-200 px-3 py-3 text-[11px] font-black uppercase tracking-wider transition-colors";
-    const quickActionMutedClass = `${quickActionButtonClass} bg-stone-50 text-stone-800 hover:bg-stone-100`;
-    const quickActionPrimaryClass = logTodayStatus === 'done'
-        ? `${quickActionButtonClass} border-emerald-300 bg-emerald-100 text-emerald-900 hover:bg-emerald-200`
+    const iconBtn = "p-1.5 rounded-full border border-stone-200 text-stone-400 hover:text-black hover:bg-stone-50 transition-colors";
+    const actionBtn = "hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-stone-200 text-[10px] font-black uppercase tracking-wide text-stone-600 hover:border-black hover:text-black transition-colors";
+    const logTodayBtn = logTodayStatus === 'done'
+        ? "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border-2 border-emerald-400 bg-emerald-50 text-[10px] font-black uppercase tracking-wide text-emerald-700 hover:bg-emerald-100 transition-colors"
         : logTodayStatus === 'partial'
-            ? `${quickActionButtonClass} border-amber-300 bg-amber-100 text-amber-900 hover:bg-amber-200`
-            : `${quickActionButtonClass} border-rose-300 bg-rose-100 text-rose-900 hover:bg-rose-200`;
-    const utilityCardClass = "rounded-2xl p-3 neo-border neo-shadow transition-all";
-    const habitsCardClass = `${utilityCardClass} flex min-h-[78px] flex-col items-center text-white hover:translate-y-0.5 hover:shadow-none group`;
-    const streakCardClass = `${utilityCardClass} flex min-h-[78px] cursor-pointer flex-col items-center justify-center bg-white text-center hover:bg-orange-50 group/streak`;
-    const utilityTitleClass = "text-[13px] font-black uppercase tracking-widest leading-none";
-    const utilityMetaClass = "mt-auto pt-2 text-[11px] font-black uppercase tracking-wide leading-none";
+            ? "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border-2 border-amber-400 bg-amber-50 text-[10px] font-black uppercase tracking-wide text-amber-700 hover:bg-amber-100 transition-colors"
+            : "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border-2 border-rose-400 bg-rose-50 text-[10px] font-black uppercase tracking-wide text-rose-700 hover:bg-rose-100 transition-colors";
     const trendDelta = view === 'weekly' ? weekDelta : view === 'monthly' ? monthDelta : annualDelta;
     const trendDeltaLabel = view === 'weekly' ? t('header.vsLW') : view === 'monthly' ? t('header.vsLM') : 'vs LY';
     const trendLegendCurrent = view === 'weekly' ? 'This week' : view === 'monthly' ? 'This month' : 'This year';
@@ -234,8 +227,8 @@ export const Header: React.FC<HeaderProps> = ({
     }, [chartType]);
 
     React.useEffect(() => {
-        localStorage.setItem('header_collapsed', String(headerCollapsed));
-    }, [headerCollapsed]);
+        localStorage.setItem('header_stats_open', String(statsOpen));
+    }, [statsOpen]);
 
     const badgeCount = React.useMemo(() => {
         return buildAchievements(
@@ -330,9 +323,10 @@ export const Header: React.FC<HeaderProps> = ({
         return '0.06em';
     };
 
+    const currentLabel = view === 'monthly' ? monthLabel : view === 'dashboard' ? dashboardLabel : weekLabel;
     const dateSelector = (
-        <div className="flex items-center justify-between bg-white border border-stone-300 px-2 py-1 relative date-selector-container min-w-[160px]">
-            <button onClick={() => view === 'monthly' ? navigateMonth('prev') : view === 'weekly' ? navigateWeek('prev') : setCurrentYear(prev => prev - 1)} className="hover:text-black active:scale-95 transition-transform"><ChevronLeft size={16} /></button>
+        <div className="flex items-center justify-between bg-white border-2 border-black px-2 py-1 relative date-selector-container min-w-[160px] shrink-0">
+            <button onClick={() => view === 'monthly' ? navigateMonth('prev') : view === 'weekly' ? navigateWeek('prev') : setCurrentYear(prev => prev - 1)} className="hover:text-black active:scale-95 transition-transform"><ChevronLeft size={15} /></button>
             <button
                 onClick={(e) => {
                     e.stopPropagation();
@@ -340,778 +334,335 @@ export const Header: React.FC<HeaderProps> = ({
                     else if (view === 'weekly') { setShowWeekSelector(!showWeekSelector); setShowMonthSelector(false); setShowYearSelector(false); }
                     else { setShowYearSelector(!showYearSelector); setShowWeekSelector(false); setShowMonthSelector(false); }
                 }}
-                className="flex-1 min-w-0 font-bold uppercase select-none hover:bg-stone-50 px-2 py-0.5 rounded-sm transition-colors whitespace-nowrap text-center"
-                style={{ fontSize: getSelectorFontSize(view === 'monthly' ? monthLabel : view === 'dashboard' ? dashboardLabel : weekLabel), letterSpacing: getSelectorLetterSpacing(view === 'monthly' ? monthLabel : view === 'dashboard' ? dashboardLabel : weekLabel), lineHeight: 1.1 }}
+                className="flex-1 min-w-0 font-black uppercase select-none hover:bg-stone-50 px-2 py-0.5 transition-colors whitespace-nowrap text-center"
+                style={{ fontSize: getSelectorFontSize(currentLabel), letterSpacing: getSelectorLetterSpacing(currentLabel), lineHeight: 1.1 }}
             >
-                {view === 'monthly' ? monthLabel : view === 'dashboard' ? dashboardLabel : weekLabel}
+                {currentLabel}
             </button>
             {view === 'monthly' && <MonthPicker isOpen={showMonthSelector} onClose={() => setShowMonthSelector(false)} currentMonthIndex={currentMonthIndex} currentYear={currentYear} onMonthSelect={handleMonthSelect} themePrimary={theme.primary} />}
             {view === 'dashboard' && <YearPicker isOpen={showYearSelector} onClose={() => setShowYearSelector(false)} currentYear={currentYear} onYearSelect={handleYearSelect} themePrimary={theme.primary} />}
             {view === 'weekly' && <WeekPicker isOpen={showWeekSelector} onClose={() => setShowWeekSelector(false)} currentDate={getCurrentWeekStart()} onWeekSelect={handleWeekSelect} themePrimary={theme.primary} />}
-            <button onClick={() => view === 'monthly' ? navigateMonth('next') : view === 'weekly' ? navigateWeek('next') : setCurrentYear(prev => prev + 1)} className="hover:text-black active:scale-95 transition-transform"><ChevronRight size={16} /></button>
+            <button onClick={() => view === 'monthly' ? navigateMonth('next') : view === 'weekly' ? navigateWeek('next') : setCurrentYear(prev => prev + 1)} className="hover:text-black active:scale-95 transition-transform"><ChevronRight size={15} /></button>
         </div>
     );
 
-    if (headerCollapsed) {
-        return (
-            <>
-                <div className="flex items-center gap-2 bg-white neo-border neo-shadow rounded-2xl px-3 py-2">
-                    {dateSelector}
-                    <div className="flex-1 rounded-lg border border-stone-200 bg-stone-100 p-0.5 flex items-center">
-                        <button onClick={() => { resetWeekOffset(); setView('weekly'); }} className={`flex-1 flex items-center justify-center gap-1 py-1 rounded-md text-[10px] font-black uppercase tracking-[0.1em] transition-all border ${view === 'weekly' ? 'bg-black text-white border-black' : 'border-transparent text-stone-500 hover:text-black'}`}>
-                            <Clock size={10} strokeWidth={3} /><span>Week</span>
-                        </button>
-                        <button onClick={() => { setView('monthly'); const now = new Date(); setCurrentMonthIndex(now.getMonth()); setCurrentYear(now.getFullYear()); }} className={`flex-1 flex items-center justify-center gap-1 py-1 rounded-md text-[10px] font-black uppercase tracking-[0.1em] transition-all border ${view === 'monthly' ? 'bg-black text-white border-black' : 'border-transparent text-stone-500 hover:text-black'}`}>
-                            <Calendar size={10} strokeWidth={3} /><span>Month</span>
-                        </button>
-                        <button onClick={() => { setView('dashboard'); setCurrentYear(new Date().getFullYear()); }} className={`flex-1 flex items-center justify-center gap-1 py-1 rounded-md text-[10px] font-black uppercase tracking-[0.1em] transition-all border ${view === 'dashboard' ? 'bg-black text-white border-black' : 'border-transparent text-stone-500 hover:text-black'}`}>
-                            <LayoutDashboard size={10} strokeWidth={3} /><span>Year</span>
-                        </button>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <button onClick={onSearch} className="p-1.5 rounded-full border border-stone-200 text-stone-400 hover:text-black hover:bg-stone-50 transition-colors"><Search size={13} /></button>
-                        <SettingsMenu theme={theme} setTheme={setTheme} themes={themes} settingsOpen={settingsOpen} setSettingsOpen={setSettingsOpen} settingsRef={settingsRef} language={language} setLanguage={setLanguage} startOfWeek={startOfWeek} setStartOfWeek={setStartOfWeek} defaultView={defaultView} setDefaultView={setDefaultView} colorMode={colorMode} setColorMode={setColorMode} cardStyle={cardStyle} setCardStyle={setCardStyle} onReportBug={onReportBug} onOpenWhatsNew={onOpenWhatsNew} onOpenTutorial={onOpenTutorial} onExportData={onExportData} onViewJournal={onViewJournal} isExportingData={isExportingData} hasUnreadFeedback={hasUnreadFeedback} hasUnseenWhatsNew={hasUnseenWhatsNew} />
-                        {!guestMode && <button onClick={handleLogout} className="p-1.5 rounded-full border border-stone-200 text-stone-300 hover:text-rose-500 transition-colors" title={t('header.logout')}><LogOut size={13} /></button>}
-                        <button onClick={() => setHeaderCollapsed(false)} className="p-1.5 rounded-full border border-stone-200 text-stone-400 hover:text-black hover:bg-stone-50 transition-colors" title="Expand header"><ChevronDown size={13} /></button>
-                    </div>
-                </div>
-                <HabitManagerModal isOpen={isHabitModalOpen} onClose={() => setIsHabitModalOpen(false)} habits={habits} addHabit={addHabit} updateHabit={updateHabit} removeHabit={removeHabit} reorderHabits={reorderHabits} toggleArchiveHabit={toggleArchiveHabit} themePrimary={theme.primary} autoAddOnOpen={autoAddHabitOnOpen} onAutoAddHandled={() => setAutoAddHabitOnOpen(false)} />
-                <ResolutionsModal isOpen={isResolutionsModalOpen} onClose={() => setIsResolutionsModalOpen(false)} year={currentYear} currentResolutions={monthlyGoals[`resolutions-${currentYear}`] || []} onSave={(resolutions) => updateMonthlyGoals(`resolutions-${currentYear}`, resolutions)} />
-            </>
-        );
-    }
+    const viewTabs = (
+        <div className="rounded-lg border-2 border-black bg-stone-100 p-0.5 flex items-center shrink-0">
+            <button onClick={() => { resetWeekOffset(); setView('weekly'); }} className={`flex items-center justify-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-[0.1em] transition-all border ${view === 'weekly' ? 'bg-black text-white border-black' : 'border-transparent text-stone-500 hover:text-black'}`}>
+                <Clock size={10} strokeWidth={3} /><span>Week</span>
+            </button>
+            <button onClick={() => { setView('monthly'); const now = new Date(); setCurrentMonthIndex(now.getMonth()); setCurrentYear(now.getFullYear()); }} className={`flex items-center justify-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-[0.1em] transition-all border ${view === 'monthly' ? 'bg-black text-white border-black' : 'border-transparent text-stone-500 hover:text-black'}`}>
+                <Calendar size={10} strokeWidth={3} /><span>Month</span>
+            </button>
+            <button onClick={() => { setView('dashboard'); setCurrentYear(new Date().getFullYear()); }} className={`flex items-center justify-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-[0.1em] transition-all border ${view === 'dashboard' ? 'bg-black text-white border-black' : 'border-transparent text-stone-500 hover:text-black'}`}>
+                <LayoutDashboard size={10} strokeWidth={3} /><span>Year</span>
+            </button>
+        </div>
+    );
+
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-            <div className="md:col-span-3 bg-white neo-border neo-shadow rounded-2xl p-3 flex flex-col gap-3 h-full justify-between relative min-h-[160px]">
-                <div className="flex flex-col gap-3">
-                    <div className="flex items-center justify-between border-b-[3px] border-black pb-2 mb-1">
-                        <span className="font-serif text-xl font-black uppercase tracking-tighter leading-none select-none">
-                            <span className="text-[#404040]">HABI</span>
-                            <span style={{ color: theme.secondary }}>CARD</span>
-                        </span>
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={onSearch}
-                                className="p-1.5 rounded-full border-2 border-black text-stone-400 hover:text-black hover:bg-stone-50 transition-colors"
-                            >
-                                <Search size={14} />
-                            </button>
-                            <SettingsMenu
-                                theme={theme}
-                                setTheme={setTheme}
-                                themes={themes}
-                                settingsOpen={settingsOpen}
-                                setSettingsOpen={setSettingsOpen}
-                                settingsRef={settingsRef}
-                                language={language}
-                                setLanguage={setLanguage}
-                                startOfWeek={startOfWeek}
-                                setStartOfWeek={setStartOfWeek}
-                                defaultView={defaultView}
-                                setDefaultView={setDefaultView}
-                                colorMode={colorMode}
-                                setColorMode={setColorMode}
-                                cardStyle={cardStyle}
-                                setCardStyle={setCardStyle}
-                                onReportBug={onReportBug}
-                                onOpenWhatsNew={onOpenWhatsNew}
-                                onOpenTutorial={onOpenTutorial}
-                                onExportData={onExportData}
-                                onViewJournal={onViewJournal}
-                                isExportingData={isExportingData}
-                                hasUnreadFeedback={hasUnreadFeedback}
-                                hasUnseenWhatsNew={hasUnseenWhatsNew}
-                            />
-                            {!guestMode && (
-                                <button
-                                    onClick={handleLogout}
-                                    className="p-1.5 rounded-full border-2 border-black text-stone-300 hover:text-rose-500 transition-colors"
-                                    title={t('header.logout')}
-                                >
-                                    <LogOut size={14} />
-                                </button>
-                            )}
-                            <button
-                                onClick={() => setHeaderCollapsed(true)}
-                                className="p-1.5 rounded-full border border-stone-200 text-stone-400 hover:text-black hover:bg-stone-50 transition-colors"
-                                title="Collapse header"
-                            >
-                                <ChevronUp size={14} />
-                            </button>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="flex-1 relative date-selector-container">
-                            {view === 'monthly' ? (
-                                <div className="flex items-center justify-between bg-stone-50 border-2 border-black px-2 py-1 relative">
-                                    <button onClick={() => navigateMonth('prev')} className="hover:text-black active:scale-95 transition-transform"><ChevronLeft size={16} /></button>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); setShowMonthSelector(!showMonthSelector); setShowWeekSelector(false); setShowYearSelector(false); }}
-                                        className="flex-1 min-w-0 font-black uppercase select-none hover:bg-stone-100 px-2 py-0.5 transition-colors whitespace-nowrap text-center"
-                                        style={{ fontSize: getSelectorFontSize(monthLabel), letterSpacing: getSelectorLetterSpacing(monthLabel), lineHeight: 1.1 }}
-                                    >
-                                        {monthLabel}
-                                    </button>
-                                    <MonthPicker
-                                        isOpen={showMonthSelector}
-                                        onClose={() => setShowMonthSelector(false)}
-                                        currentMonthIndex={currentMonthIndex}
-                                        currentYear={currentYear}
-                                        onMonthSelect={handleMonthSelect}
-                                        themePrimary={theme.primary}
-                                    />
-                                    <button onClick={() => navigateMonth('next')} className="hover:text-black active:scale-95 transition-transform"><ChevronRight size={16} /></button>
-                                </div>
-                            ) : view === 'dashboard' ? (
-                                <div className="flex items-center justify-between bg-stone-50 border-2 border-black px-2 py-1 relative">
-                                    <button onClick={() => setCurrentYear(prev => prev - 1)} className="hover:text-black active:scale-95 transition-transform"><ChevronLeft size={16} /></button>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); setShowYearSelector(!showYearSelector); setShowWeekSelector(false); setShowMonthSelector(false); }}
-                                        className="flex-1 min-w-0 font-black uppercase select-none hover:bg-stone-100 px-2 py-0.5 transition-colors whitespace-nowrap text-center"
-                                        style={{ fontSize: getSelectorFontSize(dashboardLabel), letterSpacing: getSelectorLetterSpacing(dashboardLabel), lineHeight: 1.1 }}
-                                    >
-                                        {dashboardLabel}
-                                    </button>
-                                    <YearPicker
-                                        isOpen={showYearSelector}
-                                        onClose={() => setShowYearSelector(false)}
-                                        currentYear={currentYear}
-                                        onYearSelect={handleYearSelect}
-                                        themePrimary={theme.primary}
-                                    />
-                                    <button onClick={() => setCurrentYear(prev => prev + 1)} className="hover:text-black active:scale-95 transition-transform"><ChevronRight size={16} /></button>
-                                </div>
-                            ) : (
-                                <div className="flex items-center justify-between bg-stone-50 border-2 border-black px-2 py-1 relative">
-                                    <button onClick={() => navigateWeek('prev')} className="hover:text-black active:scale-95 transition-transform"><ChevronLeft size={16} /></button>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); setShowWeekSelector(!showWeekSelector); setShowMonthSelector(false); setShowYearSelector(false); }}
-                                        className="flex-1 min-w-0 font-black uppercase select-none hover:bg-stone-100 px-2 py-0.5 transition-colors whitespace-nowrap text-center"
-                                        style={{ fontSize: getSelectorFontSize(weekLabel), letterSpacing: getSelectorLetterSpacing(weekLabel), lineHeight: 1.1 }}
-                                    >
-                                        {weekLabel}
-                                    </button>
-                                    <WeekPicker
-                                        isOpen={showWeekSelector}
-                                        onClose={() => setShowWeekSelector(false)}
-                                        currentDate={getCurrentWeekStart()}
-                                        onWeekSelect={handleWeekSelect}
-                                        themePrimary={theme.primary}
-                                    />
-                                    <button onClick={() => navigateWeek('next')} className="hover:text-black active:scale-95 transition-transform"><ChevronRight size={16} /></button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+        <div className="flex flex-col gap-3">
 
-                    <div className="flex items-center gap-2 w-full">
-                        <div className="flex-1 border-[3px] border-black bg-stone-100 p-1 relative flex items-center shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-                            <button
-                                onClick={() => { resetWeekOffset(); setView('weekly'); }}
-                                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-black uppercase tracking-[0.12em] transition-all z-10 relative border-2 ${view === 'weekly' ? 'bg-black text-white border-black' : 'border-transparent text-stone-500 hover:text-black hover:bg-white'}`}
-                                title="Week"
-                            >
-                                <Clock size={12} strokeWidth={3} />
-                                <span>Week</span>
-                            </button>
-
-                            <button
-                                onClick={() => {
-                                    setView('monthly');
-                                    const now = new Date();
-                                    setCurrentMonthIndex(now.getMonth());
-                                    setCurrentYear(now.getFullYear());
-                                }}
-                                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-black uppercase tracking-[0.12em] transition-all z-10 relative border-2 ${view === 'monthly' ? 'bg-black text-white border-black' : 'border-transparent text-stone-500 hover:text-black hover:bg-white'}`}
-                                title="Month"
-                            >
-                                <Calendar size={12} strokeWidth={3} />
-                                <span>Month</span>
-                            </button>
-
-                            <button
-                                onClick={() => {
-                                    setView('dashboard');
-                                    setCurrentYear(new Date().getFullYear());
-                                }}
-                                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-black uppercase tracking-[0.12em] transition-all z-10 relative border-2 ${view === 'dashboard' ? 'bg-black text-white border-black' : 'border-transparent text-stone-500 hover:text-black hover:bg-white'}`}
-                                title="Year"
-                            >
-                                <LayoutDashboard size={12} strokeWidth={3} />
-                                <span>Year</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                {view === 'monthly' ? (
-                    <div className={leftPanelClass}>
-                        {guestMode ? (
-                            <button
-                                onClick={() => window.location.href = '/signin'}
-                                className={authButtonClass}
-                            >
-                                <LogIn size={14} />
-                                Sign up / Sign in
-                            </button>
-                        ) : null}
-
-                        <div className="grid grid-cols-3 gap-2">
-                            <button
-                                onClick={() => {
-                                    setAutoAddHabitOnOpen(true);
-                                    setIsHabitModalOpen(true);
-                                }}
-                                className={quickActionMutedClass}
-                            >
-                                <Plus size={14} />
-                                {t('common.addHabit')}
-                            </button>
-                            <button
-                                onClick={onLogToday}
-                                className={quickActionPrimaryClass}
-                            >
-                                <Clock size={14} />
-                                {t('common.logToday')}
-                            </button>
-                            <button
-                                onClick={onViewJournal}
-                                className={quickActionMutedClass}
-                            >
-                                <BookOpen size={14} />
-                                My Journal
-                            </button>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2 flex-grow">
-                            <button
-                                onClick={() => setIsHabitModalOpen(true)}
-                                className={`my-habits-button ${habitsCardClass}`}
-                                style={{ backgroundColor: theme.secondary }}
-                            >
-                                <span className={utilityTitleClass}>{t('common.myHabits')}</span>
-                                <span className="mt-1 text-xl font-black leading-none">{habits.length}</span>
-                                <span className={utilityMetaClass}>{t('common.manageHabits')}</span>
-                            </button>
-                            <div
-                                onClick={() => setIsStreakModalOpen(true)}
-                                className={streakCardClass}
-                            >
-                                <p className="text-[8px] font-black opacity-50 uppercase tracking-widest leading-none group-hover/streak:text-orange-500 transition-colors">{t('common.currentStreak')}</p>
-                                <p className="text-2xl font-black mt-1 leading-none group-hover/streak:scale-110 transition-transform">{annualStats.currentStreak} <span className="text-[10px]">{t('common.days')}</span></p>
-                                <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-stone-500">{badgeCount} badges</p>
-                            </div>
-                        </div>
-                    </div>
-                ) : view === 'weekly' ? (
-                    <div className={leftPanelClass}>
-                        {guestMode ? (
-                            <button
-                                onClick={() => window.location.href = '/signin'}
-                                className={authButtonClass}
-                            >
-                                <LogIn size={14} />
-                                Sign up / Sign in
-                            </button>
-                        ) : null}
-
-                        <div className="grid grid-cols-3 gap-2">
-                            <button
-                                onClick={() => {
-                                    setAutoAddHabitOnOpen(true);
-                                    setIsHabitModalOpen(true);
-                                }}
-                                className={quickActionMutedClass}
-                            >
-                                <Plus size={14} />
-                                {t('common.addHabit')}
-                            </button>
-                            <button
-                                onClick={onLogToday}
-                                className={quickActionPrimaryClass}
-                            >
-                                <Clock size={14} />
-                                {t('common.logToday')}
-                            </button>
-                            <button
-                                onClick={onViewJournal}
-                                className={quickActionMutedClass}
-                            >
-                                <BookOpen size={14} />
-                                My Journal
-                            </button>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2 flex-grow">
-                            <button
-                                onClick={() => setIsHabitModalOpen(true)}
-                                className={`my-habits-button ${habitsCardClass}`}
-                                style={{ backgroundColor: theme.secondary }}
-                            >
-                                <span className={utilityTitleClass}>{t('common.myHabits')}</span>
-                                <span className="mt-1 text-xl font-black leading-none">{habits.length}</span>
-                                <span className={utilityMetaClass}>{t('common.manageHabits')}</span>
-                            </button>
-                            <div
-                                onClick={() => setIsStreakModalOpen(true)}
-                                className={streakCardClass}
-                            >
-                                <p className="text-[8px] font-black opacity-50 uppercase tracking-widest leading-none group-hover/streak:text-orange-500 transition-colors">{t('common.currentStreak')}</p>
-                                <p className="text-2xl font-black mt-1 leading-none group-hover/streak:scale-110 transition-transform">{annualStats.currentStreak} <span className="text-[10px]">{t('common.days')}</span></p>
-                                <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-stone-500">{badgeCount} badges</p>
-                            </div>
-                        </div>
-                    </div>
-                ) : (
-                    <div className={leftPanelClass}>
-                        {guestMode ? (
-                            <button
-                                onClick={() => window.location.href = '/signin'}
-                                className={authButtonClass}
-                            >
-                                <LogIn size={14} />
-                                Sign up / Sign in
-                            </button>
-                        ) : null}
-
-                        <div className="grid grid-cols-3 gap-2">
-                            <button
-                                onClick={() => {
-                                    setAutoAddHabitOnOpen(true);
-                                    setIsHabitModalOpen(true);
-                                }}
-                                className={quickActionMutedClass}
-                            >
-                                <Plus size={14} />
-                                {t('common.addHabit')}
-                            </button>
-                            <button
-                                onClick={onLogToday}
-                                className={quickActionPrimaryClass}
-                            >
-                                <Clock size={14} />
-                                {t('common.logToday')}
-                            </button>
-                            <button
-                                onClick={onViewJournal}
-                                className={quickActionMutedClass}
-                            >
-                                <BookOpen size={14} />
-                                My Journal
-                            </button>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2 flex-grow">
-                            <button
-                                onClick={() => setIsHabitModalOpen(true)}
-                                className={`my-habits-button ${habitsCardClass}`}
-                                style={{ backgroundColor: theme.secondary }}
-                            >
-                                <span className={utilityTitleClass}>{t('common.myHabits')}</span>
-                                <span className="mt-1 text-xl font-black leading-none">{habits.length}</span>
-                                <span className={utilityMetaClass}>{t('common.manageHabits')}</span>
-                            </button>
-                            <div
-                                onClick={() => setIsStreakModalOpen(true)}
-                                className={streakCardClass}
-                            >
-                                <p className="text-[8px] font-black opacity-50 uppercase tracking-widest leading-none group-hover/streak:text-orange-500 transition-colors">{t('common.currentStreak')}</p>
-                                <p className="text-2xl font-black mt-1 leading-none group-hover/streak:scale-110 transition-transform">{annualStats.currentStreak} <span className="text-[10px]">{t('common.days')}</span></p>
-                                <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-stone-500">{badgeCount} badges</p>
-                            </div>
-                        </div>
-                    </div>
+            {/* ─── TOOLBAR ─── */}
+            <div className="flex items-center gap-2 bg-white neo-border neo-shadow rounded-2xl px-3 py-2 flex-wrap">
+                {/* Logo */}
+                <span className="font-serif text-lg font-black uppercase tracking-tighter leading-none select-none shrink-0 pr-1">
+                    <span className="text-[#404040]">HABI</span>
+                    <span style={{ color: theme.secondary }}>CARD</span>
+                </span>
+                <div className="w-px h-5 bg-stone-200 shrink-0" />
+                {/* Date nav */}
+                {dateSelector}
+                {/* View tabs */}
+                {viewTabs}
+                <div className="hidden sm:block w-px h-5 bg-stone-200 shrink-0" />
+                {/* Streak */}
+                <button
+                    onClick={() => setIsStreakModalOpen(true)}
+                    className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-stone-200 text-[10px] font-black uppercase tracking-wide text-stone-600 hover:border-black hover:text-black transition-colors shrink-0"
+                >
+                    <Flame size={11} className="text-orange-500" />
+                    {annualStats.currentStreak}d · {badgeCount} badges
+                </button>
+                {/* Quick actions */}
+                <button
+                    onClick={() => { setAutoAddHabitOnOpen(true); setIsHabitModalOpen(true); }}
+                    className={actionBtn}
+                >
+                    <Plus size={11} strokeWidth={3} />{t('common.addHabit')}
+                </button>
+                <button onClick={onLogToday} className={logTodayBtn}>
+                    <Clock size={11} strokeWidth={3} />{t('common.logToday')}
+                </button>
+                <button onClick={onViewJournal} className={actionBtn}>
+                    <BookOpen size={11} strokeWidth={3} />Journal
+                </button>
+                {/* Spacer */}
+                <div className="flex-1" />
+                {/* Guest sign-in */}
+                {guestMode && (
+                    <button onClick={() => window.location.href = '/signin'} className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border-2 border-black bg-black text-white text-[10px] font-black uppercase tracking-wide hover:bg-stone-800 transition-colors shrink-0">
+                        <LogIn size={11} strokeWidth={3} />Sign in
+                    </button>
                 )}
+                {/* Icon buttons */}
+                <button onClick={onSearch} className={iconBtn}><Search size={13} /></button>
+                <SettingsMenu
+                    theme={theme} setTheme={setTheme} themes={themes}
+                    settingsOpen={settingsOpen} setSettingsOpen={setSettingsOpen} settingsRef={settingsRef}
+                    language={language} setLanguage={setLanguage}
+                    startOfWeek={startOfWeek} setStartOfWeek={setStartOfWeek}
+                    defaultView={defaultView} setDefaultView={setDefaultView}
+                    colorMode={colorMode} setColorMode={setColorMode}
+                    cardStyle={cardStyle} setCardStyle={setCardStyle}
+                    onReportBug={onReportBug} onOpenWhatsNew={onOpenWhatsNew} onOpenTutorial={onOpenTutorial}
+                    onExportData={onExportData} onViewJournal={onViewJournal}
+                    isExportingData={isExportingData} hasUnreadFeedback={hasUnreadFeedback} hasUnseenWhatsNew={hasUnseenWhatsNew}
+                />
+                {!guestMode && (
+                    <button onClick={handleLogout} className={iconBtn} title={t('header.logout')}>
+                        <LogOut size={13} />
+                    </button>
+                )}
+                {/* Stats toggle */}
+                <button
+                    onClick={() => setStatsOpen(prev => !prev)}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-stone-200 text-stone-500 hover:border-black hover:text-black transition-colors text-[10px] font-black uppercase tracking-wide shrink-0"
+                >
+                    <BarChart2 size={12} />
+                    <span className="hidden sm:inline">Stats</span>
+                    {statsOpen ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+                </button>
             </div>
 
-            <div className={`md:col-span-6 neo-border neo-shadow rounded-2xl min-h-[160px] h-auto relative overflow-hidden flex flex-col ${isDarkMode ? 'bg-[#151515]' : 'bg-[#f9f9f9]'}`}>
-                <div className="h-[3px] shrink-0 rounded-t-2xl" style={{ backgroundColor: theme.primary }} />
-                <div className="flex flex-col flex-1 p-2">
-                <div className="flex justify-between items-center mb-6">
-                    <h4 className="font-serif font-black uppercase text-base tracking-widest">
-                        {view === 'monthly' ? t('header.monthlyTrends') : (view === 'weekly' ? t('header.weeklyTrends') : t('header.annualTrends'))}
-                    </h4>
-                    <div className="flex items-center gap-2">
-                        <div className={`text-sm font-black px-3 py-1.5 border-[3px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] ${trendDelta >= 0
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-red-100 text-red-700'
-                                }`}>
-                            {Math.abs(trendDelta).toFixed(0)}% {trendDeltaLabel}
+            {/* ─── STATS PANEL ─── */}
+            {statsOpen && (
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
+
+                    {/* Trend chart */}
+                    <div className={`neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col min-h-[220px] ${isDarkMode ? 'bg-[#151515]' : 'bg-[#f9f9f9]'}`}>
+                        <div className="h-[3px] shrink-0 rounded-t-2xl" style={{ backgroundColor: theme.primary }} />
+                        <div className="flex flex-col flex-1 p-4">
+                            <div className="flex justify-between items-center mb-4">
+                                <h4 className="font-serif font-black uppercase text-sm tracking-widest">
+                                    {view === 'monthly' ? t('header.monthlyTrends') : (view === 'weekly' ? t('header.weeklyTrends') : t('header.annualTrends'))}
+                                </h4>
+                                <div className="flex items-center gap-2">
+                                    <div className={`text-sm font-black px-3 py-1 border-[3px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] ${trendDelta >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                        {Math.abs(trendDelta).toFixed(0)}% {trendDeltaLabel}
+                                    </div>
+                                    <div className="hidden sm:flex items-center gap-2 rounded-full border-2 border-black bg-white/70 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-stone-500">
+                                        <span className="inline-flex items-center gap-1">
+                                            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: theme.primary }} />
+                                            {trendLegendCurrent}
+                                        </span>
+                                        <span className="inline-flex items-center gap-1">
+                                            <span className="h-[2px] w-3 rounded-full" style={{ backgroundColor: theme.secondary }} />
+                                            {trendLegendPrevious}
+                                        </span>
+                                    </div>
+                                    <button
+                                        onClick={() => setChartType(prev => prev === 'area' ? 'bar' : 'area')}
+                                        className="p-1 hover:bg-stone-200 rounded-sm transition-colors text-stone-400 hover:text-stone-600"
+                                        title={t('header.switchChart')}
+                                    >
+                                        {chartType === 'area' ? <BarChart2 size={12} /> : <Activity size={12} />}
+                                    </button>
+                                </div>
+                            </div>
+                            <ResponsiveContainer width="100%" height="100%" minHeight={160} key={view + chartType}>
+                                {chartType === 'area' ? (
+                                    <AreaChart data={trendChartData} margin={{ right: 20, left: 20, bottom: 0, top: 10 }}>
+                                        <defs>
+                                            <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor={theme.primary} stopOpacity={0.8} />
+                                                <stop offset="95%" stopColor={theme.primary} stopOpacity={0} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? "rgba(255,255,255,0.14)" : "#ddd"} />
+                                        <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold', fill: isDarkMode ? '#a8a8a8' : '#666' }} interval={view === 'monthly' ? 'preserveStartEnd' : 0} minTickGap={0} padding={{ left: 10, right: 10 }} />
+                                        <Tooltip contentStyle={{ backgroundColor: isDarkMode ? '#161616' : '#fff', border: isDarkMode ? '1px solid #2d2d2d' : '2px solid black', borderRadius: isDarkMode ? '6px' : '0', color: isDarkMode ? '#ededed' : '#111', fontWeight: 'bold' }} formatter={(value: any, name: string) => [`${value} completed`, name === 'current' ? trendLegendCurrent : trendLegendPrevious]} />
+                                        <Area type="monotone" dataKey="previous" name="previous" stroke={theme.secondary} strokeWidth={2} strokeDasharray="6 6" fillOpacity={0} fill="transparent" />
+                                        <Area type="monotone" dataKey="current" name="current" stroke={isDarkMode ? "#d6d6d6" : "#000"} strokeWidth={2.5} fillOpacity={1} fill="url(#colorVal)" />
+                                    </AreaChart>
+                                ) : (
+                                    <BarChart data={trendChartData} margin={{ right: 20, left: 20, bottom: 20, top: 10 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? "rgba(255,255,255,0.14)" : "#ddd"} />
+                                        <XAxis dataKey="label" tick={{ fontSize: 9, fontWeight: 'bold', fill: isDarkMode ? '#a8a8a8' : '#666' }} stroke={isDarkMode ? "#3a3a3a" : "#999"} tickLine={false} interval={view === 'monthly' ? 'preserveStartEnd' : 0} minTickGap={0} padding={{ left: 5, right: 5 }} label={{ value: view === 'monthly' ? 'Day of Month' : (view === 'weekly' ? 'Day of Week' : 'Month'), position: 'insideBottom', offset: -5, style: { fontSize: 8, fontWeight: 'bold', fill: isDarkMode ? '#a8a8a8' : '#999', textTransform: 'uppercase' } }} />
+                                        <YAxis tick={{ fontSize: 9, fontWeight: 'bold', fill: isDarkMode ? '#a8a8a8' : '#666' }} stroke={isDarkMode ? "#3a3a3a" : "#999"} tickLine={false} width={25} domain={[0, 'dataMax + 1']} allowDecimals={false} />
+                                        <Tooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} contentStyle={{ backgroundColor: isDarkMode ? '#161616' : '#fff', border: isDarkMode ? '1px solid #2d2d2d' : '2px solid black', borderRadius: isDarkMode ? '6px' : '0', color: isDarkMode ? '#ededed' : '#111', fontWeight: 'bold', boxShadow: isDarkMode ? '0 10px 30px rgba(0,0,0,0.45)' : '4px 4px 0px rgba(0,0,0,0.1)' }} formatter={(value: any, name: string) => [`${value} completed`, name === 'current' ? trendLegendCurrent : trendLegendPrevious]} />
+                                        <Bar dataKey="previous" name="previous" fill={theme.secondary} fillOpacity={0.55} radius={[4, 4, 0, 0]} stroke={isDarkMode ? "#2d2d2d" : "#000"} strokeWidth={1} animationDuration={900} animationBegin={0} isAnimationActive={true} />
+                                        <Bar dataKey="current" name="current" fill={theme.primary} radius={[4, 4, 0, 0]} stroke={isDarkMode ? "#2d2d2d" : "#000"} strokeWidth={1} animationDuration={1000} animationBegin={0} isAnimationActive={true} />
+                                    </BarChart>
+                                )}
+                            </ResponsiveContainer>
                         </div>
-                        <div className="hidden sm:flex items-center gap-2 rounded-full border-2 border-black bg-white/70 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-stone-500">
-                            <span className="inline-flex items-center gap-1">
-                                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: theme.primary }} />
-                                {trendLegendCurrent}
-                            </span>
-                            <span className="inline-flex items-center gap-1">
-                                <span className="h-[2px] w-3 rounded-full" style={{ backgroundColor: theme.secondary }} />
-                                {trendLegendPrevious}
-                            </span>
-                        </div>
-                        <button
-                            onClick={() => setChartType(prev => prev === 'area' ? 'bar' : 'area')}
-                            className="p-1 hover:bg-stone-200 rounded-sm transition-colors text-stone-400 hover:text-stone-600"
-                            title={t('header.switchChart')}
-                        >
-                            {chartType === 'area' ? <BarChart2 size={12} /> : <Activity size={12} />}
-                        </button>
                     </div>
-                </div>
-                <ResponsiveContainer width="100%" height="100%" minHeight={120} key={view + chartType}>
-                    {chartType === 'area' ? (
-                        <AreaChart data={trendChartData} margin={{ right: 20, left: 20, bottom: 0, top: 10 }}>
-                            <defs>
-                                <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor={theme.primary} stopOpacity={0.8} />
-                                    <stop offset="95%" stopColor={theme.primary} stopOpacity={0} />
-                                </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? "rgba(255, 255, 255, 0.14)" : "#ddd"} />
-                            <XAxis
-                                dataKey="label"
-                                axisLine={false}
-                                tickLine={false}
-                                tick={{ fontSize: 10, fontWeight: 'bold', fill: isDarkMode ? '#a8a8a8' : '#666' }}
-                                interval={view === 'monthly' ? 'preserveStartEnd' : 0}
-                                minTickGap={0}
-                                padding={{ left: 10, right: 10 }}
-                            />
-                            <Tooltip
-                                contentStyle={{
-                                    backgroundColor: isDarkMode ? '#161616' : '#fff',
-                                    border: isDarkMode ? '1px solid #2d2d2d' : '2px solid black',
-                                    borderRadius: isDarkMode ? '6px' : '0',
-                                    color: isDarkMode ? '#ededed' : '#111',
-                                    fontWeight: 'bold'
-                                }}
-                                formatter={(value: any, name: string) => [
-                                    `${value} completed`,
-                                    name === 'current' ? trendLegendCurrent : trendLegendPrevious
-                                ]}
-                            />
-                            <Area
-                                type="monotone"
-                                dataKey="previous"
-                                name="previous"
-                                stroke={theme.secondary}
-                                strokeWidth={2}
-                                strokeDasharray="6 6"
-                                fillOpacity={0}
-                                fill="transparent"
-                            />
-                            <Area
-                                type="monotone"
-                                dataKey="current"
-                                name="current"
-                                stroke={isDarkMode ? "#d6d6d6" : "#000"}
-                                strokeWidth={2.5}
-                                fillOpacity={1}
-                                fill="url(#colorVal)"
-                            />
-                        </AreaChart>
-                    ) : (
-                        <BarChart data={trendChartData} margin={{ right: 20, left: 20, bottom: 20, top: 10 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? "rgba(255, 255, 255, 0.14)" : "#ddd"} />
-                            <XAxis
-                                dataKey="label"
-                                tick={{ fontSize: 9, fontWeight: 'bold', fill: isDarkMode ? '#a8a8a8' : '#666' }}
-                                stroke={isDarkMode ? "#3a3a3a" : "#999"}
-                                tickLine={false}
-                                interval={view === 'monthly' ? 'preserveStartEnd' : 0}
-                                minTickGap={0}
-                                padding={{ left: 5, right: 5 }}
-                                label={{
-                                    value: view === 'monthly' ? 'Day of Month' : (view === 'weekly' ? 'Day of Week' : 'Month'),
-                                    position: 'insideBottom',
-                                    offset: -5,
-                                    style: { fontSize: 8, fontWeight: 'bold', fill: isDarkMode ? '#a8a8a8' : '#999', textTransform: 'uppercase' }
-                                }}
-                            />
-                            <YAxis
-                                tick={{ fontSize: 9, fontWeight: 'bold', fill: isDarkMode ? '#a8a8a8' : '#666' }}
-                                stroke={isDarkMode ? "#3a3a3a" : "#999"}
-                                tickLine={false}
-                                width={25}
-                                domain={[0, 'dataMax + 1']}
-                                allowDecimals={false}
-                            />
-                            <Tooltip
-                                cursor={{ fill: 'rgba(0,0,0,0.05)' }}
-                                contentStyle={{
-                                    backgroundColor: isDarkMode ? '#161616' : '#fff',
-                                    border: isDarkMode ? '1px solid #2d2d2d' : '2px solid black',
-                                    borderRadius: isDarkMode ? '6px' : '0',
-                                    color: isDarkMode ? '#ededed' : '#111',
-                                    fontWeight: 'bold',
-                                    boxShadow: isDarkMode ? '0 10px 30px rgba(0,0,0,0.45)' : '4px 4px 0px rgba(0,0,0,0.1)'
-                                }}
-                                formatter={(value: any, name: string) => [
-                                    `${value} completed`,
-                                    name === 'current' ? trendLegendCurrent : trendLegendPrevious
-                                ]}
-                            />
-                            <Bar
-                                dataKey="previous"
-                                name="previous"
-                                fill={theme.secondary}
-                                fillOpacity={0.55}
-                                radius={[4, 4, 0, 0]}
-                                stroke={isDarkMode ? "#2d2d2d" : "#000"}
-                                strokeWidth={1}
-                                animationDuration={900}
-                                animationBegin={0}
-                                isAnimationActive={true}
-                            />
-                            <Bar
-                                dataKey="current"
-                                name="current"
-                                fill={theme.primary}
-                                radius={[4, 4, 0, 0]}
-                                stroke={isDarkMode ? "#2d2d2d" : "#000"}
-                                strokeWidth={1}
-                                animationDuration={1000}
-                                animationBegin={0}
-                                isAnimationActive={true}
-                            />
-                        </BarChart>
-                    )}
-                </ResponsiveContainer>
-                <DailyQuote />
-                <DailyTips />
-                </div>
-            </div>
 
-            <div className="md:col-span-3 bg-white neo-border neo-shadow rounded-2xl relative flex flex-col overflow-hidden min-h-[160px]">
-                <div className="text-white text-[11px] font-black uppercase py-2 text-center tracking-widest border-b-[3px] border-black drop-shadow-sm" style={{ backgroundColor: theme.primary }}>
-                    {view === 'monthly' ? t('header.monthlySuccess') : (view === 'weekly' ? t('header.weeklySuccess') : t('header.annualPerformance'))}
-                </div>
-                <div className="flex-1 flex flex-col items-center justify-center p-2 relative">
-                    {view === 'monthly' ? (
-                        <div className="w-full h-full flex flex-col gap-1 overflow-hidden">
-                            <div className="flex items-center justify-between px-2 pt-1 mb-1">
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] font-black uppercase text-stone-400 tracking-widest leading-none mb-2">Month Story</span>
-                                    <div className="flex items-baseline gap-1">
-                                        <span className="text-3xl font-black leading-none">{monthProgress.completed}</span>
-                                        <span className="text-lg font-black text-stone-300">/</span>
-                                        <span className="text-lg font-black text-stone-300">{monthProgress.total}</span>
-                                    </div>
-                                </div>
-                                <div className="w-20 h-20 relative">
-                                    <ResponsiveContainer width="100%" height="100%" minHeight={80}>
-                                        <PieChart>
-                                            <Pie
-                                                data={[{ value: monthProgress.completed || 0.1 }, { value: monthProgress.remaining || 0 }]}
-                                                innerRadius="75%" outerRadius="100%" paddingAngle={2} dataKey="value" startAngle={90} endAngle={450}
-                                                isAnimationActive={true}
-                                                animationDuration={1000}
-                                                animationBegin={0}
-                                            >
-                                                <Cell fill={theme.primary} /><Cell fill={isDarkMode ? "#2a2a2a" : "#f0f0f0"} />
-                                            </Pie>
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                        <span className="text-sm font-black leading-none" style={{ color: theme.primary }}>
-                                            {monthProgress.percentage.toFixed(0)}%
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="min-h-[140px] max-h-[180px] bg-stone-50/50 neo-border rounded-xl p-2 overflow-y-auto custom-scrollbar">
-                                {(() => {
-                                    const isCurrentMonth = currentMonthIndex === currentMonthOfYear && currentYear === currentFullYear;
-                                    const daysElapsed = isCurrentMonth ? currentDayOfMonth : new Date(currentYear, currentMonthIndex + 1, 0).getDate();
-                                    const story = buildMonthlyStory(monthProgress, topHabitsThisMonth, monthDelta, t, daysElapsed);
-                                    return (
-                                        <div className="space-y-3">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <Sparkles size={12} className="text-amber-500" />
-                                                <span className="font-serif text-[10px] font-black uppercase tracking-widest text-stone-500">{t('header.yourStoryMonth')}</span>
-                                            </div>
-                                            {story.sections.map((section: any, idx: number) => (
-                                                <p key={idx} className="text-[13px] leading-relaxed font-bold">
-                                                    <FormattedText
-                                                        text={section.text}
-                                                        highlightColor={theme.secondary}
-                                                        className={section.type === 'consistency' ? '' : 'italic'}
-                                                    />
-                                                </p>
-                                            ))}
-                                        </div>
-                                    );
-                                })()}
-                            </div>
+                    {/* Story / success panel */}
+                    <div className="bg-white neo-border neo-shadow rounded-2xl relative flex flex-col overflow-hidden">
+                        <div className="text-white text-[11px] font-black uppercase py-2 text-center tracking-widest border-b-[3px] border-black" style={{ backgroundColor: theme.primary }}>
+                            {view === 'monthly' ? t('header.monthlySuccess') : (view === 'weekly' ? t('header.weeklySuccess') : t('header.annualPerformance'))}
                         </div>
-                    ) : view === 'weekly' ? (
-                        <div className="w-full h-full flex flex-col gap-1 overflow-hidden">
-                            <div className="flex items-center justify-between px-2 pt-1 mb-1">
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] font-black uppercase text-stone-400 tracking-widest leading-none mb-2">{t('header.habitMaster')}</span>
-                                    <div className="flex items-baseline gap-1">
-                                        <span className="text-3xl font-black leading-none">{weekProgress.completed}</span>
-                                        <span className="text-lg font-black text-stone-300">/</span>
-                                        <span className="text-lg font-black text-stone-300">{weekProgress.total}</span>
-                                    </div>
-                                </div>
-                                <div className="w-20 h-20 relative">
-                                    <ResponsiveContainer width="100%" height="100%" minHeight={80}>
-                                        <PieChart>
-                                            <Pie
-                                                data={[{ value: weekProgress.completed || 0.1 }, { value: weekProgress.remaining || 0 }]}
-                                                innerRadius="75%" outerRadius="100%" paddingAngle={2} dataKey="value" startAngle={90} endAngle={450}
-                                                isAnimationActive={true}
-                                                animationDuration={1000}
-                                                animationBegin={0}
-                                            >
-                                                <Cell fill={theme.primary} /><Cell fill={isDarkMode ? "#2a2a2a" : "#f0f0f0"} />
-                                            </Pie>
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                        <span className="text-sm font-black leading-none" style={{ color: theme.primary }}>
-                                            {weekProgress.percentage.toFixed(0)}%
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="min-h-[140px] max-h-[180px] bg-stone-50/50 neo-border rounded-xl p-2 overflow-y-auto custom-scrollbar">
-                                {(() => {
-                                    const daysElapsed = weekOffset === 0
-                                        ? (startOfWeek === 'sunday' ? today.getDay() + 1 : (today.getDay() === 0 ? 7 : today.getDay()))
-                                        : 7;
-                                    const story = buildWeeklyStory(weekProgress, weeklyStats, habits, t, daysElapsed);
-                                    return (
-                                        <div className="space-y-3">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <Sparkles size={12} className="text-amber-500" />
-                                                <span className="font-serif text-[10px] font-black uppercase tracking-widest text-stone-500">{t('header.yourStoryWeek')}</span>
+                        <div className="flex-1 flex flex-col p-3 gap-2 overflow-y-auto">
+                            {view === 'monthly' ? (
+                                <>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-[10px] font-black uppercase text-stone-400 tracking-widest leading-none mb-1">Month Story</p>
+                                            <div className="flex items-baseline gap-1">
+                                                <span className="text-3xl font-black leading-none">{monthProgress.completed}</span>
+                                                <span className="text-lg font-black text-stone-300">/ {monthProgress.total}</span>
                                             </div>
-                                            {story.sections.map((section: any, idx: number) => (
-                                                <p key={idx} className="text-[13px] leading-relaxed font-bold">
-                                                    <FormattedText
-                                                        text={section.text}
-                                                        primaryColor={theme.primary}
-                                                        className={section.type === 'consistency' ? 'text-black' : 'text-black'}
-                                                    />
-                                                </p>
-                                            ))}
                                         </div>
-                                    );
-                                })()}
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="w-full h-full flex flex-col gap-1 overflow-hidden">
-                            <div className="flex items-start justify-between gap-3 px-2 pt-1">
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Sparkles size={12} className="text-amber-500" />
-                                        <span className="font-serif text-[10px] font-black uppercase tracking-widest text-stone-500">{t('annualUi.story.title')}</span>
-                                    </div>
-                                    {annualStory.annualSummary ? (
-                                        <div className="space-y-1">
-                                            <div className="text-[12px] font-black text-stone-900 truncate">
-                                                {annualStory.annualSummary.support.strongestHabit?.name || 'Year story'}
+                                        <div className="w-16 h-16 relative">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <PieChart>
+                                                    <Pie data={[{ value: monthProgress.completed || 0.1 }, { value: monthProgress.remaining || 0 }]} innerRadius="72%" outerRadius="100%" paddingAngle={2} dataKey="value" startAngle={90} endAngle={450} isAnimationActive={true} animationDuration={800}>
+                                                        <Cell fill={theme.primary} /><Cell fill={isDarkMode ? "#2a2a2a" : "#f0f0f0"} />
+                                                    </Pie>
+                                                </PieChart>
+                                            </ResponsiveContainer>
+                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                <span className="text-xs font-black" style={{ color: theme.primary }}>{monthProgress.percentage.toFixed(0)}%</span>
                                             </div>
-                                            <p className="text-[10px] leading-relaxed font-bold text-stone-500">
-                                                {annualStory.annualSummary.support.momentumLabel} · {annualStory.annualSummary.support.rhythmLabel}
-                                            </p>
                                         </div>
-                                    ) : (
-                                        <p className="text-[13px] leading-relaxed font-bold text-stone-500">
-                                            {t('annualUi.story.noSignificantOutcomes')}
-                                        </p>
+                                    </div>
+                                    <div className="flex-1 bg-stone-50/50 neo-border rounded-xl p-2 overflow-y-auto">
+                                        {(() => {
+                                            const isCurrentMonth = currentMonthIndex === currentMonthOfYear && currentYear === currentFullYear;
+                                            const daysElapsed = isCurrentMonth ? currentDayOfMonth : new Date(currentYear, currentMonthIndex + 1, 0).getDate();
+                                            const story = buildMonthlyStory(monthProgress, topHabitsThisMonth, monthDelta, t, daysElapsed);
+                                            return (
+                                                <div className="space-y-2">
+                                                    <div className="flex items-center gap-1.5"><Sparkles size={11} className="text-amber-500" /><span className="font-serif text-[9px] font-black uppercase tracking-widest text-stone-500">{t('header.yourStoryMonth')}</span></div>
+                                                    {story.sections.map((section: any, idx: number) => (
+                                                        <p key={idx} className="text-[12px] leading-relaxed font-bold">
+                                                            <FormattedText text={section.text} highlightColor={theme.secondary} className={section.type === 'consistency' ? '' : 'italic'} />
+                                                        </p>
+                                                    ))}
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
+                                </>
+                            ) : view === 'weekly' ? (
+                                <>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-[10px] font-black uppercase text-stone-400 tracking-widest leading-none mb-1">{t('header.habitMaster')}</p>
+                                            <div className="flex items-baseline gap-1">
+                                                <span className="text-3xl font-black leading-none">{weekProgress.completed}</span>
+                                                <span className="text-lg font-black text-stone-300">/ {weekProgress.total}</span>
+                                            </div>
+                                        </div>
+                                        <div className="w-16 h-16 relative">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <PieChart>
+                                                    <Pie data={[{ value: weekProgress.completed || 0.1 }, { value: weekProgress.remaining || 0 }]} innerRadius="72%" outerRadius="100%" paddingAngle={2} dataKey="value" startAngle={90} endAngle={450} isAnimationActive={true} animationDuration={800}>
+                                                        <Cell fill={theme.primary} /><Cell fill={isDarkMode ? "#2a2a2a" : "#f0f0f0"} />
+                                                    </Pie>
+                                                </PieChart>
+                                            </ResponsiveContainer>
+                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                <span className="text-xs font-black" style={{ color: theme.primary }}>{weekProgress.percentage.toFixed(0)}%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 bg-stone-50/50 neo-border rounded-xl p-2 overflow-y-auto">
+                                        {(() => {
+                                            const daysElapsed = weekOffset === 0
+                                                ? (startOfWeek === 'sunday' ? today.getDay() + 1 : (today.getDay() === 0 ? 7 : today.getDay()))
+                                                : 7;
+                                            const story = buildWeeklyStory(weekProgress, weeklyStats, habits, t, daysElapsed);
+                                            return (
+                                                <div className="space-y-2">
+                                                    <div className="flex items-center gap-1.5"><Sparkles size={11} className="text-amber-500" /><span className="font-serif text-[9px] font-black uppercase tracking-widest text-stone-500">{t('header.yourStoryWeek')}</span></div>
+                                                    {story.sections.map((section: any, idx: number) => (
+                                                        <p key={idx} className="text-[12px] leading-relaxed font-bold">
+                                                            <FormattedText text={section.text} primaryColor={theme.primary} className="text-black" />
+                                                        </p>
+                                                    ))}
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-1.5 mb-1"><Sparkles size={11} className="text-amber-500" /><span className="font-serif text-[9px] font-black uppercase tracking-widest text-stone-500">{t('annualUi.story.title')}</span></div>
+                                            {annualStory.annualSummary ? (
+                                                <div>
+                                                    <div className="text-[12px] font-black text-stone-900 truncate">{annualStory.annualSummary.support.strongestHabit?.name || 'Year story'}</div>
+                                                    <p className="text-[10px] font-bold text-stone-500">{annualStory.annualSummary.support.momentumLabel} · {annualStory.annualSummary.support.rhythmLabel}</p>
+                                                </div>
+                                            ) : (
+                                                <p className="text-[11px] font-bold text-stone-500">{t('annualUi.story.noSignificantOutcomes')}</p>
+                                            )}
+                                        </div>
+                                        <div className="w-16 h-16 relative shrink-0">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <PieChart>
+                                                    <Pie data={[{ value: annualStats.totalCompletions || 0.1 }, { value: Math.max(0, annualStats.totalPossible - annualStats.totalCompletions) }]} innerRadius="72%" outerRadius="100%" paddingAngle={2} dataKey="value" startAngle={90} endAngle={450} isAnimationActive={true} animationDuration={800}>
+                                                        <Cell fill={theme.primary} /><Cell fill={isDarkMode ? "#2a2a2a" : "#f0f0f0"} />
+                                                    </Pie>
+                                                </PieChart>
+                                            </ResponsiveContainer>
+                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                <span className="text-xs font-black" style={{ color: theme.primary }}>{annualCompletionRate.toFixed(0)}%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-1.5">
+                                        <div className="rounded-lg bg-stone-50 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] px-2 py-1.5 text-center">
+                                            <div className="text-[8px] font-black uppercase tracking-[0.2em] text-stone-400">Rate</div>
+                                            <div className="font-serif text-sm font-black text-stone-900">{annualCompletionRate.toFixed(0)}%</div>
+                                        </div>
+                                        <div className="rounded-lg bg-stone-50 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] px-2 py-1.5 text-center">
+                                            <div className="text-[8px] font-black uppercase tracking-[0.2em] text-stone-400">Done</div>
+                                            <div className="font-serif text-sm font-black text-stone-900">{Math.round(annualStats.totalCompletions)}</div>
+                                        </div>
+                                        <div className="rounded-lg bg-stone-50 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] px-2 py-1.5 text-center">
+                                            <div className="text-[8px] font-black uppercase tracking-[0.2em] text-stone-400">vs LY</div>
+                                            {(() => {
+                                                const d = annualDelta;
+                                                const pos = d > 0; const neu = Math.abs(d) < 0.1;
+                                                return <div className={`flex items-center justify-center gap-0.5 text-sm font-black ${neu ? 'text-stone-400' : pos ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                                    {neu ? <Minus size={11} strokeWidth={4} /> : pos ? <ArrowUp size={11} strokeWidth={4} /> : <ArrowDown size={11} strokeWidth={4} />}
+                                                    <span>{Math.abs(d).toFixed(neu ? 0 : 1)}%</span>
+                                                </div>;
+                                            })()}
+                                        </div>
+                                    </div>
+                                    <div className="rounded-lg border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] bg-stone-50/70 px-3 py-2 flex items-start gap-2">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="text-[8px] font-black uppercase tracking-[0.2em] text-stone-400">Strongest month</div>
+                                            <div className="font-serif text-[11px] font-black text-stone-900 truncate">{annualStory.annualSummary?.support.strongestMonth?.month || 'Still emerging'}</div>
+                                            <div className="text-[10px] font-bold text-stone-500">{annualStory.annualSummary?.support.strongestMonth?.rate ? `${Math.round(annualStory.annualSummary.support.strongestMonth.rate)}% completion` : annualStory.annualSummary?.support.momentumLabel || ''}</div>
+                                        </div>
+                                        <div className="w-px self-stretch bg-stone-200" />
+                                        <div className="flex-1 min-w-0">
+                                            <div className="text-[8px] font-black uppercase tracking-[0.2em] text-stone-400">Strongest habit</div>
+                                            <div className="font-serif text-[11px] font-black text-stone-900 truncate">{annualStory.annualSummary?.support.strongestHabit?.name || 'No clear anchor yet'}</div>
+                                            <div className="text-[10px] font-bold text-stone-500">{annualStory.annualSummary?.support.rhythmLabel || ''}</div>
+                                        </div>
+                                    </div>
+                                    {currentYear === new Date().getFullYear() && (
+                                        <button onClick={() => setIsResolutionsModalOpen(true)} className="flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-wider bg-black text-white px-2 py-2 rounded-xl hover:bg-stone-800 transition-colors">
+                                            <Sparkles size={11} />{t('header.thisYearResolutions')}
+                                        </button>
                                     )}
-                                </div>
-                                <div className="w-20 h-20 relative shrink-0">
-                                    <ResponsiveContainer width="100%" height="100%" minHeight={80}>
-                                        <PieChart>
-                                            <Pie
-                                                data={[
-                                                    { value: annualStats.totalCompletions || 0.1 },
-                                                    { value: Math.max(0, annualStats.totalPossible - annualStats.totalCompletions) }
-                                                ]}
-                                                innerRadius="75%" outerRadius="100%" paddingAngle={2} dataKey="value" startAngle={90} endAngle={450}
-                                                isAnimationActive={true}
-                                                animationDuration={1000}
-                                                animationBegin={0}
-                                            >
-                                                <Cell fill={theme.primary} /><Cell fill={isDarkMode ? "#2a2a2a" : "#f0f0f0"} />
-                                            </Pie>
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                        <span className="text-sm font-black leading-none" style={{ color: theme.primary }}>
-                                            {annualCompletionRate.toFixed(0)}%
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-3 gap-2 px-2">
-                                <div className="rounded-xl bg-stone-50 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] px-2 py-1.5 text-center">
-                                    <div className="text-[8px] font-black uppercase tracking-[0.2em] text-stone-400">Rate</div>
-                                    <div className="mt-0.5 font-serif text-sm font-black text-stone-900">{annualCompletionRate.toFixed(0)}%</div>
-                                </div>
-                                <div className="rounded-xl bg-stone-50 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] px-2 py-1.5 text-center">
-                                    <div className="text-[8px] font-black uppercase tracking-[0.2em] text-stone-400">Volume</div>
-                                    <div className="mt-0.5 font-serif text-sm font-black text-stone-900">{Math.round(annualStats.totalCompletions)}</div>
-                                </div>
-                                <div className="rounded-xl bg-stone-50 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] px-2 py-1.5 text-center">
-                                    <div className="text-[8px] font-black uppercase tracking-[0.2em] text-stone-400">vs LY</div>
-                                    {(() => {
-                                        const delta = annualDelta;
-                                        const isPositive = delta > 0;
-                                        const isNeutral = Math.abs(delta) < 0.1;
-                                        return (
-                                            <div className={`mt-0.5 flex items-center justify-center gap-1 text-sm font-black ${isNeutral ? 'text-stone-400' : (isPositive ? 'text-emerald-500' : 'text-rose-500')}`}>
-                                                {isNeutral ? <Minus size={12} strokeWidth={4} /> : (isPositive ? <ArrowUp size={12} strokeWidth={4} /> : <ArrowDown size={12} strokeWidth={4} />)}
-                                                <span>{Math.abs(delta).toFixed(isNeutral ? 0 : 1)}%</span>
-                                            </div>
-                                        );
-                                    })()}
-                                </div>
-                            </div>
-
-                            <div className="h-[76px] mx-2 rounded-xl border-[2px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] bg-stone-50/70 px-3 py-2 flex items-start gap-3 overflow-hidden">
-                                <div className="flex-1 min-w-0">
-                                    <div className="text-[8px] font-black uppercase tracking-[0.22em] text-stone-400">Strongest month</div>
-                                    <div className="mt-1 font-serif text-[11px] font-black text-stone-900 truncate">
-                                        {annualStory.annualSummary?.support.strongestMonth?.month || 'Still emerging'}
-                                    </div>
-                                    <div className="text-[10px] font-bold text-stone-500 leading-tight">
-                                        {annualStory.annualSummary?.support.strongestMonth?.rate
-                                            ? `${Math.round(annualStory.annualSummary.support.strongestMonth.rate)}% completion`
-                                            : annualStory.annualSummary?.support.momentumLabel || 'Watch for the trend that lasts'}
-                                    </div>
-                                </div>
-                                <div className="w-px self-stretch bg-stone-200" />
-                                <div className="flex-1 min-w-0">
-                                    <div className="text-[8px] font-black uppercase tracking-[0.22em] text-stone-400">Strongest habit</div>
-                                    <div className="mt-1 font-serif text-[11px] font-black text-stone-900 truncate">
-                                        {annualStory.annualSummary?.support.strongestHabit?.name || 'No clear anchor yet'}
-                                    </div>
-                                    <div className="text-[10px] font-bold text-stone-500 leading-tight">
-                                        {annualStory.annualSummary?.support.rhythmLabel || 'Find the rhythm that repeats'}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {currentYear === new Date().getFullYear() && (
-                                <button
-                                    onClick={() => setIsResolutionsModalOpen(true)}
-                                    className="mx-2 mt-1 w-auto min-h-[36px] flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-wider bg-black text-white px-2 py-1.5 rounded-xl hover:bg-stone-800 transition-colors shadow-sm"
-                                >
-                                    <Sparkles size={12} />
-                                    {t('header.thisYearResolutions')}
-                                </button>
+                                </>
                             )}
                         </div>
-                    )}
+                    </div>
+
                 </div>
-            </div>
+            )}
+
             <HabitManagerModal
                 isOpen={isHabitModalOpen}
                 onClose={() => setIsHabitModalOpen(false)}
@@ -1132,6 +683,6 @@ export const Header: React.FC<HeaderProps> = ({
                 currentResolutions={monthlyGoals[`resolutions-${currentYear}`] || []}
                 onSave={(resolutions) => updateMonthlyGoals(`resolutions-${currentYear}`, resolutions)}
             />
-        </div >
+        </div>
     );
 };

@@ -712,8 +712,8 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                     clearLongPress();
                                     toggleHabitInactive(habit.id, dateKey);
                                 }}
-                                className="flex items-center justify-between group cursor-pointer hover:bg-black/5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] rounded-lg py-2 px-2 -mx-2 transition-all touch-pan-y"
-                                style={{ touchAction: 'pan-y' }}
+                                className="flex items-center justify-between group cursor-pointer hover:bg-black/5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] rounded-lg py-2 pr-2 pl-3 -mx-2 transition-all touch-pan-y border-l-[3px]"
+                                style={{ touchAction: 'pan-y', borderLeftColor: habit.color || theme.secondary }}
                             >
                                 <div className="flex items-center flex-1 min-w-0">
                                     <span className={`text-[11px] font-bold truncate transition-all duration-300 ${inactive ? 'text-amber-700' : (done ? 'text-stone-400 line-through' : 'text-stone-700')}`}>

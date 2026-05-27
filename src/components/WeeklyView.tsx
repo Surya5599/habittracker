@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Habit, HabitCompletion, Theme, DailyNote, Task, DayData } from '../types';
 import { generateShareCard, shareCard } from '../utils/shareCardGenerator';
@@ -109,6 +110,12 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
 
     const weekDates = getWeekDates();
 
+    const todayString = new Date().toDateString();
+    const todayInWeek = weekDates.some(d => d.toDateString() === todayString);
+    const gridTemplateColumns = todayInWeek
+        ? weekDates.map(d => d.toDateString() === todayString ? '2fr' : '1fr').join(' ')
+        : undefined;
+
     const handleShareClick = (data: { date: Date, dayName: string, dateString: string, completedCount: number, totalCount: number, progress: number }) => {
         setShareData(data);
         setShareModalOpen(true);
@@ -150,9 +157,14 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
     return (
         <div className="h-full min-h-0 p-2">
             {/* Desktop View (Grid) */}
-            <div className="hidden md:block h-full min-h-0">
+            <motion.div
+                className="hidden md:block h-full min-h-0"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25 }}
+            >
                 <div className="h-full min-h-0 overflow-x-auto overflow-y-visible px-1 pb-[2px] pt-1">
-                    <div className="grid grid-cols-7 gap-4 h-full min-h-0 auto-rows-fr min-w-[1120px] items-stretch">
+                    <div className="grid gap-4 h-full min-h-0 auto-rows-fr min-w-[1120px] items-stretch" style={{ gridTemplateColumns: gridTemplateColumns || 'repeat(7, 1fr)' }}>
                         {weekDates.map((date) => (
                             <DailyCard
                                 key={date.toISOString()}
@@ -176,7 +188,7 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                         ))}
                     </div>
                 </div>
-            </div>
+            </motion.div>
 
             {/* Mobile View (Day Switcher) */}
             <div className="md:hidden flex flex-col gap-4 pb-2">

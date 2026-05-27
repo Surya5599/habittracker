@@ -434,7 +434,7 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                 const isEditingGoal = editingGoalId === habit.id;
                                 return (
                                     <tr key={habit.id} className="hover:bg-stone-50 transition-colors group" style={{ height: '36px' }}>
-                                        <td className="p-0 border-r border-stone-200 text-[12px] font-bold text-stone-700 sticky left-0 z-30 bg-stone-50 group-hover:bg-stone-100 transition-colors border-l-4" style={{ borderLeftColor: theme.secondary }}>
+                                        <td className="p-0 border-r border-stone-200 text-[12px] font-bold text-stone-700 sticky left-0 z-30 bg-stone-50 group-hover:bg-stone-100 transition-colors border-l-4" style={{ borderLeftColor: habit.color || theme.secondary }}>
                                             <div className="flex items-center justify-between gap-2 p-1.5 px-3 h-full transition-colors">
                                                 {isEditingName ? (
                                                     <div className="flex items-center gap-2 flex-1">

@@ -27,10 +27,17 @@ export interface Task {
   completed: boolean;
 }
 
+export interface JournalEntry {
+  id: string;
+  text: string;
+  mood?: number;
+  createdAt: number;
+}
+
 export interface DayData {
   tasks: Task[];
   mood?: number; // 1-5
-  journal?: string;
+  journal?: string | JournalEntry[];
   inactiveHabits?: string[];
 }
 

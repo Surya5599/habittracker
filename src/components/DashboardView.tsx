@@ -74,19 +74,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 }}
             />
 
-            <div className="p-4 bg-white neo-border neo-shadow rounded-2xl flex flex-col min-h-[220px]">
-                <div className="flex items-center gap-2 mb-3 border-b border-stone-100 pb-2">
-                    <div className="p-1 bg-amber-100 text-amber-600 rounded"><Sparkles size={14} /></div>
+            <div className="bg-white neo-border neo-shadow rounded-2xl flex flex-col min-h-[220px] overflow-hidden">
+                <div className="flex items-center gap-2 px-4 py-3 border-b-[3px] border-black" style={{ backgroundColor: '#f9f9f9' }}>
+                    <div className="p-1.5 bg-black text-white rounded-none"><Sparkles size={12} strokeWidth={3} /></div>
                     <span className="text-[10px] font-black uppercase tracking-widest">{t('annualUi.story.title')}</span>
                 </div>
+                <div className="p-4">
 
                 {!story.focused || !story.annualSummary ? (
                     <div className="flex-1 flex items-center justify-center text-stone-300 italic text-sm">{t('annualUi.story.noSignificantOutcomes')}</div>
                 ) : (
-                    <div className="flex-1 flex flex-col gap-5 py-2">
+                    <div className="flex-1 flex flex-col gap-4 py-0">
                         <div className="rounded-2xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white p-5 space-y-4">
                             <div className="flex items-center gap-2">
-                                <div className="p-1.5 bg-stone-100 text-black rounded-lg"><Zap size={14} strokeWidth={2.5} /></div>
+                                <div className="p-1.5 bg-black text-white"><Zap size={12} strokeWidth={3} /></div>
                                 <span className="font-serif text-[10px] font-black uppercase tracking-widest text-stone-500">Year in review</span>
                             </div>
                             <p className="text-base leading-relaxed font-bold text-stone-900">
@@ -97,7 +98,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(280px,0.75fr)]">
                             <div className="rounded-2xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white p-5 space-y-4">
                                 <div className="flex items-center gap-2">
-                                    <div className="p-1.5 bg-amber-100 text-amber-700 rounded-lg"><Sparkles size={14} strokeWidth={2.5} /></div>
+                                    <div className="p-1.5 bg-black text-white"><Sparkles size={12} strokeWidth={3} /></div>
                                     <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">What defined the year</span>
                                 </div>
                                 <div className="space-y-3">
@@ -145,8 +146,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             <div className="rounded-2xl border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white p-4">
                                 <div className="text-[8px] font-black uppercase tracking-[0.22em] text-stone-400">Strongest habit</div>
                                 <div className="mt-2 flex items-center gap-3">
-                                    <div className="p-2 bg-amber-50 rounded-xl border border-amber-100">
-                                        <Trophy size={16} className="text-amber-500" />
+                                    <div className="p-2 bg-black border-2 border-black">
+                                        <Trophy size={14} className="text-white" />
                                     </div>
                                     <div>
                                         <div className="text-sm font-black text-stone-900">{story.annualSummary.support.strongestHabit?.name || t('annualUi.story.firstHabit')}</div>
@@ -179,7 +180,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         </div>
                     </div>
                 )}
+                </div>
             </div>
-        </div >
+        </div>
     );
 };

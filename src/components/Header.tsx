@@ -170,7 +170,9 @@ export const Header: React.FC<HeaderProps> = ({
         return (localStorage.getItem('habit_chart_type') as 'area' | 'bar') || 'area';
     });
     const [statsOpen, setStatsOpen] = React.useState<boolean>(() => {
-        return localStorage.getItem('header_stats_open') === 'true';
+        const saved = localStorage.getItem('header_stats_open');
+        if (saved !== null) return saved === 'true';
+        return view === 'dashboard';
     });
 
     const [showWeekSelector, setShowWeekSelector] = React.useState(false);

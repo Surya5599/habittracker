@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, LayoutDashboard, Calendar, Clock, LogIn, LogOut, ArrowUp, ArrowDown, Minus, BarChart2, Activity, Sparkles, Search, Plus, BookOpen } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, LayoutDashboard, Calendar, Clock, LogIn, LogOut, ArrowUp, ArrowDown, Minus, BarChart2, Activity, Sparkles, Search, Plus, BookOpen } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 import { MONTHS } from '../constants';
 import { Habit, Theme, MonthStats, MonthlyGoal, MonthlyGoals } from '../types';
@@ -169,6 +169,9 @@ export const Header: React.FC<HeaderProps> = ({
     const [chartType, setChartType] = React.useState<'area' | 'bar'>(() => {
         return (localStorage.getItem('habit_chart_type') as 'area' | 'bar') || 'area';
     });
+    const [headerCollapsed, setHeaderCollapsed] = React.useState<boolean>(() => {
+        return localStorage.getItem('header_collapsed') === 'true';
+    });
 
     const [showWeekSelector, setShowWeekSelector] = React.useState(false);
     const [showMonthSelector, setShowMonthSelector] = React.useState(false);
@@ -229,6 +232,10 @@ export const Header: React.FC<HeaderProps> = ({
     React.useEffect(() => {
         localStorage.setItem('habit_chart_type', chartType);
     }, [chartType]);
+
+    React.useEffect(() => {
+        localStorage.setItem('header_collapsed', String(headerCollapsed));
+    }, [headerCollapsed]);
 
     const badgeCount = React.useMemo(() => {
         return buildAchievements(
@@ -323,6 +330,57 @@ export const Header: React.FC<HeaderProps> = ({
         return '0.06em';
     };
 
+    const dateSelector = (
+        <div className="flex items-center justify-between bg-white border border-stone-300 px-2 py-1 relative date-selector-container min-w-[160px]">
+            <button onClick={() => view === 'monthly' ? navigateMonth('prev') : view === 'weekly' ? navigateWeek('prev') : setCurrentYear(prev => prev - 1)} className="hover:text-black active:scale-95 transition-transform"><ChevronLeft size={16} /></button>
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    if (view === 'monthly') { setShowMonthSelector(!showMonthSelector); setShowWeekSelector(false); setShowYearSelector(false); }
+                    else if (view === 'weekly') { setShowWeekSelector(!showWeekSelector); setShowMonthSelector(false); setShowYearSelector(false); }
+                    else { setShowYearSelector(!showYearSelector); setShowWeekSelector(false); setShowMonthSelector(false); }
+                }}
+                className="flex-1 min-w-0 font-bold uppercase select-none hover:bg-stone-50 px-2 py-0.5 rounded-sm transition-colors whitespace-nowrap text-center"
+                style={{ fontSize: getSelectorFontSize(view === 'monthly' ? monthLabel : view === 'dashboard' ? dashboardLabel : weekLabel), letterSpacing: getSelectorLetterSpacing(view === 'monthly' ? monthLabel : view === 'dashboard' ? dashboardLabel : weekLabel), lineHeight: 1.1 }}
+            >
+                {view === 'monthly' ? monthLabel : view === 'dashboard' ? dashboardLabel : weekLabel}
+            </button>
+            {view === 'monthly' && <MonthPicker isOpen={showMonthSelector} onClose={() => setShowMonthSelector(false)} currentMonthIndex={currentMonthIndex} currentYear={currentYear} onMonthSelect={handleMonthSelect} themePrimary={theme.primary} />}
+            {view === 'dashboard' && <YearPicker isOpen={showYearSelector} onClose={() => setShowYearSelector(false)} currentYear={currentYear} onYearSelect={handleYearSelect} themePrimary={theme.primary} />}
+            {view === 'weekly' && <WeekPicker isOpen={showWeekSelector} onClose={() => setShowWeekSelector(false)} currentDate={getCurrentWeekStart()} onWeekSelect={handleWeekSelect} themePrimary={theme.primary} />}
+            <button onClick={() => view === 'monthly' ? navigateMonth('next') : view === 'weekly' ? navigateWeek('next') : setCurrentYear(prev => prev + 1)} className="hover:text-black active:scale-95 transition-transform"><ChevronRight size={16} /></button>
+        </div>
+    );
+
+    if (headerCollapsed) {
+        return (
+            <>
+                <div className="flex items-center gap-2 bg-white neo-border neo-shadow rounded-2xl px-3 py-2">
+                    {dateSelector}
+                    <div className="flex-1 rounded-lg border border-stone-200 bg-stone-100 p-0.5 flex items-center">
+                        <button onClick={() => { resetWeekOffset(); setView('weekly'); }} className={`flex-1 flex items-center justify-center gap-1 py-1 rounded-md text-[10px] font-black uppercase tracking-[0.1em] transition-all border ${view === 'weekly' ? 'bg-black text-white border-black' : 'border-transparent text-stone-500 hover:text-black'}`}>
+                            <Clock size={10} strokeWidth={3} /><span>Week</span>
+                        </button>
+                        <button onClick={() => { setView('monthly'); const now = new Date(); setCurrentMonthIndex(now.getMonth()); setCurrentYear(now.getFullYear()); }} className={`flex-1 flex items-center justify-center gap-1 py-1 rounded-md text-[10px] font-black uppercase tracking-[0.1em] transition-all border ${view === 'monthly' ? 'bg-black text-white border-black' : 'border-transparent text-stone-500 hover:text-black'}`}>
+                            <Calendar size={10} strokeWidth={3} /><span>Month</span>
+                        </button>
+                        <button onClick={() => { setView('dashboard'); setCurrentYear(new Date().getFullYear()); }} className={`flex-1 flex items-center justify-center gap-1 py-1 rounded-md text-[10px] font-black uppercase tracking-[0.1em] transition-all border ${view === 'dashboard' ? 'bg-black text-white border-black' : 'border-transparent text-stone-500 hover:text-black'}`}>
+                            <LayoutDashboard size={10} strokeWidth={3} /><span>Year</span>
+                        </button>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        <button onClick={onSearch} className="p-1.5 rounded-full border border-stone-200 text-stone-400 hover:text-black hover:bg-stone-50 transition-colors"><Search size={13} /></button>
+                        <SettingsMenu theme={theme} setTheme={setTheme} themes={themes} settingsOpen={settingsOpen} setSettingsOpen={setSettingsOpen} settingsRef={settingsRef} language={language} setLanguage={setLanguage} startOfWeek={startOfWeek} setStartOfWeek={setStartOfWeek} defaultView={defaultView} setDefaultView={setDefaultView} colorMode={colorMode} setColorMode={setColorMode} cardStyle={cardStyle} setCardStyle={setCardStyle} onReportBug={onReportBug} onOpenWhatsNew={onOpenWhatsNew} onOpenTutorial={onOpenTutorial} onExportData={onExportData} onViewJournal={onViewJournal} isExportingData={isExportingData} hasUnreadFeedback={hasUnreadFeedback} hasUnseenWhatsNew={hasUnseenWhatsNew} />
+                        {!guestMode && <button onClick={handleLogout} className="p-1.5 rounded-full border border-stone-200 text-stone-300 hover:text-rose-500 transition-colors" title={t('header.logout')}><LogOut size={13} /></button>}
+                        <button onClick={() => setHeaderCollapsed(false)} className="p-1.5 rounded-full border border-stone-200 text-stone-400 hover:text-black hover:bg-stone-50 transition-colors" title="Expand header"><ChevronDown size={13} /></button>
+                    </div>
+                </div>
+                <HabitManagerModal isOpen={isHabitModalOpen} onClose={() => setIsHabitModalOpen(false)} habits={habits} addHabit={addHabit} updateHabit={updateHabit} removeHabit={removeHabit} reorderHabits={reorderHabits} toggleArchiveHabit={toggleArchiveHabit} themePrimary={theme.primary} autoAddOnOpen={autoAddHabitOnOpen} onAutoAddHandled={() => setAutoAddHabitOnOpen(false)} />
+                <ResolutionsModal isOpen={isResolutionsModalOpen} onClose={() => setIsResolutionsModalOpen(false)} year={currentYear} currentResolutions={monthlyGoals[`resolutions-${currentYear}`] || []} onSave={(resolutions) => updateMonthlyGoals(`resolutions-${currentYear}`, resolutions)} />
+            </>
+        );
+    }
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
             <div className="md:col-span-3 bg-white neo-border neo-shadow rounded-2xl p-3 flex flex-col gap-3 h-full justify-between relative min-h-[160px]">
@@ -374,6 +432,13 @@ export const Header: React.FC<HeaderProps> = ({
                                     <LogOut size={14} />
                                 </button>
                             )}
+                            <button
+                                onClick={() => setHeaderCollapsed(true)}
+                                className="p-1.5 rounded-full border border-stone-200 text-stone-400 hover:text-black hover:bg-stone-50 transition-colors"
+                                title="Collapse header"
+                            >
+                                <ChevronUp size={14} />
+                            </button>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">

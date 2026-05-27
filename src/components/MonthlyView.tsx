@@ -354,7 +354,9 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                     const dateKey = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                                     const dayNote = notes ? notes[dateKey] : undefined;
                                     const moodValue = dayNote ? (Array.isArray(dayNote) ? undefined : dayNote.mood) : undefined;
-                                    const hasJournal = dayNote && !Array.isArray(dayNote) && dayNote.journal && dayNote.journal.trim().length > 0;
+                                    const rawJ = dayNote && !Array.isArray(dayNote) ? dayNote.journal : undefined;
+                                    const journalStr = Array.isArray(rawJ) ? rawJ.map((e: any) => (typeof e === 'string' ? e : e?.text || '')).join('') : String(rawJ || '');
+                                    const hasJournal = journalStr.trim().length > 0;
 
                                     const MOOD_CONFIG = {
                                         1: { icon: Angry, color: '#ef4444' },

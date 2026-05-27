@@ -50,10 +50,16 @@ export const getJournalMoodMeta = (mood?: number) => {
     }
 };
 
+const getJournalText = (journal: DailyNote[string]['journal']): string => {
+    if (!journal) return '';
+    if (Array.isArray(journal)) return journal.map((e: any) => e?.text || '').filter(Boolean).join('\n\n');
+    return (journal as string).trim();
+};
+
 export const getJournalExportEntries = (notes: DailyNote): JournalExportEntry[] => {
     return Object.entries(notes)
         .map(([dateKey, dayData]) => {
-            const journal = dayData.journal?.trim();
+            const journal = getJournalText(dayData.journal);
             const hasJournal = Boolean(journal);
             const hasMood = typeof dayData.mood === 'number';
 

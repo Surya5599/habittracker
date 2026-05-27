@@ -976,10 +976,13 @@ const AppContent: React.FC = () => {
     const currentNote = notes[dateKey] || { tasks: [] };
     updatedNote = { ...currentNote, ...data };
 
+    const journalEmpty = Array.isArray(updatedNote.journal)
+      ? !(updatedNote.journal as any[]).some((e: any) => (e?.text || '').trim())
+      : !updatedNote.journal;
     const isEmpty =
       (!updatedNote.tasks || updatedNote.tasks.length === 0) &&
       !updatedNote.mood &&
-      !updatedNote.journal &&
+      journalEmpty &&
       (!updatedNote.inactiveHabits || updatedNote.inactiveHabits.length === 0);
 
     // Sync to database for logged-in users
@@ -1067,7 +1070,10 @@ const AppContent: React.FC = () => {
     const normalizedDayData = Array.isArray(dayData) ? { tasks: dayData } : (dayData || { tasks: [] });
     const totalTasks = normalizedDayData.tasks?.length || 0;
     const openTasks = (normalizedDayData.tasks || []).filter((task: any) => !task.completed).length;
-    const hasJournal = Boolean(normalizedDayData.journal && normalizedDayData.journal.trim());
+    const journalVal = normalizedDayData.journal;
+    const hasJournal = Array.isArray(journalVal)
+      ? journalVal.some((e: any) => (e?.text || '').trim())
+      : Boolean(journalVal && (journalVal as string).trim());
     const hasMood = typeof normalizedDayData.mood === 'number';
 
     return {

@@ -1,16 +1,16 @@
 # HabiCard Chrome Web Store Listing
 
-## Rejection Status (v1.0.0 — Jan 15, 2026)
+## Rejection History
 
-> **Status:** Rejected — DO NOT resubmit until this is resolved.
->
-> **Violation:** User Data Privacy  
-> **Reference ID:** Purple Nickel  
-> **Issue:** Privacy policy link does not lead to a valid privacy policy. Owner sites (e.g. just linking to habicard.com) are not considered valid.
->
-> **Fix required:** `https://habicard.com/privacy` must serve a real, standalone privacy policy page — not a homepage, not a redirect. It must explicitly state what user data is collected (email, habit data), how it is stored (Supabase), and how users can request deletion.
->
-> Once the privacy page is live and accessible, resubmit.
+### v1.0.0 — Jan 15, 2026
+> **Violation:** User Data Privacy — Reference ID: Purple Nickel  
+> **Issue:** Privacy policy link did not lead to a valid privacy policy.  
+> **Fix applied:** Rewrote `habicard.com/privacy` as a standalone policy page.
+
+### v1.0.1 — May 2026
+> **Violation:** Inaccurate Description — Reference ID: Red Potassium  
+> **Issue:** Metadata described features not present in the extension (monthly calendar, analytics dashboard, New Year's goal lock, offline mode).  
+> **Fix applied:** Rewrote description to only describe features visible in the extension popup.
 
 ---
 
@@ -34,28 +34,26 @@
 > Paste the text below into the Chrome Web Store description field.
 
 ```
-HabiCard is a clean, focused habit tracker that lives in your browser toolbar — always one click away, never in the way.
+HabiCard is a habit tracker that lives in your browser toolbar — one click to check in on your day, no tab switching required.
 
-Build streaks, track consistency, and get a clear picture of how your days are actually going.
+Sign in with your HabiCard account to sync your habits, then open the popup to log your day in seconds.
 
-FEATURES
+WHAT'S IN THE POPUP
 
-• Daily habit tracking — check off habits directly from the popup
-• Progress rings — see your completion at a glance
-• Task list — add and complete tasks for the day
-• Journal & mood — log a quick note and how you're feeling
-• Monthly calendar — scan patterns across the whole month
-• Analytics dashboard — week-over-week and month-over-month trends
-• Share card — generate a visual summary to share your progress
-• Theme customization — choose colors that match your style
-• New Year's goal lock — set resolutions that stay sealed until year end
-• Works offline — local storage keeps your data available even without a connection
-• Syncs across devices — sign in to keep your history on any machine
+• My Habits tab — check off each habit for the day, see your completion ring update live
+• Tasks tab — add and complete one-off tasks for the day
+• Journal tab — write a quick note and log your mood
+• Progress ring — at-a-glance percentage of habits completed today
+• Navigate days — swipe back to log a missed day or check yesterday
+• Theme options — choose a color scheme in Settings
+• Compact or full card view — pick the density that suits you
 
-Designed for people who want just enough structure without the overwhelm. No subscriptions, no noise.
+REQUIRES A FREE HABICARD ACCOUNT
+
+Sign up at habicard.com. Your habits sync across the extension and the full web app, where you can access monthly views and trend analytics.
 ```
 
-**Character count:** ~950 / 16,000
+**Character count:** ~780 / 16,000
 
 ---
 
@@ -77,14 +75,13 @@ Designed for people who want just enough structure without the overwhelm. No sub
 3. Use Chrome DevTools device toolbar set to 400x600 or capture the popup window
 4. Use macOS Screenshot (`Cmd+Shift+4`) and crop to 1280x800 canvas
 
-**Suggested shots:**
+**Suggested shots (extension popup ONLY — do not use web app screenshots):**
 | File | What to show |
 |---|---|
-| `screenshots/01-daily-habits.png` | Daily view with a few habits checked, progress ring visible |
-| `screenshots/02-monthly-view.png` | Monthly calendar with habit dots filled in |
-| `screenshots/03-analytics.png` | Analytics dashboard with completion chart |
-| `screenshots/04-journal.png` | Journal tab with mood selector and a note |
-| `screenshots/05-theme.png` | Settings open showing theme color options |
+| `screenshots/01-daily-habits.png` | My Habits tab with several habits checked, progress ring showing % |
+| `screenshots/02-tasks.png` | Tasks tab with a few tasks listed |
+| `screenshots/03-journal.png` | Journal tab with mood selector and a note typed |
+| `screenshots/04-settings.png` | Settings modal open showing theme color options |
 
 ### Small Promo Tile
 - **Size:** 440x280px

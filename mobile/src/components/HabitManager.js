@@ -108,9 +108,14 @@ export const HabitManager = ({
     const handleSave = () => {
         if (!editingHabit || !editName.trim()) return;
 
+        const originalName = editingHabit.name.trim().toLowerCase();
         const duplicate = habits.some(
-            h => h.id !== editingHabit.id && !h.archivedAt &&
-                h.name.trim().toLowerCase() === editName.trim().toLowerCase()
+            h => !h.archivedAt &&
+                h.name.trim().toLowerCase() === editName.trim().toLowerCase() &&
+                h.id !== editingHabit.id &&
+                // guard against false positives after tempId→realId remap:
+                // if the habit's name matches what we opened the editor with, it's the same habit
+                h.name.trim().toLowerCase() !== originalName
         );
         if (duplicate) {
             Alert.alert('Already exists', `A habit called "${editName.trim()}" already exists.`);

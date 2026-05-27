@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 import { View, Text, TouchableOpacity, ScrollView, Animated, TextInput, Easing, useWindowDimensions, Platform, Keyboard, PanResponder, Alert } from 'react-native';
-import { Check, ChevronLeft, ChevronRight, BookOpen, Save, Plus, X, Meh, Frown, Smile, Laugh, Angry, Minus } from 'lucide-react-native';
+import { Check, ChevronLeft, ChevronRight, BookOpen, Save, Plus, X, Meh, Frown, Smile, Laugh, Angry, Minus, ClipboardList, ArrowUpDown, Pencil } from 'lucide-react-native';
 import tw from 'twrnc';
 import { isCompleted as checkCompleted } from '../utils/stats';
 import { DAYS_OF_WEEK } from '../constants';
@@ -45,6 +45,7 @@ export const DailyCard = ({
 }) => {
     const [isFlipped, setIsFlipped] = useState(false);
     const [backView, setBackView] = useState('journal');
+    const [sortMode, setSortMode] = useState('default'); // 'default' | 'name' | 'color'
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [newTaskText, setNewTaskText] = useState('');
     const [editingTaskId, setEditingTaskId] = useState(null);
@@ -52,6 +53,8 @@ export const DailyCard = ({
     const viewSwitchAnim = useRef(new Animated.Value(1)).current;
     const [switchPhase, setSwitchPhase] = useState('idle'); // idle | out | in
     const isSwitchingRef = useRef(false);
+    const flipAnim = useRef(new Animated.Value(0)).current;
+    const backSwitchAnim = useRef(new Animated.Value(0)).current;
     const journalScrollRef = useRef(null);
     const swipeLockRef = useRef(false);
     const onPrevRef = useRef(onPrev);
@@ -64,16 +67,14 @@ export const DailyCard = ({
     const [statusRowWidth, setStatusRowWidth] = useState(0);
     const statusIndicatorAnim = useRef(new Animated.Value(0)).current;
 
-    const finalDayData = dayData || { tasks: [], mood: undefined, journal: '' };
+    const finalDayData = dayData || { tasks: [], mood: undefined, journal: [] };
 
-    // Local state for journal/mood to allow editing before save (or auto-save)
-    const [localJournal, setLocalJournal] = useState(finalDayData.journal || '');
-    const [localMood, setLocalMood] = useState(finalDayData.mood);
-
-    useEffect(() => {
-        setLocalJournal(finalDayData.journal || '');
-        setLocalMood(finalDayData.mood);
-    }, [finalDayData.journal, finalDayData.mood]);
+    const [isAddingEntry, setIsAddingEntry] = useState(false);
+    const [newEntryText, setNewEntryText] = useState('');
+    const [newEntryMood, setNewEntryMood] = useState(undefined);
+    const [editingEntryId, setEditingEntryId] = useState(null);
+    const [editingEntryText, setEditingEntryText] = useState('');
+    const [editingEntryMood, setEditingEntryMood] = useState(undefined);
 
     useEffect(() => {
         onPrevRef.current = onPrev;
@@ -102,9 +103,37 @@ export const DailyCard = ({
         };
     }, []);
 
-    const handleSaveJournal = () => {
-        updateNote && updateNote(dateKey, { journal: localJournal, mood: localMood });
-        flipToFront();
+    const handleAddEntry = () => {
+        if (!newEntryText.trim()) return;
+        const entry = { id: Date.now().toString(), text: newEntryText.trim(), mood: newEntryMood, createdAt: Date.now() };
+        const current = Array.isArray(finalDayData.journal) ? finalDayData.journal : [];
+        const updated = [...current, entry];
+        const latestMood = [...updated].reverse().find(e => e.mood)?.mood;
+        updateNote && updateNote(dateKey, { journal: updated, mood: latestMood });
+        setNewEntryText('');
+        setNewEntryMood(undefined);
+        setIsAddingEntry(false);
+    };
+
+    const handleUpdateEntry = (id) => {
+        if (!editingEntryText.trim()) return;
+        const current = Array.isArray(finalDayData.journal) ? finalDayData.journal : [];
+        const updated = current.map(e => e.id === id ? { ...e, text: editingEntryText.trim(), mood: editingEntryMood } : e);
+        const latestMood = [...updated].reverse().find(e => e.mood)?.mood;
+        updateNote && updateNote(dateKey, { journal: updated, mood: latestMood });
+        setEditingEntryId(null);
+        setEditingEntryText('');
+        setEditingEntryMood(undefined);
+    };
+
+    const handleDeleteEntry = (id) => {
+        const current = Array.isArray(finalDayData.journal) ? finalDayData.journal : [];
+        updateNote && updateNote(dateKey, { journal: current.filter(e => e.id !== id) });
+    };
+
+    const formatEntryTime = (timestamp) => {
+        if (!timestamp) return '';
+        return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     };
 
     const confirmAddTask = () => {
@@ -136,14 +165,14 @@ export const DailyCard = ({
 
     const handleHabitTap = (habit) => {
         if (habit.inactive) {
-            // skip → empty: clear rest day
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             if (toggleHabitInactive) toggleHabitInactive(habit.id, dateKey);
         } else if (habit.done) {
-            // complete → skip: undo completion then mark as rest
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             toggleCompletion(habit.id, dateKey);
             if (toggleHabitInactive) toggleHabitInactive(habit.id, dateKey);
         } else {
-            // empty → complete
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             toggleCompletion(habit.id, dateKey);
         }
     };
@@ -184,16 +213,56 @@ export const DailyCard = ({
 
     const switchCardView = (targetView) => {
         const currentView = isFlipped ? backView : 'habits';
-        if (currentView === targetView) return;
+        if (currentView === targetView || isSwitchingRef.current) return;
 
-        animateViewChange(() => {
-            if (targetView === 'habits') {
-                setIsFlipped(false);
-            } else {
-                setBackView(targetView);
+        const goingToBack = targetView !== 'habits';
+
+        if (goingToBack && !isFlipped) {
+            // habits → tasks/journal: flip forward
+            isSwitchingRef.current = true;
+            setBackView(targetView);
+            Animated.timing(flipAnim, {
+                toValue: 1,
+                duration: 360,
+                easing: Easing.out(Easing.cubic),
+                useNativeDriver: true,
+            }).start(() => {
                 setIsFlipped(true);
-            }
-        });
+                isSwitchingRef.current = false;
+            });
+        } else if (!goingToBack && isFlipped) {
+            // tasks/journal → habits: flip back
+            isSwitchingRef.current = true;
+            Animated.timing(flipAnim, {
+                toValue: 0,
+                duration: 360,
+                easing: Easing.out(Easing.cubic),
+                useNativeDriver: true,
+            }).start(() => {
+                setIsFlipped(false);
+                isSwitchingRef.current = false;
+            });
+        } else {
+            // back-to-back: tasks ↔ journal, flip the inner content
+            isSwitchingRef.current = true;
+            Animated.timing(backSwitchAnim, {
+                toValue: 0.5,
+                duration: 180,
+                easing: Easing.out(Easing.cubic),
+                useNativeDriver: true,
+            }).start(() => {
+                setBackView(targetView);
+                Animated.timing(backSwitchAnim, {
+                    toValue: 1,
+                    duration: 180,
+                    easing: Easing.out(Easing.cubic),
+                    useNativeDriver: true,
+                }).start(() => {
+                    backSwitchAnim.setValue(0);
+                    isSwitchingRef.current = false;
+                });
+            });
+        }
     };
 
     const openJournalView = () => switchCardView('journal');
@@ -211,11 +280,6 @@ export const DailyCard = ({
             useNativeDriver: true
         }).start();
     }, [activeTab, statusRowWidth, statusIndicatorAnim]);
-
-    const handleSaveJournalOld = () => {
-        // Deprecated, using the one above
-        flipToFront();
-    };
 
     const dayName = date.toLocaleDateString(i18n.language, { weekday: 'long' });
     const shortDayName = date.toLocaleDateString(i18n.language, { weekday: 'short' });
@@ -294,8 +358,10 @@ export const DailyCard = ({
     const totalHabitsCount = visibleHabitsForDate.filter(h => !isHabitInactiveOnDate(h.id)).length;
     const totalTasksCount = (finalDayData.tasks || []).length;
     const completedTasksCount = (finalDayData.tasks || []).filter(task => task.completed).length;
-    const hasJournalEntry = Boolean((finalDayData.journal || '').trim());
-    const selectedMood = MOODS.find(m => m.value === localMood);
+    const journalEntries = Array.isArray(finalDayData.journal) ? finalDayData.journal : [];
+    const hasJournalEntry = journalEntries.some(e => (e.text || '').trim());
+    const displayMood = [...journalEntries].reverse().find(e => e.mood)?.mood ?? finalDayData.mood;
+    const selectedMood = MOODS.find(m => m.value === displayMood);
     const MoodStatusIcon = selectedMood?.icon || Meh;
     const panelBg = isDark ? '#0b0b0b' : '#ffffff';
     const panelSoftBg = isDark ? '#161616' : '#f9fafb';
@@ -305,60 +371,75 @@ export const DailyCard = ({
     const borderSoft = isDark ? '#262626' : '#f3f4f6';
     const outlineColor = isDark ? '#ffffff' : '#000000';
     const dateHeaderBg = isDark ? '#000000' : theme.secondary;
-    const headerCircleSize = 64;
-    const headerCircleRadius = 29;
-    const headerCircleStroke = 6;
-    const headerTitleSize = isLargeLayout ? 26 : 30;
-    const headerDateSize = 10;
+    const headerCircleSize = 60;
+    const headerCircleRadius = 27;
+    const headerCircleStroke = 5;
+    const headerTitleSize = 28;
+    const headerDateSize = 11;
     const listItemTextSize = isLargeLayout ? 16 : 17;
-    const listItemSpacing = isLargeLayout ? 7 : 8;
-    const checkBoxSize = isLargeLayout ? 23 : 24;
+    const listItemSpacing = isLargeLayout ? 4 : 4;
+    const checkBoxSize = isLargeLayout ? 28 : 30;
 
     const StatusRow = () => (
         <View
             onLayout={(e) => setStatusRowWidth(e.nativeEvent.layout.width)}
-            style={[tw`relative flex-row border-t-[3px] border-b-[3px] border-black`, { backgroundColor: panelSoftBg, borderColor: outlineColor }]}
+            style={[tw`relative flex-row border-t-[3px]`, { backgroundColor: panelSoftBg, borderTopColor: outlineColor }]}
         >
+            {/* Active tab indicator — coloured bar that overlays the top border */}
             {statusRowWidth > 0 ? (
                 <Animated.View
                     style={{
                         position: 'absolute',
-                        bottom: 0,
+                        top: -3,
                         left: 0,
                         width: statusRowWidth / 3,
-                        alignItems: 'center',
-                        transform: [{ translateX: statusIndicatorAnim }]
+                        height: 3,
+                        backgroundColor: theme.primary,
+                        transform: [{ translateX: statusIndicatorAnim }],
                     }}
-                >
-                    <View style={{ height: 3, width: 28, borderRadius: 999, backgroundColor: theme.primary }} />
-                </Animated.View>
+                />
             ) : null}
+
             <TouchableOpacity
                 onPress={flipToFront}
-                style={[tw`flex-1 px-2 py-2 border-r border-black items-center justify-center`, { borderRightColor: outlineColor }]}
+                style={[tw`flex-1 py-3 border-r items-center justify-center`, { borderRightColor: outlineColor }]}
             >
-                <Text style={[tw`text-[9px] font-black uppercase tracking-wider`, { color: textSecondary }]}>{t('common.myHabits')}</Text>
-                <Text style={[tw`text-[10px] font-black mt-1`, { color: textPrimary }]}>{completedHabitsCount}/{totalHabitsCount}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-                onPress={openTasksView}
-                style={[tw`flex-1 px-2 py-2 border-r border-black items-center justify-center`, { borderRightColor: outlineColor }]}
-            >
-                <Text style={[tw`text-[9px] font-black uppercase tracking-wider`, { color: textSecondary }]}>{t('dailyCard.tasks')}</Text>
-                <Text style={[tw`text-[10px] font-black mt-1`, { color: textPrimary }]}>
-                    {totalTasksCount > 0 ? `${completedTasksCount}/${totalTasksCount}` : '+'}
+                <Check size={15} color={activeTab === 'habits' ? theme.primary : textSecondary} strokeWidth={2.5} />
+                <Text style={[tw`text-[8px] font-black uppercase tracking-wider mt-1`, { color: activeTab === 'habits' ? theme.primary : textSecondary }]}>
+                    {t('common.myHabits')}
+                </Text>
+                <Text style={[tw`text-[11px] font-black mt-0.5`, { color: textPrimary }]}>
+                    {completedHabitsCount}/{totalHabitsCount}
                 </Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+                onPress={openTasksView}
+                style={[tw`flex-1 py-3 border-r items-center justify-center`, { borderRightColor: outlineColor }]}
+            >
+                <ClipboardList size={15} color={activeTab === 'tasks' ? theme.primary : textSecondary} strokeWidth={2} />
+                <Text style={[tw`text-[8px] font-black uppercase tracking-wider mt-1`, { color: activeTab === 'tasks' ? theme.primary : textSecondary }]}>
+                    {t('dailyCard.tasks')}
+                </Text>
+                <Text style={[tw`text-[11px] font-black mt-0.5`, { color: textPrimary }]}>
+                    {totalTasksCount > 0 ? `${completedTasksCount}/${totalTasksCount}` : '—'}
+                </Text>
+            </TouchableOpacity>
+
             <TouchableOpacity
                 onPress={openJournalView}
-                style={[tw`flex-1 px-2 py-2 border-r border-black items-center justify-center`, { borderRightColor: outlineColor }]}
+                style={tw`flex-1 py-3 items-center justify-center`}
             >
-                <Text style={[tw`text-[9px] font-black uppercase tracking-wider`, { color: textSecondary }]}>{t('dailyCard.journal')}</Text>
-                {selectedMood ? (
-                    <MoodStatusIcon size={16} color={selectedMood.color} strokeWidth={2.5} />
-                ) : (
-                    <BookOpen size={16} color={hasJournalEntry ? '#166534' : textSecondary} strokeWidth={2.5} />
-                )}
+                {selectedMood
+                    ? <MoodStatusIcon size={15} color={selectedMood.color} strokeWidth={2.5} />
+                    : <BookOpen size={15} color={activeTab === 'journal' ? theme.primary : textSecondary} strokeWidth={2} />
+                }
+                <Text style={[tw`text-[8px] font-black uppercase tracking-wider mt-1`, { color: activeTab === 'journal' ? theme.primary : textSecondary }]}>
+                    {t('dailyCard.journal')}
+                </Text>
+                <Text style={[tw`text-[11px] font-black mt-0.5`, { color: textPrimary }]}>
+                    {hasJournalEntry ? '✓' : '—'}
+                </Text>
             </TouchableOpacity>
         </View>
     );
@@ -420,7 +501,6 @@ export const DailyCard = ({
     const { height: screenHeight } = useWindowDimensions();
     const { width: screenWidth } = useWindowDimensions();
     const cardHeight = screenHeight - 220; // Corrected height to stay above bottom nav
-    const journalInputHeight = Math.max(250, Math.floor(cardHeight * 0.46));
     const swipeX = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
@@ -543,6 +623,57 @@ export const DailyCard = ({
         })
     };
 
+    // Inner flip for tasks ↔ journal (same "back" side of the card)
+    const backSwitchFlipStyle = {
+        transform: [
+            { perspective: 1000 },
+            {
+                rotateY: backSwitchAnim.interpolate({
+                    inputRange: [0, 0.5, 1],
+                    outputRange: ['0deg', '90deg', '0deg'],
+                }),
+            },
+        ],
+        opacity: backSwitchAnim.interpolate({
+            inputRange: [0, 0.44, 0.5, 0.56, 1],
+            outputRange: [1, 1, 0, 1, 1],
+        }),
+    };
+
+    // Two-phase flip: front sweeps 0→90° out, then back sweeps -90→0° in.
+    // Each face only ever shows its front face — no backfaceVisibility needed.
+    const frontFlipStyle = {
+        transform: [
+            { perspective: 1000 },
+            {
+                rotateY: flipAnim.interpolate({
+                    inputRange: [0, 0.5, 1],
+                    outputRange: ['0deg', '90deg', '90deg'],
+                }),
+            },
+        ],
+        opacity: flipAnim.interpolate({
+            inputRange: [0, 0.44, 0.5, 1],
+            outputRange: [1, 1, 0, 0],
+        }),
+    };
+
+    const backFlipStyle = {
+        transform: [
+            { perspective: 1000 },
+            {
+                rotateY: flipAnim.interpolate({
+                    inputRange: [0, 0.5, 1],
+                    outputRange: ['-90deg', '-90deg', '0deg'],
+                }),
+            },
+        ],
+        opacity: flipAnim.interpolate({
+            inputRange: [0, 0.5, 0.56, 1],
+            outputRange: [0, 0, 1, 1],
+        }),
+    };
+
     return (
         <Animated.View style={[tw`pb-0 pr-0`, { height: cardHeight }, swipeCardStyle]} {...swipeResponder.panHandlers}>
             <DatePickerModal
@@ -555,10 +686,13 @@ export const DailyCard = ({
             />
 
 
-            {/* Front Face */}
-            {!isFlipped && (
-            <Animated.View style={[tw`w-full h-full`, viewSwitchStyle]}>
-                <HardShadowCard style={tw`h-full`} isDark={isDark}>
+            <View style={tw`h-full`}>
+                {/* Front Face */}
+                <Animated.View
+                    style={[{ position: 'absolute', width: '100%', height: '100%' }, frontFlipStyle]}
+                    pointerEvents={isFlipped ? 'none' : 'auto'}
+                >
+                    <View style={[tw`border-[3px] rounded-3xl overflow-hidden h-full`, { backgroundColor: isDark ? '#0b0b0b' : '#ffffff', borderColor: isDark ? '#ffffff' : '#000000' }]}>
                     {/* Header */}
                     <View style={[tw`flex-row items-center justify-between border-b-[3px] border-black`, { paddingHorizontal: isLargeLayout ? 14 : 16, paddingVertical: isLargeLayout ? 12 : 16, backgroundColor: dateHeaderBg, borderBottomColor: outlineColor }]}>
                         <TouchableOpacity onPress={onPrev}>
@@ -566,15 +700,12 @@ export const DailyCard = ({
                         </TouchableOpacity>
 
                         <View style={tw`flex-row items-center gap-3`}>
-                            <View style={tw`items-center`}>
+                            <TouchableOpacity onPress={() => setShowDatePicker(true)} activeOpacity={0.7} style={tw`items-center`}>
                                 <Text style={[tw`text-white font-black uppercase tracking-tighter`, { fontSize: headerTitleSize, lineHeight: headerTitleSize + 2 }]}>{dayName}</Text>
-                                <TouchableOpacity onPress={() => setShowDatePicker(true)} activeOpacity={0.8}>
-                                    <Text style={[tw`text-white/80 font-bold tracking-widest`, { fontSize: headerDateSize }]}>{dateString}</Text>
-                                </TouchableOpacity>
-                            </View>
+                                <Text style={[tw`text-white/80 font-bold tracking-widest`, { fontSize: headerDateSize }]}>{dateString}</Text>
+                            </TouchableOpacity>
 
-                            {!isLargeLayout && (
-                                <View style={tw`flex-row items-center gap-2`}>
+                            <View style={tw`flex-row items-center gap-2`}>
                                     <View style={{ width: headerCircleSize, height: headerCircleSize, alignItems: 'center', justifyContent: 'center' }}>
                                         <Svg width={headerCircleSize} height={headerCircleSize} style={{ transform: [{ rotate: '-90deg' }] }}>
                                             <Circle
@@ -605,7 +736,6 @@ export const DailyCard = ({
                                         </View>
                                     </View>
                                 </View>
-                            )}
                         </View>
 
                         <TouchableOpacity onPress={onNext}>
@@ -614,44 +744,22 @@ export const DailyCard = ({
                     </View>
 
                     <View style={[tw`flex-1`, { backgroundColor: panelBg }]}>
-                        {isLargeLayout && (
-                            <View style={[tw`items-center pt-4 pb-3 border-b`, { borderColor: borderSoft }]}>
-                                <Animated.View style={{ width: 110, height: 110, alignItems: 'center', justifyContent: 'center', transform: [{ scale: pulseAnim }] }}>
-                                    <Svg width={110} height={110} style={{ transform: [{ rotate: '-90deg' }] }}>
-                                        <Circle
-                                            stroke={isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.12)'}
-                                            cx={55}
-                                            cy={55}
-                                            r={48}
-                                            strokeWidth={10}
-                                            fill="transparent"
-                                        />
-                                        <AnimatedCircle
-                                            stroke={theme.primary}
-                                            cx={55}
-                                            cy={55}
-                                            r={48}
-                                            strokeWidth={10}
-                                            fill="transparent"
-                                            strokeDasharray={48 * 2 * Math.PI}
-                                            strokeDashoffset={progressAnim.interpolate({
-                                                inputRange: [0, 100],
-                                                outputRange: [48 * 2 * Math.PI, 0],
-                                            })}
-                                            strokeLinecap="round"
-                                        />
-                                    </Svg>
-                                    <View style={tw`absolute inset-0 items-center justify-center`}>
-                                        <Text style={[tw`font-black`, { color: textPrimary, fontSize: 24 }]}>{Math.round(actualProgress)}%</Text>
-                                    </View>
-                                </Animated.View>
-                            </View>
-                        )}
-
                         <View style={[tw`px-5 pt-3 pb-2 border-b`, { borderColor: borderSoft }]}>
                             <View style={tw`flex-row justify-between items-center`}>
                                 <Text style={[tw`text-xs font-black uppercase tracking-widest`, { color: textSecondary }]}>{t('common.myHabits')}</Text>
-                                <Text style={[tw`text-xs font-black mr-2`, { color: textSecondary }]}>{completedHabitsCount}/{totalHabitsCount}</Text>
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        const next = sortMode === 'default' ? 'name' : sortMode === 'name' ? 'color' : 'default';
+                                        setSortMode(next);
+                                    }}
+                                    style={[tw`flex-row items-center gap-1 px-2 py-0.5 rounded-full`, { backgroundColor: sortMode !== 'default' ? theme.primary + '22' : borderSoft }]}
+                                    activeOpacity={0.7}
+                                >
+                                    <ArrowUpDown size={10} color={sortMode !== 'default' ? theme.primary : textSecondary} strokeWidth={2.5} />
+                                    <Text style={[tw`text-[9px] font-black uppercase tracking-wider`, { color: sortMode !== 'default' ? theme.primary : textSecondary }]}>
+                                        {sortMode === 'name' ? 'A–Z' : sortMode === 'color' ? 'Color' : 'Sort'}
+                                    </Text>
+                                </TouchableOpacity>
                             </View>
                         </View>
 
@@ -675,13 +783,28 @@ export const DailyCard = ({
                                             weeklyDone: habit.weeklyTarget ? getFlexibleProgress(habit.id) : null,
                                             inactive: isHabitInactiveOnDate(habit.id)
                                         }))
+                                        .sort((a, b) => {
+                                            if (sortMode === 'name') return (a.name || '').localeCompare(b.name || '');
+                                            if (sortMode === 'color') return (a.color || '').localeCompare(b.color || '');
+                                            return 0; // default: preserve original sortOrder
+                                        })
                                         .map(habit => (
                                             <TouchableOpacity
                                                 key={habit.id}
                                                 onPress={() => handleHabitTap(habit)}
-                                                style={[tw`flex-row items-center justify-between mr-2`, { marginBottom: listItemSpacing }]}
-                                                activeOpacity={0.7}
+                                                style={[tw`flex-row items-center`, { marginBottom: listItemSpacing, paddingVertical: 9 }]}
+                                                activeOpacity={0.65}
                                             >
+                                                {/* Colored accent bar */}
+                                                <View style={{
+                                                    width: 3,
+                                                    alignSelf: 'stretch',
+                                                    borderRadius: 2,
+                                                    marginRight: 11,
+                                                    backgroundColor: habit.inactive ? '#b45309' : (habit.color || theme.primary),
+                                                    opacity: habit.done ? 0.3 : 1,
+                                                }} />
+
                                                 <View style={tw`flex-row items-center flex-1 mr-2`}>
                                                     <Text style={[
                                                         tw`font-bold flex-shrink`,
@@ -739,31 +862,30 @@ export const DailyCard = ({
                     )}
 
                     <StatusRow />
+                    </View>
+                </Animated.View>
 
-                </HardShadowCard>
-            </Animated.View>
-            )}
-
-            {/* Back Face */}
-            {isFlipped && (
-            <Animated.View style={[tw`w-full h-full`, viewSwitchStyle]}>
-                <HardShadowCard style={tw`h-full`} isDark={isDark}>
+                {/* Back Face */}
+                <Animated.View
+                    style={[{ position: 'absolute', width: '100%', height: '100%' }, backFlipStyle]}
+                    pointerEvents={isFlipped ? 'auto' : 'none'}
+                >
+                    <Animated.View style={[tw`w-full h-full`, backSwitchFlipStyle]}>
+                    <View style={[tw`border-[3px] rounded-3xl overflow-hidden h-full`, { backgroundColor: isDark ? '#0b0b0b' : '#ffffff', borderColor: isDark ? '#ffffff' : '#000000' }]}>
                     {/* Header */}
                     <View style={[tw`flex-row items-center border-b-[3px] border-black`, { paddingHorizontal: isCompact ? 14 : 20, paddingVertical: isCompact ? 10 : 20, backgroundColor: dateHeaderBg, borderBottomColor: outlineColor }]}>
                         <TouchableOpacity onPress={onPrev} style={tw`absolute left-4 z-10`}>
                             <ChevronLeft size={isCompact ? 24 : 28} color="white" />
                         </TouchableOpacity>
-                        <View style={tw`flex-1 items-center`}>
+                        <TouchableOpacity onPress={() => setShowDatePicker(true)} activeOpacity={0.7} style={tw`flex-1 items-center`}>
                             <Text style={[tw`text-white font-black uppercase tracking-tighter`, { fontSize: isCompact ? 24 : 30, lineHeight: isCompact ? 26 : 32 }]}>
                                 {backView === 'tasks' ? t('dailyCard.tasks') : t('journal.title')}
                             </Text>
-                            <TouchableOpacity onPress={() => setShowDatePicker(true)} activeOpacity={0.8}>
-                                <Text style={[tw`text-white/90 font-bold tracking-widest mt-1`, { fontSize: isCompact ? 12 : 14 }]}>
-                                    <Text style={{ opacity: 0.9 }}>{shortDayName}</Text>
-                                    <Text>{`, ${dateString}`}</Text>
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
+                            <Text style={[tw`text-white/90 font-bold tracking-widest mt-1`, { fontSize: isCompact ? 12 : 14 }]}>
+                                <Text style={{ opacity: 0.9 }}>{shortDayName}</Text>
+                                <Text>{`, ${dateString}`}</Text>
+                            </Text>
+                        </TouchableOpacity>
                         <View style={tw`absolute right-4 z-10 flex-row items-center`}>
                             <TouchableOpacity onPress={onNext}>
                                 <ChevronRight size={isCompact ? 24 : 28} color="white" />
@@ -834,75 +956,160 @@ export const DailyCard = ({
                     ) : (
                         <ScrollView
                             ref={journalScrollRef}
-                            style={tw`flex-1 p-6`}
+                            style={tw`flex-1 p-4`}
                             contentContainerStyle={{ paddingBottom: 32 + keyboardInset }}
                             keyboardShouldPersistTaps="handled"
                             keyboardDismissMode="interactive"
                             showsVerticalScrollIndicator={false}
                         >
-                            <Text style={[tw`text-xs font-black uppercase tracking-widest text-center mb-4`, { color: textSecondary }]}>{t('journal.prompt')}</Text>
-                            <View style={tw`flex-row justify-between mb-6`}>
-                                {MOODS.map((m) => {
-                                    const Icon = m.icon;
-                                    const isSelected = localMood === m.value;
-                                    return (
-                                        <TouchableOpacity
-                                            key={m.value}
-                                            onPress={() => setLocalMood(m.value)}
-                                            style={[
-                                                tw`items-center p-1.5 rounded-lg border-2`,
-                                                isSelected ? { borderColor: m.color, backgroundColor: m.color + '20' } : tw`border-transparent`
-                                            ]}
-                                        >
-                                            <Icon
-                                                size={26}
-                                                color={isSelected ? m.color : textMuted}
-                                                strokeWidth={isSelected ? 2.5 : 2}
-                                            />
-                                        </TouchableOpacity>
-                                    );
-                                })}
-                            </View>
+                            {/* Existing entries */}
+                            {journalEntries.map((entry) => {
+                                const entryMoodObj = MOODS.find(m => m.value === entry.mood);
+                                const EntryMoodIcon = entryMoodObj?.icon;
+                                return (
+                                    <View
+                                        key={entry.id}
+                                        style={[tw`mb-3 rounded-xl border-2 overflow-hidden`, { borderColor: borderSoft, backgroundColor: panelSoftBg }]}
+                                    >
+                                        {editingEntryId === entry.id ? (
+                                            <View>
+                                                <TextInput
+                                                    style={[tw`p-3 text-sm font-medium`, { color: textPrimary, minHeight: 80, textAlignVertical: 'top' }]}
+                                                    value={editingEntryText}
+                                                    onChangeText={setEditingEntryText}
+                                                    multiline
+                                                    autoFocus
+                                                    onFocus={() => setTimeout(() => journalScrollRef.current?.scrollToEnd({ animated: true }), 80)}
+                                                />
+                                                {/* Mood row below text, above action bar */}
+                                                <View style={[tw`flex-row justify-between px-3 py-2 border-t-2`, { borderColor: borderSoft }]}>
+                                                    {MOODS.map((m) => {
+                                                        const Icon = m.icon;
+                                                        const isSel = editingEntryMood === m.value;
+                                                        return (
+                                                            <TouchableOpacity
+                                                                key={m.value}
+                                                                onPress={() => setEditingEntryMood(isSel ? undefined : m.value)}
+                                                                style={[
+                                                                    tw`flex-1 items-center py-1.5 rounded-lg border-2 mx-0.5`,
+                                                                    isSel ? { borderColor: m.color, backgroundColor: m.color + '20' } : tw`border-transparent`
+                                                                ]}
+                                                            >
+                                                                <Icon size={20} color={isSel ? m.color : textMuted} strokeWidth={isSel ? 2.5 : 2} />
+                                                            </TouchableOpacity>
+                                                        );
+                                                    })}
+                                                </View>
+                                                <View style={[tw`flex-row justify-between items-center px-3 py-2 border-t-2`, { borderColor: borderSoft }]}>
+                                                    <TouchableOpacity onPress={() => { setEditingEntryId(null); setEditingEntryText(''); setEditingEntryMood(undefined); }}>
+                                                        <Text style={[tw`text-[10px] font-black uppercase tracking-widest`, { color: textMuted }]}>{t('common.cancel')}</Text>
+                                                    </TouchableOpacity>
+                                                    <TouchableOpacity
+                                                        onPress={() => handleUpdateEntry(entry.id)}
+                                                        style={[tw`flex-row items-center gap-1.5 px-3 py-1.5 rounded-lg`, { backgroundColor: outlineColor }]}
+                                                    >
+                                                        <Save size={11} color={isDark ? '#000' : '#fff'} />
+                                                        <Text style={[tw`text-[10px] font-black uppercase tracking-widest`, { color: isDark ? '#000' : '#fff' }]}>{t('journal.save')}</Text>
+                                                    </TouchableOpacity>
+                                                </View>
+                                            </View>
+                                        ) : (
+                                            <View>
+                                                {EntryMoodIcon && (
+                                                    <View style={[tw`px-3 py-2 border-b-2`, { borderColor: borderSoft }]}>
+                                                        <EntryMoodIcon size={16} color={entryMoodObj.color} strokeWidth={2.5} />
+                                                    </View>
+                                                )}
+                                                <Text style={[tw`px-3 py-3 text-sm font-medium leading-relaxed`, { color: textPrimary }]}>{entry.text}</Text>
+                                                <View style={[tw`flex-row items-center justify-between px-3 py-2 border-t-2`, { borderColor: borderSoft }]}>
+                                                    <Text style={[tw`text-[9px] font-black uppercase tracking-widest`, { color: textMuted }]}>
+                                                        {formatEntryTime(entry.createdAt)}
+                                                    </Text>
+                                                    <View style={tw`flex-row gap-4`}>
+                                                        <TouchableOpacity onPress={() => { setEditingEntryId(entry.id); setEditingEntryText(entry.text); setEditingEntryMood(entry.mood); }}>
+                                                            <Pencil size={13} color={textSecondary} />
+                                                        </TouchableOpacity>
+                                                        <TouchableOpacity onPress={() => handleDeleteEntry(entry.id)}>
+                                                            <X size={13} color={textMuted} />
+                                                        </TouchableOpacity>
+                                                    </View>
+                                                </View>
+                                            </View>
+                                        )}
+                                    </View>
+                                );
+                            })}
 
-                            <View style={tw`relative mb-4`}>
-                                <TextInput
-                                    style={[
-                                        tw`border-[3px] p-4 pb-14 rounded-xl text-base font-medium leading-relaxed`,
-                                        {
-                                            height: journalInputHeight,
-                                            backgroundColor: panelSoftBg,
-                                            borderColor: isDark ? '#262626' : '#e5e7eb',
-                                            color: textPrimary
-                                        }
-                                    ]}
-                                    placeholder={t('journal.placeholder')}
-                                    placeholderTextColor={textMuted}
-                                    multiline
-                                    keyboardType="default"
-                                    textAlignVertical="top"
-                                    value={localJournal}
-                                    onChangeText={setLocalJournal}
-                                    onFocus={() => {
-                                        setTimeout(() => {
-                                            journalScrollRef.current?.scrollTo({ y: 140, animated: true });
-                                        }, 80);
-                                    }}
-                                    returnKeyType="default"
-                                    blurOnSubmit={false}
-                                />
+                            {/* Empty state */}
+                            {journalEntries.length === 0 && !isAddingEntry && (
+                                <Text style={[tw`text-[10px] font-black uppercase tracking-widest text-center py-3 mb-3`, { color: textMuted }]}>
+                                    {t('journal.empty')}
+                                </Text>
+                            )}
+
+                            {/* New entry input or add button */}
+                            {isAddingEntry ? (
+                                <View style={[tw`rounded-xl border-2 overflow-hidden`, { borderColor: outlineColor, backgroundColor: panelSoftBg }]}>
+                                    <TextInput
+                                        style={[tw`p-3 text-sm font-medium`, { color: textPrimary, minHeight: 100, textAlignVertical: 'top' }]}
+                                        value={newEntryText}
+                                        onChangeText={setNewEntryText}
+                                        placeholder={t('journal.placeholder')}
+                                        placeholderTextColor={textMuted}
+                                        multiline
+                                        autoFocus
+                                        onFocus={() => setTimeout(() => journalScrollRef.current?.scrollToEnd({ animated: true }), 80)}
+                                    />
+                                    {/* Mood row below text, above action bar */}
+                                    <View style={[tw`flex-row justify-between px-3 py-2 border-t-2`, { borderColor: borderSoft }]}>
+                                        {MOODS.map((m) => {
+                                            const Icon = m.icon;
+                                            const isSel = newEntryMood === m.value;
+                                            return (
+                                                <TouchableOpacity
+                                                    key={m.value}
+                                                    onPress={() => setNewEntryMood(isSel ? undefined : m.value)}
+                                                    style={[
+                                                        tw`flex-1 items-center py-1.5 rounded-lg border-2 mx-0.5`,
+                                                        isSel ? { borderColor: m.color, backgroundColor: m.color + '20' } : tw`border-transparent`
+                                                    ]}
+                                                >
+                                                    <Icon size={20} color={isSel ? m.color : textMuted} strokeWidth={isSel ? 2.5 : 2} />
+                                                </TouchableOpacity>
+                                            );
+                                        })}
+                                    </View>
+                                    <View style={[tw`flex-row justify-between items-center px-3 py-2 border-t-2`, { borderColor: borderSoft }]}>
+                                        <TouchableOpacity onPress={() => { setIsAddingEntry(false); setNewEntryText(''); setNewEntryMood(undefined); }}>
+                                            <Text style={[tw`text-[10px] font-black uppercase tracking-widest`, { color: textMuted }]}>{t('common.cancel')}</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                            onPress={handleAddEntry}
+                                            style={[tw`flex-row items-center gap-1.5 px-3 py-1.5 rounded-lg`, { backgroundColor: outlineColor }]}
+                                        >
+                                            <Save size={11} color={isDark ? '#000' : '#fff'} />
+                                            <Text style={[tw`text-[10px] font-black uppercase tracking-widest`, { color: isDark ? '#000' : '#fff' }]}>{t('journal.save')}</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+                            ) : (
                                 <TouchableOpacity
-                                    onPress={handleSaveJournal}
-                                    style={[tw`absolute right-3 bottom-3 w-9 h-9 rounded-full border-2 border-black items-center justify-center`, { backgroundColor: '#000', borderColor: outlineColor }]}
+                                    onPress={() => setIsAddingEntry(true)}
+                                    style={[tw`flex-row items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed`, { borderColor: theme.primary + '80' }]}
                                 >
-                                    <Save size={14} color="white" />
+                                    <Plus size={14} color={theme.primary} />
+                                    <Text style={[tw`text-[10px] font-black uppercase tracking-widest`, { color: theme.primary }]}>
+                                        {t('journal.addEntry')}
+                                    </Text>
                                 </TouchableOpacity>
-                            </View>
+                            )}
                         </ScrollView>
                     )}
                     <StatusRow />
-                </HardShadowCard>
-            </Animated.View>
-            )}
+                    </View>
+                    </Animated.View>
+                </Animated.View>
+            </View>
         </Animated.View>
     );
 };

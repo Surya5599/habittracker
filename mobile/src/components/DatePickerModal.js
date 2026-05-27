@@ -1,138 +1,259 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Modal, ScrollView } from 'react-native';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react-native';
-import tw from 'twrnc';
-import { DAYS_OF_WEEK } from '../constants';
+import { View, Text, TouchableOpacity, Modal, Platform } from 'react-native';
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react-native';
+
+const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTH_FULL  = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const DAY_LABELS  = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 export const DatePickerModal = ({ isVisible, onClose, onSelect, selectedDate, theme, colorMode = 'light' }) => {
-    const [currentMonth, setCurrentMonth] = useState(new Date(selectedDate || new Date()));
-    const isDark = colorMode === 'dark';
-    const panelBg = isDark ? '#0a0a0a' : '#ffffff';
+    const initial = selectedDate || new Date();
+    const [viewMode, setViewMode]         = useState('days');
+    const [currentMonth, setCurrentMonth] = useState(() => new Date(initial.getFullYear(), initial.getMonth(), 1));
+    const [pickerYear, setPickerYear]     = useState(() => initial.getFullYear());
+    const [gridWidth, setGridWidth]       = useState(0);
+
+    const isDark      = colorMode === 'dark';
+    const panelBg     = isDark ? '#0a0a0a' : '#ffffff';
     const panelBorder = isDark ? '#ffffff' : '#000000';
-    const textPrimary = isDark ? '#f5f5f5' : '#1f2937';
-    const textMuted = isDark ? '#a3a3a3' : '#9ca3af';
-    const subtleBg = isDark ? '#111111' : '#f3f4f6';
+    const textPrimary = isDark ? '#f5f5f5' : '#111827';
+    const textMuted   = isDark ? '#6b7280' : '#9ca3af';
 
-    const getDaysInMonth = (date) => {
-        const year = date.getFullYear();
-        const month = date.getMonth();
-        const days = new Date(year, month + 1, 0).getDate();
-        const firstDay = new Date(year, month, 1).getDay();
-        return { days, firstDay };
-    };
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    const handlePrevMonth = () => {
-        setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
-    };
+    const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
+    const firstDay    = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
+    const monthLabel  = `${MONTH_FULL[currentMonth.getMonth()]} ${currentMonth.getFullYear()}`;
 
-    const handleNextMonth = () => {
-        setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
-    };
+    // Compute exact pixel size from measured container width — no flex/aspectRatio on cells
+    const cellSize   = gridWidth > 0 ? Math.floor(gridWidth / 7) : 0;
+    const circleSize = cellSize > 0 ? cellSize - 8 : 0;
 
-    const handleToday = () => {
-        const today = new Date();
-        onSelect(today);
+    const selectDay = (d) => {
+        onSelect(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), d));
         onClose();
     };
 
-    const handleSelectDay = (day) => {
-        const newDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-        onSelect(newDate);
-        onClose();
-    };
+    const prevMonth = () => setCurrentMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1));
+    const nextMonth = () => setCurrentMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1));
 
-    const { days, firstDay } = getDaysInMonth(currentMonth);
-    const monthName = currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
+    const openMonthPicker = () => { setPickerYear(currentMonth.getFullYear()); setViewMode('months'); };
+    const selectMonth = (idx) => { setCurrentMonth(new Date(pickerYear, idx, 1)); setViewMode('days'); };
+    const goToThisMonth = () => { setCurrentMonth(new Date(today.getFullYear(), today.getMonth(), 1)); setViewMode('days'); };
 
-    // Adjust firstDay for Monday start if desired, but Calendar standard often Sunday. 
-    // Let's stick to simple Sunday=0 for grid.
+    // Build grid as explicit rows — no flexWrap so rows can never stretch vertically
+    const renderDayGrid = () => {
+        if (!cellSize) return null;
 
-    const renderCalendarGrid = () => {
-        const daysArray = [];
-        // Empty slots
-        for (let i = 0; i < firstDay; i++) {
-            daysArray.push(<View key={`empty-${i}`} style={tw`w-[14.28%] aspect-square`} />);
-        }
-        // Days
-        for (let i = 1; i <= days; i++) {
-            const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), i);
-            const isSelected = date.toDateString() === selectedDate.toDateString();
-            const isToday = date.toDateString() === new Date().toDateString();
+        const numRows = Math.ceil((firstDay + daysInMonth) / 7);
+        const rows = [];
 
-            daysArray.push(
-                <TouchableOpacity
-                    key={i}
-                    onPress={() => handleSelectDay(i)}
-                    style={[
-                        tw`w-[14.28%] aspect-square items-center justify-center m-0.5 rounded-lg`,
-                        isSelected ? { backgroundColor: theme.primary } : (isToday ? { backgroundColor: subtleBg, borderWidth: 2, borderColor: isDark ? '#ffffff' : '#d1d5db' } : tw`bg-transparent`)
-                    ]}
-                >
-                    <Text style={[
-                        tw`text-sm font-bold`,
-                        isSelected ? tw`text-white` : { color: textPrimary }
-                    ]}>
-                        {i}
-                    </Text>
-                </TouchableOpacity>
+        for (let row = 0; row < numRows; row++) {
+            const cells = [];
+            for (let col = 0; col < 7; col++) {
+                const d = row * 7 + col - firstDay + 1;
+                if (d < 1 || d > daysInMonth) {
+                    cells.push(<View key={col} style={{ width: cellSize, height: cellSize }} />);
+                } else {
+                    const cellDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), d);
+                    cellDate.setHours(0, 0, 0, 0);
+                    const isSelected = selectedDate && cellDate.toDateString() === selectedDate.toDateString();
+                    const isToday    = cellDate.toDateString() === today.toDateString();
+
+                    cells.push(
+                        <TouchableOpacity
+                            key={col}
+                            onPress={() => selectDay(d)}
+                            activeOpacity={0.7}
+                            style={{ width: cellSize, height: cellSize, alignItems: 'center', justifyContent: 'center' }}
+                        >
+                            <View style={{
+                                width: circleSize,
+                                height: circleSize,
+                                borderRadius: circleSize / 2,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                backgroundColor: isSelected
+                                    ? theme.primary
+                                    : isToday
+                                        ? theme.primary + '25'
+                                        : 'transparent',
+                            }}>
+                                <Text style={{
+                                    fontSize: 13,
+                                    fontWeight: isSelected || isToday ? '900' : '500',
+                                    color: isSelected ? '#ffffff' : isToday ? theme.primary : textPrimary,
+                                    includeFontPadding: false,
+                                    textAlignVertical: 'center',
+                                }}>
+                                    {d}
+                                </Text>
+                            </View>
+                        </TouchableOpacity>
+                    );
+                }
+            }
+            rows.push(
+                <View key={row} style={{ flexDirection: 'row' }}>
+                    {cells}
+                </View>
             );
         }
-        return daysArray;
+
+        return rows;
     };
 
+    const renderMonthGrid = () =>
+        MONTH_SHORT.map((name, idx) => {
+            const isActive   = idx === currentMonth.getMonth() && pickerYear === currentMonth.getFullYear();
+            const isSelected = selectedDate && idx === selectedDate.getMonth() && pickerYear === selectedDate.getFullYear();
+            const isTodayMo  = idx === today.getMonth() && pickerYear === today.getFullYear();
+            return (
+                <TouchableOpacity
+                    key={idx}
+                    onPress={() => selectMonth(idx)}
+                    activeOpacity={0.7}
+                    style={{
+                        width: '33.33%',
+                        paddingVertical: 14,
+                        alignItems: 'center',
+                        borderRadius: 14,
+                        backgroundColor: isSelected ? theme.primary : isActive ? theme.primary + '22' : 'transparent',
+                    }}
+                >
+                    <Text style={{
+                        fontSize: 14,
+                        fontWeight: '800',
+                        color: isSelected ? '#ffffff' : isActive ? theme.primary : textPrimary,
+                    }}>
+                        {name}
+                    </Text>
+                    {isTodayMo && !isSelected && (
+                        <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: theme.primary, marginTop: 4 }} />
+                    )}
+                </TouchableOpacity>
+            );
+        });
+
     return (
-        <Modal
-            animationType="fade"
-            transparent={true}
-            visible={isVisible}
-            onRequestClose={onClose}
-        >
-            <View style={tw`flex-1 justify-center items-center bg-black/50 p-4`}>
-                <View style={[tw`w-full max-w-sm rounded-3xl border-[3px] overflow-hidden shadow-xl`, { backgroundColor: panelBg, borderColor: panelBorder }]}>
-                    {/* Header */}
-                    <View style={[tw`p-4 flex-row items-center justify-between border-b-[3px] border-black`, { backgroundColor: theme.primary }]}>
-                        <Text style={tw`text-white font-black uppercase text-lg tracking-widest`}>Select Date</Text>
-                        <TouchableOpacity onPress={onClose} style={tw`bg-black/20 p-1 rounded-full`}>
-                            <X size={20} color="white" />
-                        </TouchableOpacity>
-                    </View>
-
-                    <View style={tw`p-4`}>
-                        {/* Month Nav */}
-                        <View style={tw`flex-row items-center justify-between mb-4`}>
-                            <TouchableOpacity onPress={handlePrevMonth} style={[tw`p-2 rounded-lg border-2`, { backgroundColor: subtleBg, borderColor: isDark ? '#ffffff' : '#d1d5db' }]}>
-                                <ChevronLeft size={20} color={isDark ? '#e5e7eb' : '#57534e'} />
+        <Modal animationType="fade" transparent visible={isVisible} onRequestClose={onClose}>
+            <TouchableOpacity
+                style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 16 }}
+                activeOpacity={1}
+                onPress={onClose}
+            >
+                <TouchableOpacity activeOpacity={1} onPress={() => {}} style={{ width: '100%', maxWidth: 360 }}>
+                    <View style={{
+                        backgroundColor: panelBg,
+                        borderWidth: 3,
+                        borderColor: panelBorder,
+                        borderRadius: 28,
+                        overflow: 'hidden',
+                    }}>
+                        {/* Header */}
+                        <View style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            paddingHorizontal: 16,
+                            paddingVertical: 14,
+                            backgroundColor: theme.primary,
+                            borderBottomWidth: 3,
+                            borderBottomColor: panelBorder,
+                        }}>
+                            <TouchableOpacity
+                                onPress={viewMode === 'days' ? prevMonth : () => setPickerYear(y => y - 1)}
+                                style={{ padding: 6, borderRadius: 10, backgroundColor: 'rgba(0,0,0,0.15)' }}
+                            >
+                                <ChevronLeft size={20} color="white" strokeWidth={2.5} />
                             </TouchableOpacity>
-                            <Text style={[tw`text-lg font-black uppercase`, { color: textPrimary }]}>{monthName}</Text>
-                            <TouchableOpacity onPress={handleNextMonth} style={[tw`p-2 rounded-lg border-2`, { backgroundColor: subtleBg, borderColor: isDark ? '#ffffff' : '#d1d5db' }]}>
-                                <ChevronRight size={20} color={isDark ? '#e5e7eb' : '#57534e'} />
+
+                            <TouchableOpacity
+                                onPress={viewMode === 'days' ? openMonthPicker : () => setViewMode('days')}
+                                activeOpacity={0.75}
+                                style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 2, paddingHorizontal: 8 }}
+                            >
+                                <Text style={{ color: 'white', fontSize: 17, fontWeight: '900', letterSpacing: -0.3, textTransform: 'uppercase' }}>
+                                    {viewMode === 'days' ? monthLabel : pickerYear}
+                                </Text>
+                                {viewMode === 'days'
+                                    ? <ChevronDown size={15} color="rgba(255,255,255,0.85)" strokeWidth={2.5} />
+                                    : <ChevronUp   size={15} color="rgba(255,255,255,0.85)" strokeWidth={2.5} />
+                                }
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                onPress={viewMode === 'days' ? nextMonth : () => setPickerYear(y => y + 1)}
+                                style={{ padding: 6, borderRadius: 10, backgroundColor: 'rgba(0,0,0,0.15)' }}
+                            >
+                                <ChevronRight size={20} color="white" strokeWidth={2.5} />
                             </TouchableOpacity>
                         </View>
 
-                        {/* Weekday Headers */}
-                        <View style={[tw`flex-row mb-2 border-b pb-2`, { borderColor: isDark ? '#ffffff' : '#e5e7eb' }]}>
-                            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-                                <View key={i} style={tw`w-[14.28%] items-center`}>
-                                    <Text style={[tw`text-xs font-black`, { color: textMuted }]}>{day}</Text>
-                                </View>
-                            ))}
-                        </View>
+                        <View style={{ padding: 14 }}>
+                            {viewMode === 'days' ? (
+                                <>
+                                    {/* Weekday labels row — onLayout here measures the exact grid width */}
+                                    <View
+                                        style={{ flexDirection: 'row' }}
+                                        onLayout={e => setGridWidth(e.nativeEvent.layout.width)}
+                                    >
+                                        {DAY_LABELS.map((l, i) => (
+                                            <View key={i} style={{ flex: 1, alignItems: 'center', paddingVertical: 6 }}>
+                                                <Text style={{ fontSize: 11, fontWeight: '900', color: textMuted, letterSpacing: 0.5 }}>{l}</Text>
+                                            </View>
+                                        ))}
+                                    </View>
 
-                        {/* Grid */}
-                        <View style={tw`flex-row flex-wrap`}>
-                            {renderCalendarGrid()}
-                        </View>
+                                    {/* Day grid — explicit rows, no flexWrap */}
+                                    <View>{renderDayGrid()}</View>
 
-                        {/* Today Button */}
-                        <TouchableOpacity
-                            onPress={handleToday}
-                            style={[tw`mt-4 w-full py-3 rounded-xl border-[2px] border-black flex-row items-center justify-center gap-2`, { backgroundColor: theme.primary + '20', borderColor: theme.primary }]}
-                        >
-                            <Text style={[tw`font-black uppercase text-sm tracking-widest`, { color: theme.primary }]}>Jump to Today</Text>
-                        </TouchableOpacity>
+                                    <TouchableOpacity
+                                        onPress={() => { onSelect(new Date()); onClose(); }}
+                                        style={{
+                                            marginTop: 12,
+                                            paddingVertical: 12,
+                                            borderRadius: 14,
+                                            alignItems: 'center',
+                                            backgroundColor: theme.primary + '18',
+                                            borderWidth: 2,
+                                            borderColor: theme.primary,
+                                        }}
+                                    >
+                                        <Text style={{ color: theme.primary, fontWeight: '900', fontSize: 13, letterSpacing: 1, textTransform: 'uppercase' }}>
+                                            Today
+                                        </Text>
+                                    </TouchableOpacity>
+                                </>
+                            ) : (
+                                <>
+                                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingVertical: 6 }}>
+                                        {renderMonthGrid()}
+                                    </View>
+
+                                    <TouchableOpacity
+                                        onPress={goToThisMonth}
+                                        style={{
+                                            marginTop: 8,
+                                            paddingVertical: 12,
+                                            borderRadius: 14,
+                                            alignItems: 'center',
+                                            backgroundColor: theme.primary + '18',
+                                            borderWidth: 2,
+                                            borderColor: theme.primary,
+                                        }}
+                                    >
+                                        <Text style={{ color: theme.primary, fontWeight: '900', fontSize: 13, letterSpacing: 1, textTransform: 'uppercase' }}>
+                                            This Month
+                                        </Text>
+                                    </TouchableOpacity>
+                                </>
+                            )}
+                        </View>
                     </View>
-                </View>
-            </View>
+                </TouchableOpacity>
+            </TouchableOpacity>
         </Modal>
     );
 };

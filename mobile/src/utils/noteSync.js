@@ -1,9 +1,17 @@
+const normalizeJournal = (journal) => {
+  if (Array.isArray(journal)) return journal;
+  if (typeof journal === 'string' && journal.trim()) {
+    return [{ id: 'legacy-0', text: journal, createdAt: Date.now() }];
+  }
+  return [];
+};
+
 export const normalizeNote = (note) => {
   const input = note || {};
   return {
     tasks: Array.isArray(input.tasks) ? input.tasks : [],
     mood: input.mood,
-    journal: input.journal || '',
+    journal: normalizeJournal(input.journal),
     inactiveHabits: Array.isArray(input.inactiveHabits) ? input.inactiveHabits : [],
     _updatedAt: Number(input._updatedAt) || Date.now()
   };
@@ -13,7 +21,7 @@ export const parseServerContent = (content) => {
   try {
     const parsed = JSON.parse(content);
     if (Array.isArray(parsed)) {
-      return normalizeNote({ tasks: parsed, mood: undefined, journal: '' });
+      return normalizeNote({ tasks: parsed, mood: undefined, journal: [] });
     }
     if (parsed && typeof parsed === 'object') {
       return normalizeNote(parsed);
@@ -43,8 +51,7 @@ export const isNoteEmpty = (note) => {
   return (
     value.tasks.length === 0 &&
     !value.mood &&
-    !String(value.journal || '').trim() &&
+    !value.journal.some(e => (e.text || '').trim()) &&
     value.inactiveHabits.length === 0
   );
 };
-

@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Linking from 'expo-linking';
 import { supabase } from './src/lib/supabase';
 import { SignInScreen } from './src/screens/SignInScreen';
 import { MainScreen } from './src/screens/MainScreen';
@@ -75,6 +76,32 @@ export default function App() {
     setCardStyle(style);
     await AsyncStorage.setItem('habit_card_style', style);
   };
+
+  // Handle deep links (e.g. email confirmation → habicard://#access_token=...&refresh_token=...)
+  useEffect(() => {
+    const handleDeepLink = async ({ url }) => {
+      if (!url) return;
+      const fragment = url.split('#')[1];
+      if (!fragment) return;
+      const params = Object.fromEntries(new URLSearchParams(fragment));
+      if (params.access_token && params.refresh_token) {
+        await supabase.auth.setSession({
+          access_token: params.access_token,
+          refresh_token: params.refresh_token,
+        });
+      }
+    };
+
+    // App was already open when link was tapped
+    const linkingSub = Linking.addEventListener('url', handleDeepLink);
+
+    // App was cold-started by the link
+    Linking.getInitialURL().then(url => {
+      if (url) handleDeepLink({ url });
+    });
+
+    return () => linkingSub?.remove();
+  }, []);
 
   // Initialize Session
   useEffect(() => {

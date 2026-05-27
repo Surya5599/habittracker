@@ -216,7 +216,9 @@
         "title": "Journal",
         "prompt": "Reflect on your day",
         "placeholder": "Write regarding today...",
-        "save": "Save Entry"
+        "save": "Save",
+        "addEntry": "Add Entry",
+        "empty": "No entries yet"
     },
     "habitManager": {
         "title": "My Habits",

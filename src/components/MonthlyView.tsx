@@ -80,7 +80,11 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
         if (!dayNote || Array.isArray(dayNote)) return count;
 
         const hasMood = typeof dayNote.mood === 'number';
-        const hasJournal = Boolean(dayNote.journal && dayNote.journal.trim().length > 0);
+        const rawJournal = dayNote.journal;
+        const journalText = Array.isArray(rawJournal)
+            ? rawJournal.map((e: any) => (typeof e === 'string' ? e : e?.text || '')).join('')
+            : String(rawJournal || '');
+        const hasJournal = Boolean(journalText.trim().length > 0);
 
         return hasMood || hasJournal ? count + 1 : count;
     }, 0);

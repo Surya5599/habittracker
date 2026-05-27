@@ -517,13 +517,11 @@ export const Header: React.FC<HeaderProps> = ({
                                             </div>
                                         </div>
                                         <div className="w-16 h-16 relative">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <PieChart>
-                                                    <Pie data={[{ value: monthProgress.completed || 0.1 }, { value: monthProgress.remaining || 0 }]} innerRadius="72%" outerRadius="100%" paddingAngle={2} dataKey="value" startAngle={90} endAngle={450} isAnimationActive={true} animationDuration={800}>
-                                                        <Cell fill={theme.primary} /><Cell fill={isDarkMode ? "#2a2a2a" : "#f0f0f0"} />
-                                                    </Pie>
-                                                </PieChart>
-                                            </ResponsiveContainer>
+                                            <PieChart width={64} height={64}>
+                                                <Pie data={[{ value: monthProgress.completed || 0.1 }, { value: monthProgress.remaining || 0 }]} innerRadius="72%" outerRadius="100%" paddingAngle={2} dataKey="value" startAngle={90} endAngle={450} isAnimationActive={true} animationDuration={800}>
+                                                    <Cell fill={theme.primary} /><Cell fill={isDarkMode ? "#2a2a2a" : "#f0f0f0"} />
+                                                </Pie>
+                                            </PieChart>
                                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                                 <span className="text-xs font-black" style={{ color: theme.primary }}>{monthProgress.percentage.toFixed(0)}%</span>
                                             </div>
@@ -558,13 +556,11 @@ export const Header: React.FC<HeaderProps> = ({
                                             </div>
                                         </div>
                                         <div className="w-16 h-16 relative">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <PieChart>
-                                                    <Pie data={[{ value: weekProgress.completed || 0.1 }, { value: weekProgress.remaining || 0 }]} innerRadius="72%" outerRadius="100%" paddingAngle={2} dataKey="value" startAngle={90} endAngle={450} isAnimationActive={true} animationDuration={800}>
-                                                        <Cell fill={theme.primary} /><Cell fill={isDarkMode ? "#2a2a2a" : "#f0f0f0"} />
-                                                    </Pie>
-                                                </PieChart>
-                                            </ResponsiveContainer>
+                                            <PieChart width={64} height={64}>
+                                                <Pie data={[{ value: weekProgress.completed || 0.1 }, { value: weekProgress.remaining || 0 }]} innerRadius="72%" outerRadius="100%" paddingAngle={2} dataKey="value" startAngle={90} endAngle={450} isAnimationActive={true} animationDuration={800}>
+                                                    <Cell fill={theme.primary} /><Cell fill={isDarkMode ? "#2a2a2a" : "#f0f0f0"} />
+                                                </Pie>
+                                            </PieChart>
                                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                                 <span className="text-xs font-black" style={{ color: theme.primary }}>{weekProgress.percentage.toFixed(0)}%</span>
                                             </div>
@@ -604,13 +600,11 @@ export const Header: React.FC<HeaderProps> = ({
                                             )}
                                         </div>
                                         <div className="w-16 h-16 relative shrink-0">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <PieChart>
-                                                    <Pie data={[{ value: annualStats.totalCompletions || 0.1 }, { value: Math.max(0, annualStats.totalPossible - annualStats.totalCompletions) }]} innerRadius="72%" outerRadius="100%" paddingAngle={2} dataKey="value" startAngle={90} endAngle={450} isAnimationActive={true} animationDuration={800}>
-                                                        <Cell fill={theme.primary} /><Cell fill={isDarkMode ? "#2a2a2a" : "#f0f0f0"} />
-                                                    </Pie>
-                                                </PieChart>
-                                            </ResponsiveContainer>
+                                            <PieChart width={64} height={64}>
+                                                <Pie data={[{ value: annualStats.totalCompletions || 0.1 }, { value: Math.max(0, annualStats.totalPossible - annualStats.totalCompletions) }]} innerRadius="72%" outerRadius="100%" paddingAngle={2} dataKey="value" startAngle={90} endAngle={450} isAnimationActive={true} animationDuration={800}>
+                                                    <Cell fill={theme.primary} /><Cell fill={isDarkMode ? "#2a2a2a" : "#f0f0f0"} />
+                                                </Pie>
+                                            </PieChart>
                                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                                 <span className="text-xs font-black" style={{ color: theme.primary }}>{annualCompletionRate.toFixed(0)}%</span>
                                             </div>

@@ -1,414 +1,504 @@
 {
-    "settings": {
-        "title": "Settings",
-        "general": {
-            "title": "General",
-            "defaultView": "Default View",
-            "views": {
-                "daily": "Daily",
-                "monthly": "Mnth",
-                "dashboard": "Dash"
-            },
-            "startOfWeek": "Start of Week"
-        },
-        "language": {
-            "title": "Language"
-        },
-        "theme": {
-            "title": "Theme",
-            "select": "Select Theme"
-        },
-        "support": {
-            "title": "Support",
-            "reportBug": "Report Bug or Suggestion"
-        },
-        "appearance": {
-            "title": "Appearance",
-            "light": "Light",
-            "dark": "Dark"
-        },
-        "cardSize": {
-            "title": "Card Size",
-            "compact": "Compact",
-            "large": "Large"
-        },
-        "whatsNew": {
-            "title": "What's New",
-            "tutorial": "Tutorial"
-        },
-        "onboardingEntry": {
-            "title": "Tutorial",
-            "open": "Open"
-        },
-        "privacy": {
-            "title": "Privacy",
-            "policy": "Policy"
-        },
-        "account": {
-            "delete": "Delete Account",
-            "noSession": "No account session found.",
-            "deleteFailed": "Delete failed",
-            "unableDelete": "Unable to delete account right now.",
-            "prompts": {
-                "confirmTitle": "Delete account?",
-                "confirmBody": "This permanently removes your account and data.",
-                "sureTitle": "Are you absolutely sure?",
-                "sureBody": "This action cannot be undone.",
-                "keep": "Keep Account",
-                "forever": "Delete Forever"
-            }
-        },
-        "errors": {
-            "title": "Error",
-            "unableSignOut": "Unable to sign out"
-        }
-    },
-    "header": {
-        "dashboard": "Dashboard",
-        "signIn": "Sign In",
-        "logout": "Logout",
-        "myWeek": "My Week",
-        "myMonth": "My Month",
-        "monthlyTrends": "Monthly Trends",
-        "weeklyTrends": "Weekly Trends",
-        "annualTrends": "Annual Trends",
-        "vsLM": "vs LM",
-        "vsLW": "vs LW",
-        "switchChart": "Switch to Chart",
-        "monthlySuccess": "Monthly Success",
-        "weeklySuccess": "Weekly Success",
-        "annualPerformance": "Annual Performance",
-        "monthMastery": "Month Mastery",
-        "habitMaster": "Habit Master",
-        "yourStoryMonth": "Your Story This Month",
-        "yourStoryWeek": "Your Story This Week",
-        "completed": "Completed",
-        "vsPrev": "vs Prev",
-        "best": "Best",
-        "thisYearResolutions": "This Year Resolutions"
-    },
-    "story": {
-        "annual": {
-            "momentum": {
-                "ascending": "Your consistency improved as the year progressed, so you're closing stronger than you started.",
-                "descending": "Your pace slowed in recent months. Treat this as a signal to simplify and restart your core routine.",
-                "stable": "You kept a steady rhythm through changing weeks, which is a strong base to build on.",
-                "main": "This year, [[{{habitName}}]] became a central identity habit. {{momentumMsg}}"
-            },
-            "rhythm": {
-                "weekend": "Your strongest rhythm appears on weekends. Protect that window and replicate one part of it on weekdays.",
-                "weekday": "Your weekday structure is strong, while weekends are less consistent. A lighter weekend version could close that gap.",
-                "consistent": "Your execution stayed balanced across weekdays and weekends, showing reliable routine control."
-            },
-            "consistency": {
-                "high": "You showed up on [[{{activeDays}}]] days this year. That's strong evidence of durable habit identity.",
-                "medium": "You have a reliable base. Tightening one trigger or time slot could make this much more automatic.",
-                "low": "You're still in foundation mode. Small repeatable wins matter more than intensity right now."
-            },
-            "experimental": "You explored many habits this year. Choose fewer priorities next cycle so consistency can compound.",
-            "fading": "[[{{habitName}}]] has cooled recently. If it still matters, restart with an easier version this week.",
-            "neglected": "[[{{habitName}}]] has been inactive for [[{{days}}]] days. One quick rep can reopen momentum."
-        },
-        "weekly": {
-            "intro": {
-                "elite": "You completed [[{{count}}]] actions this week and stayed ahead of pace. Your systems are working.",
-                "strong": "You logged [[{{count}}]] completions this week with solid follow-through.",
-                "balanced": "You completed [[{{count}}]] actions this week. Some habits held, others need a clearer trigger.",
-                "low": "You logged [[{{count}}]] completions this week. Keep the floor low and focus on restart consistency."
-            },
-            "momentum": {
-                "highlight": "[[{{habitName}}]] led this week at [[{{count}}/{{total}}]] days completed."
-            },
-            "neglected": "[[{{habitName}}]] was untouched this week. A 2-minute version tomorrow is enough to bring it back.",
-            "growth": {
-                "recovery": "Your second half outperformed your first half. That's meaningful rebound momentum.",
-                "friction": "Your early momentum faded later in the week. Add one end-of-week cue to reduce that drop-off."
-            }
-        },
-        "monthly": {
-            "intro": {
-                "exceptional": "With [[{{count}}]] completions so far, this month shows high execution and strong stability.",
-                "solid": "You reached [[{{count}}]] completions this month with dependable consistency.",
-                "exploration": "You logged [[{{count}}]] completions this month. Narrowing focus could improve carryover next month.",
-                "low": "You completed [[{{count}}]] actions this month. Use this month to reset scope and rebuild a simpler baseline."
-            },
-            "momentum": {
-                "growth": "You're up [[{{delta}}%]] versus last month, a clear positive shift in execution.",
-                "cooling": "You're down [[{{delta}}%]] versus last month. Reducing friction in one key habit should help stabilize next month."
-            },
-            "rhythm": {
-                "anchor": "[[{{habitName}}]] was your anchor this month with [[{{count}}]] completions."
-            }
-        }
-    },
-    "common": {
-        "done": "Done",
-        "reorder": "Reorder",
-        "delete": "Delete",
-        "week": "Week",
-        "rate": "Rate",
-        "days": "DAYS",
-        "myHabits": "My Habits",
-        "manageHabits": "Manage habits",
-        "currentStreak": "Current Streak",
-        "months": {
-            "jan": "Jan",
-            "feb": "Feb",
-            "mar": "Mar",
-            "apr": "Apr",
-            "may": "May",
-            "jun": "Jun",
-            "jul": "Jul",
-            "aug": "Aug",
-            "sep": "Sep",
-            "oct": "Oct",
-            "nov": "Nov",
-            "dec": "Dec"
-        },
-        "selectYear": "Select Year",
-        "cancel": "Cancel",
-        "thisWeek": "this week",
-        "untitled": "Untitled",
-        "daysShort": {
-            "mon": "M",
-            "tue": "T",
-            "wed": "W",
-            "thu": "T",
-            "fri": "F",
-            "sat": "S",
-            "sun": "S"
-        }
-    },
-    "dailyCard": {
-        "dailyHabits": "Daily Habits",
-        "flexibleHabits": "Flexible Habits",
-        "tasks": "Tasks",
-        "dailyDone": "Daily Done",
-        "remaining": "Remaining",
-        "noDailyHabits": "No daily habits due today",
-        "addTask": "Click + to add a task",
-        "share": "Share Achievement",
-        "journal": "Journal",
-        "mood": "Mood",
-        "notes": "Notes",
-        "saveEntry": "Save Entry",
-        "journalPlaceholder": "Write regarding today...",
-        "editTask": "Edit task",
-        "deleteTask": "Delete task",
-        "untitled": "Untitled",
-        "moods": {
-            "veryBad": "Very Bad",
-            "bad": "Bad",
-            "neutral": "Neutral",
-            "good": "Good",
-            "veryGood": "Very Good"
-        },
-        "goal": "Goal"
-    },
-    "tasks": {
-        "enterTask": "Enter your task",
-        "placeholder": "Type something...",
-        "addTask": "Add Task",
-        "newTaskPlaceholder": "New task...",
-        "empty": "No tasks yet"
-    },
-    "journal": {
-        "title": "Journal",
-        "prompt": "Reflect on your day",
-        "placeholder": "Write regarding today...",
-        "save": "Save",
-        "addEntry": "Add Entry",
-        "empty": "No entries yet"
-    },
-    "habitManager": {
-        "title": "My Habits",
-        "addHabit": "Add New Habit",
-        "showActive": "Active",
-        "showArchived": "Archived",
+  "settings": {
+    "title": "Settings",
+    "general": {
+      "title": "General",
+      "defaultView": "Default View",
+      "views": {
         "daily": "Daily",
-        "weekly": "Weekly",
-        "weeklyGoal": "Weekly goal",
-        "goal": "Goal",
-        "dailyGoal": "Daily",
-        "days": "Days",
-        "noHabits": "No habits yet. Start by adding one!",
-        "dragToReorder": "Drag habits to reorder them.",
-        "fixed": "Fixed",
-        "flexible": "Flexible",
-        "timesPerWeek": "Times per week",
-        "habitNamePlaceholder": "Habit name",
-        "untitled": "Untitled Habit",
-        "deleteTitle": "Delete Habit",
-        "deleteConfirm": "Are you sure you want to delete this habit? You will lose all its historical data."
+        "monthly": "Mnth",
+        "dashboard": "Dash"
+      },
+      "startOfWeek": "Start of Week"
     },
-    "weeklyCard": {
-        "title": "Weekly Goals",
-        "target": "Target: {{count}}x this week"
+    "language": {
+      "title": "Language"
     },
-    "monthlyView": {
-        "journals": "Journals",
-        "habits": "Habits",
-        "emptyEntry": "Empty entry...",
-        "noActivity": "No activity today",
-        "dayDetails": "Day Details"
+    "theme": {
+      "title": "Theme",
+      "select": "Select Theme"
     },
-    "dashboard": {
-        "week": "Week",
-        "month": "Month",
-        "year": "Year",
-        "weekTab": "WEEK",
-        "monthTab": "MONTH",
-        "yearTab": "YEAR"
+    "reminders": {
+      "title": "Daily Reminders"
     },
-    "analytics": {
-        "success": "{{period}} Success",
-        "mastery": "{{period}} Mastery",
-        "notEnoughData": "Not enough data to generate a story yet.",
-        "retrospectiveGrid": "Retrospective Grid",
-        "done": "Done",
-        "moodAnalysis": "Mood Analysis",
-        "vibe": "{{period}} Vibe",
-        "activityMomentum": "Activity Momentum",
-        "bestHabit": "Best Habit This {{period}}",
-        "needsFocus": "Needs Focus This {{period}}",
-        "noData": "No Data",
-        "onTrack": "On Track"
+    "support": {
+      "title": "Support",
+      "reportBug": "Report Bug or Suggestion"
     },
-    "bottomNav": {
-        "today": "Today",
-        "analytics": "Analytics",
-        "logs": "Logs",
-        "analysis": "Analysis"
+    "appearance": {
+      "title": "Appearance",
+      "light": "Light",
+      "dark": "Dark"
     },
-    "auth": {
-        "enterEmail": "Please enter your email",
-        "enterPassword": "Please enter your password",
-        "resetSent": "Password reset email sent!",
-        "resetFailed": "We couldn't send the reset email. Please try again.",
-        "signInSignUp": "Sign In / Sign Up",
-        "requestReset": "Request Pin Reset",
-        "returnLogin": "Return to Login",
-        "forgotPassword": "Forgot your password?",
-        "guestEntry": "Guest Entry",
-        "checkEmail": "Check your email to confirm your account before signing in.",
-        "incorrectPassword": "Incorrect password. Please try again.",
-        "accountExists": "An account with this email already exists. Please sign in.",
-        "sessionExpired": "Your session expired. Please sign in again.",
-        "genericError": "We couldn't sign you in. Please try again.",
-        "sending": "Sending...",
-        "verifying": "Verifying...",
-        "tagline": "A calming analytical tracker to build your habits",
-        "email": "Email",
-        "password": "Password",
-        "signIn": "Sign In",
-        "createAccount": "Create Account",
-        "or": "OR"
+    "cardSize": {
+      "title": "Card Size",
+      "compact": "Compact",
+      "large": "Large"
     },
-    "dashboardScreen": {
-        "title": "Dashboard",
-        "welcome": "Welcome!",
-        "description": "This is the mobile version of HabiCard.",
-        "signOut": "Sign Out"
+    "whatsNew": {
+      "title": "What's New",
+      "tutorial": "Tutorial"
     },
-    "aiAnalysis": {
-        "premiumOnly": "Premium Only",
-        "premiumDesc": "Get deep insights into your habits and life patterns with AI analysis. Unlock this feature with a premium subscription.",
-        "upgrade": "Upgrade to Premium",
-        "weeklyUsage": "Weekly Usage",
-        "analyses": "Analyses",
-        "limitReached": "Limit Reached",
-        "generateNew": "Generate New Analysis",
-        "resetMessage": "Resets next Monday",
-        "analyzeMessage": "AI will analyze your recent habits & notes",
-        "history": "Insights History",
-        "viewReport": "View Full Report",
-        "insight": "Insight",
-        "mockTitle": "Patterns & Energy",
-        "mockContent": "You tend to complete more habits on days when you record a \"productive\" mood early in the morning. Your consistency with \"Reading\" has improved by 15% this week."
+    "onboardingEntry": {
+      "title": "Tutorial",
+      "open": "Open"
     },
-    "onboarding": {
-        "badge": "Tutorial",
-        "step": "Step",
-        "back": "Back",
-        "next": "Next",
-        "finish": "Finish",
-        "saving": "Saving...",
-        "habitInstructions": {
-            "tap": "Tap to check off a habit",
-            "hold": "Hold to skip the habit",
-            "empty": "Leave empty if you missed it"
-        },
-        "steps": {
-            "language": {
-                "title": "Choose language",
-                "subtitle": "Set your app language. You can change this later in Settings."
-            },
-            "theme": {
-                "title": "Choose color",
-                "subtitle": "Pick the same HabiCard color pairing used across the app."
-            },
-            "cardStyle": {
-                "title": "Choose card size",
-                "subtitle": "Preview both card layouts and pick the one you want as default."
-            },
-            "habitsDemo": {
-                "title": "Habits in one place",
-                "subtitle": "Check off all your habits in one place."
-            },
-            "tasksDemo": {
-                "title": "Tasks made simple",
-                "subtitle": "Create tasks and check them off as you are done."
-            },
-            "journalDemo": {
-                "title": "Journal every day",
-                "subtitle": "Update your daily journal in the same card flow."
-            },
-            "weekStart": {
-                "title": "Start of week",
-                "subtitle": "Choose whether your week starts on Sunday or Monday."
-            }
-        },
-        "languageTitle": "Language",
-        "cardStyleTitle": "Card Size",
-        "cardStyleLabels": {
-            "compact": "Compact",
-            "large": "Large"
-        },
-        "habits": [
-            "Exercise",
-            "Drink Water",
-            "Read 10 pages",
-            "Meditate",
-            "Plan Tomorrow"
-        ],
-        "taskSamples": [
-            "Plan tomorrow",
-            "Review goals"
-        ],
-        "journalSample": "This is where you can type into the journal.",
-        "sampleDay": "Thursday",
-        "cardStyleDescriptions": {
-            "compact": "Small progress badge in the header.",
-            "large": "Big day progress panel under the date."
-        },
-        "themeNames": {
-            "sageRose": "Sage & Rose",
-            "oceanSky": "Ocean & Sky",
-            "sunsetClay": "Sunset & Clay",
-            "lavenderSlate": "Lavender & Slate",
-            "forestEarth": "Forest & Earth",
-            "peachMint": "Peach & Mint",
-            "lilacCream": "Lilac & Cream",
-            "dustyBlueMauve": "Dusty Blue & Mauve",
-            "coralSand": "Coral & Sand",
-            "mintBlush": "Mint & Blush",
-            "honeyFog": "Honey & Fog",
-            "plumSage": "Plum & Sage",
-            "monochrome": "Monochrome"
-        },
-        "weekStartOptions": {
-            "sun": "SUN",
-            "mon": "MON"
-        }
+    "privacy": {
+      "title": "Privacy",
+      "policy": "Policy"
+    },
+    "account": {
+      "delete": "Delete Account",
+      "noSession": "No account session found.",
+      "deleteFailed": "Delete failed",
+      "unableDelete": "Unable to delete account right now.",
+      "prompts": {
+        "confirmTitle": "Delete account?",
+        "confirmBody": "This permanently removes your account and data.",
+        "sureTitle": "Are you absolutely sure?",
+        "sureBody": "This action cannot be undone.",
+        "keep": "Keep Account",
+        "forever": "Delete Forever"
+      },
+      "title": "Account",
+      "email": "Email",
+      "changePassword": "Change Password",
+      "sendResetEmail": "Send Reset Email",
+      "resetSent": "Check your email",
+      "resetSentBody": "A password reset link has been sent to {{email}}.",
+      "resetFailed": "Unable to send reset email."
+    },
+    "errors": {
+      "title": "Error",
+      "unableSignOut": "Unable to sign out"
     }
+  },
+  "header": {
+    "dashboard": "Dashboard",
+    "signIn": "Sign In",
+    "logout": "Logout",
+    "myWeek": "My Week",
+    "myMonth": "My Month",
+    "monthlyTrends": "Monthly Trends",
+    "weeklyTrends": "Weekly Trends",
+    "annualTrends": "Annual Trends",
+    "vsLM": "vs LM",
+    "vsLW": "vs LW",
+    "switchChart": "Switch to Chart",
+    "monthlySuccess": "Monthly Success",
+    "weeklySuccess": "Weekly Success",
+    "annualPerformance": "Annual Performance",
+    "monthMastery": "Month Mastery",
+    "habitMaster": "Habit Master",
+    "yourStoryMonth": "Your Story This Month",
+    "yourStoryWeek": "Your Story This Week",
+    "completed": "Completed",
+    "vsPrev": "vs Prev",
+    "best": "Best",
+    "thisYearResolutions": "This Year Resolutions"
+  },
+  "story": {
+    "annual": {
+      "momentum": {
+        "ascending": "Your consistency improved as the year progressed, so you're closing stronger than you started.",
+        "descending": "Your pace slowed in recent months. Treat this as a signal to simplify and restart your core routine.",
+        "stable": "You kept a steady rhythm through changing weeks, which is a strong base to build on.",
+        "main": "This year, [[{{habitName}}]] became a central identity habit. {{momentumMsg}}"
+      },
+      "rhythm": {
+        "weekend": "Your strongest rhythm appears on weekends. Protect that window and replicate one part of it on weekdays.",
+        "weekday": "Your weekday structure is strong, while weekends are less consistent. A lighter weekend version could close that gap.",
+        "consistent": "Your execution stayed balanced across weekdays and weekends, showing reliable routine control."
+      },
+      "consistency": {
+        "high": "You showed up on [[{{activeDays}}]] days this year. That's strong evidence of durable habit identity.",
+        "medium": "You have a reliable base. Tightening one trigger or time slot could make this much more automatic.",
+        "low": "You're still in foundation mode. Small repeatable wins matter more than intensity right now."
+      },
+      "experimental": "You explored many habits this year. Choose fewer priorities next cycle so consistency can compound.",
+      "fading": "[[{{habitName}}]] has cooled recently. If it still matters, restart with an easier version this week.",
+      "neglected": "[[{{habitName}}]] has been inactive for [[{{days}}]] days. One quick rep can reopen momentum."
+    },
+    "weekly": {
+      "intro": {
+        "elite": "You completed [[{{count}}]] actions this week and stayed ahead of pace. Your systems are working.",
+        "strong": "You logged [[{{count}}]] completions this week with solid follow-through.",
+        "balanced": "You completed [[{{count}}]] actions this week. Some habits held, others need a clearer trigger.",
+        "low": "You logged [[{{count}}]] completions this week. Keep the floor low and focus on restart consistency."
+      },
+      "momentum": {
+        "highlight": "[[{{habitName}}]] led this week at [[{{count}}/{{total}}]] days completed."
+      },
+      "neglected": "[[{{habitName}}]] was untouched this week. A 2-minute version tomorrow is enough to bring it back.",
+      "growth": {
+        "recovery": "Your second half outperformed your first half. That's meaningful rebound momentum.",
+        "friction": "Your early momentum faded later in the week. Add one end-of-week cue to reduce that drop-off."
+      }
+    },
+    "monthly": {
+      "intro": {
+        "exceptional": "With [[{{count}}]] completions so far, this month shows high execution and strong stability.",
+        "solid": "You reached [[{{count}}]] completions this month with dependable consistency.",
+        "exploration": "You logged [[{{count}}]] completions this month. Narrowing focus could improve carryover next month.",
+        "low": "You completed [[{{count}}]] actions this month. Use this month to reset scope and rebuild a simpler baseline."
+      },
+      "momentum": {
+        "growth": "You're up [[{{delta}}%]] versus last month, a clear positive shift in execution.",
+        "cooling": "You're down [[{{delta}}%]] versus last month. Reducing friction in one key habit should help stabilize next month."
+      },
+      "rhythm": {
+        "anchor": "[[{{habitName}}]] was your anchor this month with [[{{count}}]] completions."
+      }
+    }
+  },
+  "common": {
+    "done": "Done",
+    "reorder": "Reorder",
+    "delete": "Delete",
+    "week": "Week",
+    "rate": "Rate",
+    "days": "DAYS",
+    "myHabits": "My Habits",
+    "manageHabits": "Manage habits",
+    "currentStreak": "Current Streak",
+    "months": {
+      "jan": "Jan",
+      "feb": "Feb",
+      "mar": "Mar",
+      "apr": "Apr",
+      "may": "May",
+      "jun": "Jun",
+      "jul": "Jul",
+      "aug": "Aug",
+      "sep": "Sep",
+      "oct": "Oct",
+      "nov": "Nov",
+      "dec": "Dec"
+    },
+    "selectYear": "Select Year",
+    "add": "Add",
+    "cancel": "Cancel",
+    "thisWeek": "this week",
+    "untitled": "Untitled",
+    "daysShort": {
+      "mon": "M",
+      "tue": "T",
+      "wed": "W",
+      "thu": "T",
+      "fri": "F",
+      "sat": "S",
+      "sun": "S"
+    }
+  },
+  "dailyCard": {
+    "dailyHabits": "Daily Habits",
+    "flexibleHabits": "Flexible Habits",
+    "tasks": "Tasks",
+    "dailyDone": "Daily Done",
+    "remaining": "Remaining",
+    "noDailyHabits": "No daily habits due today",
+    "addTask": "Click + to add a task",
+    "share": "Share Achievement",
+    "journal": "Journal",
+    "mood": "Mood",
+    "notes": "Notes",
+    "saveEntry": "Save Entry",
+    "journalPlaceholder": "Write regarding today...",
+    "editTask": "Edit task",
+    "deleteTask": "Delete task",
+    "untitled": "Untitled",
+    "moods": {
+      "veryBad": "Very Bad",
+      "bad": "Bad",
+      "neutral": "Neutral",
+      "good": "Good",
+      "veryGood": "Very Good"
+    },
+    "goal": "Goal"
+  },
+  "tasks": {
+    "enterTask": "Enter your task",
+    "placeholder": "Type something...",
+    "addTask": "Add Task",
+    "newTaskPlaceholder": "New task...",
+    "empty": "No tasks yet"
+  },
+  "journal": {
+    "title": "Journal",
+    "prompt": "Reflect on your day",
+    "placeholder": "Write regarding today...",
+    "save": "Save",
+    "addEntry": "Add Entry",
+    "empty": "No entries yet"
+  },
+  "habitManager": {
+    "title": "My Habits",
+    "addHabit": "Add New Habit",
+    "showActive": "Active",
+    "showArchived": "Archived",
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "weeklyGoal": "Weekly goal",
+    "goal": "Goal",
+    "dailyGoal": "Daily",
+    "days": "Days",
+    "noHabits": "No habits yet. Start by adding one!",
+    "dragToReorder": "Drag habits to reorder them.",
+    "fixed": "Fixed",
+    "flexible": "Flexible",
+    "timesPerWeek": "Times per week",
+    "habitNamePlaceholder": "Habit name",
+    "untitled": "Untitled Habit",
+    "deleteTitle": "Delete Habit",
+    "deleteConfirm": "Are you sure you want to delete this habit? You will lose all its historical data.",
+    "edit": "Edit",
+    "restore": "Restore",
+    "everyDay": "Every day",
+    "alreadyExists": "Already exists",
+    "alreadyExistsMsg": "A habit called \"{{name}}\" already exists."
+  },
+  "weeklyCard": {
+    "title": "Weekly Goals",
+    "target": "Target: {{count}}x this week"
+  },
+  "monthlyView": {
+    "journals": "Journals",
+    "habits": "Habits",
+    "emptyEntry": "Empty entry...",
+    "noActivity": "No activity today",
+    "dayDetails": "Day Details",
+    "tasks": "Tasks",
+    "searchPlaceholder": "Search logs...",
+    "noLogs": "No logs found for this section."
+  },
+  "dashboard": {
+    "week": "Week",
+    "month": "Month",
+    "year": "Year",
+    "weekTab": "WEEK",
+    "monthTab": "MONTH",
+    "yearTab": "YEAR",
+    "insights": "Insights",
+    "anchorHabit": "Anchor Habit",
+    "anchorDesc1": "On days you do this, your other habit completion is",
+    "anchorDesc2": "higher",
+    "anchorDesc3": "({{done}}% vs {{missed}}%). Start here to set the tone.",
+    "weakSpot": "Weak Spot",
+    "weakSpotDesc1": "Your lowest completion day —",
+    "weakSpotDesc2": "average",
+    "weakSpotDesc3": "\"{{habit}}\" is the most skipped on {{day}}s.",
+    "streakPattern": "Streak Pattern",
+    "streakDesc1": "Streaks tend to break after",
+    "streakDescDay": "day",
+    "streakDescDays": "days",
+    "streakDesc2": "— this has happened {{count}} times. Day {{day}} is when to push through."
+  },
+  "analytics": {
+    "success": "{{period}} Success",
+    "mastery": "{{period}} Mastery",
+    "notEnoughData": "Not enough data to generate a story yet.",
+    "retrospectiveGrid": "Retrospective Grid",
+    "done": "Done",
+    "moodAnalysis": "Mood Analysis",
+    "vibe": "{{period}} Vibe",
+    "activityMomentum": "Activity Momentum",
+    "bestHabit": "Best Habit This {{period}}",
+    "needsFocus": "Needs Focus This {{period}}",
+    "noData": "No Data",
+    "onTrack": "On Track",
+    "atAGlance": "At a glance",
+    "completion": "Completion",
+    "doneTotal": "Done / Total",
+    "vsPrevious": "Vs Previous",
+    "topHabit": "Top Habit",
+    "weekOverWeek": "Week over week",
+    "vsLastWeek": "vs last week",
+    "thisWeek": "This week",
+    "lastWeek": "Last week",
+    "monthOverMonth": "Month over month",
+    "vsLastMonth": "vs last month",
+    "thisMonth": "This month",
+    "lastMonth": "Last month",
+    "weeksThisMonth": "Weeks this month"
+  },
+  "bottomNav": {
+    "today": "Today",
+    "analytics": "Analytics",
+    "logs": "Logs",
+    "todo": "To-Do",
+    "analysis": "Analysis"
+  },
+  "auth": {
+    "enterEmail": "Please enter your email",
+    "enterPassword": "Please enter your password",
+    "resetSent": "Password reset email sent!",
+    "resetFailed": "We couldn't send the reset email. Please try again.",
+    "signInSignUp": "Sign In / Sign Up",
+    "requestReset": "Request Pin Reset",
+    "returnLogin": "Return to Login",
+    "forgotPassword": "Forgot your password?",
+    "guestEntry": "Guest Entry",
+    "checkEmail": "Check your email to confirm your account before signing in.",
+    "incorrectPassword": "Incorrect password. Please try again.",
+    "accountExists": "An account with this email already exists. Please sign in.",
+    "sessionExpired": "Your session expired. Please sign in again.",
+    "genericError": "We couldn't sign you in. Please try again.",
+    "sending": "Sending...",
+    "verifying": "Verifying...",
+    "tagline": "A calming analytical tracker to build your habits",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign In",
+    "createAccount": "Create Account",
+    "or": "OR"
+  },
+  "dashboardScreen": {
+    "title": "Dashboard",
+    "welcome": "Welcome!",
+    "description": "This is the mobile version of HabiCard.",
+    "signOut": "Sign Out"
+  },
+  "aiAnalysis": {
+    "premiumOnly": "Premium Only",
+    "premiumDesc": "Get deep insights into your habits and life patterns with AI analysis. Unlock this feature with a premium subscription.",
+    "upgrade": "Upgrade to Premium",
+    "weeklyUsage": "Weekly Usage",
+    "analyses": "Analyses",
+    "limitReached": "Limit Reached",
+    "generateNew": "Generate New Analysis",
+    "resetMessage": "Resets next Monday",
+    "analyzeMessage": "AI will analyze your recent habits & notes",
+    "history": "Insights History",
+    "viewReport": "View Full Report",
+    "insight": "Insight",
+    "mockTitle": "Patterns & Energy",
+    "mockContent": "You tend to complete more habits on days when you record a \"productive\" mood early in the morning. Your consistency with \"Reading\" has improved by 15% this week."
+  },
+  "onboarding": {
+    "badge": "Tutorial",
+    "step": "Step",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Finish",
+    "saving": "Saving...",
+    "habitInstructions": {
+      "tap": "Tap to check off a habit",
+      "hold": "Hold to skip the habit",
+      "empty": "Leave empty if you missed it"
+    },
+    "steps": {
+      "language": {
+        "title": "Choose language",
+        "subtitle": "Set your app language. You can change this later in Settings."
+      },
+      "theme": {
+        "title": "Choose color",
+        "subtitle": "Pick the same HabiCard color pairing used across the app."
+      },
+      "cardStyle": {
+        "title": "Choose card size",
+        "subtitle": "Preview both card layouts and pick the one you want as default."
+      },
+      "habitsDemo": {
+        "title": "Habits in one place",
+        "subtitle": "Check off all your habits in one place."
+      },
+      "tasksDemo": {
+        "title": "Tasks made simple",
+        "subtitle": "Create tasks and check them off as you are done."
+      },
+      "journalDemo": {
+        "title": "Journal every day",
+        "subtitle": "Update your daily journal in the same card flow."
+      },
+      "weekStart": {
+        "title": "Start of week",
+        "subtitle": "Choose whether your week starts on Sunday or Monday."
+      }
+    },
+    "languageTitle": "Language",
+    "cardStyleTitle": "Card Size",
+    "cardStyleLabels": {
+      "compact": "Compact",
+      "large": "Large"
+    },
+    "habits": [
+      "Exercise",
+      "Drink Water",
+      "Read 10 pages",
+      "Meditate",
+      "Plan Tomorrow"
+    ],
+    "taskSamples": [
+      "Plan tomorrow",
+      "Review goals"
+    ],
+    "journalSample": "This is where you can type into the journal.",
+    "sampleDay": "Thursday",
+    "cardStyleDescriptions": {
+      "compact": "Small progress badge in the header.",
+      "large": "Big day progress panel under the date."
+    },
+    "themeNames": {
+      "sageRose": "Sage & Rose",
+      "oceanSky": "Ocean & Sky",
+      "sunsetClay": "Sunset & Clay",
+      "lavenderSlate": "Lavender & Slate",
+      "forestEarth": "Forest & Earth",
+      "peachMint": "Peach & Mint",
+      "lilacCream": "Lilac & Cream",
+      "dustyBlueMauve": "Dusty Blue & Mauve",
+      "coralSand": "Coral & Sand",
+      "mintBlush": "Mint & Blush",
+      "honeyFog": "Honey & Fog",
+      "plumSage": "Plum & Sage",
+      "monochrome": "Monochrome"
+    },
+    "weekStartOptions": {
+      "sun": "SUN",
+      "mon": "MON"
+    }
+  },
+  "feedback": {
+    "loadError": "Failed to load your feedback history.",
+    "missingTitle": "Missing Message",
+    "missingMsg": "Please enter your feedback.",
+    "submittedTitle": "Submitted",
+    "submittedMsg": "Thanks for your feedback.",
+    "failedMsg": "Failed to submit feedback.",
+    "signInRequired": "Sign In Required",
+    "signInRequiredMsg": "Please sign in to reply to feedback threads.",
+    "replyFailed": "Failed to send reply.",
+    "unableToOpenLink": "Unable to Open Link",
+    "bugPlaceholder": "Describe the issue...",
+    "ideaPlaceholder": "Share your idea...",
+    "replyPlaceholder": "Write a reply..."
+  },
+  "tutorial": {
+    "header": "Guided Tutorial",
+    "stepCompleted": "Step completed",
+    "stepPending": "Complete this action in the app to continue",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Finish",
+    "close": "Close",
+    "steps": {
+      "addHabit": {
+        "title": "Create a Habit",
+        "description": "Tap the + button in the top-left and create one new habit."
+      },
+      "completeSkip": {
+        "title": "Complete Or Skip a Habit",
+        "description": "Check off the habit you created. Or long-press it to skip it for today."
+      },
+      "analytics": {
+        "title": "Open Analytics",
+        "description": "Use bottom navigation and switch to Analytics."
+      },
+      "logs": {
+        "title": "Open Logs",
+        "description": "Use bottom navigation and switch to Logs to see your history."
+      }
+    }
+  }
 }

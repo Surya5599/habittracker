@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 import { View, Text, TouchableOpacity, ScrollView, Animated, TextInput, Easing, useWindowDimensions, Platform, Keyboard, PanResponder, Alert } from 'react-native';
@@ -40,12 +41,15 @@ export const DailyCard = ({
     dayData,
     dateKey,
     updateNote,
+    notes = {},
     colorMode = 'light',
-    cardStyle = 'large'
+    cardStyle = 'large',
+    initialView = 'habits'
 }) => {
-    const [isFlipped, setIsFlipped] = useState(false);
-    const [backView, setBackView] = useState('journal');
-    const [sortMode, setSortMode] = useState('default'); // 'default' | 'name' | 'color'
+    const startsFlipped = initialView === 'journal' || initialView === 'tasks';
+    const [isFlipped, setIsFlipped] = useState(startsFlipped);
+    const [backView, setBackView] = useState(startsFlipped ? initialView : 'journal');
+    const [sortMode, setSortMode] = useState('default'); // 'default' | 'name' | 'color' | 'completion'
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [newTaskText, setNewTaskText] = useState('');
     const [editingTaskId, setEditingTaskId] = useState(null);
@@ -53,7 +57,7 @@ export const DailyCard = ({
     const viewSwitchAnim = useRef(new Animated.Value(1)).current;
     const [switchPhase, setSwitchPhase] = useState('idle'); // idle | out | in
     const isSwitchingRef = useRef(false);
-    const flipAnim = useRef(new Animated.Value(0)).current;
+    const flipAnim = useRef(new Animated.Value(startsFlipped ? 1 : 0)).current;
     const backSwitchAnim = useRef(new Animated.Value(0)).current;
     const journalScrollRef = useRef(null);
     const swipeLockRef = useRef(false);
@@ -80,6 +84,17 @@ export const DailyCard = ({
         onPrevRef.current = onPrev;
         onNextRef.current = onNext;
     }, [onPrev, onNext]);
+
+    useEffect(() => {
+        AsyncStorage.getItem('habit_sort_mode').then((saved) => {
+            if (saved) setSortMode(saved);
+        });
+    }, []);
+
+    const handleSortModeChange = useCallback((next) => {
+        setSortMode(next);
+        AsyncStorage.setItem('habit_sort_mode', next);
+    }, []);
 
     useEffect(() => {
         const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
@@ -162,6 +177,7 @@ export const DailyCard = ({
         const newTasks = currentTasks.filter(t => t.id !== taskId);
         updateNote && updateNote(dateKey, { tasks: newTasks });
     };
+
 
     const handleHabitTap = (habit) => {
         if (habit.inactive) {
@@ -685,7 +701,6 @@ export const DailyCard = ({
                 colorMode={colorMode}
             />
 
-
             <View style={tw`h-full`}>
                 {/* Front Face */}
                 <Animated.View
@@ -749,15 +764,15 @@ export const DailyCard = ({
                                 <Text style={[tw`text-xs font-black uppercase tracking-widest`, { color: textSecondary }]}>{t('common.myHabits')}</Text>
                                 <TouchableOpacity
                                     onPress={() => {
-                                        const next = sortMode === 'default' ? 'name' : sortMode === 'name' ? 'color' : 'default';
-                                        setSortMode(next);
+                                        const next = sortMode === 'default' ? 'name' : sortMode === 'name' ? 'color' : sortMode === 'color' ? 'completion' : 'default';
+                                        handleSortModeChange(next);
                                     }}
                                     style={[tw`flex-row items-center gap-1 px-2 py-0.5 rounded-full`, { backgroundColor: sortMode !== 'default' ? theme.primary + '22' : borderSoft }]}
                                     activeOpacity={0.7}
                                 >
                                     <ArrowUpDown size={10} color={sortMode !== 'default' ? theme.primary : textSecondary} strokeWidth={2.5} />
                                     <Text style={[tw`text-[9px] font-black uppercase tracking-wider`, { color: sortMode !== 'default' ? theme.primary : textSecondary }]}>
-                                        {sortMode === 'name' ? 'A–Z' : sortMode === 'color' ? 'Color' : 'Sort'}
+                                        {sortMode === 'name' ? 'A–Z' : sortMode === 'color' ? 'Color' : sortMode === 'completion' ? 'To Do' : 'Sort'}
                                     </Text>
                                 </TouchableOpacity>
                             </View>
@@ -786,6 +801,13 @@ export const DailyCard = ({
                                         .sort((a, b) => {
                                             if (sortMode === 'name') return (a.name || '').localeCompare(b.name || '');
                                             if (sortMode === 'color') return (a.color || '').localeCompare(b.color || '');
+                                            if (sortMode === 'completion') {
+                                                const aTodo = !a.done && !a.inactive;
+                                                const bTodo = !b.done && !b.inactive;
+                                                if (aTodo && !bTodo) return -1;
+                                                if (!aTodo && bTodo) return 1;
+                                                return 0;
+                                            }
                                             return 0; // default: preserve original sortOrder
                                         })
                                         .map(habit => (
@@ -886,7 +908,7 @@ export const DailyCard = ({
                                 <Text>{`, ${dateString}`}</Text>
                             </Text>
                         </TouchableOpacity>
-                        <View style={tw`absolute right-4 z-10 flex-row items-center`}>
+                        <View style={tw`absolute right-4 z-10 flex-row items-center gap-3`}>
                             <TouchableOpacity onPress={onNext}>
                                 <ChevronRight size={isCompact ? 24 : 28} color="white" />
                             </TouchableOpacity>

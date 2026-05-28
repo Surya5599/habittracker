@@ -24,7 +24,13 @@ export const MonthlyView = ({
     const { t, i18n } = useTranslation();
     const [mode, setMode] = useState('journals'); // 'journals' | 'habits' | 'tasks'
     const [selectedDate, setSelectedDate] = useState(null);
+    const [selectedFocusView, setSelectedFocusView] = useState('habits');
     const [searchQuery, setSearchQuery] = useState('');
+
+    const openDateCard = (date, focusView) => {
+        setSelectedFocusView(focusView);
+        setSelectedDate(date);
+    };
 
     useEffect(() => {
         if (!initialSelectedDate) return;
@@ -146,7 +152,7 @@ export const MonthlyView = ({
                         style={[tw`flex-1 py-3 rounded-xl items-center flex-row justify-center gap-2`, mode === 'tasks' && { backgroundColor: panelBg }]}
                     >
                         <ListTodo size={16} color={mode === 'tasks' ? theme.primary : '#a1a1aa'} />
-                        <Text style={[tw`font-black uppercase text-[11px] tracking-widest`, mode === 'tasks' ? { color: theme.primary } : { color: textMuted }]}>Tasks</Text>
+                        <Text style={[tw`font-black uppercase text-[11px] tracking-widest`, mode === 'tasks' ? { color: theme.primary } : { color: textMuted }]}>{t('monthlyView.tasks')}</Text>
                     </TouchableOpacity>
                 </View>
                 <View style={[tw`mt-3 flex-row items-center rounded-xl border px-3`, { borderColor: panelBorder, backgroundColor: panelSoftBg }]}>
@@ -154,7 +160,7 @@ export const MonthlyView = ({
                     <TextInput
                         value={searchQuery}
                         onChangeText={setSearchQuery}
-                        placeholder="Search logs..."
+                        placeholder={t('monthlyView.searchPlaceholder')}
                         placeholderTextColor={textMuted}
                         style={[tw`flex-1 ml-2 py-2.5 text-sm font-bold`, { color: textPrimary }]}
                     />
@@ -178,18 +184,20 @@ export const MonthlyView = ({
                             return (
                                 <TouchableOpacity
                                     key={`${dateKey}-${entry.id || entry.text}`}
-                                    onPress={() => setSelectedDate(date)}
-                                    style={[tw`mx-4 mt-3 border rounded-2xl p-4 flex-row items-center`, { backgroundColor: panelBg, borderColor: panelBorder }]}
+                                    onPress={() => openDateCard(date, 'journal')}
+                                    style={[tw`mx-4 mt-3 border rounded-2xl p-4 flex-row items-center`, { backgroundColor: panelBg, borderColor: moodObj ? moodColor : panelBorder }]}
                                     activeOpacity={0.7}
                                 >
-                                    <View style={[tw`mr-3 w-[44px] rounded-xl border py-2 items-center`, { backgroundColor: panelSoftBg, borderColor: panelBorder }]}>
-                                        <Text style={[tw`text-[9px] font-black uppercase`, { color: theme.primary }]} numberOfLines={1}>{dayName}</Text>
+                                    <View style={[tw`mr-3 w-[44px] rounded-xl border py-2 items-center`, { backgroundColor: moodObj ? moodColor + '18' : panelSoftBg, borderColor: moodObj ? moodColor : panelBorder }]}>
+                                        <Text style={[tw`text-[9px] font-black uppercase`, { color: moodObj ? moodColor : theme.primary }]} numberOfLines={1}>{dayName}</Text>
                                         <Text style={[tw`text-xl font-black leading-tight`, { color: textPrimary }]}>{dayNum}</Text>
-                                        <Text style={[tw`text-[9px] font-black uppercase`, { color: textMuted }]} numberOfLines={1}>{monthName}</Text>
+                                        <Text style={[tw`text-[9px] font-black uppercase`, { color: moodObj ? moodColor : textMuted }]} numberOfLines={1}>{monthName}</Text>
                                     </View>
-                                    <View style={[tw`flex-1 border-l pl-4 py-1 min-h-[40px] justify-center`, { borderColor: divider }]}>
+                                    <View style={[tw`flex-1 border-l pl-4 py-1 min-h-[40px] justify-center`, { borderColor: moodObj ? moodColor + '44' : divider }]}>
                                         <View style={tw`flex-row items-start gap-2`}>
-                                            <MoodIcon size={18} color={moodColor} strokeWidth={moodObj ? 2.5 : 2} style={tw`mt-0.5`} />
+                                            <View style={[tw`rounded-full p-1 mt-0.5`, { backgroundColor: moodColor + '22' }]}>
+                                                <MoodIcon size={14} color={moodColor} strokeWidth={moodObj ? 2.5 : 2} />
+                                            </View>
                                             <Text style={[tw`flex-1 text-sm font-bold leading-snug`, { color: isDark ? '#d1d5db' : '#4b5563' }]} numberOfLines={3}>
                                                 {entry.text}
                                             </Text>
@@ -203,7 +211,7 @@ export const MonthlyView = ({
                         })}
                         {journalRows.length === 0 && (
                             <View style={tw`px-6 pt-8`}>
-                                <Text style={[tw`text-center text-sm font-bold`, { color: textMuted }]}>No logs found for this section.</Text>
+                                <Text style={[tw`text-center text-sm font-bold`, { color: textMuted }]}>{t('monthlyView.noLogs')}</Text>
                             </View>
                         )}
                     </>
@@ -221,7 +229,7 @@ export const MonthlyView = ({
                             return (
                                 <TouchableOpacity
                                     key={dateKey}
-                                    onPress={() => setSelectedDate(date)}
+                                    onPress={() => openDateCard(date, mode === 'tasks' ? 'tasks' : 'habits')}
                                     style={[tw`mx-4 mt-3 border rounded-2xl p-4 flex-row items-center`, { backgroundColor: panelBg, borderColor: panelBorder }]}
                                     activeOpacity={0.7}
                                 >
@@ -262,7 +270,7 @@ export const MonthlyView = ({
                         })}
                         {visibleDays.length === 0 && (
                             <View style={tw`px-6 pt-8`}>
-                                <Text style={[tw`text-center text-sm font-bold`, { color: textMuted }]}>No logs found for this section.</Text>
+                                <Text style={[tw`text-center text-sm font-bold`, { color: textMuted }]}>{t('monthlyView.noLogs')}</Text>
                             </View>
                         )}
                     </>
@@ -316,6 +324,7 @@ export const MonthlyView = ({
                                         dateKey={`${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`}
                                         updateNote={updateNote}
                                         cardStyle={cardStyle}
+                                        initialView={selectedFocusView}
                                     />
                                 </View>
                             )}

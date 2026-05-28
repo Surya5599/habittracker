@@ -5,9 +5,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { WeeklyScreen } from './WeeklyView';
 import { MonthlyView } from './MonthlyView';
 import { DashboardView } from './DashboardView';
-import { BadgesStreaksView } from './BadgesStreaksView';
+import { TodoScreen } from './TodoScreen';
 import { BottomNav } from '../components/BottomNav';
-import { Settings, X, Check, Plus, MessageSquare, Sun, Moon, Shield, Sparkles, Trash2 } from 'lucide-react-native';
+import { Settings, X, Check, Plus, MessageSquare, Sun, Moon, Shield, Sparkles, Trash2, Mail, Lock, Bell, BellOff } from 'lucide-react-native';
 import tw from 'twrnc';
 import { THEMES } from '../constants';
 import { HabitManager } from '../components/HabitManager';
@@ -18,6 +18,7 @@ import { HelpTutorialModal } from '../components/HelpTutorialModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { isBenignAuthError } from '../utils/authErrors';
 import { reportError } from '../lib/errorReporting';
+import { sendTestNotification } from '../utils/notifications';
 
 export const MainScreen = ({
     view,
@@ -51,7 +52,9 @@ export const MainScreen = ({
     cardStyle,
     setCardStyle,
     userId,
-    userEmail
+    userEmail,
+    reminderEnabled = false,
+    onToggleReminder,
 }) => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isHabitManagerOpen, setIsHabitManagerOpen] = useState(false);
@@ -179,6 +182,18 @@ export const MainScreen = ({
         }
     };
 
+    const handleChangePassword = async () => {
+        if (!userEmail) return;
+        try {
+            const { error } = await supabase.auth.resetPasswordForEmail(userEmail);
+            if (error) throw error;
+            Alert.alert(t('settings.account.resetSent'), t('settings.account.resetSentBody', { email: userEmail }));
+        } catch (error) {
+            reportError(error, { scope: 'main-screen:change-password' });
+            Alert.alert(t('settings.errors.title'), error?.message || t('settings.account.resetFailed'));
+        }
+    };
+
     const handleDeleteAccount = () => {
         Alert.alert(
             t('settings.account.prompts.confirmTitle'),
@@ -265,7 +280,7 @@ export const MainScreen = ({
                 <View style={[tw`flex-row items-center justify-between px-4 py-3`, { backgroundColor: isDark ? '#000000' : '#f5f5f4' }]}>
                     <TouchableOpacity onPress={() => setIsHabitManagerOpen(true)} style={tw`flex-row items-center`}>
                         <Plus size={22} color={isDark ? '#e5e7eb' : '#57534e'} strokeWidth={2.5} />
-                        <Text style={[tw`ml-1.5 text-xs font-black uppercase tracking-widest`, { color: isDark ? '#e5e7eb' : '#57534e' }]}>Add</Text>
+                        <Text style={[tw`ml-1.5 text-xs font-black uppercase tracking-widest`, { color: isDark ? '#e5e7eb' : '#57534e' }]}>{t('common.add')}</Text>
                     </TouchableOpacity>
                     <Text style={[tw`text-xl font-black uppercase tracking-widest`, { color: isDark ? '#e5e7eb' : '#57534e' }]}>
                         Habi<Text style={tw`text-[#C19A9A]`}>Card</Text>
@@ -425,20 +440,40 @@ export const MainScreen = ({
                                             </View>
                                         </View>
 
-                                        <View style={[tw`flex-row items-center justify-between p-4 border-b-[3px] border-black`, { borderBottomColor: outlineColor }]}>
-                                            <Text style={[tw`text-sm font-black uppercase tracking-tight`, { color: isDark ? '#e5e7eb' : '#161616' }]}>{t('settings.cardSize.title')}</Text>
-                                            <View style={[tw`flex-row p-1 rounded-xl border-2 border-black`, { backgroundColor: isDark ? '#161616' : '#f3f4f6', borderColor: outlineColor }]}>
+                                        {/* Reminders toggle */}
+                                        <View style={[tw`flex-row items-center justify-between p-4 border-b-[3px]`, { borderBottomColor: outlineColor }]}>
+                                            <View style={tw`flex-row items-center gap-2`}>
+                                                {reminderEnabled
+                                                    ? <Bell size={16} color={theme.primary} />
+                                                    : <BellOff size={16} color={isDark ? '#9ca3af' : '#9ca3af'} />
+                                                }
+                                                <Text style={[tw`text-sm font-black uppercase tracking-tight`, { color: isDark ? '#e5e7eb' : '#161616' }]}>
+                                                    {t('settings.reminders.title')}
+                                                </Text>
+                                            </View>
+                                            <View style={tw`flex-row items-center gap-3`}>
                                                 <TouchableOpacity
-                                                    onPress={() => setCardStyle('compact')}
-                                                    style={[tw`px-3 py-1.5 rounded-lg`, cardStyle === 'compact' && { backgroundColor: theme.primary }]}
+                                                    onPress={async () => {
+                                                        const sent = await sendTestNotification();
+                                                        if (!sent) Alert.alert('Permission required', 'Enable notifications in your device settings first.');
+                                                    }}
+                                                    style={[tw`px-2 py-1 rounded-lg border`, { borderColor: outlineColor }]}
+                                                    activeOpacity={0.7}
                                                 >
-                                                    <Text style={[tw`text-[10px] font-black uppercase`, cardStyle === 'compact' ? tw`text-white` : tw`text-gray-400`]}>{t('settings.cardSize.compact')}</Text>
+                                                    <Text style={[tw`text-[10px] font-black uppercase tracking-wide`, { color: isDark ? '#e5e7eb' : '#161616' }]}>Test</Text>
                                                 </TouchableOpacity>
                                                 <TouchableOpacity
-                                                    onPress={() => setCardStyle('large')}
-                                                    style={[tw`px-3 py-1.5 rounded-lg`, cardStyle === 'large' && { backgroundColor: theme.primary }]}
+                                                    onPress={() => onToggleReminder && onToggleReminder(!reminderEnabled)}
+                                                    style={[
+                                                        tw`w-12 h-6 rounded-full justify-center`,
+                                                        { backgroundColor: reminderEnabled ? theme.primary : (isDark ? '#374151' : '#d1d5db') }
+                                                    ]}
+                                                    activeOpacity={0.8}
                                                 >
-                                                    <Text style={[tw`text-[10px] font-black uppercase`, cardStyle === 'large' ? tw`text-white` : tw`text-gray-400`]}>{t('settings.cardSize.large')}</Text>
+                                                    <View style={[
+                                                        tw`w-5 h-5 rounded-full bg-white shadow`,
+                                                        { transform: [{ translateX: reminderEnabled ? 26 : 2 }] }
+                                                    ]} />
                                                 </TouchableOpacity>
                                             </View>
                                         </View>
@@ -497,27 +532,65 @@ export const MainScreen = ({
                                             </View>
                                         </TouchableOpacity>
 
-                                        {/* Sign Out Setting */}
-                                        <TouchableOpacity
-                                            style={[tw`p-4`, { backgroundColor: isDark ? '#161616' : '#f9fafb' }]}
-                                            onPress={handleAuthAction}
-                                        >
-                                            <Text style={tw`text-sm font-black text-red-500 uppercase tracking-tight`}>
-                                                {isGuest ? t('header.signIn') : t('header.logout')}
-                                            </Text>
-                                        </TouchableOpacity>
-
-                                        {!isGuest && (
-                                            <TouchableOpacity
-                                                style={[tw`flex-row items-center justify-between p-4 border-t-[3px] border-black`, { borderTopColor: outlineColor, backgroundColor: isDark ? '#161616' : '#f9fafb' }]}
-                                                onPress={handleDeleteAccount}
-                                            >
-                                                <Text style={tw`text-sm font-black text-red-500 uppercase tracking-tight`}>{t('settings.account.delete')}</Text>
-                                                <Trash2 size={16} color="#ef4444" />
-                                            </TouchableOpacity>
-                                        )}
                                     </View>
                                 </View>
+
+                                {!isGuest && (
+                                    <>
+                                        <Text style={[tw`text-xs font-black uppercase tracking-widest mb-3`, { color: isDark ? '#9ca3af' : '#9ca3af' }]}>{t('settings.account.title')}</Text>
+                                        <View style={tw`mb-6`}>
+                                            <View style={[tw`absolute bg-black rounded-3xl`, { top: 6, left: 6, right: -6, bottom: -6, zIndex: -1 }]} />
+                                            <View style={[tw`rounded-3xl overflow-hidden border-[3px]`, { backgroundColor: isDark ? '#0b0b0b' : '#ffffff', borderColor: outlineColor }]}>
+                                                {/* Email display */}
+                                                <View style={[tw`flex-row items-center justify-between p-4 border-b-[3px]`, { borderBottomColor: outlineColor }]}>
+                                                    <View style={tw`flex-row items-center`}>
+                                                        <Mail size={14} color={isDark ? '#9ca3af' : '#6b7280'} style={tw`mr-2`} />
+                                                        <Text style={[tw`text-sm font-black uppercase tracking-tight`, { color: isDark ? '#e5e7eb' : '#161616' }]}>{t('settings.account.email')}</Text>
+                                                    </View>
+                                                    <Text style={[tw`text-xs font-bold`, { color: isDark ? '#9ca3af' : '#6b7280' }]} numberOfLines={1}>{userEmail || '—'}</Text>
+                                                </View>
+
+                                                {/* Change password */}
+                                                <TouchableOpacity
+                                                    style={[tw`flex-row items-center justify-between p-4 border-b-[3px]`, { borderBottomColor: outlineColor }]}
+                                                    onPress={handleChangePassword}
+                                                >
+                                                    <View style={tw`flex-row items-center`}>
+                                                        <Lock size={14} color={isDark ? '#9ca3af' : '#6b7280'} style={tw`mr-2`} />
+                                                        <Text style={[tw`text-sm font-black uppercase tracking-tight`, { color: isDark ? '#e5e7eb' : '#161616' }]}>{t('settings.account.changePassword')}</Text>
+                                                    </View>
+                                                    <Text style={[tw`text-xs font-black uppercase`, { color: isDark ? '#9ca3af' : '#6b7280' }]}>{t('settings.account.sendResetEmail')}</Text>
+                                                </TouchableOpacity>
+
+                                                {/* Sign Out */}
+                                                <TouchableOpacity
+                                                    style={[tw`p-4 border-b-[3px]`, { borderBottomColor: outlineColor, backgroundColor: isDark ? '#161616' : '#f9fafb' }]}
+                                                    onPress={handleAuthAction}
+                                                >
+                                                    <Text style={tw`text-sm font-black text-red-500 uppercase tracking-tight`}>{t('header.logout')}</Text>
+                                                </TouchableOpacity>
+
+                                                {/* Delete Account */}
+                                                <TouchableOpacity
+                                                    style={[tw`flex-row items-center justify-between p-4`, { backgroundColor: isDark ? '#161616' : '#f9fafb' }]}
+                                                    onPress={handleDeleteAccount}
+                                                >
+                                                    <Text style={tw`text-sm font-black text-red-500 uppercase tracking-tight`}>{t('settings.account.delete')}</Text>
+                                                    <Trash2 size={16} color="#ef4444" />
+                                                </TouchableOpacity>
+                                            </View>
+                                        </View>
+                                    </>
+                                )}
+
+                                {isGuest && (
+                                    <TouchableOpacity
+                                        style={[tw`p-4 rounded-2xl border-[3px] mb-6`, { borderColor: outlineColor, backgroundColor: isDark ? '#0b0b0b' : '#ffffff' }]}
+                                        onPress={handleAuthAction}
+                                    >
+                                        <Text style={tw`text-sm font-black text-red-500 uppercase tracking-tight text-center`}>{t('header.signIn')}</Text>
+                                    </TouchableOpacity>
+                                )}
                             </ScrollView>
                         </View>
 
@@ -604,14 +677,16 @@ export const MainScreen = ({
                         cardStyle={cardStyle}
                     />
                 )}
-                {view === 'badges' && (
-                    <BadgesStreaksView
-                        habits={habits}
-                        completions={completions}
+
+                {view === 'todo' && (
+                    <TodoScreen
+                        notes={notes}
+                        updateNote={updateNote}
                         theme={theme}
                         colorMode={colorMode}
                     />
                 )}
+
                 <HelpTutorialModal
                     visible={isHelpTutorialOpen}
                     onClose={() => setIsHelpTutorialOpen(false)}

@@ -1,393 +1,483 @@
 {
-    "settings": {
-        "title": "Configuración",
-        "general": {
-            "title": "General",
-            "defaultView": "Vista por defecto",
-            "views": {
-                "daily": "Diaria",
-                "monthly": "Mens",
-                "dashboard": "Panel"
-            },
-            "startOfWeek": "Start of Week"
-        },
-        "language": {
-            "title": "Idioma"
-        },
-        "theme": {
-            "title": "Tema"
-        },
-        "support": {
-            "title": "Soporte",
-            "reportBug": "Reportar error o sugerencia"
-        },
-        "appearance": {
-            "title": "Apariencia",
-            "light": "Claro",
-            "dark": "Oscuro"
-        },
-        "cardSize": {
-            "title": "Tamano de tarjeta",
-            "compact": "Compacta",
-            "large": "Grande"
-        },
-        "whatsNew": {
-            "title": "Novedades",
-            "tutorial": "Tutorial"
-        },
-        "onboardingEntry": {
-            "title": "Tutorial",
-            "open": "Abrir"
-        },
-        "privacy": {
-            "title": "Privacidad",
-            "policy": "Politica"
-        },
-        "account": {
-            "delete": "Eliminar cuenta",
-            "noSession": "No se encontro una sesion de cuenta.",
-            "deleteFailed": "Error al eliminar",
-            "unableDelete": "No se pudo eliminar la cuenta en este momento.",
-            "prompts": {
-                "confirmTitle": "¿Eliminar cuenta?",
-                "confirmBody": "Esto elimina permanentemente tu cuenta y tus datos.",
-                "sureTitle": "¿Estas completamente seguro?",
-                "sureBody": "Esta accion no se puede deshacer.",
-                "keep": "Conservar cuenta",
-                "forever": "Eliminar para siempre"
-            }
-        },
-        "errors": {
-            "title": "Error",
-            "unableSignOut": "No se pudo cerrar sesion"
-        }
+  "settings": {
+    "title": "Configuración",
+    "general": {
+      "title": "General",
+      "defaultView": "Vista por defecto",
+      "views": {
+        "daily": "Diaria",
+        "monthly": "Mens",
+        "dashboard": "Panel"
+      },
+      "startOfWeek": "Inicio de semana"
     },
-    "header": {
-        "dashboard": "Panel",
-        "signIn": "Iniciar sesión",
-        "logout": "Cerrar sesión",
-        "myWeek": "Mi Semana",
-        "myMonth": "Mi Mes",
-        "monthlyTrends": "Tendencias Mensuales",
-        "weeklyTrends": "Tendencias Semanales",
-        "annualTrends": "Tendencias Anuales",
-        "vsLM": "vs MA",
-        "vsLW": "vs SA",
-        "switchChart": "Cambiar a Gráfico",
-        "monthlySuccess": "Éxito Mensual",
-        "weeklySuccess": "Éxito Semanal",
-        "annualPerformance": "Rendimiento Anual",
-        "monthMastery": "Dominio Mensual",
-        "habitMaster": "Maestro de Hábitos",
-        "yourStoryMonth": "Tu historia este mes",
-        "yourStoryWeek": "Tu historia esta semana",
-        "completed": "Completado",
-        "vsPrev": "vs Ant",
-        "best": "Mejor",
-        "thisYearResolutions": "Propósitos de este año"
+    "language": {
+      "title": "Idioma"
     },
-    "story": {
-        "annual": {
-            "momentum": {
-                "ascending": "Tu constancia mejoró durante el año, así que estás cerrando más fuerte de lo que empezaste.",
-                "descending": "Tu ritmo bajó en los últimos meses. Tómalo como señal para simplificar y reiniciar tu rutina base.",
-                "stable": "Mantuviste un ritmo estable entre semanas cambiantes, una base sólida para crecer.",
-                "main": "Este año, [[{{habitName}}]] se convirtió en un hábito central de tu identidad. {{momentumMsg}}"
-            },
-            "rhythm": {
-                "weekend": "Tu mejor ritmo aparece en fin de semana. Protege esa ventana y replica una parte entre semana.",
-                "weekday": "Tu estructura entre semana es fuerte, pero el fin de semana es menos constante. Una versión más ligera puede cerrar esa brecha.",
-                "consistent": "Tu ejecución se mantuvo equilibrada entre semana y fin de semana, mostrando control de rutina."
-            },
-            "consistency": {
-                "high": "Te presentaste [[{{activeDays}}]] días este año. Es evidencia clara de una identidad de hábitos duradera.",
-                "medium": "Ya tienes una base confiable. Ajustar un disparador u horario puede volver esto mucho más automático.",
-                "low": "Aún estás construyendo fundamentos. Las victorias pequeñas y repetibles importan más que la intensidad ahora."
-            },
-            "experimental": "Exploraste muchos hábitos este año. Elegir menos prioridades en el siguiente ciclo puede multiplicar la constancia.",
-            "fading": "[[{{habitName}}]] se ha enfriado recientemente. Si sigue siendo importante, reinícialo esta semana con una versión más fácil.",
-            "neglected": "[[{{habitName}}]] lleva [[{{days}}]] días inactivo. Una repetición rápida puede reabrir el impulso."
-        },
-        "weekly": {
-            "intro": {
-                "elite": "Completaste [[{{count}}]] acciones esta semana y te mantuviste por encima del ritmo esperado. Tu sistema está funcionando.",
-                "strong": "Registraste [[{{count}}]] completados esta semana con buena consistencia.",
-                "balanced": "Completaste [[{{count}}]] acciones esta semana. Algunos hábitos se mantuvieron; otros necesitan una señal más clara.",
-                "low": "Registraste [[{{count}}]] completados esta semana. Mantén el mínimo muy simple y enfócate en reiniciar la constancia."
-            },
-            "momentum": {
-                "highlight": "[[{{habitName}}]] lideró esta semana con [[{{count}}/{{total}}]] días completados."
-            },
-            "neglected": "[[{{habitName}}]] no se registró esta semana. Una versión de 2 minutos mañana basta para retomarlo.",
-            "growth": {
-                "recovery": "Tu segunda mitad superó a la primera. Es una recuperación con señal positiva.",
-                "friction": "Tu impulso inicial cayó al final de la semana. Añade una señal de cierre para reducir esa caída."
-            }
-        },
-        "monthly": {
-            "intro": {
-                "exceptional": "Con [[{{count}}]] completados hasta ahora, este mes muestra una ejecución alta y estable.",
-                "solid": "Alcanzaste [[{{count}}]] completados este mes con constancia confiable.",
-                "exploration": "Registraste [[{{count}}]] completados este mes. Reducir el foco puede mejorar el arrastre al próximo mes.",
-                "low": "Completaste [[{{count}}]] acciones este mes. Úsalo para reiniciar el alcance y reconstruir una base más simple."
-            },
-            "momentum": {
-                "growth": "Subiste [[{{delta}}%]] frente al mes pasado: un cambio positivo y claro en ejecución.",
-                "cooling": "Bajaste [[{{delta}}%]] frente al mes pasado. Reducir fricción en un hábito clave puede estabilizar el siguiente mes."
-            },
-            "rhythm": {
-                "anchor": "[[{{habitName}}]] fue tu ancla del mes con [[{{count}}]] completados."
-            }
-        }
+    "theme": {
+      "title": "Tema"
     },
-    "common": {
-        "done": "Hecho",
-        "rate": "Valorar",
-        "days": "DÍAS",
-        "myHabits": "Mis Hábitos",
-        "manageHabits": "Gestionar hábitos",
-        "currentStreak": "Racha Actual",
-        "months": {
-            "jan": "Ene",
-            "feb": "Feb",
-            "mar": "Mar",
-            "apr": "Abr",
-            "may": "May",
-            "jun": "Jun",
-            "jul": "Jul",
-            "aug": "Ago",
-            "sep": "Sep",
-            "oct": "Oct",
-            "nov": "Nov",
-            "dec": "Dic"
-        },
-        "selectYear": "Seleccionar Año",
-        "cancel": "Cancelar",
-        "thisWeek": "esta semana",
-        "untitled": "Sin título",
-        "daysShort": {
-            "mon": "L",
-            "tue": "M",
-            "wed": "X",
-            "thu": "J",
-            "fri": "V",
-            "sat": "S",
-            "sun": "D"
-        }
+    "reminders": {
+      "title": "Recordatorios diarios"
     },
-    "dailyCard": {
-        "dailyHabits": "Hábitos Diarios",
-        "flexibleHabits": "Hábitos Flexibles",
-        "tasks": "Tareas",
-        "dailyDone": "Completado Diario",
-        "remaining": "Restante",
-        "noDailyHabits": "No hay hábitos diarios para hoy",
-        "addTask": "Haga clic en + para agregar una tarea",
-        "share": "Compartir Logro",
-        "journal": "Diario",
-        "mood": "Estado de ánimo",
-        "notes": "Notas",
-        "saveEntry": "Guardar Entrada",
-        "journalPlaceholder": "Escribe sobre hoy...",
-        "editTask": "Editar tarea",
-        "deleteTask": "Eliminar tarea",
-        "untitled": "Sin título",
-        "moods": {
-            "veryBad": "Muy mal",
-            "bad": "Mal",
-            "neutral": "Neutral",
-            "good": "Bien",
-            "veryGood": "Muy bien"
-        }
+    "support": {
+      "title": "Soporte",
+      "reportBug": "Reportar error o sugerencia"
     },
-    "habitManager": {
-        "title": "Mis Hábitos",
-        "addHabit": "Añadir Nuevo Hábito",
-        "noHabits": "Aún no hay hábitos. ¡Empieza añadiendo uno!",
-        "dragToReorder": "Arrastra los hábitos para reordenarlos.",
-        "fixed": "Fijo",
-        "flexible": "Flexible",
-        "timesPerWeek": "Veces por semana",
-        "habitNamePlaceholder": "Nombre del hábito",
-        "untitled": "Hábito sin título",
-        "deleteConfirm": "¿Estás seguro de que quieres eliminar este hábito? Perderás todos sus datos históricos."
+    "appearance": {
+      "title": "Apariencia",
+      "light": "Claro",
+      "dark": "Oscuro"
     },
-    "tasks": {
-        "enterTask": "Ingresa tu tarea",
-        "placeholder": "Escribe algo...",
-        "addTask": "Añadir Tarea",
-        "newTaskPlaceholder": "Nueva tarea...",
-        "empty": "No hay tareas aún"
+    "cardSize": {
+      "title": "Tamano de tarjeta",
+      "compact": "Compacta",
+      "large": "Grande"
     },
-    "journal": {
-        "title": "Diario",
-        "prompt": "Reflexiona sobre tu día",
-        "placeholder": "Escribe sobre hoy...",
-        "save": "Guardar Entrada"
+    "whatsNew": {
+      "title": "Novedades",
+      "tutorial": "Tutorial"
     },
-    "weeklyCard": {
-        "title": "Metas Semanales",
-        "target": "Objetivo: {{count}}x esta semana"
+    "onboardingEntry": {
+      "title": "Tutorial",
+      "open": "Abrir"
     },
-    "monthlyView": {
-        "journals": "Diarios",
-        "habits": "Hábitos",
-        "emptyEntry": "Entrada vacía...",
-        "noActivity": "No hay actividad hoy",
-        "dayDetails": "Detalles del Día"
+    "privacy": {
+      "title": "Privacidad",
+      "policy": "Politica"
     },
-    "dashboard": {
-        "week": "Semana",
-        "month": "Mes",
-        "year": "Año",
-        "weekTab": "SEMANA",
-        "monthTab": "MES",
-        "yearTab": "AÑO"
+    "account": {
+      "delete": "Eliminar cuenta",
+      "noSession": "No se encontro una sesion de cuenta.",
+      "deleteFailed": "Error al eliminar",
+      "unableDelete": "No se pudo eliminar la cuenta en este momento.",
+      "prompts": {
+        "confirmTitle": "¿Eliminar cuenta?",
+        "confirmBody": "Esto elimina permanentemente tu cuenta y tus datos.",
+        "sureTitle": "¿Estas completamente seguro?",
+        "sureBody": "Esta accion no se puede deshacer.",
+        "keep": "Conservar cuenta",
+        "forever": "Eliminar para siempre"
+      },
+      "title": "Cuenta",
+      "email": "Correo",
+      "changePassword": "Cambiar contraseña",
+      "sendResetEmail": "Enviar correo de restablecimiento",
+      "resetSent": "Revisa tu correo",
+      "resetSentBody": "Se ha enviado un enlace de restablecimiento a {{email}}.",
+      "resetFailed": "No se pudo enviar el correo de restablecimiento."
     },
-    "analytics": {
-        "success": "Éxito {{period}}",
-        "mastery": "Dominio {{period}}",
-        "notEnoughData": "No hay suficientes datos para generar una historia aún.",
-        "retrospectiveGrid": "Cuadrícula Retrospectiva",
-        "done": "Hecho",
-        "moodAnalysis": "Análisis de Estado de Ánimo",
-        "vibe": "Vibe {{period}}",
-        "activityMomentum": "Inercia de Actividad",
-        "bestHabit": "Mejor Hábito {{period}}",
-        "needsFocus": "Necesita Atención {{period}}",
-        "noData": "Sin Datos",
-        "onTrack": "En Camino"
-    },
-    "bottomNav": {
-        "today": "Hoy",
-        "analytics": "Analítica",
-        "logs": "Registros",
-        "analysis": "Análisis"
-    },
-    "auth": {
-        "enterEmail": "Por favor ingresa tu correo",
-        "enterPassword": "Por favor ingresa tu contraseña",
-        "resetSent": "¡Correo de restablecimiento enviado!",
-        "signInSignUp": "Iniciar Sesión / Registrarse",
-        "requestReset": "Solicitar Restablecimiento de Pin",
-        "returnLogin": "Volver al Inicio de Sesión",
-        "forgotPassword": "¿Olvidaste tu contraseña?",
-        "guestEntry": "Entrada de Invitado",
-        "checkEmail": "Revisa tu correo para confirmar tu cuenta.",
-        "sending": "Enviando...",
-        "verifying": "Verificando...",
-        "tagline": "Un rastreador analítico relajante para construir tus hábitos",
-        "email": "Correo",
-        "password": "Contraseña",
-        "signIn": "Iniciar sesión",
-        "createAccount": "Crear cuenta",
-        "or": "O"
-    },
-    "dashboardScreen": {
-        "title": "Panel",
-        "welcome": "¡Bienvenido!",
-        "description": "Esta es la versión móvil de HabiCard.",
-        "signOut": "Cerrar Sesión"
-    },
-    "aiAnalysis": {
-        "premiumOnly": "Solo Premium",
-        "premiumDesc": "Obtén conocimientos profundos sobre tus hábitos y patrones de vida con análisis de IA. Desbloquea esta función con una suscripción premium.",
-        "upgrade": "Actualizar a Premium",
-        "weeklyUsage": "Uso Semanal",
-        "analyses": "Análisis",
-        "limitReached": "Límite Alcanzado",
-        "generateNew": "Generar Nuevo Análisis",
-        "resetMessage": "Se reinicia el próximo lunes",
-        "analyzeMessage": "La IA analizará tus hábitos y notas recientes",
-        "history": "Historial de Insights",
-        "viewReport": "Ver Informe Completo",
-        "insight": "Insight",
-        "mockTitle": "Patrones y Energía",
-        "mockContent": "Tiendes a completar más hábitos en los días en que registras un estado de ánimo \"productivo\" temprano en la mañana. Tu constancia con \"Lectura\" ha mejorado un 15% esta semana."
-    },
-    "onboarding": {
-        "badge": "Tutorial",
-        "step": "Paso",
-        "back": "Atras",
-        "next": "Siguiente",
-        "finish": "Finalizar",
-        "saving": "Guardando...",
-        "steps": {
-            "language": {
-                "title": "Elegir idioma",
-                "subtitle": "Configura el idioma de la app. Puedes cambiarlo despues en Ajustes."
-            },
-            "theme": {
-                "title": "Elegir color",
-                "subtitle": "Elige la misma combinacion de colores de HabiCard usada en la app."
-            },
-            "cardStyle": {
-                "title": "Elegir tamano de tarjeta",
-                "subtitle": "Previsualiza ambos estilos de tarjeta y elige el predeterminado."
-            },
-            "habitsDemo": {
-                "title": "Habitos en un lugar",
-                "subtitle": "Marca todos tus habitos en un solo lugar."
-            },
-            "tasksDemo": {
-                "title": "Tareas simples",
-                "subtitle": "Crea tareas y marcalas cuando termines."
-            },
-            "journalDemo": {
-                "title": "Escribe cada dia",
-                "subtitle": "Actualiza tu diario diario en el mismo flujo de tarjeta."
-            },
-            "weekStart": {
-                "title": "Inicio de la semana",
-                "subtitle": "Elige si tu semana comienza en domingo o lunes."
-            }
-        },
-        "languageTitle": "Idioma",
-        "cardStyleTitle": "Tamano de tarjeta",
-        "cardStyleLabels": {
-            "compact": "Compacta",
-            "large": "Grande"
-        },
-        "habits": [
-            "Ejercicio",
-            "Beber agua",
-            "Leer 10 paginas",
-            "Meditar",
-            "Planear manana"
-        ],
-        "taskSamples": [
-            "Planear manana",
-            "Revisar metas"
-        ],
-        "journalSample": "Aqui puedes escribir en el diario.",
-        "sampleDay": "Jueves",
-        "cardStyleDescriptions": {
-            "compact": "Insignia pequena de progreso en el encabezado.",
-            "large": "Panel grande de progreso diario debajo de la fecha."
-        },
-        "themeNames": {
-            "sageRose": "Salvia y Rosa",
-            "oceanSky": "Oceano y Cielo",
-            "sunsetClay": "Atardecer y Arcilla",
-            "lavenderSlate": "Lavanda y Pizarra",
-            "forestEarth": "Bosque y Tierra",
-            "peachMint": "Durazno y Menta",
-            "lilacCream": "Lila y Crema",
-            "dustyBlueMauve": "Azul Polvo y Malva",
-            "coralSand": "Coral y Arena",
-            "mintBlush": "Menta y Rubor",
-            "honeyFog": "Miel y Niebla",
-            "plumSage": "Ciruela y Salvia",
-            "monochrome": "Monocromo"
-        },
-        "weekStartOptions": {
-            "sun": "DOM",
-            "mon": "LUN"
-        },
-        "habitInstructions": {
-            "tap": "Toca para marcar un habito",
-            "hold": "Manten presionado para omitir el habito",
-            "empty": "Dejalo vacio si lo perdiste"
-        }
+    "errors": {
+      "title": "Error",
+      "unableSignOut": "No se pudo cerrar sesion"
     }
+  },
+  "header": {
+    "dashboard": "Panel",
+    "signIn": "Iniciar sesión",
+    "logout": "Cerrar sesión",
+    "myWeek": "Mi Semana",
+    "myMonth": "Mi Mes",
+    "monthlyTrends": "Tendencias Mensuales",
+    "weeklyTrends": "Tendencias Semanales",
+    "annualTrends": "Tendencias Anuales",
+    "vsLM": "vs MA",
+    "vsLW": "vs SA",
+    "switchChart": "Cambiar a Gráfico",
+    "monthlySuccess": "Éxito Mensual",
+    "weeklySuccess": "Éxito Semanal",
+    "annualPerformance": "Rendimiento Anual",
+    "monthMastery": "Dominio Mensual",
+    "habitMaster": "Maestro de Hábitos",
+    "yourStoryMonth": "Tu historia este mes",
+    "yourStoryWeek": "Tu historia esta semana",
+    "completed": "Completado",
+    "vsPrev": "vs Ant",
+    "best": "Mejor",
+    "thisYearResolutions": "Propósitos de este año"
+  },
+  "story": {
+    "annual": {
+      "momentum": {
+        "ascending": "Tu constancia mejoró durante el año, así que estás cerrando más fuerte de lo que empezaste.",
+        "descending": "Tu ritmo bajó en los últimos meses. Tómalo como señal para simplificar y reiniciar tu rutina base.",
+        "stable": "Mantuviste un ritmo estable entre semanas cambiantes, una base sólida para crecer.",
+        "main": "Este año, [[{{habitName}}]] se convirtió en un hábito central de tu identidad. {{momentumMsg}}"
+      },
+      "rhythm": {
+        "weekend": "Tu mejor ritmo aparece en fin de semana. Protege esa ventana y replica una parte entre semana.",
+        "weekday": "Tu estructura entre semana es fuerte, pero el fin de semana es menos constante. Una versión más ligera puede cerrar esa brecha.",
+        "consistent": "Tu ejecución se mantuvo equilibrada entre semana y fin de semana, mostrando control de rutina."
+      },
+      "consistency": {
+        "high": "Te presentaste [[{{activeDays}}]] días este año. Es evidencia clara de una identidad de hábitos duradera.",
+        "medium": "Ya tienes una base confiable. Ajustar un disparador u horario puede volver esto mucho más automático.",
+        "low": "Aún estás construyendo fundamentos. Las victorias pequeñas y repetibles importan más que la intensidad ahora."
+      },
+      "experimental": "Exploraste muchos hábitos este año. Elegir menos prioridades en el siguiente ciclo puede multiplicar la constancia.",
+      "fading": "[[{{habitName}}]] se ha enfriado recientemente. Si sigue siendo importante, reinícialo esta semana con una versión más fácil.",
+      "neglected": "[[{{habitName}}]] lleva [[{{days}}]] días inactivo. Una repetición rápida puede reabrir el impulso."
+    },
+    "weekly": {
+      "intro": {
+        "elite": "Completaste [[{{count}}]] acciones esta semana y te mantuviste por encima del ritmo esperado. Tu sistema está funcionando.",
+        "strong": "Registraste [[{{count}}]] completados esta semana con buena consistencia.",
+        "balanced": "Completaste [[{{count}}]] acciones esta semana. Algunos hábitos se mantuvieron; otros necesitan una señal más clara.",
+        "low": "Registraste [[{{count}}]] completados esta semana. Mantén el mínimo muy simple y enfócate en reiniciar la constancia."
+      },
+      "momentum": {
+        "highlight": "[[{{habitName}}]] lideró esta semana con [[{{count}}/{{total}}]] días completados."
+      },
+      "neglected": "[[{{habitName}}]] no se registró esta semana. Una versión de 2 minutos mañana basta para retomarlo.",
+      "growth": {
+        "recovery": "Tu segunda mitad superó a la primera. Es una recuperación con señal positiva.",
+        "friction": "Tu impulso inicial cayó al final de la semana. Añade una señal de cierre para reducir esa caída."
+      }
+    },
+    "monthly": {
+      "intro": {
+        "exceptional": "Con [[{{count}}]] completados hasta ahora, este mes muestra una ejecución alta y estable.",
+        "solid": "Alcanzaste [[{{count}}]] completados este mes con constancia confiable.",
+        "exploration": "Registraste [[{{count}}]] completados este mes. Reducir el foco puede mejorar el arrastre al próximo mes.",
+        "low": "Completaste [[{{count}}]] acciones este mes. Úsalo para reiniciar el alcance y reconstruir una base más simple."
+      },
+      "momentum": {
+        "growth": "Subiste [[{{delta}}%]] frente al mes pasado: un cambio positivo y claro en ejecución.",
+        "cooling": "Bajaste [[{{delta}}%]] frente al mes pasado. Reducir fricción en un hábito clave puede estabilizar el siguiente mes."
+      },
+      "rhythm": {
+        "anchor": "[[{{habitName}}]] fue tu ancla del mes con [[{{count}}]] completados."
+      }
+    }
+  },
+  "common": {
+    "done": "Hecho",
+    "rate": "Valorar",
+    "days": "DÍAS",
+    "myHabits": "Mis Hábitos",
+    "manageHabits": "Gestionar hábitos",
+    "currentStreak": "Racha Actual",
+    "months": {
+      "jan": "Ene",
+      "feb": "Feb",
+      "mar": "Mar",
+      "apr": "Abr",
+      "may": "May",
+      "jun": "Jun",
+      "jul": "Jul",
+      "aug": "Ago",
+      "sep": "Sep",
+      "oct": "Oct",
+      "nov": "Nov",
+      "dec": "Dic"
+    },
+    "selectYear": "Seleccionar Año",
+    "add": "Agregar",
+    "cancel": "Cancelar",
+    "thisWeek": "esta semana",
+    "untitled": "Sin título",
+    "daysShort": {
+      "mon": "L",
+      "tue": "M",
+      "wed": "X",
+      "thu": "J",
+      "fri": "V",
+      "sat": "S",
+      "sun": "D"
+    }
+  },
+  "dailyCard": {
+    "dailyHabits": "Hábitos Diarios",
+    "flexibleHabits": "Hábitos Flexibles",
+    "tasks": "Tareas",
+    "dailyDone": "Completado Diario",
+    "remaining": "Restante",
+    "noDailyHabits": "No hay hábitos diarios para hoy",
+    "addTask": "Haga clic en + para agregar una tarea",
+    "share": "Compartir Logro",
+    "journal": "Diario",
+    "mood": "Estado de ánimo",
+    "notes": "Notas",
+    "saveEntry": "Guardar Entrada",
+    "journalPlaceholder": "Escribe sobre hoy...",
+    "editTask": "Editar tarea",
+    "deleteTask": "Eliminar tarea",
+    "untitled": "Sin título",
+    "moods": {
+      "veryBad": "Muy mal",
+      "bad": "Mal",
+      "neutral": "Neutral",
+      "good": "Bien",
+      "veryGood": "Muy bien"
+    }
+  },
+  "habitManager": {
+    "title": "Mis Hábitos",
+    "addHabit": "Añadir Nuevo Hábito",
+    "noHabits": "Aún no hay hábitos. ¡Empieza añadiendo uno!",
+    "dragToReorder": "Arrastra los hábitos para reordenarlos.",
+    "fixed": "Fijo",
+    "flexible": "Flexible",
+    "timesPerWeek": "Veces por semana",
+    "habitNamePlaceholder": "Nombre del hábito",
+    "untitled": "Hábito sin título",
+    "deleteConfirm": "¿Estás seguro de que quieres eliminar este hábito? Perderás todos sus datos históricos.",
+    "edit": "Editar",
+    "restore": "Restaurar",
+    "everyDay": "Todos los días",
+    "alreadyExists": "Ya existe",
+    "alreadyExistsMsg": "Ya existe un hábito llamado \"{{name}}\"."
+  },
+  "tasks": {
+    "enterTask": "Ingresa tu tarea",
+    "placeholder": "Escribe algo...",
+    "addTask": "Añadir Tarea",
+    "newTaskPlaceholder": "Nueva tarea...",
+    "empty": "No hay tareas aún"
+  },
+  "journal": {
+    "title": "Diario",
+    "prompt": "Reflexiona sobre tu día",
+    "placeholder": "Escribe sobre hoy...",
+    "save": "Guardar Entrada"
+  },
+  "weeklyCard": {
+    "title": "Metas Semanales",
+    "target": "Objetivo: {{count}}x esta semana"
+  },
+  "monthlyView": {
+    "journals": "Diarios",
+    "habits": "Hábitos",
+    "emptyEntry": "Entrada vacía...",
+    "noActivity": "No hay actividad hoy",
+    "dayDetails": "Detalles del Día",
+    "tasks": "Tareas",
+    "searchPlaceholder": "Buscar registros...",
+    "noLogs": "No se encontraron registros para esta sección."
+  },
+  "dashboard": {
+    "week": "Semana",
+    "month": "Mes",
+    "year": "Año",
+    "weekTab": "SEMANA",
+    "monthTab": "MES",
+    "yearTab": "AÑO",
+    "insights": "Perspectivas",
+    "anchorHabit": "Hábito Ancla",
+    "anchorDesc1": "Los días que haces esto, tu cumplimiento de otros hábitos es",
+    "anchorDesc2": "más alto",
+    "anchorDesc3": "({{done}}% vs {{missed}}%). Empieza aquí para marcar el ritmo.",
+    "weakSpot": "Punto Débil",
+    "weakSpotDesc1": "Tu día con menor cumplimiento —",
+    "weakSpotDesc2": "promedio",
+    "weakSpotDesc3": "\"{{habit}}\" es el más omitido los {{day}}.",
+    "streakPattern": "Patrón de Racha",
+    "streakDesc1": "Las rachas tienden a romperse después de",
+    "streakDescDay": "día",
+    "streakDescDays": "días",
+    "streakDesc2": "— esto ha ocurrido {{count}} veces. El día {{day}} es cuando debes perseverar."
+  },
+  "analytics": {
+    "success": "Éxito {{period}}",
+    "mastery": "Dominio {{period}}",
+    "notEnoughData": "No hay suficientes datos para generar una historia aún.",
+    "retrospectiveGrid": "Cuadrícula Retrospectiva",
+    "done": "Hecho",
+    "moodAnalysis": "Análisis de Estado de Ánimo",
+    "vibe": "Vibe {{period}}",
+    "activityMomentum": "Inercia de Actividad",
+    "bestHabit": "Mejor Hábito {{period}}",
+    "needsFocus": "Necesita Atención {{period}}",
+    "noData": "Sin Datos",
+    "onTrack": "En Camino",
+    "atAGlance": "De un vistazo",
+    "completion": "Completado",
+    "doneTotal": "Hecho / Total",
+    "vsPrevious": "Vs Anterior",
+    "topHabit": "Mejor Hábito",
+    "weekOverWeek": "Semana a semana",
+    "vsLastWeek": "vs semana pasada",
+    "thisWeek": "Esta semana",
+    "lastWeek": "Semana pasada",
+    "monthOverMonth": "Mes a mes",
+    "vsLastMonth": "vs mes pasado",
+    "thisMonth": "Este mes",
+    "lastMonth": "Mes pasado",
+    "weeksThisMonth": "Semanas de este mes"
+  },
+  "bottomNav": {
+    "today": "Hoy",
+    "analytics": "Analítica",
+    "logs": "Registros",
+    "todo": "Tareas",
+    "analysis": "Análisis"
+  },
+  "auth": {
+    "enterEmail": "Por favor ingresa tu correo",
+    "enterPassword": "Por favor ingresa tu contraseña",
+    "resetSent": "¡Correo de restablecimiento enviado!",
+    "signInSignUp": "Iniciar Sesión / Registrarse",
+    "requestReset": "Solicitar Restablecimiento de Pin",
+    "returnLogin": "Volver al Inicio de Sesión",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "guestEntry": "Entrada de Invitado",
+    "checkEmail": "Revisa tu correo para confirmar tu cuenta.",
+    "sending": "Enviando...",
+    "verifying": "Verificando...",
+    "tagline": "Un rastreador analítico relajante para construir tus hábitos",
+    "email": "Correo",
+    "password": "Contraseña",
+    "signIn": "Iniciar sesión",
+    "createAccount": "Crear cuenta",
+    "or": "O"
+  },
+  "dashboardScreen": {
+    "title": "Panel",
+    "welcome": "¡Bienvenido!",
+    "description": "Esta es la versión móvil de HabiCard.",
+    "signOut": "Cerrar Sesión"
+  },
+  "aiAnalysis": {
+    "premiumOnly": "Solo Premium",
+    "premiumDesc": "Obtén conocimientos profundos sobre tus hábitos y patrones de vida con análisis de IA. Desbloquea esta función con una suscripción premium.",
+    "upgrade": "Actualizar a Premium",
+    "weeklyUsage": "Uso Semanal",
+    "analyses": "Análisis",
+    "limitReached": "Límite Alcanzado",
+    "generateNew": "Generar Nuevo Análisis",
+    "resetMessage": "Se reinicia el próximo lunes",
+    "analyzeMessage": "La IA analizará tus hábitos y notas recientes",
+    "history": "Historial de Insights",
+    "viewReport": "Ver Informe Completo",
+    "insight": "Insight",
+    "mockTitle": "Patrones y Energía",
+    "mockContent": "Tiendes a completar más hábitos en los días en que registras un estado de ánimo \"productivo\" temprano en la mañana. Tu constancia con \"Lectura\" ha mejorado un 15% esta semana."
+  },
+  "onboarding": {
+    "badge": "Tutorial",
+    "step": "Paso",
+    "back": "Atras",
+    "next": "Siguiente",
+    "finish": "Finalizar",
+    "saving": "Guardando...",
+    "steps": {
+      "language": {
+        "title": "Elegir idioma",
+        "subtitle": "Configura el idioma de la app. Puedes cambiarlo despues en Ajustes."
+      },
+      "theme": {
+        "title": "Elegir color",
+        "subtitle": "Elige la misma combinacion de colores de HabiCard usada en la app."
+      },
+      "cardStyle": {
+        "title": "Elegir tamano de tarjeta",
+        "subtitle": "Previsualiza ambos estilos de tarjeta y elige el predeterminado."
+      },
+      "habitsDemo": {
+        "title": "Habitos en un lugar",
+        "subtitle": "Marca todos tus habitos en un solo lugar."
+      },
+      "tasksDemo": {
+        "title": "Tareas simples",
+        "subtitle": "Crea tareas y marcalas cuando termines."
+      },
+      "journalDemo": {
+        "title": "Escribe cada dia",
+        "subtitle": "Actualiza tu diario diario en el mismo flujo de tarjeta."
+      },
+      "weekStart": {
+        "title": "Inicio de la semana",
+        "subtitle": "Elige si tu semana comienza en domingo o lunes."
+      }
+    },
+    "languageTitle": "Idioma",
+    "cardStyleTitle": "Tamano de tarjeta",
+    "cardStyleLabels": {
+      "compact": "Compacta",
+      "large": "Grande"
+    },
+    "habits": [
+      "Ejercicio",
+      "Beber agua",
+      "Leer 10 paginas",
+      "Meditar",
+      "Planear manana"
+    ],
+    "taskSamples": [
+      "Planear manana",
+      "Revisar metas"
+    ],
+    "journalSample": "Aqui puedes escribir en el diario.",
+    "sampleDay": "Jueves",
+    "cardStyleDescriptions": {
+      "compact": "Insignia pequena de progreso en el encabezado.",
+      "large": "Panel grande de progreso diario debajo de la fecha."
+    },
+    "themeNames": {
+      "sageRose": "Salvia y Rosa",
+      "oceanSky": "Oceano y Cielo",
+      "sunsetClay": "Atardecer y Arcilla",
+      "lavenderSlate": "Lavanda y Pizarra",
+      "forestEarth": "Bosque y Tierra",
+      "peachMint": "Durazno y Menta",
+      "lilacCream": "Lila y Crema",
+      "dustyBlueMauve": "Azul Polvo y Malva",
+      "coralSand": "Coral y Arena",
+      "mintBlush": "Menta y Rubor",
+      "honeyFog": "Miel y Niebla",
+      "plumSage": "Ciruela y Salvia",
+      "monochrome": "Monocromo"
+    },
+    "weekStartOptions": {
+      "sun": "DOM",
+      "mon": "LUN"
+    },
+    "habitInstructions": {
+      "tap": "Toca para marcar un habito",
+      "hold": "Manten presionado para omitir el habito",
+      "empty": "Dejalo vacio si lo perdiste"
+    }
+  },
+  "feedback": {
+    "loadError": "Error al cargar el historial de comentarios.",
+    "missingTitle": "Mensaje vacío",
+    "missingMsg": "Por favor ingresa tus comentarios.",
+    "submittedTitle": "Enviado",
+    "submittedMsg": "Gracias por tus comentarios.",
+    "failedMsg": "Error al enviar los comentarios.",
+    "signInRequired": "Inicio de sesión requerido",
+    "signInRequiredMsg": "Por favor inicia sesión para responder a los comentarios.",
+    "replyFailed": "Error al enviar la respuesta.",
+    "unableToOpenLink": "No se puede abrir el enlace",
+    "bugPlaceholder": "Describe el problema...",
+    "ideaPlaceholder": "Comparte tu idea...",
+    "replyPlaceholder": "Escribe una respuesta..."
+  },
+  "tutorial": {
+    "header": "Tutorial Guiado",
+    "stepCompleted": "Paso completado",
+    "stepPending": "Completa esta acción en la app para continuar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "finish": "Finalizar",
+    "close": "Cerrar",
+    "steps": {
+      "addHabit": {
+        "title": "Crear un Hábito",
+        "description": "Toca el botón + en la esquina superior izquierda y crea un nuevo hábito."
+      },
+      "completeSkip": {
+        "title": "Completar u Omitir un Hábito",
+        "description": "Marca el hábito que creaste. O mantenlo presionado para omitirlo hoy."
+      },
+      "analytics": {
+        "title": "Abrir Analíticas",
+        "description": "Usa la navegación inferior y cambia a Analíticas."
+      },
+      "logs": {
+        "title": "Abrir Registros",
+        "description": "Usa la navegación inferior y cambia a Registros para ver tu historial."
+      }
+    }
+  }
 }

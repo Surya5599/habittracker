@@ -135,6 +135,7 @@ export const WeeklyScreen = ({
                     dayData={dayData}
                     dateKey={dateKey}
                     updateNote={updateNote}
+                    notes={notes}
                     cardStyle={cardStyle}
                 />
                 {/* 

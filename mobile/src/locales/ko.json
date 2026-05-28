@@ -1,394 +1,484 @@
 {
-    "settings": {
-        "title": "설정",
-        "general": {
-            "title": "일반",
-            "defaultView": "기본 보기",
-            "views": {
-                "daily": "일일",
-                "monthly": "월간",
-                "dashboard": "대시"
-            },
-            "startOfWeek": "Start of Week"
-        },
-        "language": {
-            "title": "언어"
-        },
-        "theme": {
-            "title": "테마"
-        },
-        "support": {
-            "title": "지원",
-            "reportBug": "버그 신고 또는 제안"
-        },
-        "appearance": {
-            "title": "화면 설정",
-            "light": "라이트",
-            "dark": "다크"
-        },
-        "cardSize": {
-            "title": "카드 크기",
-            "compact": "컴팩트",
-            "large": "크게"
-        },
-        "whatsNew": {
-            "title": "새 소식",
-            "tutorial": "튜토리얼"
-        },
-        "onboardingEntry": {
-            "title": "튜토리얼",
-            "open": "열기"
-        },
-        "privacy": {
-            "title": "개인정보",
-            "policy": "정책"
-        },
-        "account": {
-            "delete": "계정 삭제",
-            "noSession": "계정 세션을 찾을 수 없습니다.",
-            "deleteFailed": "삭제 실패",
-            "unableDelete": "지금은 계정을 삭제할 수 없습니다.",
-            "prompts": {
-                "confirmTitle": "계정을 삭제할까요?",
-                "confirmBody": "계정과 데이터가 영구적으로 삭제됩니다.",
-                "sureTitle": "정말로 삭제하시겠습니까?",
-                "sureBody": "이 작업은 되돌릴 수 없습니다.",
-                "keep": "계정 유지",
-                "forever": "영구 삭제"
-            }
-        },
-        "errors": {
-            "title": "오류",
-            "unableSignOut": "로그아웃할 수 없습니다"
-        }
+  "settings": {
+    "title": "설정",
+    "general": {
+      "title": "일반",
+      "defaultView": "기본 보기",
+      "views": {
+        "daily": "일일",
+        "monthly": "월간",
+        "dashboard": "대시"
+      },
+      "startOfWeek": "주 시작일"
     },
-    "header": {
-        "dashboard": "대시보드",
-        "signIn": "로그인",
-        "logout": "로그아웃",
-        "myWeek": "나의 주간",
-        "myMonth": "나의 월간",
-        "monthlyTrends": "월간 트렌드",
-        "weeklyTrends": "주간 트렌드",
-        "annualTrends": "연간 트렌드",
-        "vsLM": "지난달 대비",
-        "vsLW": "지난주 대비",
-        "switchChart": "차트 전환",
-        "monthlySuccess": "월간 성공",
-        "weeklySuccess": "주간 성공",
-        "annualPerformance": "연간 성과",
-        "monthMastery": "월간 마스터리",
-        "habitMaster": "습관 마스터",
-        "yourStoryMonth": "이번 달 이야기",
-        "yourStoryWeek": "이번 주 이야기",
-        "completed": "완료됨",
-        "vsPrev": "이전 대비",
-        "best": "최고",
-        "thisYearResolutions": "올해의 결심"
+    "language": {
+      "title": "언어"
     },
-    "story": {
-        "annual": {
-            "momentum": {
-                "ascending": "연중 꾸준함이 좋아져서 시작보다 더 강하게 마무리하고 있습니다.",
-                "descending": "최근 몇 달 페이스가 내려왔습니다. 실패가 아니라 핵심 루틴을 단순화해 재시작하라는 신호입니다.",
-                "stable": "주간 변화 속에서도 안정적인 리듬을 유지했습니다. 다음 성장을 위한 좋은 기반입니다.",
-                "main": "올해 [[{{habitName}}]] 은(는) 당신의 핵심 정체성 습관이 되었습니다. {{momentumMsg}}"
-            },
-            "rhythm": {
-                "weekend": "주말에 가장 강한 리듬이 나옵니다. 그 시간을 지키고 평일에 일부를 복제해 보세요.",
-                "weekday": "평일 구조는 강하지만 주말 일관성은 낮습니다. 주말 버전을 더 가볍게 만들면 격차를 줄일 수 있습니다.",
-                "consistent": "평일과 주말 모두 실행이 균형적이라 루틴 통제가 잘 되고 있습니다."
-            },
-            "consistency": {
-                "high": "올해 [[{{activeDays}}]]일 실천했습니다. 지속 가능한 습관 정체성이 형성되고 있다는 강한 증거입니다.",
-                "medium": "기반은 충분히 좋습니다. 트리거나 시간대를 하나만 더 고정하면 자동화가 쉬워집니다.",
-                "low": "지금은 기반을 만드는 단계입니다. 강도보다 작고 반복 가능한 성공이 더 중요합니다."
-            },
-            "experimental": "올해 많은 습관을 실험했습니다. 다음 사이클에서는 우선순위를 줄이면 일관성이 더 빨리 쌓입니다.",
-            "fading": "[[{{habitName}}]] 이(가) 최근 식었습니다. 여전히 중요하다면 이번 주 더 쉬운 버전으로 재시작하세요.",
-            "neglected": "[[{{habitName}}]] 이(가) [[{{days}}]]일 비활성 상태입니다. 짧은 1회 실행으로 흐름을 되살릴 수 있습니다."
-        },
-        "weekly": {
-            "intro": {
-                "elite": "이번 주 [[{{count}}]]개를 완료하며 기대 페이스를 넘었습니다. 시스템이 잘 작동하고 있습니다.",
-                "strong": "이번 주 [[{{count}}]]개를 안정적으로 완료했습니다.",
-                "balanced": "이번 주 [[{{count}}]]개를 완료했습니다. 유지된 습관도 있고, 트리거 보완이 필요한 습관도 보입니다.",
-                "low": "이번 주 [[{{count}}]]개를 기록했습니다. 최소 실행 기준을 낮게 두고 재시작 일관성에 집중하세요."
-            },
-            "momentum": {
-                "highlight": "이번 주 [[{{habitName}}]] 이(가) [[{{count}}/{{total}}]]일로 가장 앞섰습니다."
-            },
-            "neglected": "[[{{habitName}}]] 은(는) 이번 주 기록이 없습니다. 내일 2분 버전으로 다시 시작하면 충분합니다.",
-            "growth": {
-                "recovery": "주 후반 성과가 주 초반보다 높았습니다. 의미 있는 회복 신호입니다.",
-                "friction": "초반의 좋은 흐름이 후반에 약해졌습니다. 주 후반용 신호를 하나 추가하면 하락을 줄일 수 있습니다."
-            }
-        },
-        "monthly": {
-            "intro": {
-                "exceptional": "이번 달 현재 [[{{count}}]]개 완료로 실행력과 안정성이 모두 높습니다.",
-                "solid": "이번 달 [[{{count}}]]개를 꾸준하게 달성했습니다.",
-                "exploration": "이번 달 [[{{count}}]]개를 기록했습니다. 다음 달 이월 성과를 높이려면 초점을 조금 더 좁히는 것이 좋습니다.",
-                "low": "이번 달 [[{{count}}]]개를 완료했습니다. 범위를 줄이고 더 단순한 기준선부터 다시 세우세요."
-            },
-            "momentum": {
-                "growth": "지난달 대비 [[{{delta}}%]] 상승했습니다. 실행이 분명히 개선되고 있습니다.",
-                "cooling": "지난달 대비 [[{{delta}}%]] 하락했습니다. 핵심 습관 하나의 마찰을 줄이면 다음 달 안정화에 도움이 됩니다."
-            },
-            "rhythm": {
-                "anchor": "이번 달 앵커 습관은 [[{{habitName}}]] 이며 [[{{count}}]]회 실행했습니다."
-            }
-        }
+    "theme": {
+      "title": "테마"
     },
-    "common": {
-        "done": "완료",
-        "rate": "비율",
-        "days": "일",
-        "myHabits": "나의 습관",
-        "manageHabits": "습관 관리",
-        "currentStreak": "현재 연속",
-        "months": {
-            "jan": "1월",
-            "feb": "2월",
-            "mar": "3월",
-            "apr": "4월",
-            "may": "5월",
-            "jun": "6월",
-            "jul": "7월",
-            "aug": "8월",
-            "sep": "9월",
-            "oct": "10월",
-            "nov": "11월",
-            "dec": "12월"
-        },
-        "selectYear": "연도 선택",
-        "cancel": "취소",
-        "thisWeek": "이번 주",
-        "untitled": "제목 없음",
-        "daysShort": {
-            "mon": "월",
-            "tue": "화",
-            "wed": "수",
-            "thu": "목",
-            "fri": "금",
-            "sat": "토",
-            "sun": "일"
-        }
+    "reminders": {
+      "title": "매일 알림"
     },
-    "dailyCard": {
-        "dailyHabits": "일일 습관",
-        "flexibleHabits": "유연한 습관",
-        "tasks": "할 일",
-        "dailyDone": "오늘 완료",
-        "remaining": "남음",
-        "noDailyHabits": "오늘 마감된 습관 없음",
-        "addTask": "+ 버튼을 눌러 할 일 추가",
-        "share": "성취 공유",
-        "journal": "저널",
-        "mood": "기분",
-        "notes": "노트",
-        "saveEntry": "저장",
-        "journalPlaceholder": "오늘에 대해 쓰세요...",
-        "editTask": "할 일 편집",
-        "deleteTask": "할 일 삭제",
-        "untitled": "제목 없음",
-        "moods": {
-            "veryBad": "매우 나쁨",
-            "bad": "나쁨",
-            "neutral": "보통",
-            "good": "좋음",
-            "veryGood": "매우 좋음"
-        },
-        "goal": "목표"
+    "support": {
+      "title": "지원",
+      "reportBug": "버그 신고 또는 제안"
     },
-    "tasks": {
-        "enterTask": "할 일 입력",
-        "placeholder": "내용 입력...",
-        "addTask": "추가",
-        "newTaskPlaceholder": "새로운 할 일...",
-        "empty": "할 일 없음"
+    "appearance": {
+      "title": "화면 설정",
+      "light": "라이트",
+      "dark": "다크"
     },
-    "journal": {
-        "title": "저널",
-        "prompt": "하루를 돌아보세요",
-        "placeholder": "오늘에 대해 쓰세요...",
-        "save": "저장"
+    "cardSize": {
+      "title": "카드 크기",
+      "compact": "컴팩트",
+      "large": "크게"
     },
-    "habitManager": {
-        "title": "나의 습관",
-        "addHabit": "새 습관 추가",
-        "noHabits": "아직 습관이 없습니다. 하나 추가해보세요!",
-        "dragToReorder": "드래그하여 순서 변경",
-        "fixed": "고정",
-        "flexible": "유연",
-        "timesPerWeek": "주간 횟수",
-        "habitNamePlaceholder": "습관 이름",
-        "untitled": "제목 없는 습관",
-        "deleteConfirm": "이 습관을 삭제하시겠습니까? 모든 기록이 손실됩니다."
+    "whatsNew": {
+      "title": "새 소식",
+      "tutorial": "튜토리얼"
     },
-    "weeklyCard": {
-        "title": "주간 목표",
-        "target": "목표: 이번 주 {{count}}회"
+    "onboardingEntry": {
+      "title": "튜토리얼",
+      "open": "열기"
     },
-    "monthlyView": {
-        "journals": "저널",
-        "habits": "습관",
-        "emptyEntry": "빈 항목...",
-        "noActivity": "오늘 활동 없음",
-        "dayDetails": "일일 상세"
+    "privacy": {
+      "title": "개인정보",
+      "policy": "정책"
     },
-    "dashboard": {
-        "week": "주간",
-        "month": "월간",
-        "year": "연간",
-        "weekTab": "주간",
-        "monthTab": "월간",
-        "yearTab": "연간"
+    "account": {
+      "delete": "계정 삭제",
+      "noSession": "계정 세션을 찾을 수 없습니다.",
+      "deleteFailed": "삭제 실패",
+      "unableDelete": "지금은 계정을 삭제할 수 없습니다.",
+      "prompts": {
+        "confirmTitle": "계정을 삭제할까요?",
+        "confirmBody": "계정과 데이터가 영구적으로 삭제됩니다.",
+        "sureTitle": "정말로 삭제하시겠습니까?",
+        "sureBody": "이 작업은 되돌릴 수 없습니다.",
+        "keep": "계정 유지",
+        "forever": "영구 삭제"
+      },
+      "title": "계정",
+      "email": "이메일",
+      "changePassword": "비밀번호 변경",
+      "sendResetEmail": "링크 발송",
+      "resetSent": "이메일을 확인하세요",
+      "resetSentBody": "{{email}}로 비밀번호 재설정 링크를 보냈습니다.",
+      "resetFailed": "재설정 이메일을 보낼 수 없습니다."
     },
-    "analytics": {
-        "success": "{{period}} 성공",
-        "mastery": "{{period}} 숙련도",
-        "notEnoughData": "스토리를 생성하기에 데이터가 부족합니다.",
-        "retrospectiveGrid": "회고 그리드",
-        "done": "완료",
-        "moodAnalysis": "기분 분석",
-        "vibe": "{{period}} 분위기",
-        "activityMomentum": "활동 모멘텀",
-        "bestHabit": "{{period}} 최고의 습관",
-        "needsFocus": "{{period}} 집중 필요",
-        "noData": "데이터 없음",
-        "onTrack": "순항 중"
-    },
-    "bottomNav": {
-        "today": "오늘",
-        "analytics": "분석",
-        "logs": "기록",
-        "analysis": "AI 분석"
-    },
-    "auth": {
-        "enterEmail": "이메일을 입력하세요",
-        "enterPassword": "비밀번호를 입력하세요",
-        "resetSent": "비밀번호 재설정 이메일이 전송되었습니다!",
-        "signInSignUp": "로그인 / 가입",
-        "requestReset": "PIN 재설정 요청",
-        "returnLogin": "로그인으로 돌아가기",
-        "forgotPassword": "비밀번호를 잊으셨나요?",
-        "guestEntry": "게스트 입장",
-        "checkEmail": "이메일을 확인하여 계정을 인증하세요.",
-        "sending": "전송 중...",
-        "verifying": "확인 중...",
-        "tagline": "습관 형성을 위한 차분한 분석 트래커",
-        "email": "이메일",
-        "password": "비밀번호",
-        "signIn": "로그인",
-        "createAccount": "계정 만들기",
-        "or": "또는"
-    },
-    "dashboardScreen": {
-        "title": "대시보드",
-        "welcome": "환영합니다!",
-        "description": "HabiCard 모바일 버전입니다.",
-        "signOut": "로그아웃"
-    },
-    "aiAnalysis": {
-        "premiumOnly": "프리미엄 전용",
-        "premiumDesc": "AI 분석으로 습관과 생활 패턴에 대한 깊은 통찰력을 얻으세요. 프리미엄 구독으로 잠금 해제하세요.",
-        "upgrade": "프리미엄으로 업그레이드",
-        "weeklyUsage": "주간 사용량",
-        "analyses": "분석",
-        "limitReached": "한도 도달",
-        "generateNew": "새 분석 생성",
-        "resetMessage": "다음 주 월요일 초기화",
-        "analyzeMessage": "AI가 최근 습관과 노트를 분석합니다",
-        "history": "인사이트 기록",
-        "viewReport": "전체 보고서 보기",
-        "insight": "인사이트",
-        "mockTitle": "패턴 & 에너지",
-        "mockContent": "이른 아침에 '생산적'인 기분을 기록한 날에 습관을 더 많이 완료하는 경향이 있습니다. 이번 주 '독서' 일관성이 15% 향상되었습니다."
-    },
-    "onboarding": {
-        "badge": "튜토리얼",
-        "step": "단계",
-        "back": "뒤로",
-        "next": "다음",
-        "finish": "완료",
-        "saving": "저장 중...",
-        "steps": {
-            "language": {
-                "title": "언어 선택",
-                "subtitle": "앱 언어를 설정하세요. 나중에 설정에서 변경할 수 있습니다."
-            },
-            "theme": {
-                "title": "색상 선택",
-                "subtitle": "앱에서 사용하는 HabiCard 색상 조합을 선택하세요."
-            },
-            "cardStyle": {
-                "title": "카드 크기 선택",
-                "subtitle": "두 가지 카드 스타일을 미리 보고 기본값을 선택하세요."
-            },
-            "habitsDemo": {
-                "title": "습관을 한곳에",
-                "subtitle": "모든 습관을 한곳에서 체크하세요."
-            },
-            "tasksDemo": {
-                "title": "간단한 할 일",
-                "subtitle": "할 일을 만들고 끝나면 체크하세요."
-            },
-            "journalDemo": {
-                "title": "매일 기록하기",
-                "subtitle": "같은 카드 흐름에서 매일 저널을 업데이트하세요."
-            },
-            "weekStart": {
-                "title": "한 주의 시작",
-                "subtitle": "주 시작을 일요일 또는 월요일로 선택하세요."
-            }
-        },
-        "languageTitle": "언어",
-        "cardStyleTitle": "카드 크기",
-        "cardStyleLabels": {
-            "compact": "컴팩트",
-            "large": "크게"
-        },
-        "habits": [
-            "운동",
-            "물 마시기",
-            "10페이지 읽기",
-            "명상",
-            "내일 계획"
-        ],
-        "taskSamples": [
-            "내일 계획",
-            "목표 검토"
-        ],
-        "journalSample": "여기에 저널을 작성할 수 있습니다.",
-        "sampleDay": "목요일",
-        "cardStyleDescriptions": {
-            "compact": "헤더에 작은 진행 배지가 표시됩니다.",
-            "large": "날짜 아래에 큰 일일 진행 패널이 표시됩니다."
-        },
-        "themeNames": {
-            "sageRose": "세이지와 로즈",
-            "oceanSky": "오션과 스카이",
-            "sunsetClay": "선셋과 클레이",
-            "lavenderSlate": "라벤더와 슬레이트",
-            "forestEarth": "포레스트와 어스",
-            "peachMint": "피치와 민트",
-            "lilacCream": "라일락과 크림",
-            "dustyBlueMauve": "더스티 블루와 모브",
-            "coralSand": "코랄과 샌드",
-            "mintBlush": "민트와 블러시",
-            "honeyFog": "허니와 포그",
-            "plumSage": "플럼과 세이지",
-            "monochrome": "모노크롬"
-        },
-        "weekStartOptions": {
-            "sun": "일",
-            "mon": "월"
-        },
-        "habitInstructions": {
-            "tap": "탭해서 습관을 완료로 표시하세요",
-            "hold": "길게 눌러 습관을 건너뛰세요",
-            "empty": "놓쳤다면 비워 두세요"
-        }
+    "errors": {
+      "title": "오류",
+      "unableSignOut": "로그아웃할 수 없습니다"
     }
+  },
+  "header": {
+    "dashboard": "대시보드",
+    "signIn": "로그인",
+    "logout": "로그아웃",
+    "myWeek": "나의 주간",
+    "myMonth": "나의 월간",
+    "monthlyTrends": "월간 트렌드",
+    "weeklyTrends": "주간 트렌드",
+    "annualTrends": "연간 트렌드",
+    "vsLM": "지난달 대비",
+    "vsLW": "지난주 대비",
+    "switchChart": "차트 전환",
+    "monthlySuccess": "월간 성공",
+    "weeklySuccess": "주간 성공",
+    "annualPerformance": "연간 성과",
+    "monthMastery": "월간 마스터리",
+    "habitMaster": "습관 마스터",
+    "yourStoryMonth": "이번 달 이야기",
+    "yourStoryWeek": "이번 주 이야기",
+    "completed": "완료됨",
+    "vsPrev": "이전 대비",
+    "best": "최고",
+    "thisYearResolutions": "올해의 결심"
+  },
+  "story": {
+    "annual": {
+      "momentum": {
+        "ascending": "연중 꾸준함이 좋아져서 시작보다 더 강하게 마무리하고 있습니다.",
+        "descending": "최근 몇 달 페이스가 내려왔습니다. 실패가 아니라 핵심 루틴을 단순화해 재시작하라는 신호입니다.",
+        "stable": "주간 변화 속에서도 안정적인 리듬을 유지했습니다. 다음 성장을 위한 좋은 기반입니다.",
+        "main": "올해 [[{{habitName}}]] 은(는) 당신의 핵심 정체성 습관이 되었습니다. {{momentumMsg}}"
+      },
+      "rhythm": {
+        "weekend": "주말에 가장 강한 리듬이 나옵니다. 그 시간을 지키고 평일에 일부를 복제해 보세요.",
+        "weekday": "평일 구조는 강하지만 주말 일관성은 낮습니다. 주말 버전을 더 가볍게 만들면 격차를 줄일 수 있습니다.",
+        "consistent": "평일과 주말 모두 실행이 균형적이라 루틴 통제가 잘 되고 있습니다."
+      },
+      "consistency": {
+        "high": "올해 [[{{activeDays}}]]일 실천했습니다. 지속 가능한 습관 정체성이 형성되고 있다는 강한 증거입니다.",
+        "medium": "기반은 충분히 좋습니다. 트리거나 시간대를 하나만 더 고정하면 자동화가 쉬워집니다.",
+        "low": "지금은 기반을 만드는 단계입니다. 강도보다 작고 반복 가능한 성공이 더 중요합니다."
+      },
+      "experimental": "올해 많은 습관을 실험했습니다. 다음 사이클에서는 우선순위를 줄이면 일관성이 더 빨리 쌓입니다.",
+      "fading": "[[{{habitName}}]] 이(가) 최근 식었습니다. 여전히 중요하다면 이번 주 더 쉬운 버전으로 재시작하세요.",
+      "neglected": "[[{{habitName}}]] 이(가) [[{{days}}]]일 비활성 상태입니다. 짧은 1회 실행으로 흐름을 되살릴 수 있습니다."
+    },
+    "weekly": {
+      "intro": {
+        "elite": "이번 주 [[{{count}}]]개를 완료하며 기대 페이스를 넘었습니다. 시스템이 잘 작동하고 있습니다.",
+        "strong": "이번 주 [[{{count}}]]개를 안정적으로 완료했습니다.",
+        "balanced": "이번 주 [[{{count}}]]개를 완료했습니다. 유지된 습관도 있고, 트리거 보완이 필요한 습관도 보입니다.",
+        "low": "이번 주 [[{{count}}]]개를 기록했습니다. 최소 실행 기준을 낮게 두고 재시작 일관성에 집중하세요."
+      },
+      "momentum": {
+        "highlight": "이번 주 [[{{habitName}}]] 이(가) [[{{count}}/{{total}}]]일로 가장 앞섰습니다."
+      },
+      "neglected": "[[{{habitName}}]] 은(는) 이번 주 기록이 없습니다. 내일 2분 버전으로 다시 시작하면 충분합니다.",
+      "growth": {
+        "recovery": "주 후반 성과가 주 초반보다 높았습니다. 의미 있는 회복 신호입니다.",
+        "friction": "초반의 좋은 흐름이 후반에 약해졌습니다. 주 후반용 신호를 하나 추가하면 하락을 줄일 수 있습니다."
+      }
+    },
+    "monthly": {
+      "intro": {
+        "exceptional": "이번 달 현재 [[{{count}}]]개 완료로 실행력과 안정성이 모두 높습니다.",
+        "solid": "이번 달 [[{{count}}]]개를 꾸준하게 달성했습니다.",
+        "exploration": "이번 달 [[{{count}}]]개를 기록했습니다. 다음 달 이월 성과를 높이려면 초점을 조금 더 좁히는 것이 좋습니다.",
+        "low": "이번 달 [[{{count}}]]개를 완료했습니다. 범위를 줄이고 더 단순한 기준선부터 다시 세우세요."
+      },
+      "momentum": {
+        "growth": "지난달 대비 [[{{delta}}%]] 상승했습니다. 실행이 분명히 개선되고 있습니다.",
+        "cooling": "지난달 대비 [[{{delta}}%]] 하락했습니다. 핵심 습관 하나의 마찰을 줄이면 다음 달 안정화에 도움이 됩니다."
+      },
+      "rhythm": {
+        "anchor": "이번 달 앵커 습관은 [[{{habitName}}]] 이며 [[{{count}}]]회 실행했습니다."
+      }
+    }
+  },
+  "common": {
+    "done": "완료",
+    "rate": "비율",
+    "days": "일",
+    "myHabits": "나의 습관",
+    "manageHabits": "습관 관리",
+    "currentStreak": "현재 연속",
+    "months": {
+      "jan": "1월",
+      "feb": "2월",
+      "mar": "3월",
+      "apr": "4월",
+      "may": "5월",
+      "jun": "6월",
+      "jul": "7월",
+      "aug": "8월",
+      "sep": "9월",
+      "oct": "10월",
+      "nov": "11월",
+      "dec": "12월"
+    },
+    "selectYear": "연도 선택",
+    "add": "추가",
+    "cancel": "취소",
+    "thisWeek": "이번 주",
+    "untitled": "제목 없음",
+    "daysShort": {
+      "mon": "월",
+      "tue": "화",
+      "wed": "수",
+      "thu": "목",
+      "fri": "금",
+      "sat": "토",
+      "sun": "일"
+    }
+  },
+  "dailyCard": {
+    "dailyHabits": "일일 습관",
+    "flexibleHabits": "유연한 습관",
+    "tasks": "할 일",
+    "dailyDone": "오늘 완료",
+    "remaining": "남음",
+    "noDailyHabits": "오늘 마감된 습관 없음",
+    "addTask": "+ 버튼을 눌러 할 일 추가",
+    "share": "성취 공유",
+    "journal": "저널",
+    "mood": "기분",
+    "notes": "노트",
+    "saveEntry": "저장",
+    "journalPlaceholder": "오늘에 대해 쓰세요...",
+    "editTask": "할 일 편집",
+    "deleteTask": "할 일 삭제",
+    "untitled": "제목 없음",
+    "moods": {
+      "veryBad": "매우 나쁨",
+      "bad": "나쁨",
+      "neutral": "보통",
+      "good": "좋음",
+      "veryGood": "매우 좋음"
+    },
+    "goal": "목표"
+  },
+  "tasks": {
+    "enterTask": "할 일 입력",
+    "placeholder": "내용 입력...",
+    "addTask": "추가",
+    "newTaskPlaceholder": "새로운 할 일...",
+    "empty": "할 일 없음"
+  },
+  "journal": {
+    "title": "저널",
+    "prompt": "하루를 돌아보세요",
+    "placeholder": "오늘에 대해 쓰세요...",
+    "save": "저장"
+  },
+  "habitManager": {
+    "title": "나의 습관",
+    "addHabit": "새 습관 추가",
+    "noHabits": "아직 습관이 없습니다. 하나 추가해보세요!",
+    "dragToReorder": "드래그하여 순서 변경",
+    "fixed": "고정",
+    "flexible": "유연",
+    "timesPerWeek": "주간 횟수",
+    "habitNamePlaceholder": "습관 이름",
+    "untitled": "제목 없는 습관",
+    "deleteConfirm": "이 습관을 삭제하시겠습니까? 모든 기록이 손실됩니다.",
+    "edit": "편집",
+    "restore": "복원",
+    "everyDay": "매일",
+    "alreadyExists": "이미 존재합니다",
+    "alreadyExistsMsg": "\"{{name}}\"이라는 습관이 이미 존재합니다."
+  },
+  "weeklyCard": {
+    "title": "주간 목표",
+    "target": "목표: 이번 주 {{count}}회"
+  },
+  "monthlyView": {
+    "journals": "저널",
+    "habits": "습관",
+    "emptyEntry": "빈 항목...",
+    "noActivity": "오늘 활동 없음",
+    "dayDetails": "일일 상세",
+    "tasks": "할일",
+    "searchPlaceholder": "기록 검색...",
+    "noLogs": "이 섹션에 기록이 없습니다."
+  },
+  "dashboard": {
+    "week": "주간",
+    "month": "월간",
+    "year": "연간",
+    "weekTab": "주간",
+    "monthTab": "월간",
+    "yearTab": "연간",
+    "insights": "인사이트",
+    "anchorHabit": "앵커 습관",
+    "anchorDesc1": "이것을 한 날은 다른 습관 완료율이",
+    "anchorDesc2": "높습니다",
+    "anchorDesc3": "({{done}}% vs {{missed}}%). 여기서 시작해 분위기를 잡으세요.",
+    "weakSpot": "취약점",
+    "weakSpotDesc1": "완료율이 가장 낮은 날 —",
+    "weakSpotDesc2": "평균",
+    "weakSpotDesc3": "\"{{habit}}\"이 {{day}}에 가장 많이 건너뜁니다.",
+    "streakPattern": "스트릭 패턴",
+    "streakDesc1": "연속 기록은 보통",
+    "streakDescDay": "일",
+    "streakDescDays": "일",
+    "streakDesc2": "후에 끊어집니다 — 이것이 {{count}}번 발생했습니다. {{day}}일째가 버텨야 할 때입니다."
+  },
+  "analytics": {
+    "success": "{{period}} 성공",
+    "mastery": "{{period}} 숙련도",
+    "notEnoughData": "스토리를 생성하기에 데이터가 부족합니다.",
+    "retrospectiveGrid": "회고 그리드",
+    "done": "완료",
+    "moodAnalysis": "기분 분석",
+    "vibe": "{{period}} 분위기",
+    "activityMomentum": "활동 모멘텀",
+    "bestHabit": "{{period}} 최고의 습관",
+    "needsFocus": "{{period}} 집중 필요",
+    "noData": "데이터 없음",
+    "onTrack": "순항 중",
+    "atAGlance": "한눈에",
+    "completion": "달성률",
+    "doneTotal": "완료 / 합계",
+    "vsPrevious": "이전 대비",
+    "topHabit": "최고 습관",
+    "weekOverWeek": "주간 비교",
+    "vsLastWeek": "지난주 대비",
+    "thisWeek": "이번 주",
+    "lastWeek": "지난주",
+    "monthOverMonth": "월간 비교",
+    "vsLastMonth": "지난달 대비",
+    "thisMonth": "이번 달",
+    "lastMonth": "지난달",
+    "weeksThisMonth": "이번 달 주간"
+  },
+  "bottomNav": {
+    "today": "오늘",
+    "analytics": "분석",
+    "logs": "기록",
+    "todo": "할 일",
+    "analysis": "AI 분석"
+  },
+  "auth": {
+    "enterEmail": "이메일을 입력하세요",
+    "enterPassword": "비밀번호를 입력하세요",
+    "resetSent": "비밀번호 재설정 이메일이 전송되었습니다!",
+    "signInSignUp": "로그인 / 가입",
+    "requestReset": "PIN 재설정 요청",
+    "returnLogin": "로그인으로 돌아가기",
+    "forgotPassword": "비밀번호를 잊으셨나요?",
+    "guestEntry": "게스트 입장",
+    "checkEmail": "이메일을 확인하여 계정을 인증하세요.",
+    "sending": "전송 중...",
+    "verifying": "확인 중...",
+    "tagline": "습관 형성을 위한 차분한 분석 트래커",
+    "email": "이메일",
+    "password": "비밀번호",
+    "signIn": "로그인",
+    "createAccount": "계정 만들기",
+    "or": "또는"
+  },
+  "dashboardScreen": {
+    "title": "대시보드",
+    "welcome": "환영합니다!",
+    "description": "HabiCard 모바일 버전입니다.",
+    "signOut": "로그아웃"
+  },
+  "aiAnalysis": {
+    "premiumOnly": "프리미엄 전용",
+    "premiumDesc": "AI 분석으로 습관과 생활 패턴에 대한 깊은 통찰력을 얻으세요. 프리미엄 구독으로 잠금 해제하세요.",
+    "upgrade": "프리미엄으로 업그레이드",
+    "weeklyUsage": "주간 사용량",
+    "analyses": "분석",
+    "limitReached": "한도 도달",
+    "generateNew": "새 분석 생성",
+    "resetMessage": "다음 주 월요일 초기화",
+    "analyzeMessage": "AI가 최근 습관과 노트를 분석합니다",
+    "history": "인사이트 기록",
+    "viewReport": "전체 보고서 보기",
+    "insight": "인사이트",
+    "mockTitle": "패턴 & 에너지",
+    "mockContent": "이른 아침에 '생산적'인 기분을 기록한 날에 습관을 더 많이 완료하는 경향이 있습니다. 이번 주 '독서' 일관성이 15% 향상되었습니다."
+  },
+  "onboarding": {
+    "badge": "튜토리얼",
+    "step": "단계",
+    "back": "뒤로",
+    "next": "다음",
+    "finish": "완료",
+    "saving": "저장 중...",
+    "steps": {
+      "language": {
+        "title": "언어 선택",
+        "subtitle": "앱 언어를 설정하세요. 나중에 설정에서 변경할 수 있습니다."
+      },
+      "theme": {
+        "title": "색상 선택",
+        "subtitle": "앱에서 사용하는 HabiCard 색상 조합을 선택하세요."
+      },
+      "cardStyle": {
+        "title": "카드 크기 선택",
+        "subtitle": "두 가지 카드 스타일을 미리 보고 기본값을 선택하세요."
+      },
+      "habitsDemo": {
+        "title": "습관을 한곳에",
+        "subtitle": "모든 습관을 한곳에서 체크하세요."
+      },
+      "tasksDemo": {
+        "title": "간단한 할 일",
+        "subtitle": "할 일을 만들고 끝나면 체크하세요."
+      },
+      "journalDemo": {
+        "title": "매일 기록하기",
+        "subtitle": "같은 카드 흐름에서 매일 저널을 업데이트하세요."
+      },
+      "weekStart": {
+        "title": "한 주의 시작",
+        "subtitle": "주 시작을 일요일 또는 월요일로 선택하세요."
+      }
+    },
+    "languageTitle": "언어",
+    "cardStyleTitle": "카드 크기",
+    "cardStyleLabels": {
+      "compact": "컴팩트",
+      "large": "크게"
+    },
+    "habits": [
+      "운동",
+      "물 마시기",
+      "10페이지 읽기",
+      "명상",
+      "내일 계획"
+    ],
+    "taskSamples": [
+      "내일 계획",
+      "목표 검토"
+    ],
+    "journalSample": "여기에 저널을 작성할 수 있습니다.",
+    "sampleDay": "목요일",
+    "cardStyleDescriptions": {
+      "compact": "헤더에 작은 진행 배지가 표시됩니다.",
+      "large": "날짜 아래에 큰 일일 진행 패널이 표시됩니다."
+    },
+    "themeNames": {
+      "sageRose": "세이지와 로즈",
+      "oceanSky": "오션과 스카이",
+      "sunsetClay": "선셋과 클레이",
+      "lavenderSlate": "라벤더와 슬레이트",
+      "forestEarth": "포레스트와 어스",
+      "peachMint": "피치와 민트",
+      "lilacCream": "라일락과 크림",
+      "dustyBlueMauve": "더스티 블루와 모브",
+      "coralSand": "코랄과 샌드",
+      "mintBlush": "민트와 블러시",
+      "honeyFog": "허니와 포그",
+      "plumSage": "플럼과 세이지",
+      "monochrome": "모노크롬"
+    },
+    "weekStartOptions": {
+      "sun": "일",
+      "mon": "월"
+    },
+    "habitInstructions": {
+      "tap": "탭해서 습관을 완료로 표시하세요",
+      "hold": "길게 눌러 습관을 건너뛰세요",
+      "empty": "놓쳤다면 비워 두세요"
+    }
+  },
+  "feedback": {
+    "loadError": "피드백 기록을 불러올 수 없습니다.",
+    "missingTitle": "메시지 없음",
+    "missingMsg": "피드백을 입력해 주세요.",
+    "submittedTitle": "제출됨",
+    "submittedMsg": "피드백 감사합니다.",
+    "failedMsg": "피드백 제출에 실패했습니다.",
+    "signInRequired": "로그인 필요",
+    "signInRequiredMsg": "피드백에 답글을 달려면 로그인하세요.",
+    "replyFailed": "답글 전송에 실패했습니다.",
+    "unableToOpenLink": "링크를 열 수 없습니다",
+    "bugPlaceholder": "문제를 설명해 주세요...",
+    "ideaPlaceholder": "아이디어를 공유해 주세요...",
+    "replyPlaceholder": "답글을 작성해 주세요..."
+  },
+  "tutorial": {
+    "header": "가이드 튜토리얼",
+    "stepCompleted": "단계 완료",
+    "stepPending": "앱에서 이 작업을 완료하면 계속 진행됩니다",
+    "back": "이전",
+    "next": "다음",
+    "finish": "완료",
+    "close": "닫기",
+    "steps": {
+      "addHabit": {
+        "title": "습관 만들기",
+        "description": "왼쪽 상단 + 버튼을 탭하고 새 습관을 만드세요."
+      },
+      "completeSkip": {
+        "title": "습관 완료 또는 건너뛰기",
+        "description": "만든 습관에 체크하세요. 꾹 누르면 오늘 건너뛸 수 있습니다."
+      },
+      "analytics": {
+        "title": "분석 열기",
+        "description": "하단 탐색을 사용하여 분석으로 이동하세요."
+      },
+      "logs": {
+        "title": "기록 열기",
+        "description": "하단 탐색을 사용하여 기록으로 이동해 히스토리를 확인하세요."
+      }
+    }
+  }
 }

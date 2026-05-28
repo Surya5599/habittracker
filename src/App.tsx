@@ -2,16 +2,20 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
 import { createPortal } from 'react-dom';
 import i18n from './i18n';
-import { X, Search, Key, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Search, Key, ChevronLeft, ChevronRight, Sparkles, BarChart2, Activity, ArrowUp, ArrowDown, Minus, Angry, Frown, Meh, Smile, Laugh } from 'lucide-react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from './supabase';
 import './i18n';
+import { useTranslation } from 'react-i18next';
+import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 import { AuthForm } from './components/AuthForm';
 import { UpdatePasswordForm } from './components/UpdatePasswordForm';
 import { Header } from './components/Header';
 import { MonthlyView } from './components/MonthlyView';
+import { CircularProgress } from './components/CircularProgress';
 import { DashboardView } from './components/DashboardView';
 import { WeeklyView } from './components/WeeklyView';
+import { TasksView } from './components/TasksView';
 import { useHabits } from './hooks/useHabits';
 import { useTheme } from './hooks/useTheme';
 import { useHabitStats } from './hooks/useHabitStats';
@@ -26,12 +30,14 @@ import { OnboardingModal } from './components/OnboardingModal';
 import { FeatureAnnouncementModal } from './components/FeatureAnnouncementModal';
 import { LoadingScreen } from './components/LoadingScreen';
 import { FeedbackModal } from './components/FeedbackModal';
-import { StreakModal } from './components/StreakModal';
+import { StreakModal, buildAchievements } from './components/StreakModal';
 import { SearchModal } from './components/SearchModal';
-import { JournalExportModal } from './components/JournalExportModal';
+import { JournalPdfPreviewModal } from './components/JournalPdfPreviewModal';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
 import { LandingPage } from './pages/LandingPage';
 import { isBenignAuthError } from './utils/authErrors';
+import { FormattedText } from './components/FormattedText';
+import { buildAnnualStory, buildWeeklyStory, buildMonthlyStory } from './utils/storyGenerator';
 
 const ADMIN_EMAILS = ((import.meta.env.VITE_ADMIN_EMAILS as string | undefined) || 'admin@habicard.com,knowheredeveloper@gmail.com')
   .split(',')
@@ -76,6 +82,7 @@ const DEMO_ANNUAL_STATS = {
 const AppContent: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
   const queryParams = new URLSearchParams(location.search);
   const impersonateId = queryParams.get('impersonate');
   const [session, setSession] = useState<any>(null);
@@ -122,11 +129,18 @@ const AppContent: React.FC = () => {
     localStorage.setItem('habit_card_style', cardStyle);
   }, [cardStyle]);
   const [view, setView] = useState<'monthly' | 'dashboard' | 'weekly'>(defaultView);
+  const [isTasksOpen, setIsTasksOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showWhatsNewModal, setShowWhatsNewModal] = useState(false);
   const [hasUnseenWhatsNew, setHasUnseenWhatsNew] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isJournalExportOpen, setIsJournalExportOpen] = useState(false);
+  const [statsOpen, setStatsOpen] = useState<boolean>(() => localStorage.getItem('header_stats_open') === 'true');
+  const [chartType, setChartType] = useState<'area' | 'bar'>(() => (localStorage.getItem('habit_chart_type') as 'area' | 'bar') || 'area');
+  const [sortMode, setSortMode] = useState<'default' | 'name' | 'color' | 'completion'>(() => (localStorage.getItem('habit_sort_mode') as 'default' | 'name' | 'color' | 'completion') || 'default');
+  useEffect(() => { localStorage.setItem('header_stats_open', String(statsOpen)); }, [statsOpen]);
+  useEffect(() => { localStorage.setItem('habit_chart_type', chartType); }, [chartType]);
+  useEffect(() => { localStorage.setItem('habit_sort_mode', sortMode); }, [sortMode]);
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Cmd+K or Ctrl+K
@@ -1105,6 +1119,40 @@ const AppContent: React.FC = () => {
     return 'empty';
   }, [habits, completions, notes]);
 
+  const sortedHabits = useMemo(() => {
+    if (sortMode === 'default') return habits;
+    const today = new Date();
+    const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    return [...habits].sort((a, b) => {
+      if (sortMode === 'name') return (a.name || '').localeCompare(b.name || '');
+      if (sortMode === 'color') return (a.color || '').localeCompare(b.color || '');
+      if (sortMode === 'completion') {
+        const aDone = completions[a.id]?.[todayKey] || false;
+        const bDone = completions[b.id]?.[todayKey] || false;
+        if (!aDone && bDone) return -1;
+        if (aDone && !bDone) return 1;
+        return 0;
+      }
+      return 0;
+    });
+  }, [habits, sortMode, completions]);
+
+  const tasksCount = useMemo(() => {
+    const todayStr = (() => {
+      const now = new Date();
+      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    })();
+    let count = 0;
+    (Object.entries(notes) as [string, DayData][]).forEach(([key, data]) => {
+      if (key === '__backlog__') {
+        count += (data?.tasks || []).filter(t => !t.completed).length;
+      } else if (key < todayStr) {
+        count += (data?.tasks || []).filter(t => !t.completed).length;
+      }
+    });
+    return count;
+  }, [notes]);
+
   const handleLogout = async () => {
     try {
       setLoading(true);
@@ -1171,6 +1219,76 @@ const AppContent: React.FC = () => {
     });
     return result;
   }, [monthDates]);
+
+  const isDarkMode = colorMode === 'dark';
+  const today_ref = new Date();
+  const currentDayOfMonth = today_ref.getDate();
+  const currentMonthOfYear = today_ref.getMonth();
+  const currentFullYear_ref = today_ref.getFullYear();
+
+  const trendDelta = view === 'weekly' ? weekDelta : view === 'monthly' ? monthDelta : annualDelta;
+  const trendDeltaLabel = view === 'weekly' ? 'vs LW' : view === 'monthly' ? 'vs LM' : 'vs LY';
+  const trendLegendCurrent = view === 'weekly' ? 'This week' : view === 'monthly' ? 'This month' : 'This year';
+  const trendLegendPrevious = view === 'weekly' ? 'Prev week' : view === 'monthly' ? 'Prev month' : 'Prev year';
+
+  const trendChartData = useMemo(() => {
+    if (view === 'weekly') {
+      return weeklyStats.map((item: any, index: number) => ({ label: item.displayDay, current: item.count, previous: previousWeeklyStats[index]?.count ?? null }));
+    }
+    if (view === 'monthly') {
+      return dailyStats.map((item: any, index: number) => ({ label: String(item.day), current: item.count, previous: previousDailyStats[index]?.count ?? null }));
+    }
+    return annualStats.monthlySummaries.map((item: any, index: number) => ({ label: item.month, current: item.completed, previous: previousAnnualMonthlySummaries[index]?.completed ?? null }));
+  }, [view, weeklyStats, previousWeeklyStats, dailyStats, previousDailyStats, annualStats.monthlySummaries, previousAnnualMonthlySummaries]);
+
+  const annualStory = useMemo(() => {
+    const monthsElapsed = currentYear === currentFullYear_ref ? currentMonthOfYear + 1 : 12;
+    return buildAnnualStory(annualStats, t, monthsElapsed);
+  }, [annualStats, currentYear, currentFullYear_ref, currentMonthOfYear, t]);
+
+  const annualCompletionRate = annualStats.totalPossible > 0 ? (annualStats.totalCompletions / annualStats.totalPossible) * 100 : 0;
+
+  const weekHabitPerformance = useMemo(() => {
+    const today = new Date();
+    const day = today.getDay();
+    const diff = startOfWeek === 'monday'
+      ? today.getDate() - day + (day === 0 ? -6 : 1) + weekOffset * 7
+      : today.getDate() - day + weekOffset * 7;
+    const startDay = new Date(today.getFullYear(), today.getMonth(), diff);
+    return habits.map(h => {
+      let completed = 0, total = 0;
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(startDay);
+        date.setDate(startDay.getDate() + i);
+        if (h.frequency && !h.frequency.includes(date.getDay())) continue;
+        total++;
+        const dateKey = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+        if (completions[h.id]?.[dateKey]) completed++;
+      }
+      return { id: h.id, name: h.name, color: h.color, completed, total, rate: total > 0 ? (completed/total)*100 : 0 };
+    }).filter(h => h.total > 0).sort((a, b) => b.rate - a.rate);
+  }, [habits, completions, weekOffset, startOfWeek]);
+
+  const statsBestHabit = useMemo(() => {
+    if (view === 'weekly') return weekHabitPerformance[0] ?? null;
+    if (view === 'monthly') return topHabitsThisMonth[0] ? { ...topHabitsThisMonth[0], rate: topHabitsThisMonth[0].percentage } : null;
+    return annualStats.topHabits[0] ?? null;
+  }, [view, weekHabitPerformance, topHabitsThisMonth, annualStats.topHabits]);
+
+  const statsWorstHabit = useMemo(() => {
+    if (view === 'weekly') return weekHabitPerformance.length > 1 ? weekHabitPerformance[weekHabitPerformance.length - 1] : null;
+    if (view === 'monthly') {
+      const sorted = [...topHabitsThisMonth].sort((a, b) => a.percentage - b.percentage);
+      return sorted[0] && sorted[0].percentage < (statsBestHabit?.rate ?? 100) ? { ...sorted[0], rate: sorted[0].percentage } : null;
+    }
+    return annualStats.weakestHabit ?? null;
+  }, [view, weekHabitPerformance, topHabitsThisMonth, annualStats.weakestHabit, statsBestHabit]);
+
+  const statsKpi = useMemo(() => {
+    if (view === 'weekly') return { pct: weekProgress.percentage, completed: weekProgress.completed, total: weekProgress.total, delta: weekDelta, label: 'vs last week' };
+    if (view === 'monthly') return { pct: monthProgress.percentage, completed: monthProgress.completed, total: monthProgress.total, delta: monthDelta, label: 'vs last month' };
+    return { pct: annualCompletionRate, completed: Math.round(annualStats.totalCompletions), total: Math.round(annualStats.totalPossible), delta: annualDelta, label: 'vs last year' };
+  }, [view, weekProgress, weekDelta, monthProgress, monthDelta, annualCompletionRate, annualStats, annualDelta]);
 
   if (passwordRecoveryMode) {
     return (
@@ -1262,7 +1380,7 @@ const AppContent: React.FC = () => {
         onFinish={handleWhatsNewFinish}
       />
 
-      <JournalExportModal
+      <JournalPdfPreviewModal
         isOpen={isJournalExportOpen}
         onClose={() => setIsJournalExportOpen(false)}
         notes={notes}
@@ -1270,7 +1388,7 @@ const AppContent: React.FC = () => {
         userName={session?.user?.email || 'You'}
       />
 
-      <div className="max-w-full md:h-full mx-auto bg-white border-[3px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] p-2 sm:p-4 flex flex-col gap-4 overflow-visible md:overflow-hidden">
+      <div className="max-w-full md:h-full mx-auto bg-white border-[3px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] p-2 sm:p-3 flex flex-col gap-3 overflow-visible md:overflow-hidden">
 
         <Header
           view={view}
@@ -1346,6 +1464,12 @@ const AppContent: React.FC = () => {
             setCardOpenFlipped(false);
           }}
           logTodayStatus={logTodayStatus}
+          statsOpen={statsOpen}
+          onToggleStats={() => setStatsOpen(prev => !prev)}
+          sortMode={sortMode}
+          onCycleSortMode={() => setSortMode(m => m === 'default' ? 'name' : m === 'name' ? 'color' : m === 'color' ? 'completion' : 'default')}
+          onOpenTasks={() => setIsTasksOpen(true)}
+          tasksCount={tasksCount}
         />
 
         <SearchModal
@@ -1365,8 +1489,8 @@ const AppContent: React.FC = () => {
 
         {selectedDateForCard && createPortal(
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 md:p-4 bg-black/35 backdrop-blur-[2px] animate-in fade-in duration-200" onClick={() => setSelectedDateForCard(null)}>
-            <div className="w-full max-w-6xl relative animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 flex flex-col pt-[max(env(safe-area-inset-top),1rem)] md:pt-4" onClick={e => e.stopPropagation()}>
-              <div className="rounded-[30px] border-[3px] border-black bg-white p-3 md:p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.12)]">
+            <div className="w-full max-w-6xl h-[calc(100dvh-1rem)] md:h-[calc(100dvh-2rem)] relative animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 flex flex-col pt-[max(env(safe-area-inset-top),0.5rem)] md:pt-0" onClick={e => e.stopPropagation()}>
+              <div className="flex-1 min-h-0 flex flex-col rounded-[30px] border-[3px] border-black bg-white p-3 md:p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.12)] overflow-hidden">
                 <div className="grid grid-cols-[1fr_auto] items-start gap-2 md:grid-cols-[1fr_auto_1fr] md:items-center">
                   <div className="justify-self-start min-w-0">
                   {isSearchOpen ? (
@@ -1443,7 +1567,7 @@ const AppContent: React.FC = () => {
                     </button>
                   </div>
                 </div>
-                <div className="mt-3">
+                <div className="mt-3 flex-1 min-h-0 overflow-hidden">
                   <DailyCard
                     date={selectedDateForCard}
                     habits={habits}
@@ -1458,6 +1582,7 @@ const AppContent: React.FC = () => {
                     defaultFlipped={cardOpenFlipped}
                     combinedView={true}
                     cardStyle={cardStyle}
+                    fitParentHeight={true}
                   />
                 </div>
               </div>
@@ -1466,75 +1591,795 @@ const AppContent: React.FC = () => {
           document.body
         )}
 
-        <div className={`flex-1 min-h-0 ${view === 'weekly' ? 'overflow-visible md:overflow-hidden' : 'overflow-visible md:overflow-y-auto'}`}>
-          {view === 'monthly' ? (
-            <MonthlyView
-              habits={habits}
-              completions={completions}
-              currentMonthIndex={currentMonthIndex}
-              currentYear={currentYear}
-              theme={theme}
-              weeks={weeks}
-              monthDates={monthDates}
-              topHabitsThisMonth={topHabitsThisMonth}
-              editingHabitId={editingHabitId}
-              editingGoalId={editingGoalId}
-              inputRef={inputRef}
-              goalInputRef={goalInputRef}
-              toggleCompletion={toggleCompletion}
-              toggleHabitInactive={toggleHabitInactive}
-              isHabitInactive={isHabitInactive}
-              updateHabitNameState={(id, name) => updateHabit(id, { name })}
-              updateHabitGoalState={(id, goal) => updateHabit(id, { goal: parseInt(goal) || 0 })}
-              handleHabitBlur={handleHabitBlur}
-              setEditingHabitId={setEditingHabitId}
-              setEditingGoalId={setEditingGoalId}
-              removeHabit={removeHabit}
-              isDayFullyCompleted={isDayFullyCompleted}
-              isModalOpen={isHabitModalOpen || isResolutionsModalOpen}
-              notes={notes}
-              updateNote={updateNote}
-              setSelectedDateForCard={(date, flipped = false) => {
-                setSelectedDateForCard(date);
-                setCardOpenFlipped(flipped);
-              }}
-            />
-          ) : view === 'dashboard' ? (
-            <DashboardView
-              annualStats={annualStats}
-              habits={habits}
-              theme={theme}
-              currentYear={currentYear}
-              setCurrentMonthIndex={setCurrentMonthIndex}
-              setView={setView}
-              monthlyGoals={monthlyGoals}
-              updateMonthlyGoals={updateMonthlyGoals}
-              reorderHabits={reorderHabits}
-              setSelectedDateForCard={(date, flipped = false) => {
-                setSelectedDateForCard(date);
-                setCardOpenFlipped(flipped);
-              }}
-            />
-          ) : (
-            <WeeklyView
-              habits={habits}
-              completions={completions}
-              currentYear={currentYear}
-              weekOffset={weekOffset}
-              theme={theme}
-              toggleCompletion={toggleCompletion}
-              toggleHabitInactive={toggleHabitInactive}
-              isHabitInactive={isHabitInactive}
-              notes={notes}
-              updateNote={updateNote}
-              addHabit={() => addHabit(theme.primary).then(id => setEditingHabitId(id))}
-              setSelectedDateForCard={(date, flipped = false) => {
-                setSelectedDateForCard(date);
-                setCardOpenFlipped(flipped);
-              }}
-              startOfWeek={startOfWeek}
-              cardStyle={cardStyle}
-            />
+        <div className="flex-1 min-h-0 relative min-w-0">
+          <div
+            className={`h-full min-h-0 transition-[padding] duration-200 ${view === 'weekly' ? 'overflow-visible md:overflow-hidden' : 'overflow-visible md:overflow-y-auto'} ${statsOpen && (view === 'monthly' || view === 'dashboard') ? 'lg:pr-[50%]' : ''}`}
+            style={statsOpen && view === 'weekly' ? { paddingRight: '52%' } : undefined}
+          >
+            {view === 'monthly' ? (
+              <MonthlyView
+                habits={sortedHabits}
+                completions={completions}
+                currentMonthIndex={currentMonthIndex}
+                currentYear={currentYear}
+                theme={theme}
+                weeks={weeks}
+                monthDates={monthDates}
+                topHabitsThisMonth={topHabitsThisMonth}
+                toggleCompletion={toggleCompletion}
+                toggleHabitInactive={toggleHabitInactive}
+                isHabitInactive={isHabitInactive}
+                removeHabit={removeHabit}
+                isDayFullyCompleted={isDayFullyCompleted}
+                isModalOpen={isHabitModalOpen || isResolutionsModalOpen}
+                notes={notes}
+                updateNote={updateNote}
+                setSelectedDateForCard={(date, flipped = false) => {
+                  setSelectedDateForCard(date);
+                  setCardOpenFlipped(flipped);
+                }}
+                statsOpen={statsOpen}
+              />
+            ) : view === 'dashboard' ? (
+              <DashboardView
+                annualStats={annualStats}
+                habits={habits}
+                theme={theme}
+                currentYear={currentYear}
+                setCurrentMonthIndex={setCurrentMonthIndex}
+                setView={setView}
+                monthlyGoals={monthlyGoals}
+                updateMonthlyGoals={updateMonthlyGoals}
+                reorderHabits={reorderHabits}
+                setSelectedDateForCard={(date, flipped = false) => {
+                  setSelectedDateForCard(date);
+                  setCardOpenFlipped(flipped);
+                }}
+              />
+            ) : (
+              <WeeklyView
+                habits={sortedHabits}
+                completions={completions}
+                currentYear={currentYear}
+                weekOffset={weekOffset}
+                theme={theme}
+                toggleCompletion={toggleCompletion}
+                toggleHabitInactive={toggleHabitInactive}
+                isHabitInactive={isHabitInactive}
+                notes={notes}
+                updateNote={updateNote}
+                addHabit={() => addHabit(theme.primary).then(id => setEditingHabitId(id))}
+                setSelectedDateForCard={(date, flipped = false) => {
+                  setSelectedDateForCard(date);
+                  setCardOpenFlipped(flipped);
+                }}
+                startOfWeek={startOfWeek}
+                cardStyle={cardStyle}
+                singleCardMode={statsOpen}
+                weekProgress={weekProgress}
+                weeklyStats={weeklyStats}
+              />
+            )}
+          </div>
+          {statsOpen && (
+            <div className="hidden lg:flex absolute right-0 top-0 bottom-0 w-1/2 z-20 overflow-y-auto flex-col gap-4 p-4 bg-white/90 border-l-[3px] border-black" style={{ backdropFilter: 'blur(8px)' }}>
+
+              {/* ── At a Glance KPI ── */}
+              {view !== 'dashboard' && <div className="neo-border rounded-2xl overflow-hidden bg-white shrink-0">
+                <div className="h-[3px] rounded-t-2xl" style={{ backgroundColor: theme.primary }} />
+                <div className="p-3">
+                  <p className="text-[9px] font-black uppercase tracking-[0.22em] text-stone-400 mb-3">At a Glance</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* Completion % — fills from bottom */}
+                    <div className="rounded-xl border-2 border-black overflow-hidden relative flex flex-col justify-end p-3 min-h-[80px]">
+                      <div className="absolute bottom-0 left-0 right-0 transition-all duration-700 ease-out rounded-b-[10px]" style={{ height: `${Math.min(100, Math.round(statsKpi.pct))}%`, backgroundColor: theme.primary, opacity: 0.15 }} />
+                      <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: theme.primary, opacity: Math.min(100, Math.round(statsKpi.pct)) > 0 ? 1 : 0 }} />
+                      <span className="relative text-[9px] font-black uppercase tracking-wider text-stone-400">Completion</span>
+                      <span className="relative text-4xl font-black leading-none mt-0.5" style={{ color: theme.primary }}>{Math.round(statsKpi.pct)}%</span>
+                    </div>
+                    {/* Done / Total — fills from bottom based on completion ratio */}
+                    <div className="rounded-xl border-2 border-black overflow-hidden relative flex flex-col justify-end p-3 min-h-[80px]">
+                      <div className="absolute bottom-0 left-0 right-0 transition-all duration-700 ease-out rounded-b-[10px]" style={{ height: `${statsKpi.total > 0 ? Math.min(100, (statsKpi.completed / statsKpi.total) * 100) : 0}%`, backgroundColor: theme.secondary, opacity: 0.18 }} />
+                      <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: theme.secondary, opacity: statsKpi.completed > 0 ? 1 : 0 }} />
+                      <span className="relative text-[9px] font-black uppercase tracking-wider text-stone-400">Done / Total</span>
+                      <div className="relative flex items-baseline gap-1 mt-0.5">
+                        <span className="text-4xl font-black leading-none">{statsKpi.completed}</span>
+                        <span className="text-xl font-black text-stone-300">/ {statsKpi.total}</span>
+                      </div>
+                    </div>
+                    {/* vs Previous — fills based on abs delta */}
+                    {(() => {
+                      const d = Math.round(statsKpi.delta);
+                      const fillPct = Math.min(100, Math.abs(d));
+                      const fillColor = d > 0 ? '#34d399' : d < 0 ? '#f87171' : '#d4d4d4';
+                      return (
+                        <div className="rounded-xl border-2 border-black overflow-hidden relative flex flex-col justify-end p-3 min-h-[80px]">
+                          <div className="absolute bottom-0 left-0 right-0 transition-all duration-700 ease-out rounded-b-[10px]" style={{ height: `${fillPct}%`, backgroundColor: fillColor, opacity: 0.18 }} />
+                          <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: fillColor, opacity: fillPct > 0 ? 1 : 0 }} />
+                          <span className="relative text-[9px] font-black uppercase tracking-wider text-stone-400">{statsKpi.label}</span>
+                          <span className={`relative text-3xl font-black leading-none mt-0.5 ${d > 0 ? 'text-emerald-500' : d < 0 ? 'text-rose-500' : 'text-stone-400'}`}>
+                            {d > 0 ? '+' : ''}{d}%
+                          </span>
+                        </div>
+                      );
+                    })()}
+                    {/* Top Habit */}
+                    <div className="rounded-xl border-2 border-black p-3 flex flex-col justify-end min-h-[80px] min-w-0">
+                      <span className="text-[9px] font-black uppercase tracking-wider text-stone-400">Top Habit</span>
+                      <span className="text-base font-black leading-tight break-words mt-0.5">{statsBestHabit?.name || '—'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>}
+
+              {/* ── Month Pacing by Week (monthly only) ── */}
+              {view === 'monthly' && (() => {
+                return (
+                  <div className="neo-border rounded-2xl overflow-hidden bg-white shrink-0">
+                    <div className="h-[3px] rounded-t-2xl" style={{ backgroundColor: theme.secondary }} />
+                    <div className="p-3">
+                      <div className="flex items-end justify-between mb-3">
+                        <div>
+                          <p className="text-[8px] font-black uppercase tracking-[0.22em] text-stone-400 mb-0.5">Weekly Snapshot</p>
+                          <p className="text-sm font-black uppercase tracking-wide text-stone-800">Month Pacing by Week</p>
+                        </div>
+                        <span className="text-[9px] font-black text-stone-300 mb-0.5">{weeks.length} checkpoints</span>
+                      </div>
+                      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${weeks.length}, minmax(0, 1fr))` }}>
+                        {weeks.map((week, wIndex) => {
+                          const weekTotal = habits.reduce((acc, h) => {
+                            let hWeekDone = 0, activeDays = 0;
+                            week.forEach(day => {
+                              const dayDate = new Date(currentYear, currentMonthIndex, day);
+                              const dateKey = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                              if (!isHabitActiveOnDate(h, dayDate) || isHabitManuallyInactive(notes, dateKey, h.id)) return;
+                              activeDays++;
+                              if (h.weeklyTarget) {
+                                if (checkCompleted(h.id, day, completions, currentMonthIndex, currentYear)) hWeekDone++;
+                              } else {
+                                const isDue = !h.frequency || h.frequency.includes(dayDate.getDay());
+                                if (isDue && checkCompleted(h.id, day, completions, currentMonthIndex, currentYear)) hWeekDone++;
+                              }
+                            });
+                            if (h.weeklyTarget) return acc + Math.min(hWeekDone, (h.weeklyTarget / 7) * activeDays);
+                            return acc + hWeekDone;
+                          }, 0);
+                          const weekMax = habits.reduce((acc, h) => {
+                            let activeDays = 0, hPossible = 0;
+                            week.forEach(day => {
+                              const dayDate = new Date(currentYear, currentMonthIndex, day);
+                              const dateKey = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                              if (!isHabitActiveOnDate(h, dayDate) || isHabitManuallyInactive(notes, dateKey, h.id)) return;
+                              activeDays++;
+                              if (!h.weeklyTarget && (!h.frequency || h.frequency.includes(dayDate.getDay()))) hPossible++;
+                            });
+                            if (h.weeklyTarget) return acc + (h.weeklyTarget / 7) * activeDays;
+                            return acc + hPossible;
+                          }, 0);
+                          const weekPerc = weekMax > 0 ? (weekTotal / weekMax) * 100 : 0;
+                          const isCurrentWeek = week.includes(new Date().getDate()) && currentMonthIndex === new Date().getMonth() && currentYear === new Date().getFullYear();
+                          const startDate = new Date(currentYear, currentMonthIndex, week[0]);
+                          const endDate = new Date(currentYear, currentMonthIndex, week[week.length - 1]);
+                          const monthShort = startDate.toLocaleString('default', { month: 'short' }).toUpperCase();
+                          const dayBars = week.map(day => {
+                            const dayDate = new Date(currentYear, currentMonthIndex, day);
+                            const dKey = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                            const dueH = habits.filter(h => !h.weeklyTarget && (!h.frequency || h.frequency.includes(dayDate.getDay())) && isHabitActiveOnDate(h, dayDate) && !isHabitManuallyInactive(notes, dKey, h.id));
+                            const doneH = dueH.filter(h => checkCompleted(h.id, day, completions, currentMonthIndex, currentYear)).length;
+                            return dueH.length > 0 ? Math.round((doneH / dueH.length) * 100) : -1;
+                          });
+                          return (
+                            <div
+                              key={wIndex}
+                              className={`rounded-xl border bg-white p-2 flex flex-col gap-2 ${isCurrentWeek ? 'border-black border-2' : 'border-stone-200'}`}
+                            >
+                              {/* Top: week label + date + circle */}
+                              <div className="flex items-start justify-between gap-1">
+                                <div className="min-w-0">
+                                  <p className="text-[7px] font-black uppercase tracking-wider text-stone-400 leading-none">Week {wIndex + 1}</p>
+                                  <p className="text-[8px] font-black uppercase text-stone-700 mt-1 leading-tight">
+                                    {monthShort} {String(startDate.getDate()).padStart(2, '0')} – {String(endDate.getDate()).padStart(2, '0')}
+                                  </p>
+                                </div>
+                                <CircularProgress percentage={weekPerc} size={34} strokeWidth={4} color={theme.secondary} trackColor={theme.secondary + '25'} textClassName="text-[8px]" />
+                              </div>
+                              {/* Divider */}
+                              <div className="border-t border-stone-100" />
+                              {/* Bottom: completed + day dots */}
+                              <div>
+                                <p className="text-[7px] font-black uppercase tracking-wider text-stone-400 leading-none mb-1">Completed</p>
+                                <div className="flex items-end justify-between gap-1">
+                                  <p className="text-base font-black leading-none text-stone-900">{Math.round(weekTotal)}<span className="text-[9px] font-black text-stone-300 ml-0.5">/{Math.round(weekMax)}</span></p>
+                                  {/* Per-day dot bars */}
+                                  <div className="flex items-end gap-[2px]" style={{ height: 14 }}>
+                                    {dayBars.map((pct, di) => (
+                                      <div
+                                        key={di}
+                                        className="w-[5px] rounded-full transition-all duration-500"
+                                        style={{
+                                          height: pct > 0 ? `${Math.max(5, Math.round(pct / 100 * 14))}px` : '5px',
+                                          backgroundColor: pct > 0 ? theme.secondary : '#e7e5e4',
+                                        }}
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Trend chart */}
+              {view !== 'dashboard' && <div className={`neo-border rounded-2xl overflow-hidden flex flex-col min-h-[220px] ${isDarkMode ? 'bg-[#151515]' : 'bg-[#f9f9f9]'}`}>
+                <div className="h-[3px] shrink-0 rounded-t-2xl" style={{ backgroundColor: theme.primary }} />
+                <div className="flex flex-col flex-1 p-4">
+                  <div className="flex justify-between items-center mb-3">
+                    <h4 className="font-serif font-black uppercase text-sm tracking-widest">
+                      {view === 'monthly' ? 'Monthly Trends' : view === 'weekly' ? 'Weekly Trends' : 'Annual Trends'}
+                    </h4>
+                    <div className="flex items-center gap-2">
+                      <div className={`text-xs font-black px-2 py-1 border-2 border-black ${trendDelta >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {Math.abs(trendDelta).toFixed(0)}% {trendDeltaLabel}
+                      </div>
+                      <button
+                        onClick={() => setChartType(prev => prev === 'area' ? 'bar' : 'area')}
+                        className="p-1 hover:bg-stone-200 rounded-sm transition-colors text-stone-400 hover:text-stone-600"
+                      >
+                        {chartType === 'area' ? <BarChart2 size={12} /> : <Activity size={12} />}
+                      </button>
+                    </div>
+                  </div>
+                  <ResponsiveContainer width="100%" height="100%" minHeight={150} key={view + chartType}>
+                    {chartType === 'area' ? (
+                      <AreaChart data={trendChartData} margin={{ right: 16, left: 16, bottom: 0, top: 8 }}>
+                        <defs>
+                          <linearGradient id="colorValSide" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor={theme.primary} stopOpacity={0.8} />
+                            <stop offset="95%" stopColor={theme.primary} stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? "rgba(255,255,255,0.14)" : "#ddd"} />
+                        <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 'bold', fill: isDarkMode ? '#a8a8a8' : '#666' }} interval={view === 'monthly' ? 'preserveStartEnd' : 0} minTickGap={0} padding={{ left: 8, right: 8 }} />
+                        <Tooltip contentStyle={{ backgroundColor: isDarkMode ? '#161616' : '#fff', border: isDarkMode ? '1px solid #2d2d2d' : '2px solid black', color: isDarkMode ? '#ededed' : '#111', fontWeight: 'bold' }} formatter={(value: any, name: string) => [`${value} completed`, name === 'current' ? trendLegendCurrent : trendLegendPrevious]} />
+                        <Area type="monotone" dataKey="previous" stroke={theme.secondary} strokeWidth={2} strokeDasharray="6 6" fillOpacity={0} fill="transparent" />
+                        <Area type="monotone" dataKey="current" stroke={isDarkMode ? "#d6d6d6" : "#000"} strokeWidth={2.5} fillOpacity={1} fill="url(#colorValSide)" />
+                      </AreaChart>
+                    ) : (
+                      <BarChart data={trendChartData} margin={{ right: 16, left: 16, bottom: 16, top: 8 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? "rgba(255,255,255,0.14)" : "#ddd"} />
+                        <XAxis dataKey="label" tick={{ fontSize: 8, fontWeight: 'bold', fill: isDarkMode ? '#a8a8a8' : '#666' }} tickLine={false} interval={view === 'monthly' ? 'preserveStartEnd' : 0} minTickGap={0} padding={{ left: 4, right: 4 }} />
+                        <YAxis tick={{ fontSize: 8, fontWeight: 'bold', fill: isDarkMode ? '#a8a8a8' : '#666' }} tickLine={false} width={20} domain={[0, 'dataMax + 1']} allowDecimals={false} />
+                        <Tooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} contentStyle={{ backgroundColor: isDarkMode ? '#161616' : '#fff', border: isDarkMode ? '1px solid #2d2d2d' : '2px solid black', color: isDarkMode ? '#ededed' : '#111', fontWeight: 'bold' }} formatter={(value: any, name: string) => [`${value} completed`, name === 'current' ? trendLegendCurrent : trendLegendPrevious]} />
+                        <Bar dataKey="previous" fill={theme.secondary} fillOpacity={0.55} radius={[3, 3, 0, 0]} strokeWidth={1} />
+                        <Bar dataKey="current" fill={theme.primary} radius={[3, 3, 0, 0]} strokeWidth={1} />
+                      </BarChart>
+                    )}
+                  </ResponsiveContainer>
+                </div>
+              </div>}
+              {/* Story panel */}
+              {view !== 'dashboard' && <div className="neo-border rounded-2xl flex flex-col overflow-hidden bg-white flex-1 min-h-0">
+                <div className="text-white text-[10px] font-black uppercase py-2 text-center tracking-widest border-b-[3px] border-black shrink-0" style={{ backgroundColor: theme.primary }}>
+                  {view === 'monthly' ? 'Monthly Success' : view === 'weekly' ? 'Weekly Success' : 'Annual Performance'}
+                </div>
+                <div className="flex-1 flex flex-col p-3 gap-2 overflow-y-auto min-h-0">
+                  {view === 'monthly' ? (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-[10px] font-black uppercase text-stone-400 tracking-widest leading-none mb-1">Month Story</p>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-3xl font-black leading-none">{monthProgress.completed}</span>
+                            <span className="text-lg font-black text-stone-300">/ {monthProgress.total}</span>
+                          </div>
+                        </div>
+                        <div className="w-14 h-14 relative">
+                          <PieChart width={56} height={56}>
+                            <Pie data={[{ value: monthProgress.completed || 0.1 }, { value: monthProgress.remaining || 0 }]} innerRadius="72%" outerRadius="100%" paddingAngle={2} dataKey="value" startAngle={90} endAngle={450} isAnimationActive={true} animationDuration={800}>
+                              <Cell fill={theme.primary} /><Cell fill={isDarkMode ? "#2a2a2a" : "#f0f0f0"} />
+                            </Pie>
+                          </PieChart>
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <span className="text-[10px] font-black" style={{ color: theme.primary }}>{monthProgress.percentage.toFixed(0)}%</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex-1 min-h-0 bg-stone-50/50 neo-border rounded-xl p-2 overflow-y-auto">
+                        {(() => {
+                          const isCurrentMonth = currentMonthIndex === currentMonthOfYear && currentYear === currentFullYear_ref;
+                          const daysElapsed = isCurrentMonth ? currentDayOfMonth : new Date(currentYear, currentMonthIndex + 1, 0).getDate();
+                          const story = buildMonthlyStory(monthProgress, topHabitsThisMonth, monthDelta, t, daysElapsed);
+                          return (
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-1.5"><Sparkles size={10} className="text-amber-500" /><span className="font-serif text-[9px] font-black uppercase tracking-widest text-stone-500">Your story</span></div>
+                              {story.sections.map((section: any, idx: number) => (
+                                <p key={idx} className="text-[11px] leading-relaxed font-bold">
+                                  <FormattedText text={section.text} highlightColor={theme.secondary} className={section.type === 'consistency' ? '' : 'italic'} />
+                                </p>
+                              ))}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </>
+                  ) : view === 'weekly' ? (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-[10px] font-black uppercase text-stone-400 tracking-widest leading-none mb-1">Week progress</p>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-3xl font-black leading-none">{weekProgress.completed}</span>
+                            <span className="text-lg font-black text-stone-300">/ {weekProgress.total}</span>
+                          </div>
+                        </div>
+                        <div className="w-14 h-14 relative">
+                          <PieChart width={56} height={56}>
+                            <Pie data={[{ value: weekProgress.completed || 0.1 }, { value: weekProgress.remaining || 0 }]} innerRadius="72%" outerRadius="100%" paddingAngle={2} dataKey="value" startAngle={90} endAngle={450} isAnimationActive={true} animationDuration={800}>
+                              <Cell fill={theme.primary} /><Cell fill={isDarkMode ? "#2a2a2a" : "#f0f0f0"} />
+                            </Pie>
+                          </PieChart>
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <span className="text-[10px] font-black" style={{ color: theme.primary }}>{weekProgress.percentage.toFixed(0)}%</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex-1 min-h-0 bg-stone-50/50 neo-border rounded-xl p-2 overflow-y-auto">
+                        {(() => {
+                          const daysElapsed = weekOffset === 0
+                            ? (startOfWeek === 'sunday' ? today_ref.getDay() + 1 : (today_ref.getDay() === 0 ? 7 : today_ref.getDay()))
+                            : 7;
+                          const story = buildWeeklyStory(weekProgress, weeklyStats, habits, t, daysElapsed);
+                          return (
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-1.5"><Sparkles size={10} className="text-amber-500" /><span className="font-serif text-[9px] font-black uppercase tracking-widest text-stone-500">Your story</span></div>
+                              {story.sections.map((section: any, idx: number) => (
+                                <p key={idx} className="text-[11px] leading-relaxed font-bold">
+                                  <FormattedText text={section.text} primaryColor={theme.primary} className="text-black" />
+                                </p>
+                              ))}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 mb-1"><Sparkles size={10} className="text-amber-500" /><span className="font-serif text-[9px] font-black uppercase tracking-widest text-stone-500">Annual story</span></div>
+                          {annualStory.annualSummary ? (
+                            <div>
+                              <div className="text-[12px] font-black text-stone-900 truncate">{annualStory.annualSummary.support.strongestHabit?.name || 'Year story'}</div>
+                              <p className="text-[10px] font-bold text-stone-500">{annualStory.annualSummary.support.momentumLabel} · {annualStory.annualSummary.support.rhythmLabel}</p>
+                            </div>
+                          ) : (
+                            <p className="text-[11px] font-bold text-stone-500">No significant outcomes yet</p>
+                          )}
+                        </div>
+                        <div className="w-14 h-14 relative shrink-0">
+                          <PieChart width={56} height={56}>
+                            <Pie data={[{ value: annualStats.totalCompletions || 0.1 }, { value: Math.max(0, annualStats.totalPossible - annualStats.totalCompletions) }]} innerRadius="72%" outerRadius="100%" paddingAngle={2} dataKey="value" startAngle={90} endAngle={450} isAnimationActive={true} animationDuration={800}>
+                              <Cell fill={theme.primary} /><Cell fill={isDarkMode ? "#2a2a2a" : "#f0f0f0"} />
+                            </Pie>
+                          </PieChart>
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <span className="text-[10px] font-black" style={{ color: theme.primary }}>{annualCompletionRate.toFixed(0)}%</span>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>}
+
+              {/* ── Dashboard: Year Trend ── */}
+              {view === 'dashboard' && (
+                <div className="neo-border rounded-2xl overflow-hidden flex flex-col min-h-[200px] bg-[#f9f9f9] shrink-0">
+                  <div className="h-[3px] shrink-0 rounded-t-2xl" style={{ backgroundColor: theme.primary }} />
+                  <div className="flex flex-col flex-1 p-3">
+                    <div className="flex justify-between items-center mb-2">
+                      <p className="text-[9px] font-black uppercase tracking-[0.22em] text-stone-400">Year Trend</p>
+                      <div className={`text-[9px] font-black px-2 py-1 border border-black ${trendDelta >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {trendDelta >= 0 ? '+' : ''}{Math.abs(trendDelta).toFixed(0)}% vs LY
+                      </div>
+                    </div>
+                    <ResponsiveContainer width="100%" height="100%" minHeight={140}>
+                      <AreaChart data={trendChartData} margin={{ right: 12, left: 12, bottom: 0, top: 6 }}>
+                        <defs>
+                          <linearGradient id="yearGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor={theme.primary} stopOpacity={0.7} />
+                            <stop offset="95%" stopColor={theme.primary} stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ddd" />
+                        <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 8, fontWeight: 'bold', fill: '#666' }} interval={0} minTickGap={0} padding={{ left: 8, right: 8 }} />
+                        <Tooltip contentStyle={{ backgroundColor: '#fff', border: '2px solid black', fontWeight: 'bold' }} formatter={(value: any) => [`${value} completed`]} />
+                        <Area type="monotone" dataKey="previous" stroke={theme.secondary} strokeWidth={1.5} strokeDasharray="4 4" fillOpacity={0} fill="transparent" />
+                        <Area type="monotone" dataKey="current" stroke="#000" strokeWidth={2} fillOpacity={1} fill="url(#yearGrad)" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Dashboard: 52-Week Heatmap ── */}
+              {view === 'dashboard' && (() => {
+                const jan1DayOfWeek = new Date(currentYear, 0, 1).getDay();
+                const emptyCells = jan1DayOfWeek;
+
+                const yearCells: { pct: number; month: number }[] = [];
+                for (let m = 0; m < 12; m++) {
+                  const summary = annualStats.monthlySummaries[m];
+                  const days = summary?.days ?? [];
+                  days.forEach((d: any, i: number) => {
+                    const date = new Date(currentYear, m, i + 1);
+                    if (date.getMonth() !== m) return;
+                    const pct = d.totalPossible > 0 ? Math.round((d.habitsCompleted / d.totalPossible) * 100) : -1;
+                    yearCells.push({ pct, month: m });
+                  });
+                }
+
+                const allCells: ({ pct: number; month: number } | null)[] = [
+                  ...Array(emptyCells).fill(null),
+                  ...yearCells,
+                ];
+
+                const weekColumns: ({ pct: number; month: number } | null)[][] = [];
+                for (let i = 0; i < allCells.length; i += 7) {
+                  weekColumns.push(allCells.slice(i, i + 7));
+                }
+
+                const monthAbbr = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+                const getCellColor = (pct: number) => {
+                  if (pct < 0) return '#f5f5f4';
+                  if (pct === 0) return '#e7e5e4';
+                  if (pct < 50) return theme.secondary + '60';
+                  if (pct < 100) return theme.secondary + 'aa';
+                  return theme.primary;
+                };
+
+                return (
+                  <div className="neo-border rounded-2xl overflow-hidden bg-white shrink-0">
+                    <div className="h-[3px] rounded-t-2xl" style={{ backgroundColor: theme.secondary }} />
+                    <div className="p-3">
+                      <p className="text-[9px] font-black uppercase tracking-[0.22em] text-stone-400 mb-3">52-Week Map</p>
+                      <div className="overflow-x-auto">
+                        <div className="flex gap-[3px]" style={{ minWidth: 'max-content' }}>
+                          {weekColumns.map((week, wi) => (
+                            <div key={wi} className="flex flex-col gap-[3px]">
+                              {Array.from({ length: 7 }, (_, di) => {
+                                const cell = week[di] ?? null;
+                                return (
+                                  <div
+                                    key={di}
+                                    className="w-[10px] h-[10px] rounded-[2px]"
+                                    style={{ backgroundColor: cell ? getCellColor(cell.pct) : 'transparent' }}
+                                  />
+                                );
+                              })}
+                            </div>
+                          ))}
+                        </div>
+                        <div className="flex mt-1 gap-[3px]">
+                          {(() => {
+                            const labels: React.ReactNode[] = [];
+                            let cellIdx = emptyCells;
+                            for (let m = 0; m < 12; m++) {
+                              const daysInMonth = new Date(currentYear, m + 1, 0).getDate();
+                              labels.push(
+                                <div key={m} style={{ width: Math.ceil(daysInMonth / 7) * 13, minWidth: 0 }}>
+                                  <span className="text-[7px] font-black text-stone-300 uppercase">{monthAbbr[m]}</span>
+                                </div>
+                              );
+                              cellIdx += daysInMonth;
+                            }
+                            return labels;
+                          })()}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* ── Dashboard: Seasonal Breakdown ── */}
+              {view === 'dashboard' && (() => {
+                const seasons = [
+                  { name: 'Winter', label: 'Dec–Feb', months: [11, 0, 1] },
+                  { name: 'Spring', label: 'Mar–May', months: [2, 3, 4] },
+                  { name: 'Summer', label: 'Jun–Aug', months: [5, 6, 7] },
+                  { name: 'Fall',   label: 'Sep–Nov', months: [8, 9, 10] },
+                ].map(s => {
+                  const data = s.months.map(m => annualStats.monthlySummaries[m]).filter((m: any) => m && !m.isFutureMonth && m.total > 0);
+                  const avg = data.length > 0 ? Math.round(data.reduce((acc: number, m: any) => acc + m.rate, 0) / data.length) : null;
+                  return { ...s, avg };
+                });
+                const maxAvg = Math.max(...seasons.map(s => s.avg ?? 0));
+
+                return (
+                  <div className="neo-border rounded-2xl overflow-hidden bg-white shrink-0">
+                    <div className="h-[3px] rounded-t-2xl" style={{ backgroundColor: theme.secondary }} />
+                    <div className="p-3">
+                      <p className="text-[9px] font-black uppercase tracking-[0.22em] text-stone-400 mb-3">Seasonal Patterns</p>
+                      <div className="grid grid-cols-4 gap-2">
+                        {seasons.map(s => {
+                          const isBest = s.avg !== null && s.avg === maxAvg && maxAvg > 0;
+                          return (
+                            <div key={s.name} className={`rounded-xl border p-2 text-center relative overflow-hidden ${isBest ? 'border-black border-2' : 'border-stone-200'}`}>
+                              {s.avg !== null && s.avg > 0 && (
+                                <div className="absolute bottom-0 left-0 right-0 transition-all duration-500" style={{ height: `${s.avg}%`, backgroundColor: isBest ? theme.primary : theme.secondary, opacity: isBest ? 0.2 : 0.15 }} />
+                              )}
+                              <p className="relative text-[8px] font-black uppercase tracking-wide text-stone-500">{s.name}</p>
+                              <p className="relative text-base font-black leading-tight mt-0.5 text-stone-900">{s.avg !== null ? `${s.avg}%` : '—'}</p>
+                              <p className="relative text-[7px] font-bold text-stone-400">{s.label}</p>
+                              {isBest && <p className="relative text-[7px] font-black" style={{ color: theme.primary }}>PEAK</p>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* ── Dashboard: Weekday Pattern ── */}
+              {view === 'dashboard' && (
+                <div className="neo-border rounded-2xl overflow-hidden bg-white shrink-0">
+                  <div className="h-[3px] rounded-t-2xl" style={{ backgroundColor: theme.secondary }} />
+                  <div className="p-3">
+                    <p className="text-[9px] font-black uppercase tracking-[0.22em] text-stone-400 mb-2">Weekday Pattern</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { label: 'Weekdays', rate: Math.round(annualStats.weekdayRate ?? 0) },
+                        { label: 'Weekends', rate: Math.round(annualStats.weekendRate ?? 0) },
+                      ].map(({ label, rate }) => {
+                        const isBetter = label === 'Weekdays'
+                          ? (annualStats.weekdayRate ?? 0) >= (annualStats.weekendRate ?? 0)
+                          : (annualStats.weekendRate ?? 0) > (annualStats.weekdayRate ?? 0);
+                        return (
+                          <div key={label} className={`rounded-xl border relative overflow-hidden p-2 ${isBetter ? 'border-black border-2' : 'border-stone-200'}`}>
+                            <div className="absolute bottom-0 left-0 right-0" style={{ height: `${rate}%`, backgroundColor: isBetter ? theme.primary : theme.secondary, opacity: 0.15 }} />
+                            <p className="relative text-[8px] font-black uppercase text-stone-500">{label}</p>
+                            <p className="relative text-xl font-black leading-none mt-0.5" style={{ color: isBetter ? theme.primary : undefined }}>{rate}%</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Best / Needs Focus ── */}
+              <div className="grid grid-cols-2 gap-3 shrink-0">
+                <div className="neo-border rounded-2xl overflow-hidden bg-white">
+                  <div className="h-[3px] rounded-t-2xl bg-emerald-400" />
+                  <div className="p-3 flex flex-col gap-1">
+                    <span className="text-[9px] font-black uppercase tracking-wider text-stone-400">
+                      {view === 'weekly' ? 'Best This Week' : view === 'monthly' ? 'Best This Month' : 'Best This Year'}
+                    </span>
+                    {statsBestHabit ? (
+                      <>
+                        <span className="text-sm font-black leading-tight break-words">{statsBestHabit.name}</span>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <div className="flex-1 h-1.5 rounded-full bg-stone-100 overflow-hidden">
+                            <div className="h-full rounded-full bg-emerald-400 transition-all" style={{ width: `${Math.min(100, Math.round(statsBestHabit.rate))}%` }} />
+                          </div>
+                          <span className="text-[10px] font-black text-emerald-600">{Math.round(statsBestHabit.rate)}%</span>
+                        </div>
+                      </>
+                    ) : <span className="text-xs text-stone-300 font-bold">No data yet</span>}
+                  </div>
+                </div>
+                <div className="neo-border rounded-2xl overflow-hidden bg-white">
+                  <div className="h-[3px] rounded-t-2xl bg-rose-300" />
+                  <div className="p-3 flex flex-col gap-1">
+                    <span className="text-[9px] font-black uppercase tracking-wider text-rose-300">
+                      {view === 'weekly' ? 'Needs Focus' : view === 'monthly' ? 'Needs Focus' : 'Needs Focus'}
+                    </span>
+                    {statsWorstHabit ? (
+                      <>
+                        <span className="text-sm font-black leading-tight break-words">{statsWorstHabit.name}</span>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <div className="flex-1 h-1.5 rounded-full bg-stone-100 overflow-hidden">
+                            <div className="h-full rounded-full bg-rose-300 transition-all" style={{ width: `${Math.min(100, Math.round(statsWorstHabit.rate))}%` }} />
+                          </div>
+                          <span className="text-[10px] font-black text-rose-400">{Math.round(statsWorstHabit.rate)}%</span>
+                        </div>
+                      </>
+                    ) : <span className="text-xs text-stone-300 font-bold">On track</span>}
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Habit Leaderboard ── */}
+              {(() => {
+                const list = view === 'weekly' ? weekHabitPerformance :
+                  view === 'monthly' ? topHabitsThisMonth.map((h: any) => ({ ...h, rate: h.percentage })) :
+                  annualStats.topHabits;
+                if (!list || list.length === 0) return null;
+                return (
+                  <div className="neo-border rounded-2xl overflow-hidden bg-white shrink-0">
+                    <div className="h-[3px] rounded-t-2xl" style={{ backgroundColor: theme.primary }} />
+                    <div className="p-3">
+                      <p className="text-[9px] font-black uppercase tracking-[0.22em] text-stone-400 mb-3">
+                        {view === 'weekly' ? 'Weekly Leaderboard' : view === 'monthly' ? 'Monthly Leaderboard' : 'Top Habits'}
+                      </p>
+                      <div className="flex flex-col gap-1.5">
+                        {list.slice(0, 6).map((h: any, i: number) => {
+                          const pct = Math.min(100, Math.round(h.rate ?? 0));
+                          const hasCount = h.completed != null && h.total != null && Math.round(h.total) > 0;
+                          return (
+                            <div key={h.id ?? i} className="flex items-center gap-2">
+                              <span className="text-[9px] font-black text-stone-300 w-3 text-right shrink-0">{i + 1}</span>
+                              <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: h.color || theme.primary }} />
+                              <span className="text-[11px] font-bold text-stone-700 flex-1 min-w-0 truncate">{h.name}</span>
+                              {hasCount && <span className="text-[9px] font-black text-stone-300 shrink-0">{Math.round(h.completed)}/{Math.round(h.total)}</span>}
+                              <div className="w-14 h-1.5 rounded-full bg-stone-100 overflow-hidden shrink-0">
+                                <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: theme.primary }} />
+                              </div>
+                              <span className="text-[10px] font-black w-7 text-right shrink-0" style={{ color: theme.primary }}>{pct}%</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* ── Analytics heatmap ── */}
+              {view !== 'dashboard' && <div className="neo-border rounded-2xl overflow-hidden bg-white shrink-0">
+                <div className="h-[3px] rounded-t-2xl" style={{ backgroundColor: theme.secondary }} />
+                <div className="p-3">
+                  <p className="text-[9px] font-black uppercase tracking-[0.22em] text-stone-400 mb-3">
+                    {view === 'weekly' ? 'Day Breakdown' : view === 'monthly' ? 'Month Heatmap' : 'Year Overview'}
+                  </p>
+
+                  {view === 'weekly' && (() => {
+                    const weekStart_dates = (() => {
+                      const now = new Date();
+                      const day = now.getDay();
+                      const diff = startOfWeek === 'monday'
+                        ? now.getDate() - day + (day === 0 ? -6 : 1) + weekOffset * 7
+                        : now.getDate() - day + weekOffset * 7;
+                      return new Date(now.getFullYear(), now.getMonth(), diff);
+                    })();
+                    const MOOD_MAP: Record<number, { icon: React.ElementType; color: string; bg: string }> = {
+                      1: { icon: Angry,  color: '#ef4444', bg: '#fee2e2' },
+                      2: { icon: Frown,  color: '#f97316', bg: '#ffedd5' },
+                      3: { icon: Meh,    color: '#eab308', bg: '#fef9c3' },
+                      4: { icon: Smile,  color: '#84cc16', bg: '#ecfccb' },
+                      5: { icon: Laugh,  color: '#10b981', bg: '#d1fae5' },
+                    };
+                    const days = weeklyStats.map((d: any, i: number) => {
+                      const date = new Date(weekStart_dates);
+                      date.setDate(weekStart_dates.getDate() + i);
+                      const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                      const dueHabits = habits.filter((h: any) => !h.weeklyTarget && (!h.frequency || h.frequency.includes(date.getDay()))).length;
+                      const pct = dueHabits > 0 ? Math.round((d.count / dueHabits) * 100) : 0;
+                      const isToday = date.toDateString() === new Date().toDateString();
+                      const moodVal = notes[dateKey]?.mood;
+                      const moodMeta = typeof moodVal === 'number' ? MOOD_MAP[moodVal] ?? null : null;
+                      const label = d.displayDay.slice(0, 2).toUpperCase();
+                      return { pct, isToday, moodMeta, label };
+                    });
+                    return (
+                      <div className="flex flex-col gap-2">
+                        {/* Day labels */}
+                        <div className="flex gap-2">
+                          {days.map((d, i) => (
+                            <div key={i} className="flex-1 text-center">
+                              <span className={`text-[10px] font-black uppercase ${d.isToday ? 'text-black' : 'text-stone-400'}`}>{d.label}</span>
+                            </div>
+                          ))}
+                        </div>
+                        {/* Completion tiles */}
+                        <div className="flex gap-2">
+                          {days.map((d, i) => (
+                            <div key={i} className={`relative flex-1 aspect-square rounded-xl overflow-hidden flex items-end justify-center pb-1.5 ${d.isToday ? 'border-2 border-black' : 'border border-stone-200'} ${d.pct === 0 ? 'bg-stone-50' : ''}`}>
+                              {d.pct > 0 && <div className="absolute bottom-0 left-0 right-0 transition-all duration-500 ease-out" style={{ height: `${d.pct}%`, backgroundColor: d.pct >= 100 ? theme.primary : theme.secondary, opacity: d.pct >= 100 ? 1 : 0.8 }} />}
+                              <span className={`relative text-xs font-black leading-none ${d.pct >= 50 ? 'text-white' : d.pct === 0 ? 'text-stone-300' : 'text-stone-700'}`}>{d.pct}%</span>
+                            </div>
+                          ))}
+                        </div>
+                        {/* Mood tiles */}
+                        <div className="flex gap-2">
+                          {days.map((d, i) => {
+                            const MoodIcon = d.moodMeta?.icon;
+                            return (
+                              <div key={i} className={`relative flex-1 aspect-square rounded-xl overflow-hidden flex items-center justify-center ${d.isToday ? 'border-2 border-black' : 'border border-stone-200'}`} style={{ backgroundColor: d.moodMeta?.bg || '#f9fafb' }}>
+                                {MoodIcon
+                                  ? <MoodIcon size={20} color={d.moodMeta!.color} strokeWidth={2.5} />
+                                  : <span className="text-[10px] font-black text-stone-300">—</span>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {view === 'monthly' && (() => {
+                    const firstDay = new Date(currentYear, currentMonthIndex, 1).getDay();
+                    const offset_days = startOfWeek === 'monday' ? (firstDay === 0 ? 6 : firstDay - 1) : firstDay;
+                    const dayLabels = startOfWeek === 'monday' ? ['M','T','W','T','F','S','S'] : ['S','M','T','W','T','F','S'];
+                    return (
+                      <div>
+                        <div className="grid grid-cols-7 gap-1 mb-1.5">
+                          {dayLabels.map((l, i) => (
+                            <div key={i} className="text-center text-[8px] font-black text-stone-300">{l}</div>
+                          ))}
+                        </div>
+                        <div className="grid grid-cols-7 gap-1">
+                          {Array.from({ length: offset_days }).map((_, i) => <div key={`e${i}`} />)}
+                          {dailyStats.map((d: any) => {
+                            const pct = d.totalDue > 0 ? Math.round((d.count / d.totalDue) * 100) : -1;
+                            const isToday = d.day === new Date().getDate() && currentMonthIndex === new Date().getMonth() && currentYear === new Date().getFullYear();
+                            const cellDateKey = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}-${String(d.day).padStart(2, '0')}`;
+                            const cellNote = notes[cellDateKey];
+                            const moodVal = cellNote && !Array.isArray(cellNote) ? (cellNote as any).mood : undefined;
+                            const MOOD_ICON_MAP: Record<number, React.ElementType> = { 1: Angry, 2: Frown, 3: Meh, 4: Smile, 5: Laugh };
+                            const MOOD_COLOR_MAP: Record<number, string> = { 1: '#ef4444', 2: '#f97316', 3: '#eab308', 4: '#84cc16', 5: '#10b981' };
+                            const CellMoodIcon = typeof moodVal === 'number' ? MOOD_ICON_MAP[moodVal] : null;
+                            const cellMoodColor = typeof moodVal === 'number' ? MOOD_COLOR_MAP[moodVal] : null;
+                            return (
+                              <div
+                                key={d.day}
+                                className={`aspect-square rounded-lg border relative overflow-hidden ${isToday ? 'border-black border-2' : 'border-stone-200'}`}
+                                style={{ backgroundColor: '#fafaf9' }}
+                              >
+                                {/* Bottom fill to pct */}
+                                {pct > 0 && (
+                                  <div className="absolute bottom-0 left-0 right-0 transition-all duration-500" style={{ height: `${pct}%`, backgroundColor: pct >= 100 ? theme.primary : theme.secondary, opacity: 0.82 }} />
+                                )}
+                                {/* Day — top left */}
+                                <span className={`absolute top-1 left-1 text-[10px] font-black leading-none z-10 ${pct >= 90 ? 'text-white' : 'text-stone-700'}`}>{d.day}</span>
+                                {/* Mood — center */}
+                                {CellMoodIcon && (
+                                  <div className="absolute inset-0 flex items-center justify-center z-10">
+                                    <CellMoodIcon size={16} style={{ fill: cellMoodColor!, color: '#44403c', strokeWidth: 1.5 }} />
+                                  </div>
+                                )}
+                                {/* % — bottom center */}
+                                <div className="absolute bottom-1 left-0 right-0 flex justify-center z-10">
+                                  <span className={`text-[10px] font-black leading-none ${pct >= 40 ? 'text-white' : pct >= 0 ? 'text-stone-600' : 'text-stone-300'}`}>
+                                    {pct >= 0 ? `${pct}%` : '—'}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {view === 'dashboard' && (
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {annualStats.monthlySummaries.map((m: any, i: number) => {
+                        const pct = Math.round(m.rate || 0);
+                        const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                        const isCurrent = i === new Date().getMonth() && currentYear === new Date().getFullYear();
+                        return (
+                          <div key={i} className={`rounded-lg border-2 overflow-hidden flex flex-col items-center py-2 gap-1 relative ${isCurrent ? 'border-black' : 'border-stone-200'}`}>
+                            <div className="absolute inset-0" style={{ backgroundColor: theme.secondary, opacity: pct >= 100 ? 0 : pct / 100 * 0.7 }} />
+                            {pct >= 100 && <div className="absolute inset-0" style={{ backgroundColor: theme.primary }} />}
+                            <span className={`relative text-[8px] font-black uppercase ${pct >= 60 ? 'text-white' : 'text-stone-500'}`}>{monthNames[i]}</span>
+                            <span className={`relative text-[10px] font-black ${pct >= 60 ? 'text-white' : 'text-stone-800'}`}>{pct}%</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>}
+            </div>
           )}
         </div>
       </div>
@@ -1545,6 +2390,21 @@ const AppContent: React.FC = () => {
         resetWeekOffset={resetWeekOffset}
         theme={theme}
       />
+
+      {isTasksOpen && (
+        <div
+          className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 p-3 backdrop-blur-sm"
+          onClick={() => setIsTasksOpen(false)}
+        >
+          <div
+            className="bg-white neo-border neo-shadow rounded-2xl w-full max-w-lg flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+            style={{ maxHeight: 'min(85vh, 680px)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <TasksView notes={notes} updateNote={updateNote} theme={theme} onClose={() => setIsTasksOpen(false)} />
+          </div>
+        </div>
+      )}
 
       <FeedbackModal
         isOpen={isFeedbackModalOpen}
@@ -1677,6 +2537,29 @@ const SignInPage: React.FC = () => {
   );
 };
 
+// Handles email confirmation links → establishes session → redirects to app
+const AuthCallback: React.FC = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        navigate('/app', { replace: true });
+      } else {
+        // Token is in the URL fragment — Supabase JS picks it up automatically on load
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+          if (session) {
+            subscription.unsubscribe();
+            navigate('/app', { replace: true });
+          }
+        });
+      }
+    });
+  }, []);
+
+  return null;
+};
+
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<any>(null);
@@ -1731,6 +2614,7 @@ const App: React.FC = () => {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/signin" element={<LandingPage />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route
           path="/privacy"
           element={

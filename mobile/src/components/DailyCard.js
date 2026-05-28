@@ -119,7 +119,7 @@ export const DailyCard = ({
     }, []);
 
     const handleAddEntry = () => {
-        if (!newEntryText.trim()) return;
+        if (!newEntryText.trim() && !newEntryMood) return;
         const entry = { id: Date.now().toString(), text: newEntryText.trim(), mood: newEntryMood, createdAt: Date.now() };
         const current = Array.isArray(finalDayData.journal) ? finalDayData.journal : [];
         const updated = [...current, entry];

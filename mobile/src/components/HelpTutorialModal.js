@@ -1,40 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Animated, Easing, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CheckCircle2, ChevronLeft, ChevronRight, X } from 'lucide-react-native';
 import tw from 'twrnc';
 
 const STEP_DEFS = [
-  {
-    key: 'add-habit',
-    title: 'Create a Habit',
-    description: 'Tap the real Add button in the top-left and create one new habit.',
-    focus: { x: 0.02, y: 0.005, w: 0.18, h: 0.055 }
-  },
-  {
-    key: 'complete-or-skip-habit',
-    title: 'Complete Or Skip Habit',
-    description: 'Check off the habit you created. Or long-press it to skip it for today.',
-    focus: { x: 0.05, y: 0.33, w: 0.9, h: 0.12 }
-  },
-  {
-    key: 'logs',
-    title: 'Open Logs',
-    description: 'Use bottom navigation and switch to Logs.',
-    focus: { x: 0.44, y: 0.9, w: 0.23, h: 0.08 }
-  },
-  {
-    key: 'analytics',
-    title: 'Open Analytics',
-    description: 'Use bottom navigation and switch to Analytics.',
-    focus: { x: 0.24, y: 0.9, w: 0.23, h: 0.08 }
-  },
-  {
-    key: 'badges',
-    title: 'Open Badges',
-    description: 'Use bottom navigation and switch to Badges.',
-    focus: { x: 0.69, y: 0.9, w: 0.23, h: 0.08 }
-  }
+  { key: 'add-habit',             titleKey: 'tutorial.steps.addHabit.title',     descKey: 'tutorial.steps.addHabit.description',     focus: { x: 0.02, y: 0.005, w: 0.18, h: 0.055 } },
+  { key: 'complete-or-skip-habit', titleKey: 'tutorial.steps.completeSkip.title', descKey: 'tutorial.steps.completeSkip.description', focus: { x: 0.05, y: 0.33,  w: 0.9,  h: 0.12  } },
+  { key: 'analytics',             titleKey: 'tutorial.steps.analytics.title',    descKey: 'tutorial.steps.analytics.description',    focus: { x: 0.3,  y: 0.9,   w: 0.27, h: 0.08  } },
+  { key: 'logs',                  titleKey: 'tutorial.steps.logs.title',         descKey: 'tutorial.steps.logs.description',         focus: { x: 0.62, y: 0.9,   w: 0.27, h: 0.08  } },
 ];
 
 const isStepCompleted = ({ stepKey, currentView, habitsCount, baselineHabitsCount }) => {
@@ -42,9 +17,8 @@ const isStepCompleted = ({ stepKey, currentView, habitsCount, baselineHabitsCoun
     return habitsCount > baselineHabitsCount;
   }
   if (stepKey === 'complete-or-skip-habit') return false;
-  if (stepKey === 'logs') return currentView === 'monthly';
   if (stepKey === 'analytics') return currentView === 'dashboard';
-  if (stepKey === 'badges') return currentView === 'badges';
+  if (stepKey === 'logs') return currentView === 'monthly';
   return false;
 };
 
@@ -61,6 +35,7 @@ export const HelpTutorialModal = ({
   colorMode = 'light',
   theme
 }) => {
+  const { t } = useTranslation();
   const isDark = colorMode === 'dark';
   const [stepIndex, setStepIndex] = useState(0);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
@@ -190,7 +165,7 @@ export const HelpTutorialModal = ({
           >
             <View style={tw`flex-row items-center justify-between`}>
               <Text style={[tw`text-[10px] font-black uppercase tracking-widest`, { color: isDark ? '#9ca3af' : '#6b7280' }]}>
-                Guided Tutorial {stepIndex + 1}/{STEP_DEFS.length}
+                {t('tutorial.header')} {stepIndex + 1}/{STEP_DEFS.length}
               </Text>
               <TouchableOpacity onPress={onClose} style={tw`p-1`}>
                 <X size={16} color={isDark ? '#d1d5db' : '#374151'} />
@@ -198,13 +173,13 @@ export const HelpTutorialModal = ({
             </View>
 
             <View style={tw`flex-row items-center mt-2`}>
-              <Text style={[tw`text-xl font-black`, { color: isDark ? '#f3f4f6' : '#111827' }]}>{step.title}</Text>
+              <Text style={[tw`text-xl font-black`, { color: isDark ? '#f3f4f6' : '#111827' }]}>{t(step.titleKey)}</Text>
               {currentDone ? <CheckCircle2 size={18} color={theme?.primary || '#22c55e'} style={tw`ml-2`} /> : null}
             </View>
 
-            <Text style={[tw`text-sm font-bold mt-2`, { color: isDark ? '#d1d5db' : '#4b5563' }]}>{step.description}</Text>
+            <Text style={[tw`text-sm font-bold mt-2`, { color: isDark ? '#d1d5db' : '#4b5563' }]}>{t(step.descKey)}</Text>
             <Text style={[tw`text-xs font-black uppercase mt-3 tracking-wide`, { color: currentDone ? (theme?.primary || '#22c55e') : (isDark ? '#f59e0b' : '#b45309') }]}>
-              {currentDone ? 'Step completed' : 'Complete this action in the app to continue'}
+              {currentDone ? t('tutorial.stepCompleted') : t('tutorial.stepPending')}
             </Text>
 
             <View style={tw`mt-4 flex-row items-center justify-between`}>
@@ -214,7 +189,7 @@ export const HelpTutorialModal = ({
                 style={[tw`px-3 py-2 rounded-xl border flex-row items-center`, { borderColor: isDark ? '#374151' : '#d1d5db', opacity: stepIndex === 0 ? 0.5 : 1 }]}
               >
                 <ChevronLeft size={14} color={isDark ? '#d1d5db' : '#374151'} />
-                <Text style={[tw`text-xs font-black uppercase ml-1`, { color: isDark ? '#d1d5db' : '#374151' }]}>Back</Text>
+                <Text style={[tw`text-xs font-black uppercase ml-1`, { color: isDark ? '#d1d5db' : '#374151' }]}>{t('tutorial.back')}</Text>
               </TouchableOpacity>
 
               <View style={tw`flex-row items-center gap-2`}>
@@ -222,7 +197,7 @@ export const HelpTutorialModal = ({
                   onPress={onClose}
                   style={[tw`px-3 py-2 rounded-xl border`, { borderColor: isDark ? '#374151' : '#d1d5db' }]}
                 >
-                  <Text style={[tw`text-xs font-black uppercase`, { color: isDark ? '#d1d5db' : '#374151' }]}>Close</Text>
+                  <Text style={[tw`text-xs font-black uppercase`, { color: isDark ? '#d1d5db' : '#374151' }]}>{t('tutorial.close')}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -241,7 +216,7 @@ export const HelpTutorialModal = ({
                   ]}
                 >
                   <Text style={[tw`text-xs font-black uppercase mr-1`, { color: isDark ? '#f3f4f6' : '#111827' }]}>
-                    {isLast ? 'Finish' : 'Next'}
+                    {isLast ? t('tutorial.finish') : t('tutorial.next')}
                   </Text>
                   {!isLast ? <ChevronRight size={14} color={isDark ? '#f3f4f6' : '#111827'} /> : null}
                 </TouchableOpacity>

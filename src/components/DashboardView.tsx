@@ -29,6 +29,8 @@ interface DashboardViewProps {
         totalHabitsInYear?: number;
         mostLoggedHabit?: any;
         weakestHabit?: any;
+        allTopHabits?: any[];
+        streakMilestones?: { name: string; length: number; startDate: string | null; endDate: string | null }[];
     };
     habits: Habit[];
     theme: Theme;

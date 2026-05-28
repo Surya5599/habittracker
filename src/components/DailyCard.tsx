@@ -77,6 +77,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
     const dailyHabitsRef = useRef<HTMLDivElement>(null);
     const tasksRef = useRef<HTMLDivElement>(null);
     const journalRef = useRef<HTMLDivElement>(null);
+    const journalTextareaRef = useRef<HTMLTextAreaElement>(null);
     const longPressTimerRef = useRef<number | null>(null);
     const longPressTriggeredRef = useRef(false);
     const touchMovedRef = useRef(false);
@@ -114,6 +115,9 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
         };
 
         const handleWheel = (e: WheelEvent) => {
+            // Let horizontal scroll pass through so the day strip can scroll
+            if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+
             const target = e.currentTarget as HTMLElement;
             const isScrollable = target.scrollHeight > target.clientHeight + 1;
             if (!isScrollable) return;
@@ -133,23 +137,28 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
 
         const handleTouchStart = (e: TouchEvent) => {
             const target = e.currentTarget as HTMLElement & {
-                __touchScroll?: { lastY: number };
+                __touchScroll?: { lastX: number; lastY: number };
             };
             if (e.touches.length !== 1) return;
-            target.__touchScroll = { lastY: e.touches[0].clientY };
+            target.__touchScroll = { lastX: e.touches[0].clientX, lastY: e.touches[0].clientY };
         };
 
         const handleTouchMove = (e: TouchEvent) => {
             const target = e.currentTarget as HTMLElement & {
-                __touchScroll?: { lastY: number };
+                __touchScroll?: { lastX: number; lastY: number };
             };
 
             if (e.touches.length !== 1) return;
             if (target.scrollHeight <= target.clientHeight + 1) return;
 
-            const touchState = target.__touchScroll || { lastY: e.touches[0].clientY };
+            const touchState = target.__touchScroll || { lastX: e.touches[0].clientX, lastY: e.touches[0].clientY };
+            const currentX = e.touches[0].clientX;
             const currentY = e.touches[0].clientY;
+            const deltaX = Math.abs(touchState.lastX - currentX);
             const deltaY = touchState.lastY - currentY;
+
+            // Let horizontal swipes pass through for day-strip scrolling
+            if (deltaX > Math.abs(deltaY)) return;
 
             const maxScroll = target.scrollHeight - target.clientHeight;
             const nextScrollTop = Math.min(maxScroll, Math.max(0, target.scrollTop + deltaY));
@@ -160,7 +169,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 target.scrollTop = nextScrollTop;
             }
 
-            target.__touchScroll = { lastY: currentY };
+            target.__touchScroll = { lastX: currentX, lastY: currentY };
         };
 
         const refs = [dailyHabitsRef, tasksRef, journalRef];
@@ -266,6 +275,18 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
 
         return () => clearTimeout(timeoutId);
     }, [mood, journal, dayData.mood, dayData.journal, dateKey, updateNote]);
+
+    useEffect(() => {
+        const el = journalTextareaRef.current;
+        const container = journalRef.current;
+        if (!el || !container) return;
+        const wasNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 80;
+        el.style.height = 'auto';
+        el.style.height = `${el.scrollHeight}px`;
+        if (wasNearBottom) {
+            container.scrollTop = container.scrollHeight;
+        }
+    }, [journal]);
 
     const handleSaveJournal = () => {
         onJournalSaveClick?.();
@@ -567,11 +588,12 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
 
     const FrontFace = (
         <div
-            className={`relative w-full h-full bg-white neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans ${isToday ? 'ring-2 ring-black ring-offset-0' : ''}`}
+            className="relative w-full h-full neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans"
+            style={{ backgroundColor: '#ffffff' }}
         >
             {/* Header */}
             <div
-                className={`day-date-header py-2 px-0 text-center border-b-[2px] border-black relative ${onDateClick && !combinedView ? 'cursor-pointer' : ''}`}
+                className={`day-date-header py-1.5 px-0 text-center border-b-[2px] border-black relative ${onDateClick && !combinedView ? 'cursor-pointer' : ''}`}
                 style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}
                 onClick={() => {
                     if (onDateClick && !combinedView) onDateClick(date);
@@ -644,9 +666,9 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
             >
             {/* Habits List */}
-            <div className="py-1 px-3 bg-stone-50/50 flex flex-col border-b border-stone-200">
+            <div className="py-1 px-2 flex flex-col">
                 <div
-                    className="space-y-1 pr-1"
+                    className="space-y-0 pr-0.5"
                 >
                     {visibleHabitsForDate.length > 0 ? visibleHabitsForDate.map((habit, habitIndex) => {
                         const done = checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
@@ -704,12 +726,12 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                     clearLongPress();
                                     toggleHabitInactive(habit.id, dateKey);
                                 }}
-                                className="flex items-center justify-between group cursor-pointer hover:bg-black/5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] rounded-lg py-2 px-2 -mx-2 transition-all touch-pan-y"
-                                style={{ touchAction: 'pan-y', backgroundColor: `${habit.color || theme.secondary}15` }}
+                                className={`flex items-start justify-between group cursor-pointer hover:bg-black/5 rounded-lg px-1.5 -mx-1.5 transition-all touch-pan-y relative ${cardStyle === 'compact' ? 'py-1' : 'py-1.5'}`}
+                                style={{ touchAction: 'pan-y' }}
                             >
                                 <div className="flex items-center flex-1 min-w-0">
-                                    <span className={`text-[11px] font-bold truncate transition-all duration-300 ${inactive ? 'text-amber-700' : (done ? 'text-stone-400 line-through' : 'text-stone-700')}`}>
-                                        {habit.name || t('dailyCard.untitled')}
+                                    <span className={`text-[11px] font-bold break-words leading-tight transition-all duration-300 ${inactive ? 'text-amber-700' : (done ? 'text-stone-400 line-through' : 'text-stone-700')}`}>
+                                        {(habit.name || t('dailyCard.untitled')).slice(0, 40)}{(habit.name || '').length > 40 ? '…' : ''}
                                     </span>
                                     {habit.weeklyTarget && (
                                         <span className={`ml-1 text-[9px] px-1 py-0 border-[1px] font-black uppercase tracking-tighter ${goalMet ? 'bg-black text-white border-black' : 'bg-stone-50 text-stone-400 border-stone-200'}`}>
@@ -720,7 +742,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                 <motion.div
                                     animate={{ scale: done ? [1, 1.25, 1] : 1 }}
                                     transition={{ duration: 0.18 }}
-                                    className={`w-5 h-5 border-[2px] border-black flex items-center justify-center transition-all ${inactive ? 'bg-amber-300 text-amber-900 border-amber-700' : (done ? 'bg-black text-white' : 'bg-white')}`}
+                                    className={`border-[2px] border-black flex items-center justify-center transition-all ${cardStyle === 'compact' ? 'w-4 h-4' : 'w-5 h-5'} ${inactive ? 'bg-amber-300 text-amber-900 border-amber-700' : (done ? 'bg-black text-white' : 'bg-white')}`}
                                     data-onboarding={habitIndex === 0 ? 'habit-checkbox' : undefined}
                                 >
                                     {inactive ? <Minus size={11} strokeWidth={4} /> : (done && <Check size={11} strokeWidth={4} />)}
@@ -769,7 +791,8 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
 
     const TasksFace = (
         <div
-            className={`relative w-full h-full bg-white neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans ${isToday && !combinedView ? 'ring-2 ring-black ring-offset-0' : ''}`}
+            className="relative w-full h-full neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans"
+            style={{ backgroundColor: '#ffffff' }}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => {
                 e.preventDefault();
@@ -950,35 +973,33 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
         </div>
     );
 
+    const LINE_HEIGHT_J = 26;
+    const RULED_LINES_J = `repeating-linear-gradient(to bottom, transparent, transparent ${LINE_HEIGHT_J - 1}px, #e2ddd6 ${LINE_HEIGHT_J - 1}px, #e2ddd6 ${LINE_HEIGHT_J}px)`;
+
     const JournalFace = (
         <div
-            className={`relative w-full h-full bg-white neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans ${isToday && !combinedView ? 'ring-2 ring-black ring-offset-0' : ''}`}
+            className="relative w-full h-full neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans"
+            style={{ backgroundColor: '#fdfdf8' }}
         >
             {/* Header */}
             <div className="day-date-header p-3 text-center border-b-[2px] border-black relative" style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}>
                 {onPrev && (
                     <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onPrev();
-                        }}
+                        onClick={(e) => { e.stopPropagation(); onPrev(); }}
                         className="absolute left-2 top-1/2 -translate-y-1/2 p-1 text-white hover:bg-white/20 rounded transition-colors"
                         title="Previous day"
                     >
                         <ChevronLeft size={20} strokeWidth={3} />
                     </button>
                 )}
-                <h3 className="text-white font-black uppercase tracking-tighter text-base sm:text-lg leading-tight">
+                <h3 className="text-white font-black tracking-tight text-sm sm:text-base leading-tight">
                     <span className="sm:hidden">{dayNameShort}</span>
                     <span className="hidden sm:inline">{dayName}</span>
                 </h3>
-                <p className="text-white/80 font-bold text-[9px] sm:text-[10px] tracking-widest whitespace-nowrap">{dateString}</p>
+                <p className="text-white/80 font-bold text-[9px] sm:text-[10px] tracking-wide whitespace-nowrap">{dateString}</p>
                 {onNext && (
                     <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onNext();
-                        }}
+                        onClick={(e) => { e.stopPropagation(); onNext(); }}
                         className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-white hover:bg-white/20 rounded transition-colors"
                         title="Next day"
                     >
@@ -987,80 +1008,94 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 )}
             </div>
 
-            <div
-                ref={journalRef}
-                className="p-3 pb-4 flex-1 flex flex-col gap-1 overflow-y-auto scroll-container touch-pan-y"
-                style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
-            >
-                {combinedView && (
-                    <div className="mb-2 rounded-xl border-2 border-black bg-stone-50 px-3 py-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.08)]">
-                        <div className="flex items-center justify-between gap-2">
-                            <div>
-                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-stone-400">Journal</p>
-                                <p className="mt-1 text-sm font-black text-stone-900">
-                                    {hasJournalEntry ? 'Entry saved' : 'Ready to reflect'}
-                                </p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-stone-400">Mood</p>
-                                <p className="mt-1 text-xs font-black text-stone-600">{hasMoodTracked ? selectedMood?.label : 'Not logged'}</p>
-                            </div>
+            {combinedView && (
+                <div className="border-b-2 border-stone-200 px-4 py-2" style={{ backgroundColor: '#fdfdf8' }}>
+                    <div className="flex items-center justify-between gap-2">
+                        <div>
+                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-stone-400">Journal</p>
+                            <p className="mt-0.5 text-sm font-black text-stone-900">{hasJournalEntry ? 'Entry saved' : 'Ready to reflect'}</p>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-stone-400">Mood</p>
+                            <p className="mt-0.5 text-xs font-black text-stone-600">{hasMoodTracked ? selectedMood?.label : 'Not logged'}</p>
                         </div>
                     </div>
-                )}
-                {/* Mood Selector */}
-                <div className="space-y-0">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-stone-600 block text-center">{t('dailyCard.mood')}</label>
-                    <div className="grid grid-cols-5 gap-1 px-1" data-onboarding="journal-moods">
-                        {MOODS.map((m) => {
-                            const isSelected = mood === m.value;
-                            const Icon = m.icon;
-                            return (
-                                <button
-                                    key={m.value}
-                                    onClick={() => setMood(m.value)}
-                                    title={m.tooltip}
-                                    className="flex flex-col items-center justify-center p-1.5 rounded-lg"
-                                >
-                                    <div
-                                        className="p-1 rounded-full transition-all"
-                                        style={{ opacity: isSelected ? 1 : 0.55 }}
-                                    >
-                                        <Icon
-                                            size={18}
-                                            strokeWidth={isSelected ? 2.8 : 2}
-                                            className="text-black"
-                                            fill={isSelected ? m.color : 'none'}
-                                        />
-                                    </div>
-                                </button>
-                            );
-                        })}
-                    </div>
                 </div>
+            )}
 
-                {/* Journal Textarea */}
-                <div className="flex-1 flex flex-col gap-1 min-h-0">
-                    <div className="flex items-center justify-between">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-stone-600">{t('dailyCard.notes')}</label>
+            {/* Mood row */}
+            <div className="flex items-center justify-between px-2 py-1.5 border-b border-stone-200 gap-1" style={{ backgroundColor: '#fdfdf8' }}>
+                {MOODS.map((m) => {
+                    const isSelected = mood === m.value;
+                    const Icon = m.icon;
+                    return (
                         <button
-                            onClick={handleSaveJournal}
-                            className="px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide rounded border border-stone-300 bg-stone-50 text-stone-500 hover:bg-stone-100 hover:text-stone-700 transition-colors inline-flex items-center gap-1"
-                            data-onboarding="journal-save"
+                            key={m.value}
+                            onClick={() => setMood(isSelected ? undefined : m.value)}
+                            title={m.tooltip}
+                            className={`flex-1 flex items-center justify-center py-1.5 rounded-xl border-2 transition-all ${
+                                isSelected
+                                    ? 'border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5'
+                                    : 'border-stone-200 hover:border-stone-400'
+                            }`}
+                            style={isSelected ? { backgroundColor: m.color + '18' } : {}}
+                            data-onboarding="journal-moods"
                         >
-                            <Save size={9} strokeWidth={2.5} />
-                            Save
+                            <Icon
+                                size={16}
+                                strokeWidth={isSelected ? 2.5 : 1.8}
+                                style={{ color: isSelected ? m.color : '#d4cfc9' }}
+                            />
                         </button>
-                    </div>
-                    <textarea
-                        value={journal}
-                        onChange={(e) => setJournal(e.target.value)}
-                        placeholder={t('dailyCard.journalPlaceholder')}
-                        className="w-full flex-1 p-3 bg-stone-50 border-2 border-transparent focus:border-black rounded-xl resize-none text-xs leading-relaxed text-stone-900 placeholder:text-stone-300 outline-none transition-all font-medium min-h-[120px]"
-                        data-onboarding="journal-input"
-                    />
-                </div>
+                    );
+                })}
             </div>
+
+            {/* Ruled writing area — background lives on the scroll container so it travels with content */}
+            <div
+                ref={journalRef}
+                className="relative flex-1 min-h-0 overflow-y-auto scroll-container touch-pan-y"
+                style={{
+                    WebkitOverflowScrolling: 'touch',
+                    touchAction: 'pan-y',
+                    overscrollBehavior: 'contain',
+                    backgroundColor: '#fdfdf8',
+                }}
+            >
+                <textarea
+                    ref={journalTextareaRef}
+                    value={journal}
+                    onChange={(e) => setJournal(e.target.value)}
+                    placeholder="Write about your day…"
+                    className="w-full px-4 pt-3 pb-8 resize-none outline-none font-serif text-[13px] text-stone-800 placeholder:text-stone-300"
+                    style={{
+                        backgroundColor: 'transparent',
+                        backgroundImage: RULED_LINES_J,
+                        backgroundPositionY: '4px',
+                        lineHeight: `${LINE_HEIGHT_J}px`,
+                        overflow: 'hidden',
+                        caretColor: theme.primary,
+                    }}
+                    data-onboarding="journal-input"
+                />
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between px-4 py-2 border-t border-stone-200" style={{ backgroundColor: '#fdfdf8' }}>
+                <p className="text-[9px] font-bold text-stone-300 uppercase tracking-widest">
+                    {journal.trim().split(/\s+/).filter(Boolean).length} words
+                </p>
+                <button
+                    onClick={handleSaveJournal}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-white text-[9px] font-black uppercase tracking-widest border-[3px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-none transition-all"
+                    style={{ backgroundColor: theme.primary }}
+                    data-onboarding="journal-save"
+                >
+                    <Save size={10} strokeWidth={3} />
+                    Save
+                </button>
+            </div>
+
             {!combinedView && StatusBar}
         </div>
     );
@@ -1103,9 +1138,11 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
         );
     }
 
+    const cardFlipped = isFlipped || showTasksView;
+
     return (
         <div
-            className={`relative w-full group ${fitParentHeight ? 'h-full min-h-0' : 'h-[clamp(420px,56svh,720px)] md:h-[clamp(460px,60svh,760px)]'}`}
+            className={`relative w-full group rounded-2xl ${fitParentHeight ? 'h-full min-h-0' : 'h-[clamp(420px,56svh,720px)] md:h-[clamp(460px,60svh,760px)]'}`}
             style={{ perspective: '1000px' }}
         >
             <div

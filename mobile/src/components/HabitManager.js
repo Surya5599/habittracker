@@ -2,7 +2,8 @@ import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, TouchableOpacity, ScrollView, TextInput, Alert, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
-import { X, ChevronLeft, ChevronRight, Check, Trash2, Archive, RefreshCw, Edit2 } from 'lucide-react-native';
+import DraggableFlatList, { ScaleDecorator } from 'react-native-draggable-flatlist';
+import { X, ChevronLeft, ChevronRight, Check, Trash2, Archive, RefreshCw, Edit2, GripVertical } from 'lucide-react-native';
 import tw from 'twrnc';
 import { THEMES } from '../constants';
 
@@ -57,7 +58,7 @@ export const HabitManager = ({
                 style={[tw`w-20 items-center justify-center gap-1`, { backgroundColor: theme.primary }]}
             >
                 <Edit2 size={18} color="white" strokeWidth={2} />
-                <Text style={tw`text-white text-[10px] font-black uppercase tracking-wider`}>Edit</Text>
+                <Text style={tw`text-white text-[10px] font-black uppercase tracking-wider`}>{t('habitManager.edit')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
                 onPress={() => {
@@ -84,13 +85,13 @@ export const HabitManager = ({
             style={[tw`w-24 items-center justify-center gap-1`, { backgroundColor: isDark ? '#1f1f1f' : '#e5e7eb' }]}
         >
             <RefreshCw size={18} color={textPrimary} strokeWidth={2} />
-            <Text style={[tw`text-[10px] font-black uppercase tracking-wider`, { color: textPrimary }]}>Restore</Text>
+            <Text style={[tw`text-[10px] font-black uppercase tracking-wider`, { color: textPrimary }]}>{t('habitManager.restore')}</Text>
         </TouchableOpacity>
     );
 
     const frequencyLabel = (habit) => {
         if (habit.weeklyTarget) return `${habit.weeklyTarget}× / week`;
-        if (!habit.frequency || habit.frequency.length === 0 || habit.frequency.length === 7) return 'Every day';
+        if (!habit.frequency || habit.frequency.length === 0 || habit.frequency.length === 7) return t('habitManager.everyDay');
         return ['S', 'M', 'T', 'W', 'T', 'F', 'S'].filter((_, i) => habit.frequency.includes(i)).join('  ');
     };
 
@@ -118,7 +119,7 @@ export const HabitManager = ({
                 h.name.trim().toLowerCase() !== originalName
         );
         if (duplicate) {
-            Alert.alert('Already exists', `A habit called "${editName.trim()}" already exists.`);
+            Alert.alert(t('habitManager.alreadyExists'), t('habitManager.alreadyExistsMsg', { name: editName.trim() }));
             return;
         }
 
@@ -154,7 +155,7 @@ export const HabitManager = ({
             h => !h.archivedAt && h.name.trim().toLowerCase() === name.toLowerCase()
         );
         if (duplicate) {
-            Alert.alert('Already exists', `A habit called "${name}" already exists.`);
+            Alert.alert(t('habitManager.alreadyExists'), t('habitManager.alreadyExistsMsg', { name }));
             return;
         }
 
@@ -223,118 +224,131 @@ export const HabitManager = ({
                                 </TouchableOpacity>
                             </View>
 
-                            <ScrollView
-                                style={tw`flex-1`}
+                            <DraggableFlatList
+                                data={activeHabits}
+                                keyExtractor={(item) => item.id}
+                                onDragEnd={({ data }) => reorderHabits(data)}
+                                activationDistance={10}
                                 contentContainerStyle={{ paddingBottom: 60 }}
                                 showsVerticalScrollIndicator={false}
                                 keyboardShouldPersistTaps="handled"
-                            >
-                                {/* Quick-add row */}
-                                <View style={[tw`flex-row items-center px-5 py-3.5`, { borderBottomWidth: 1, borderColor: border }]}>
-                                    <View style={[tw`w-2.5 h-2.5 rounded-full mr-4`, { backgroundColor: theme.primary, opacity: 0.35 }]} />
-                                    <TextInput
-                                        value={newHabitName}
-                                        onChangeText={setNewHabitName}
-                                        onSubmitEditing={handleQuickAdd}
-                                        placeholder="Add a habit..."
-                                        placeholderTextColor={textMuted}
-                                        returnKeyType="done"
-                                        blurOnSubmit={false}
-                                        style={[tw`flex-1 text-base font-medium`, { color: textPrimary }]}
-                                    />
-                                    {newHabitName.trim().length > 0 && (
-                                        <TouchableOpacity
-                                            onPress={handleQuickAdd}
-                                            style={[tw`w-7 h-7 rounded-full items-center justify-center`, { backgroundColor: theme.primary }]}
-                                        >
-                                            <Check size={13} color="white" strokeWidth={3} />
-                                        </TouchableOpacity>
-                                    )}
-                                </View>
-
-                                {/* Active habits */}
-                                {activeHabits.map(habit => (
-                                    <Swipeable
-                                        key={habit.id}
-                                        ref={ref => { swipeRefs.current[habit.id] = ref; }}
-                                        renderRightActions={() => renderRightActions(habit)}
-                                        onSwipeableOpen={() => {
-                                            if (openSwipeId.current && openSwipeId.current !== habit.id) {
-                                                swipeRefs.current[openSwipeId.current]?.close();
-                                            }
-                                            openSwipeId.current = habit.id;
-                                        }}
-                                        overshootRight={false}
-                                        friction={1}
-                                        rightThreshold={80}
-                                    >
-                                        <TouchableOpacity
-                                            onPress={() => { closeOpenSwipe(); openEdit(habit); }}
-                                            activeOpacity={0.55}
-                                            style={[tw`flex-row items-center px-5 py-3.5`, { borderBottomWidth: 1, borderColor: border, backgroundColor: bg }]}
-                                        >
-                                            <View style={[tw`w-2.5 h-2.5 rounded-full mr-4`, { backgroundColor: habit.color || theme.primary }]} />
-                                            <View style={tw`flex-1`}>
-                                                <Text style={[tw`text-base font-semibold`, { color: textPrimary }]}>{habit.name}</Text>
-                                                <Text style={[tw`text-xs font-medium mt-0.5`, { color: textMuted }]}>{frequencyLabel(habit)}</Text>
-                                            </View>
-                                            <ChevronRight size={16} color={textMuted} strokeWidth={2} />
-                                        </TouchableOpacity>
-                                    </Swipeable>
-                                ))}
-
-                                {activeHabits.length === 0 && (
+                                ListHeaderComponent={
+                                    <View style={[tw`flex-row items-center px-5 py-3.5`, { borderBottomWidth: 1, borderColor: border }]}>
+                                        <View style={[tw`w-2.5 h-2.5 rounded-full mr-4`, { backgroundColor: theme.primary, opacity: 0.35 }]} />
+                                        <TextInput
+                                            value={newHabitName}
+                                            onChangeText={setNewHabitName}
+                                            onSubmitEditing={handleQuickAdd}
+                                            placeholder="Add a habit..."
+                                            placeholderTextColor={textMuted}
+                                            returnKeyType="done"
+                                            blurOnSubmit={false}
+                                            style={[tw`flex-1 text-base font-medium`, { color: textPrimary }]}
+                                        />
+                                        {newHabitName.trim().length > 0 && (
+                                            <TouchableOpacity
+                                                onPress={handleQuickAdd}
+                                                style={[tw`w-7 h-7 rounded-full items-center justify-center`, { backgroundColor: theme.primary }]}
+                                            >
+                                                <Check size={13} color="white" strokeWidth={3} />
+                                            </TouchableOpacity>
+                                        )}
+                                    </View>
+                                }
+                                ListEmptyComponent={
                                     <View style={tw`px-5 py-10 items-center`}>
                                         <Text style={[tw`text-sm font-medium`, { color: textMuted }]}>No habits yet — add one above</Text>
                                     </View>
-                                )}
-
-                                {/* Archived section */}
-                                {archivedHabits.length > 0 && (
-                                    <View style={tw`mt-4`}>
-                                        <TouchableOpacity
-                                            onPress={() => setShowArchived(!showArchived)}
-                                            style={tw`flex-row items-center px-5 py-3`}
-                                        >
-                                            <Text style={[tw`text-xs font-black uppercase tracking-widest mr-1.5`, { color: textMuted }]}>
-                                                Archived ({archivedHabits.length})
-                                            </Text>
-                                            <View style={{ transform: [{ rotate: showArchived ? '90deg' : '0deg' }] }}>
-                                                <ChevronRight size={12} color={textMuted} strokeWidth={2.5} />
-                                            </View>
-                                        </TouchableOpacity>
-                                        {showArchived && archivedHabits.map(habit => (
-                                            <Swipeable
-                                                key={habit.id}
-                                                ref={ref => { swipeRefs.current[habit.id] = ref; }}
-                                                renderRightActions={() => renderArchivedRightActions(habit)}
-                                                onSwipeableOpen={() => {
-                                                    if (openSwipeId.current && openSwipeId.current !== habit.id) {
-                                                        swipeRefs.current[openSwipeId.current]?.close();
-                                                    }
-                                                    openSwipeId.current = habit.id;
-                                                }}
-                                                overshootRight={false}
-                                                friction={1}
-                                                rightThreshold={60}
+                                }
+                                ListFooterComponent={
+                                    archivedHabits.length > 0 ? (
+                                        <View style={tw`mt-4`}>
+                                            <TouchableOpacity
+                                                onPress={() => setShowArchived(!showArchived)}
+                                                style={tw`flex-row items-center px-5 py-3`}
                                             >
+                                                <Text style={[tw`text-xs font-black uppercase tracking-widest mr-1.5`, { color: textMuted }]}>
+                                                    Archived ({archivedHabits.length})
+                                                </Text>
+                                                <View style={{ transform: [{ rotate: showArchived ? '90deg' : '0deg' }] }}>
+                                                    <ChevronRight size={12} color={textMuted} strokeWidth={2.5} />
+                                                </View>
+                                            </TouchableOpacity>
+                                            {showArchived && archivedHabits.map(habit => (
+                                                <Swipeable
+                                                    key={habit.id}
+                                                    ref={ref => { swipeRefs.current[habit.id] = ref; }}
+                                                    renderRightActions={() => renderArchivedRightActions(habit)}
+                                                    onSwipeableOpen={() => {
+                                                        if (openSwipeId.current && openSwipeId.current !== habit.id) {
+                                                            swipeRefs.current[openSwipeId.current]?.close();
+                                                        }
+                                                        openSwipeId.current = habit.id;
+                                                    }}
+                                                    overshootRight={false}
+                                                    friction={1}
+                                                    rightThreshold={60}
+                                                >
+                                                    <TouchableOpacity
+                                                        onPress={() => { closeOpenSwipe(); openEdit(habit); }}
+                                                        activeOpacity={0.55}
+                                                        style={[tw`flex-row items-center px-5 py-3.5`, { borderBottomWidth: 1, borderColor: border, backgroundColor: bg, opacity: 0.5 }]}
+                                                    >
+                                                        <View style={[tw`w-2.5 h-2.5 rounded-full mr-4`, { backgroundColor: habit.color || theme.primary }]} />
+                                                        <View style={tw`flex-1`}>
+                                                            <Text style={[tw`text-base font-semibold`, { color: textPrimary }]}>{habit.name}</Text>
+                                                            <Text style={[tw`text-xs font-medium mt-0.5`, { color: textMuted }]}>Archived</Text>
+                                                        </View>
+                                                        <ChevronRight size={16} color={textMuted} strokeWidth={2} />
+                                                    </TouchableOpacity>
+                                                </Swipeable>
+                                            ))}
+                                        </View>
+                                    ) : null
+                                }
+                                renderItem={({ item: habit, drag, isActive }) => (
+                                    <ScaleDecorator activeScale={0.98}>
+                                        <Swipeable
+                                            ref={ref => { swipeRefs.current[habit.id] = ref; }}
+                                            renderRightActions={() => renderRightActions(habit)}
+                                            onSwipeableOpen={() => {
+                                                if (openSwipeId.current && openSwipeId.current !== habit.id) {
+                                                    swipeRefs.current[openSwipeId.current]?.close();
+                                                }
+                                                openSwipeId.current = habit.id;
+                                            }}
+                                            overshootRight={false}
+                                            friction={1}
+                                            rightThreshold={80}
+                                            enabled={!isActive}
+                                        >
+                                            <View style={[tw`flex-row items-center px-5 py-3.5`, { borderBottomWidth: 1, borderColor: border, backgroundColor: isActive ? (isDark ? '#1a1a1a' : '#f9f9f9') : bg }]}>
+                                                <TouchableOpacity
+                                                    onLongPress={drag}
+                                                    delayLongPress={150}
+                                                    activeOpacity={0.4}
+                                                    hitSlop={{ top: 8, bottom: 8, left: 4, right: 12 }}
+                                                    style={tw`mr-3`}
+                                                >
+                                                    <GripVertical size={16} color={textMuted} strokeWidth={2} />
+                                                </TouchableOpacity>
+                                                <View style={[tw`w-2.5 h-2.5 rounded-full mr-3`, { backgroundColor: habit.color || theme.primary }]} />
                                                 <TouchableOpacity
                                                     onPress={() => { closeOpenSwipe(); openEdit(habit); }}
                                                     activeOpacity={0.55}
-                                                    style={[tw`flex-row items-center px-5 py-3.5`, { borderBottomWidth: 1, borderColor: border, backgroundColor: bg, opacity: 0.5 }]}
+                                                    style={tw`flex-1 flex-row items-center`}
                                                 >
-                                                    <View style={[tw`w-2.5 h-2.5 rounded-full mr-4`, { backgroundColor: habit.color || theme.primary }]} />
                                                     <View style={tw`flex-1`}>
                                                         <Text style={[tw`text-base font-semibold`, { color: textPrimary }]}>{habit.name}</Text>
-                                                        <Text style={[tw`text-xs font-medium mt-0.5`, { color: textMuted }]}>Archived</Text>
+                                                        <Text style={[tw`text-xs font-medium mt-0.5`, { color: textMuted }]}>{frequencyLabel(habit)}</Text>
                                                     </View>
                                                     <ChevronRight size={16} color={textMuted} strokeWidth={2} />
                                                 </TouchableOpacity>
-                                            </Swipeable>
-                                        ))}
-                                    </View>
+                                            </View>
+                                        </Swipeable>
+                                    </ScaleDecorator>
                                 )}
-                            </ScrollView>
+                            />
                         </>
                     ) : (
                         <>

@@ -170,7 +170,7 @@ export const JournalModal: React.FC<JournalModalProps> = ({
                             style={{
                                 backgroundColor: 'transparent',
                                 backgroundImage: RULED_LINES,
-                                backgroundPositionY: '14px',
+                                backgroundPositionY: '20px',
                                 lineHeight: `${LINE_HEIGHT}px`,
                                 minHeight: `${LINE_HEIGHT * 14 + 14}px`,
                                 caretColor: theme.primary,

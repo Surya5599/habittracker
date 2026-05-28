@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Plus, Trash2, Check, Edit2, GripVertical, Archive, RotateCcw, ChevronUp, MoreHorizontal } from 'lucide-react';
+import { X, Plus, Trash2, Check, Edit2, GripVertical, Archive, RotateCcw, ChevronUp, MoreHorizontal, Search } from 'lucide-react';
 import { Habit } from '../types';
 import { Reorder, useDragControls } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -46,8 +46,11 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
     const [editWeeklyTarget, setEditWeeklyTarget] = useState<number | undefined>(undefined);
     const [frequencyType, setFrequencyType] = useState<'fixed' | 'flexible'>('fixed');
     const [isReorderMode, setIsReorderMode] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchOpen, setSearchOpen] = useState(false);
     const listRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const searchInputRef = useRef<HTMLInputElement>(null);
     const activeHabitsCount = habits.filter(h => !h.archivedAt).length;
     const archivedHabitsCount = habits.filter(h => !!h.archivedAt).length;
 
@@ -158,32 +161,74 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
 
     if (!isOpen) return null;
 
-    const visibleHabits = habits.filter(h => showArchived ? h.archivedAt : !h.archivedAt);
+    const visibleHabits = habits.filter(h => {
+        if (showArchived ? !h.archivedAt : h.archivedAt) return false;
+        if (!searchQuery.trim()) return true;
+        return (h.name || '').toLowerCase().includes(searchQuery.toLowerCase());
+    });
 
     return (
-        <div className="fixed inset-0 z-50 flex items-start justify-center p-2 pt-4 sm:p-4 sm:pt-8 md:pt-16 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white border-[3px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] w-full max-w-md overflow-hidden flex flex-col min-h-0 max-h-[calc(100svh-1rem)] sm:max-h-[calc(100svh-2rem)] md:max-h-[88vh] animate-in zoom-in-95 duration-200">
-                <div className="p-3 border-b-[3px] border-black flex items-center justify-between gap-2 bg-white">
-                    <div>
-                        <h2 className="font-serif text-2xl sm:text-3xl font-black uppercase tracking-tighter text-black">{t('habitManager.title')}</h2>
-                        <p className="mt-1 hidden sm:block text-[11px] font-bold uppercase tracking-wider text-stone-500">
-                            Review habits first, expand a card only when you want to edit.
-                        </p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="border-[3px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] w-full max-w-md overflow-hidden flex flex-col min-h-0 max-h-[calc(100svh-1.5rem)] animate-in zoom-in-95 duration-200 bg-white">
+                {/* Header */}
+                <div className="flex items-center gap-2 px-4 py-3 border-b-[3px] border-black bg-white shrink-0">
+                    <h2 className="flex-1 text-base font-black uppercase tracking-tight text-black">Habits</h2>
+                    <span className="px-2 py-0.5 text-[10px] font-black bg-black text-white">{activeHabitsCount}</span>
+                    {/* Inline search (sm+) */}
+                    <div className="hidden sm:flex items-center gap-1.5 px-2 py-1.5 border-2 border-stone-200 focus-within:border-black bg-stone-50 transition-colors">
+                        <Search size={12} className="text-stone-400 shrink-0" />
+                        <input
+                            ref={searchInputRef}
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                            placeholder="Search…"
+                            className="text-[11px] font-medium text-stone-700 placeholder:text-stone-300 outline-none bg-transparent w-24"
+                        />
+                        {searchQuery && <button onClick={() => setSearchQuery('')} className="text-stone-300 hover:text-stone-600"><X size={10} /></button>}
                     </div>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => setIsReorderMode(prev => !prev)}
-                            className={`px-2 py-1 text-[10px] font-black uppercase tracking-wide border-2 transition-all ${isReorderMode ? 'bg-black text-white border-black' : 'bg-white text-black border-black hover:bg-stone-100'}`}
-                        >
-                            {isReorderMode ? 'Done' : 'Reorder'}
-                        </button>
-                        <button onClick={handleCloseModal} className="border-2 border-transparent hover:border-black p-1 transition-all hover:bg-stone-100">
-                            <X size={20} className="text-black" />
-                        </button>
-                    </div>
+                    {/* Mobile search toggle */}
+                    <button
+                        onClick={() => {
+                            setSearchOpen(prev => {
+                                if (prev) setSearchQuery('');
+                                else setTimeout(() => searchInputRef.current?.focus(), 50);
+                                return !prev;
+                            });
+                        }}
+                        className={`sm:hidden p-1.5 border-2 transition-all ${searchQuery || searchOpen ? 'bg-black text-white border-black' : 'border-stone-200 text-stone-400 hover:border-black hover:text-black'}`}
+                    >
+                        <Search size={12} />
+                    </button>
+                    {/* Reorder toggle */}
+                    <button
+                        onClick={() => setIsReorderMode(prev => !prev)}
+                        className={`px-2 py-1 text-[10px] font-black uppercase tracking-wide border-2 border-black transition-all ${isReorderMode ? 'bg-black text-white' : 'bg-white text-black hover:bg-stone-100'}`}
+                    >
+                        {isReorderMode ? 'Done' : 'Reorder'}
+                    </button>
+                    <button onClick={handleCloseModal} className="p-1.5 text-stone-400 hover:text-black hover:bg-stone-100 rounded transition-colors">
+                        <X size={16} />
+                    </button>
                 </div>
 
-                <div className="px-3 py-2 border-b-[2px] border-black grid grid-cols-2 gap-2 bg-stone-50">
+                {/* Mobile search bar */}
+                {searchOpen && (
+                    <div className="sm:hidden px-4 py-2 border-b-2 border-black bg-stone-50 shrink-0">
+                        <div className="flex items-center gap-2">
+                            <Search size={12} className="text-stone-400 shrink-0" />
+                            <input
+                                value={searchQuery}
+                                onChange={e => setSearchQuery(e.target.value)}
+                                placeholder="Search habits..."
+                                className="flex-1 text-sm font-medium text-stone-800 placeholder:text-stone-400 bg-transparent outline-none"
+                            />
+                            {searchQuery && <button onClick={() => setSearchQuery('')} className="text-stone-400 hover:text-black"><X size={12} /></button>}
+                        </div>
+                    </div>
+                )}
+
+                {/* Tabs */}
+                <div className="px-3 py-2 border-b-[3px] border-black grid grid-cols-2 gap-2 bg-stone-100 shrink-0">
                     <button
                         onClick={() => setShowArchived(false)}
                         className={`w-full min-w-0 h-8 sm:h-9 px-2 text-[8px] sm:text-[10px] leading-tight text-center font-black uppercase tracking-normal sm:tracking-wide border-2 transition-all ${!showArchived ? 'bg-black text-white border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,0.2)]' : 'bg-white text-stone-400 border-stone-200 hover:border-black hover:text-black'}`}
@@ -198,9 +243,10 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                     </button>
                 </div>
 
+                {/* Scrollable content */}
                 <div
                     ref={listRef}
-                    className="flex-1 min-h-0 overflow-y-auto p-3 touch-pan-y"
+                    className="flex-1 min-h-0 overflow-y-auto p-3 touch-pan-y bg-stone-50"
                     style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
                 >
                     {visibleHabits.length === 0 ? (
@@ -227,6 +273,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                                         key={habit.id}
                                         habit={habit}
                                         editingId={editingId}
+                                        setEditingId={setEditingId}
                                         editName={editName}
                                         setEditName={setEditName}
                                         editDescription={editDescription}
@@ -257,10 +304,11 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                     )}
                 </div>
 
-                <div className="p-2.5 border-t-[2px] border-black bg-stone-50">
+                {/* Footer */}
+                <div className="border-t-[3px] border-black shrink-0 p-3 bg-white">
                     <button
                         onClick={handleAdd}
-                        className="w-full py-2.5 bg-black text-white text-[11px] font-black uppercase tracking-widest border-2 border-black shadow-[4px_4px_0px_0px_gray] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[2px_2px_0px_0px_gray] active:translate-y-[4px] active:translate-x-[4px] active:shadow-none transition-all flex items-center justify-center gap-2"
+                        className="w-full py-2.5 bg-black text-white text-[11px] font-black uppercase tracking-widest border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)] active:translate-y-[4px] active:translate-x-[4px] active:shadow-none transition-all flex items-center justify-center gap-2"
                     >
                         <Plus size={16} strokeWidth={3} />
                         {t('habitManager.addHabit')}
@@ -274,6 +322,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
 interface HabitItemProps {
     habit: Habit;
     editingId: string | null;
+    setEditingId: (id: string | null) => void;
     editName: string;
     setEditName: (val: string) => void;
     editDescription: string;
@@ -315,6 +364,7 @@ const getHabitTypeLabel = (habit: Habit) => {
 const HabitItem: React.FC<HabitItemProps> = ({
     habit,
     editingId,
+    setEditingId,
     editName,
     setEditName,
     editDescription,
@@ -357,7 +407,7 @@ const HabitItem: React.FC<HabitItemProps> = ({
                 zIndex: 50
             }}
             transition={{ type: "spring", stiffness: 500, damping: 30 }}
-            className="group relative rounded-2xl border-[2px] border-black bg-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+            className="group relative border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] bg-white"
         >
             {isReorderMode ? (
                 <div className="flex items-center gap-3 px-3 py-2.5">
@@ -470,13 +520,14 @@ const HabitItem: React.FC<HabitItemProps> = ({
                             ref={inputRef}
                             type="text"
                             value={editName}
-                            onChange={(e) => setEditName(e.target.value)}
+                            onChange={(e) => setEditName(e.target.value.slice(0, 40))}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                     e.preventDefault();
                                     saveEdit(habit.id);
                                 }
                             }}
+                            maxLength={40}
                             className="w-full bg-white border-2 border-black px-2 py-1 text-[13px] sm:text-sm font-bold text-black outline-none focus:ring-0 focus:bg-stone-50"
                             placeholder={t('habitManager.habitNamePlaceholder')}
                         />

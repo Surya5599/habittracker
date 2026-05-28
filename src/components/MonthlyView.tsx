@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Save, Check, Minus, Laugh, Smile, Meh, Frown, Angry, BookOpen, ChevronDown, ChevronUp } from 'lucide-react';
-import { CircularProgress } from './CircularProgress';
+import { Check, Minus, Laugh, Smile, Meh, Frown, Angry, BookOpen } from 'lucide-react';
 import { Habit, HabitCompletion, Theme, DailyNote, DayData } from '../types';
 import { DAYS_OF_WEEK_SHORT } from '../constants';
 import { getHabitMonthStats, isCompleted as checkCompleted } from '../utils/stats';
@@ -16,24 +15,16 @@ interface MonthlyViewProps {
     weeks: number[][];
     monthDates: number[];
     topHabitsThisMonth: (Habit & { stats: any; percentage: number })[];
-    editingHabitId: string | null;
-    editingGoalId: string | null;
-    inputRef: React.RefObject<HTMLInputElement>;
-    goalInputRef: React.RefObject<HTMLInputElement>;
     toggleCompletion: (habitId: string, dateKey: string) => void;
     toggleHabitInactive: (habitId: string, dateKey: string) => void;
     isHabitInactive: (habitId: string, dateKey: string) => boolean;
-    updateHabitNameState: (id: string, name: string) => void;
-    updateHabitGoalState: (id: string, goal: string) => void;
-    handleHabitBlur: (habit: Habit) => void;
-    setEditingHabitId: (id: string | null) => void;
-    setEditingGoalId: (id: string | null) => void;
     removeHabit: (id: string) => void;
     isDayFullyCompleted: (day: number) => boolean;
     isModalOpen?: boolean;
     notes: DailyNote;
     updateNote: (dateKey: string, data: Partial<DayData>) => void;
     setSelectedDateForCard: (date: Date | null, flipped?: boolean) => void;
+    statsOpen?: boolean;
 }
 
 export const MonthlyView: React.FC<MonthlyViewProps> = ({
@@ -45,26 +36,17 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
     weeks,
     monthDates,
     topHabitsThisMonth,
-    editingHabitId,
-    editingGoalId,
-    inputRef,
-    goalInputRef,
     toggleCompletion,
     toggleHabitInactive,
     isHabitInactive,
-    updateHabitNameState,
-    updateHabitGoalState,
-    handleHabitBlur,
-    setEditingHabitId,
-    setEditingGoalId,
     removeHabit,
     isDayFullyCompleted,
     isModalOpen,
     notes,
     updateNote,
     setSelectedDateForCard,
+    statsOpen = false,
 }) => {
-    const [showTopHabits, setShowTopHabits] = useState(false);
     const visibleHabits = habits.filter(h =>
         monthDates.some(day => isHabitActiveOnDate(h, new Date(currentYear, currentMonthIndex, day)))
     );
@@ -91,233 +73,43 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
     const moodMissedDays = Math.max(0, moodTrackableDays - moodLoggedDays);
     const moodLoggedPercentage = moodTrackableDays > 0 ? (moodLoggedDays / moodTrackableDays) * 100 : 0;
 
-    const tableScrollRef = useRef<HTMLDivElement>(null);
     const todayRef = useRef<HTMLTableHeaderCellElement>(null);
-    const weeksScrollRef = useRef<HTMLDivElement>(null);
-    const currentWeekRef = useRef<HTMLDivElement>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const longPressTimerRef = useRef<number | null>(null);
     const longPressTriggeredRef = useRef(false);
 
-    useEffect(() => {
-        // Scroll main table to today
+    const scrollToToday = (behavior: ScrollBehavior = 'auto') => {
         if (todayRef.current && scrollContainerRef.current) {
             const container = scrollContainerRef.current;
             const element = todayRef.current;
-
-            // Add a small timeout to ensure layout is fully rendered
-            setTimeout(() => {
-                const scrollLeft = element.offsetLeft - (container.clientWidth / 2) + (element.clientWidth / 2) - 50; // -50 to account for sticky column on mobile
-                container.scrollTo({ left: scrollLeft, behavior: 'auto' });
-            }, 100);
+            const scrollLeft = element.offsetLeft - (container.clientWidth / 2) + (element.clientWidth / 2) - 50;
+            container.scrollTo({ left: scrollLeft, behavior });
         }
+    };
 
-        // Scroll top chart to current week
-        if (currentWeekRef.current) {
-            currentWeekRef.current.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
-        }
+    useEffect(() => {
+        const timer = setTimeout(() => scrollToToday('auto'), 100);
+        return () => clearTimeout(timer);
     }, [currentMonthIndex, currentYear]);
+
+    useEffect(() => {
+        if (!statsOpen) return;
+        // Wait for the lg:pr-[50%] layout transition (200ms) to finish before computing scroll
+        const timer = setTimeout(() => scrollToToday('smooth'), 300);
+        return () => clearTimeout(timer);
+    }, [statsOpen]);
 
     return (
         <>
-            <div className="space-y-4">
-                <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-                    <div className="rounded-2xl border-[3px] border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] bg-white p-4">
-                        <div className="mb-4 flex items-center justify-between gap-3">
-                            <div>
-                                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-stone-400">Weekly Snapshot</p>
-                                <h4 className="mt-1 text-base font-black uppercase tracking-tight text-stone-900">Month pacing by week</h4>
-                            </div>
-                            <div className="hidden text-[10px] font-black uppercase tracking-[0.18em] text-stone-400 md:block">
-                                {weeks.length} checkpoints
-                            </div>
-                        </div>
-
-                        <div ref={weeksScrollRef} className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-                            {weeks.map((week, wIndex) => {
-                                const weekTotal = habits.reduce((acc, h) => {
-                                    let hWeekDone = 0;
-                                    let activeDays = 0;
-
-                                    week.forEach(day => {
-                                        const dayDate = new Date(currentYear, currentMonthIndex, day);
-                                        const dateKey = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                                        const inactive = !isHabitActiveOnDate(h, dayDate) || isHabitManuallyInactive(notes, dateKey, h.id);
-                                        if (inactive) return;
-
-                                        activeDays++;
-                                        if (h.weeklyTarget) {
-                                            if (checkCompleted(h.id, day, completions, currentMonthIndex, currentYear)) hWeekDone++;
-                                        } else {
-                                            const isDue = !h.frequency || h.frequency.includes(dayDate.getDay());
-                                            if (isDue && checkCompleted(h.id, day, completions, currentMonthIndex, currentYear)) hWeekDone++;
-                                        }
-                                    });
-
-                                    if (h.weeklyTarget) {
-                                        const activeCap = (h.weeklyTarget / 7) * activeDays;
-                                        return acc + Math.min(hWeekDone, activeCap);
-                                    }
-
-                                    return acc + hWeekDone;
-                                }, 0);
-
-                                const weekMax = habits.reduce((acc, h) => {
-                                    let activeDays = 0;
-                                    let hPossible = 0;
-
-                                    week.forEach(day => {
-                                        const dayDate = new Date(currentYear, currentMonthIndex, day);
-                                        const dateKey = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                                        const inactive = !isHabitActiveOnDate(h, dayDate) || isHabitManuallyInactive(notes, dateKey, h.id);
-                                        if (inactive) return;
-
-                                        activeDays++;
-                                        if (!h.weeklyTarget && (!h.frequency || h.frequency.includes(dayDate.getDay()))) hPossible++;
-                                    });
-
-                                    if (h.weeklyTarget) {
-                                        return acc + ((h.weeklyTarget / 7) * activeDays);
-                                    }
-
-                                    return acc + hPossible;
-                                }, 0);
-
-                                const weekPerc = weekMax > 0 ? (weekTotal / weekMax) * 100 : 0;
-                                const weekTotalLabel = String(Math.round(weekTotal));
-                                const weekMaxLabel = String(Math.round(weekMax));
-                                const isCurrentWeek = week.includes(new Date().getDate()) && currentMonthIndex === new Date().getMonth() && currentYear === new Date().getFullYear();
-                                const startDate = new Date(currentYear, currentMonthIndex, week[0]);
-                                const endDate = new Date(currentYear, currentMonthIndex, week[week.length - 1]);
-
-                                return (
-                                    <div
-                                        key={wIndex}
-                                        ref={isCurrentWeek ? currentWeekRef : null}
-                                        className={`rounded-2xl border-[2px] border-black p-3 transition-colors shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] ${isCurrentWeek ? 'bg-stone-50' : 'bg-white'}`}
-                                        style={isCurrentWeek ? { backgroundColor: theme.primary + '15' } : {}}
-                                    >
-                                        <div className="flex items-start justify-between gap-3">
-                                            <div>
-                                                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-stone-400">Week {wIndex + 1}</p>
-                                                <p className="mt-1 text-xs font-bold uppercase tracking-wide text-stone-600">
-                                                    {startDate.toLocaleString('default', { month: 'short' })} {String(startDate.getDate()).padStart(2, '0')} - {String(endDate.getDate()).padStart(2, '0')}
-                                                </p>
-                                            </div>
-                                            <CircularProgress
-                                                percentage={weekPerc}
-                                                size={58}
-                                                strokeWidth={7}
-                                                color={theme.secondary}
-                                                trackColor={theme.secondary + '20'}
-                                                textClassName="text-sm"
-                                            />
-                                        </div>
-                                        <div className="mt-3 flex items-end justify-between gap-3">
-                                            <div>
-                                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-stone-400">Completed</p>
-                                                <p className="mt-1 text-2xl font-black leading-none text-stone-900">{weekTotalLabel}<span className="ml-1 text-sm text-stone-300">/ {weekMaxLabel}</span></p>
-                                            </div>
-                                            <div className="flex h-10 items-end gap-1">
-                                                {week.map(day => {
-                                                    const dayDate = new Date(currentYear, currentMonthIndex, day);
-                                                    const dayIndex = dayDate.getDay();
-                                                    const dueHabits = habits.filter(h => {
-                                                        if (h.weeklyTarget) return false;
-                                                        if (!(!h.frequency || h.frequency.includes(dayIndex))) return false;
-                                                        if (!isHabitActiveOnDate(h, dayDate)) return false;
-                                                        const dateKey = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                                                        return !isHabitManuallyInactive(notes, dateKey, h.id);
-                                                    });
-                                                    let dc = 0;
-                                                    dueHabits.forEach(h => {
-                                                        if (checkCompleted(h.id, day, completions, currentMonthIndex, currentYear)) dc++;
-                                                    });
-
-                                                    const hRatio = dueHabits.length > 0 ? dc / dueHabits.length : 0;
-                                                    return (
-                                                        <div
-                                                            key={day}
-                                                            className="w-2 rounded-full"
-                                                            style={{
-                                                                height: `${Math.max(6, hRatio * 40)}px`,
-                                                                backgroundColor: hRatio === 1 && dueHabits.length > 0 ? theme.primary : theme.secondary + '80'
-                                                            }}
-                                                            title={`Day ${day}: ${dc}/${dueHabits.length}`}
-                                                        />
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    <div className="space-y-4">
-                        <div className="rounded-2xl border-[3px] border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] bg-white p-4">
-                            <button
-                                onClick={() => setShowTopHabits(prev => !prev)}
-                                className="flex w-full items-center justify-between gap-3 text-left"
-                            >
-                                <div>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.22em] text-stone-400">Ranking</p>
-                                    <h4 className="mt-1 text-base font-black uppercase tracking-tight text-stone-900">Top habits this month</h4>
-                                </div>
-                                {showTopHabits ? <ChevronUp size={16} className="text-stone-400" /> : <ChevronDown size={16} className="text-stone-400" />}
-                            </button>
-
-                            {showTopHabits && (
-                                <div className="mt-4 space-y-2">
-                                    {topHabitsThisMonth.map((h, i) => {
-                                        const stats = h.stats;
-                                        const p = h.percentage;
-                                        return (
-                                            <div key={h.id} className="flex items-center justify-between gap-3 rounded-xl border border-stone-200 hover:border-black bg-stone-50 px-3 py-2 transition-colors">
-                                                <div className="min-w-0">
-                                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-stone-300">#{i + 1}</p>
-                                                    <p className="truncate text-sm font-black uppercase text-stone-800">{h.name || 'Untitled'}</p>
-                                                </div>
-                                                <div className="min-w-[84px]">
-                                                    <p className="text-right text-xs font-black text-stone-500">{stats.completed} days</p>
-                                                    <div className="mt-1 h-2 overflow-hidden rounded-full bg-stone-200">
-                                                        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${p}%`, backgroundColor: theme.primary }} />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                    {topHabitsThisMonth.length === 0 && (
-                                        <div className="rounded-xl bg-stone-50 px-3 py-6 text-center text-[11px] font-black uppercase italic text-stone-400">
-                                            No logged activity
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="rounded-2xl border-[3px] border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] bg-white p-4">
-                            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-stone-400">Grid Guide</p>
-                            <div className="mt-3 space-y-2 text-sm font-medium text-stone-600">
-                                <p><span className="font-black text-stone-900">Click</span> a square to mark completion.</p>
-                                <p><span className="font-black text-stone-900">Long press</span> to mark a habit inactive for that day.</p>
-                                <p><span className="font-black text-stone-900">Click Mood</span> to jump into the journal side of the daily card.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div className={`border-[3px] border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] bg-white flex flex-col overflow-hidden relative w-full rounded-2xl transition-opacity duration-300 ${isModalOpen ? 'opacity-30 pointer-events-none grayscale-[0.5]' : 'opacity-100'}`}>
-                <div ref={scrollContainerRef} className="overflow-x-auto w-full">
+            <div className={`p-2 ${statsOpen ? 'pr-4' : ''} min-h-full flex flex-col`}>
+            <div className={`border-[3px] border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] bg-white flex flex-col overflow-hidden relative w-full flex-1 rounded-2xl transition-opacity duration-300 ${isModalOpen ? 'opacity-30 pointer-events-none grayscale-[0.5]' : 'opacity-100'}`}>
+                <div ref={scrollContainerRef} className="overflow-x-auto w-full flex-1">
                     <table className="w-full border-separate border-spacing-0">
                         <thead>
                             <tr className="text-[10px] font-black uppercase text-stone-700" style={{ backgroundColor: theme.secondary + '40' }}>
-                                <th className="p-2 border-r border-stone-200 text-left min-w-[100px] sm:min-w-[180px] sticky left-0 z-40 font-black" style={{ backgroundColor: theme.secondary + '40' }}>
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-stone-700">Habits</span>
+                                <th className="p-2 border-r border-stone-200 text-left sticky left-0 z-40 font-black" style={{ backgroundColor: '#f0efed', width: 250, minWidth: 250 }}>
+                                    <span className="text-xs font-black uppercase tracking-widest text-stone-700">Habits</span>
                                 </th>
-                                <th className="p-1 border-r border-stone-200 w-12 text-center font-black">Goal</th>
                                 {monthDates.map(day => {
                                     const isToday = day === new Date().getDate() && currentMonthIndex === new Date().getMonth() && currentYear === new Date().getFullYear();
                                     const isFull = isDayFullyCompleted(day);
@@ -331,25 +123,23 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                             }}
                                         >
                                             <div className="flex flex-col">
-                                                <span className="font-black text-[8px]">{DAYS_OF_WEEK_SHORT[new Date(currentYear, currentMonthIndex, day).getDay()][0]}</span>
+                                                <span className="font-black text-[10px]">{DAYS_OF_WEEK_SHORT[new Date(currentYear, currentMonthIndex, day).getDay()][0]}</span>
                                                 <span className={`font-black text-sm ${isToday ? '' : 'text-stone-600'}`}>{day}</span>
                                             </div>
                                         </th>
                                     );
                                 })}
-                                <th className="p-1 border-l border-stone-200 bg-stone-100 min-w-[85px] text-center text-stone-700 font-black">Success %</th>
-                                <th className="p-1 border-l border-stone-100 bg-stone-100 min-w-[100px] text-center text-stone-700 font-black">Monthly Done</th>
+                                {!statsOpen && <th className="p-1 border-l border-stone-100 bg-stone-100 min-w-[100px] text-center text-stone-700 font-black">Done / Miss</th>}
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-stone-100">
                             {/* Daily Mood Row */}
                             <tr className="group hover:bg-stone-50 transition-colors" style={{ height: '32px' }}>
-                                <td className="p-0 pl-3 sticky left-0 z-10 bg-stone-50 border-r border-[#e5e5e5] group-hover:bg-stone-100 transition-colors h-[32px]">
+                                <td className="p-0 pl-3 sticky left-0 z-10 border-r border-[#e5e5e5] group-hover:bg-stone-100 transition-colors h-[32px]" style={{ backgroundColor: '#fafaf9' }}>
                                     <div className="flex items-center h-full">
-                                        <span className="text-[10px] font-bold text-stone-900 truncate pl-2">Mood</span>
+                                        <span className="text-xs font-bold text-stone-900 truncate pl-2">Mood</span>
                                     </div>
                                 </td>
-                                <td className="p-0 border-r border-stone-200"></td>
                                 {monthDates.map(day => {
                                     const dateKey = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                                     const dayNote = notes ? notes[dateKey] : undefined;
@@ -395,32 +185,7 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                         </td>
                                     );
                                 })}
-                                <td className="p-1 px-3 border-l border-stone-200 bg-[#fcfcfc] text-center">
-                                    <div className="flex items-center justify-center gap-1.5 h-full">
-                                        <span className="text-[11px] font-black w-6 text-right" style={{ color: theme.secondary }}>{moodLoggedPercentage.toFixed(0)}%</span>
-                                        <div className="hidden sm:flex w-12 bg-stone-100 h-2 gap-0.5 rounded-sm overflow-hidden">
-                                            {Array.from({ length: 5 }).map((_, i) => (
-                                                <div
-                                                    key={i}
-                                                    className={`h-full flex-1 transition-all duration-500 ${moodLoggedPercentage >= (i + 1) * 20 ? '' : 'bg-transparent'}`}
-                                                    style={{ backgroundColor: moodLoggedPercentage >= (i + 1) * 20 ? theme.secondary : undefined }}
-                                                />
-                                            ))}
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="p-0 border-l border-stone-100 bg-[#fcfcfc]">
-                                    <div className="grid grid-cols-2 text-center text-[9px] font-black uppercase tracking-tight h-full">
-                                        <div className="p-1 px-2 border-r border-stone-200" style={{ backgroundColor: theme.secondary + '20' }}>
-                                            <span className="text-stone-500 block">Done</span>
-                                            <span className="text-lg leading-none">{moodLoggedDays}</span>
-                                        </div>
-                                        <div className="p-1 px-2" style={{ backgroundColor: '#f0f0f0' }}>
-                                            <span className="text-stone-500 block">Miss</span>
-                                            <span className="text-lg leading-none text-rose-400">{moodMissedDays}</span>
-                                        </div>
-                                    </div>
-                                </td>
+                                {!statsOpen && <td className="p-0 border-l border-stone-100 bg-[#fcfcfc]" />}
                             </tr>
                             {visibleHabits.map((habit) => {
                                 const habitStats = getHabitMonthStats(
@@ -436,53 +201,12 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                     }
                                 );
                                 const perc = (habitStats.completed / habitStats.totalDays) * 100;
-                                const isEditingName = editingHabitId === habit.id;
-                                const isEditingGoal = editingGoalId === habit.id;
                                 return (
-                                    <tr key={habit.id} className="hover:bg-stone-50 transition-colors group" style={{ height: '36px' }}>
-                                        <td className="p-0 border-r border-stone-200 text-[12px] font-bold text-stone-700 sticky left-0 z-30 bg-stone-50 group-hover:bg-stone-100 transition-colors border-l-4" style={{ borderLeftColor: theme.secondary }}>
-                                            <div className="flex items-center justify-between gap-2 p-1.5 px-3 h-full transition-colors">
-                                                {isEditingName ? (
-                                                    <div className="flex items-center gap-2 flex-1">
-                                                        <input
-                                                            ref={inputRef}
-                                                            type="text"
-                                                            value={habit.name}
-                                                            onChange={(e) => updateHabitNameState(habit.id, e.target.value)}
-                                                            onBlur={() => handleHabitBlur(habit)}
-                                                            onKeyDown={(e) => { if (e.key === 'Enter') handleHabitBlur(habit); }}
-                                                            className="bg-transparent border-b-2 outline-none flex-1 text-[11px] font-black py-0.5 w-20"
-                                                            style={{ borderColor: theme.secondary }}
-                                                        />
-                                                        <button onClick={() => handleHabitBlur(habit)} style={{ color: theme.secondary }}><Save size={14} /></button>
-                                                    </div>
-                                                ) : (
-                                                    <span className="truncate flex-1 cursor-pointer hover:underline" onClick={() => setEditingHabitId(habit.id)} title="Click to rename">{habit.name || 'Untitled Habit'}</span>
-                                                )}
+                                    <tr key={habit.id} className="hover:bg-stone-50 transition-colors group">
+                                        <td className="p-0 border-r border-stone-200 text-sm font-bold text-stone-700 sticky left-0 z-30 group-hover:bg-stone-100 transition-colors border-l-4" style={{ borderLeftColor: habit.color || theme.secondary, backgroundColor: '#fafaf9', width: 250, minWidth: 250, maxWidth: 250 }}>
+                                            <div className="flex items-center gap-2 p-1 px-2 min-h-[26px]">
+                                                <span className="break-words flex-1 leading-tight">{habit.name || 'Untitled Habit'}</span>
                                             </div>
-                                        </td>
-                                        <td className="p-1 border-r border-stone-200 text-center text-[10px] font-black text-stone-600 group-hover:bg-stone-100 transition-colors">
-                                            {isEditingGoal ? (
-                                                <input
-                                                    ref={goalInputRef}
-                                                    type="number"
-                                                    min="0"
-                                                    max="100"
-                                                    value={habit.goal}
-                                                    onChange={(e) => updateHabitGoalState(habit.id, e.target.value)}
-                                                    onBlur={() => handleHabitBlur(habit)}
-                                                    onKeyDown={(e) => { if (e.key === 'Enter') handleHabitBlur(habit); }}
-                                                    className="w-full text-center bg-transparent border-b-2 outline-none font-black text-[10px]"
-                                                    style={{ borderColor: theme.secondary }}
-                                                />
-                                            ) : (
-                                                <span
-                                                    onClick={() => setEditingGoalId(habit.id)}
-                                                    className="cursor-pointer hover:underline hover:text-stone-600 transition-colors"
-                                                >
-                                                    {habit.goal}%
-                                                </span>
-                                            )}
                                         </td>
                                         {monthDates.map(day => {
                                             const dateKey = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -559,35 +283,28 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                             );
                                         })}
 
-                                        <td className="p-1 px-3 border-l border-stone-200 bg-[#fcfcfc] text-center">
-                                            <div className="flex items-center justify-center gap-1.5 h-full">
-                                                <span className="text-[11px] font-black w-6 text-right" style={{ color: theme.secondary }}>{perc.toFixed(0)}%</span>
-                                                <div className="hidden sm:flex w-12 bg-stone-100 h-2 gap-0.5 rounded-sm overflow-hidden">
-                                                    {Array.from({ length: 5 }).map((_, i) => (
-                                                        <div key={i} className={`h-full flex-1 transition-all duration-500 ${perc >= (i + 1) * 20 ? '' : 'bg-transparent'}`} style={{ backgroundColor: perc >= (i + 1) * 20 ? theme.secondary : undefined }} />
-                                                    ))}
+                                        {!statsOpen && (
+                                            <td className="p-0 border-l border-stone-100 bg-[#fcfcfc]">
+                                                <div className="grid grid-cols-2 text-center text-[11px] font-black uppercase tracking-tight h-full">
+                                                    <div className="p-1 px-2 border-r border-stone-200" style={{ backgroundColor: theme.secondary + '20' }}>
+                                                        <span className="text-stone-500 block">Done</span>
+                                                        <span className="text-sm font-black leading-none">{habitStats.completed}</span>
+                                                    </div>
+                                                    <div className="p-1 px-2" style={{ backgroundColor: '#f0f0f0' }}>
+                                                        <span className="text-stone-500 block">Miss</span>
+                                                        <span className="text-sm font-black leading-none text-rose-400">{habitStats.missed}</span>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td className="p-0 border-l border-stone-100 bg-[#fcfcfc]">
-                                            <div className="grid grid-cols-2 text-center text-[9px] font-black uppercase tracking-tight h-full">
-                                                <div className="p-1 px-2 border-r border-stone-200" style={{ backgroundColor: theme.secondary + '20' }}>
-                                                    <span className="text-stone-500 block">Done</span>
-                                                    <span className="text-lg leading-none">{habitStats.completed}</span>
-                                                </div>
-                                                <div className="p-1 px-2" style={{ backgroundColor: '#f0f0f0' }}>
-                                                    <span className="text-stone-500 block">Miss</span>
-                                                    <span className="text-lg leading-none text-rose-400">{habitStats.missed}</span>
-                                                </div>
-                                            </div>
-                                        </td>
+                                            </td>
+                                        )}
                                     </tr>
                                 );
                             })}
                         </tbody>
                     </table>
                 </div>
-            </div >
+            </div>
+            </div>
         </>
     );
 };

@@ -101,7 +101,7 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
             const { error: signUpError, data: signUpData } = await supabase.auth.signUp({
                 email,
                 password,
-                options: { emailRedirectTo: 'habicard://' },
+                options: { emailRedirectTo: 'habicard://auth/callback' },
             });
 
             if (signUpError) {

@@ -2432,16 +2432,21 @@ const SignInPage: React.FC = () => {
   );
 };
 
-// Handles password-reset email links — waits for PASSWORD_RECOVERY event then shows the form
+// Handles password-reset email links — shows the form once the recovery session is confirmed
 const UpdatePasswordPage: React.FC = () => {
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // supabase-js auto-exchanges the PKCE code from the URL on init;
-    // we just need to wait for the PASSWORD_RECOVERY event to confirm it worked.
+    // With PKCE flow, supabase-js exchanges the code from the URL synchronously during
+    // createClient(), before this component mounts. The PASSWORD_RECOVERY event fires then
+    // and is missed by onAuthStateChange. So we check getSession() immediately as well.
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setReady(true);
+    });
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
+      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
         setReady(true);
       }
     });
@@ -2522,10 +2527,29 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
+// Intercepts PASSWORD_RECOVERY events from anywhere in the app and redirects to /update-password.
+// Needed because Supabase may redirect to the site root (not /update-password) if that URL
+// isn't in the dashboard's allowed redirect list — LandingPage then ships the user to /app
+// before AppContent's own PASSWORD_RECOVERY listener has a chance to mount.
+const PasswordRecoveryGuard: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY' && location.pathname !== '/update-password') {
+        navigate('/update-password', { replace: true });
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [navigate, location.pathname]);
+  return null;
+};
+
 // Main App Component with Routing
 const App: React.FC = () => {
   return (
     <BrowserRouter>
+      <PasswordRecoveryGuard />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/signin" element={<LandingPage />} />

@@ -20,11 +20,11 @@ export const UpdatePasswordForm: React.FC<UpdatePasswordFormProps> = ({ onSucces
 
         if (error) {
             toast.error(error.message);
+            setLoading(false);
         } else {
             toast.success('Password updated successfully!');
-            onSuccess();
+            onSuccess(); // navigates away — don't touch state after this
         }
-        setLoading(false);
     };
 
     return (

@@ -16,9 +16,11 @@ import { CircularProgress } from './components/CircularProgress';
 import { DashboardView } from './components/DashboardView';
 import { WeeklyView } from './components/WeeklyView';
 import { TasksView } from './components/TasksView';
+import { ListsView } from './components/ListsView';
 import { useHabits } from './hooks/useHabits';
 import { useTheme } from './hooks/useTheme';
 import { useHabitStats } from './hooks/useHabitStats';
+import { useLists } from './hooks/useLists';
 import { Habit, DailyNote, MonthlyGoals, MonthlyGoal, DayData } from './types';
 import { BottomNav } from './components/BottomNav';
 import { DailyCard } from './components/DailyCard';
@@ -131,6 +133,7 @@ const AppContent: React.FC = () => {
   }, [cardStyle]);
   const [view, setView] = useState<'monthly' | 'dashboard' | 'weekly'>(defaultView);
   const [isTasksOpen, setIsTasksOpen] = useState(false);
+  const [isListsOpen, setIsListsOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showWhatsNewModal, setShowWhatsNewModal] = useState(false);
   const [hasUnseenWhatsNew, setHasUnseenWhatsNew] = useState(false);
@@ -516,6 +519,8 @@ const AppContent: React.FC = () => {
     weekOffset,
     startOfWeek
   );
+
+  const { lists, items: listItems, loading: listsLoading, createList, updateList, deleteList, addItem, updateItem, deleteItem, getItemsForList } = useLists(session, guestMode);
 
   const weekRange = useMemo(() => {
     const today = new Date();
@@ -1366,6 +1371,8 @@ const AppContent: React.FC = () => {
           onCycleSortMode={() => setSortMode(m => m === 'default' ? 'name' : m === 'name' ? 'color' : m === 'color' ? 'completion' : 'default')}
           onOpenTasks={() => setIsTasksOpen(true)}
           tasksCount={tasksCount}
+          onOpenLists={() => setIsListsOpen(true)}
+          listsCount={listItems.length}
         />
 
         <SearchModal
@@ -2297,6 +2304,32 @@ const AppContent: React.FC = () => {
             onClick={e => e.stopPropagation()}
           >
             <TasksView notes={notes} updateNote={updateNote} theme={theme} onClose={() => setIsTasksOpen(false)} />
+          </div>
+        </div>
+      )}
+
+      {isListsOpen && (
+        <div
+          className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 p-3 backdrop-blur-sm"
+          onClick={() => setIsListsOpen(false)}
+        >
+          <div
+            className="bg-white neo-border neo-shadow rounded-2xl w-full max-w-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+            style={{ maxHeight: 'min(85vh, 680px)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <ListsView
+              lists={lists}
+              getItemsForList={getItemsForList}
+              onClose={() => setIsListsOpen(false)}
+              theme={theme}
+              onCreateList={createList}
+              onUpdateList={updateList}
+              onDeleteList={deleteList}
+              onAddItem={addItem}
+              onUpdateItem={updateItem}
+              onDeleteItem={deleteItem}
+            />
           </div>
         </div>
       )}

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Plus, Trash2, Check, Edit2, GripVertical, Archive, RotateCcw, ChevronUp, MoreHorizontal, Search } from 'lucide-react';
+import { X, Plus, Trash2, Check, Edit2, GripVertical, Archive, RotateCcw, MoreHorizontal, Search } from 'lucide-react';
 import { Habit } from '../types';
 import { Reorder, useDragControls } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -42,15 +42,25 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
     const [editName, setEditName] = useState('');
     const [editDescription, setEditDescription] = useState('');
     const [editColor, setEditColor] = useState(themePrimary);
-    const [editFrequency, setEditFrequency] = useState<number[] | undefined>(undefined);
-    const [editWeeklyTarget, setEditWeeklyTarget] = useState<number | undefined>(undefined);
-    const [frequencyType, setFrequencyType] = useState<'fixed' | 'flexible'>('fixed');
+    const [editWeeklyTarget, setEditWeeklyTarget] = useState<number>(3);
+    const [editFreqMode, setEditFreqMode] = useState<'everyday' | 'weekdays' | 'weekends' | 'custom' | 'flexible'>('everyday');
+    const [editCustomDays, setEditCustomDays] = useState<number[]>([0,1,2,3,4,5,6]);
     const [isReorderMode, setIsReorderMode] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchOpen, setSearchOpen] = useState(false);
+
+    // Quick-add form state
+    const [isQuickAdding, setIsQuickAdding] = useState(false);
+    const [quickName, setQuickName] = useState('');
+    const [quickColor, setQuickColor] = useState(themePrimary);
+    const [quickFreqMode, setQuickFreqMode] = useState<'everyday' | 'weekdays' | 'weekends' | 'custom' | 'flexible'>('everyday');
+    const [quickCustomDays, setQuickCustomDays] = useState<number[]>([0,1,2,3,4,5,6]);
+    const [quickWeeklyTarget, setQuickWeeklyTarget] = useState(3);
+
     const listRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
+    const quickNameRef = useRef<HTMLInputElement>(null);
     const activeHabitsCount = habits.filter(h => !h.archivedAt).length;
     const archivedHabitsCount = habits.filter(h => !!h.archivedAt).length;
 
@@ -73,40 +83,48 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
         return habits.some(h => h.id !== habitId && normalizeHabitName(h.name) === normalized);
     };
 
-    const handleAdd = async () => {
-        if (habits.some(h => !h.name.trim())) {
-            toast.error('Please enter a name for your new habit first');
-            return;
-        }
+    const openQuickAdd = () => {
         setShowArchived(false);
-        const newId = await addHabit(themePrimary);
-        if (newId) {
-            setEditingId(newId);
-            setEditName('');
-            setEditDescription('');
-            setEditColor(themePrimary);
-            setEditFrequency(undefined);
-            setEditWeeklyTarget(undefined);
-            setFrequencyType('fixed');
-            setIsReorderMode(false);
-            // scroll to bottom
-            setTimeout(() => {
-                if (listRef.current) {
-                    listRef.current.scrollTop = listRef.current.scrollHeight;
-                }
-            }, 100);
-        }
+        setIsReorderMode(false);
+        const autoColor = HABIT_COLOR_OPTIONS[habits.filter(h => !h.archivedAt).length % HABIT_COLOR_OPTIONS.length];
+        setQuickColor(autoColor);
+        setQuickName('');
+        setQuickFreqMode('everyday');
+        setQuickCustomDays([0,1,2,3,4,5,6]);
+        setQuickWeeklyTarget(3);
+        setIsQuickAdding(true);
+        setTimeout(() => {
+            quickNameRef.current?.focus();
+            if (listRef.current) listRef.current.scrollTop = 0;
+        }, 50);
     };
+
+    const handleAdd = () => openQuickAdd();
+
+    const handleQuickSubmit = async (e?: React.FormEvent) => {
+        e?.preventDefault();
+        const name = quickName.trim();
+        if (!name) return;
+        if (hasDuplicateName(name)) { toast.error('A habit with this name already exists'); return; }
+
+        let frequency: number[] | undefined;
+        let weeklyTarget: number | undefined;
+        if (quickFreqMode === 'weekdays') frequency = [1,2,3,4,5];
+        else if (quickFreqMode === 'weekends') frequency = [0,6];
+        else if (quickFreqMode === 'custom') frequency = quickCustomDays.length === 7 ? undefined : [...quickCustomDays].sort((a,b) => a-b);
+        else if (quickFreqMode === 'flexible') { weeklyTarget = quickWeeklyTarget; }
+
+        const newId = await addHabit(quickColor);
+        if (newId) await updateHabit(newId, { name, color: quickColor, frequency, weeklyTarget });
+        setIsQuickAdding(false);
+    };
+
+    const handleQuickCancel = () => setIsQuickAdding(false);
 
     useEffect(() => {
         if (!isOpen || !autoAddOnOpen) return;
-
-        const run = async () => {
-            await handleAdd();
-            onAutoAddHandled?.();
-        };
-
-        run();
+        openQuickAdd();
+        onAutoAddHandled?.();
     }, [isOpen, autoAddOnOpen]);
 
     const startEditing = (habit: Habit) => {
@@ -114,34 +132,38 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
         setEditName(habit.name);
         setEditDescription(habit.description || '');
         setEditColor(habit.color || themePrimary);
-        setEditFrequency(habit.frequency);
-        setEditWeeklyTarget(habit.weeklyTarget);
-        setFrequencyType(habit.weeklyTarget ? 'flexible' : 'fixed');
+        if (habit.weeklyTarget) {
+            setEditFreqMode('flexible');
+            setEditWeeklyTarget(habit.weeklyTarget);
+            setEditCustomDays([0,1,2,3,4,5,6]);
+        } else if (!habit.frequency || habit.frequency.length === 7) {
+            setEditFreqMode('everyday');
+            setEditCustomDays([0,1,2,3,4,5,6]);
+        } else if (habit.frequency.length === 5 && [1,2,3,4,5].every(d => habit.frequency!.includes(d))) {
+            setEditFreqMode('weekdays');
+            setEditCustomDays([1,2,3,4,5]);
+        } else if (habit.frequency.length === 2 && habit.frequency.includes(0) && habit.frequency.includes(6)) {
+            setEditFreqMode('weekends');
+            setEditCustomDays([0,6]);
+        } else {
+            setEditFreqMode('custom');
+            setEditCustomDays(habit.frequency);
+        }
     };
 
     const saveEdit = async (id: string) => {
         const trimmedName = editName.trim();
-        if (!trimmedName) {
-            toast.error('Habit name is required');
-            return;
-        }
-        if (hasDuplicateName(trimmedName, id)) {
-            toast.error('A habit with this name already exists');
-            return;
-        }
-        const updates: Partial<Habit> = {
-            name: trimmedName,
-            description: editDescription.trim(),
-            color: editColor
-        };
-        if (frequencyType === 'flexible') {
-            updates.weeklyTarget = editWeeklyTarget || 3;
-            updates.frequency = undefined; // Clear fixed frequency if switching to flexible
-        } else {
-            updates.frequency = editFrequency;
-            updates.weeklyTarget = undefined; // Clear weekly target if switching to fixed
-        }
-        await updateHabit(id, updates);
+        if (!trimmedName) { toast.error('Habit name is required'); return; }
+        if (hasDuplicateName(trimmedName, id)) { toast.error('A habit with this name already exists'); return; }
+
+        let frequency: number[] | undefined;
+        let weeklyTarget: number | undefined;
+        if (editFreqMode === 'weekdays') frequency = [1,2,3,4,5];
+        else if (editFreqMode === 'weekends') frequency = [0,6];
+        else if (editFreqMode === 'custom') frequency = editCustomDays.length === 7 ? undefined : [...editCustomDays].sort((a,b) => a-b);
+        else if (editFreqMode === 'flexible') weeklyTarget = editWeeklyTarget;
+
+        await updateHabit(id, { name: trimmedName, description: editDescription.trim(), color: editColor, frequency, weeklyTarget });
         setEditingId(null);
     };
 
@@ -249,6 +271,84 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                     className="flex-1 min-h-0 overflow-y-auto p-3 touch-pan-y bg-stone-50"
                     style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
                 >
+                    {/* Quick-add form */}
+                    {isQuickAdding && (
+                        <form onSubmit={handleQuickSubmit} className="mb-3 border-2 border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-3 flex flex-col gap-3">
+                            <input
+                                ref={quickNameRef}
+                                value={quickName}
+                                onChange={e => setQuickName(e.target.value.slice(0, 40))}
+                                placeholder="What habit do you want to build?"
+                                className="w-full border-2 border-black px-3 py-2 text-sm font-bold text-black outline-none focus:bg-stone-50 placeholder:text-stone-300"
+                            />
+
+                            <div className="flex flex-col gap-1.5">
+                                <span className="text-[9px] font-black uppercase tracking-widest text-stone-400">How often?</span>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {([
+                                        { key: 'everyday', label: 'Every day' },
+                                        { key: 'weekdays', label: 'Weekdays' },
+                                        { key: 'weekends', label: 'Weekends' },
+                                        { key: 'custom',   label: 'Custom' },
+                                        { key: 'flexible', label: '×/week' },
+                                    ] as const).map(({ key, label }) => (
+                                        <button key={key} type="button" onClick={() => setQuickFreqMode(key)}
+                                            className={`px-3 py-1 text-[10px] font-black uppercase tracking-wide border-2 transition-all ${quickFreqMode === key ? 'bg-black text-white border-black' : 'bg-white text-stone-600 border-stone-300 hover:border-stone-600'}`}
+                                        >{label}</button>
+                                    ))}
+                                </div>
+
+                                {quickFreqMode === 'custom' && (
+                                    <div className="flex gap-1 mt-1">
+                                        {['S','M','T','W','T','F','S'].map((day, i) => {
+                                            const sel = quickCustomDays.includes(i);
+                                            return (
+                                                <button key={i} type="button"
+                                                    onClick={() => setQuickCustomDays(prev => sel ? prev.filter(d => d !== i) : [...prev, i])}
+                                                    className={`w-7 h-7 text-[10px] font-black border-2 transition-all ${sel ? 'bg-black text-white border-black' : 'bg-white text-stone-300 border-stone-200 hover:border-stone-400'}`}
+                                                >{day}</button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+
+                                {quickFreqMode === 'flexible' && (
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <input type="range" min="1" max="7" value={quickWeeklyTarget}
+                                            onChange={e => setQuickWeeklyTarget(parseInt(e.target.value))}
+                                            className="flex-1 accent-black h-1 bg-stone-200 rounded-lg appearance-none cursor-pointer"
+                                        />
+                                        <span className="text-xs font-black border-2 border-black bg-stone-50 px-1.5 py-0.5 min-w-[2.5rem] text-center shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]">
+                                            {quickWeeklyTarget}×
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                                <span className="text-[9px] font-black uppercase tracking-widest text-stone-400">Color</span>
+                                <div className="flex gap-1.5 flex-wrap">
+                                    {HABIT_COLOR_OPTIONS.map(c => (
+                                        <button key={c} type="button" onClick={() => setQuickColor(c)}
+                                            className="w-5 h-5 rounded-full border-2 transition-all"
+                                            style={{ backgroundColor: c, borderColor: quickColor === c ? 'black' : c, transform: quickColor === c ? 'scale(1.2)' : 'scale(1)' }}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="flex gap-2">
+                                <button type="submit" disabled={!quickName.trim()}
+                                    className="flex-1 py-2 bg-black text-white text-[11px] font-black uppercase tracking-widest border-2 border-black disabled:opacity-40 disabled:cursor-not-allowed hover:bg-stone-800 transition-colors"
+                                    style={{ boxShadow: quickName.trim() ? '2px 2px 0px 0px rgba(0,0,0,1)' : 'none' }}
+                                >Add Habit</button>
+                                <button type="button" onClick={handleQuickCancel}
+                                    className="px-4 py-2 text-[11px] font-black uppercase tracking-wide border-2 border-stone-300 text-stone-600 hover:border-stone-600 transition-colors"
+                                >Cancel</button>
+                            </div>
+                        </form>
+                    )}
+
                     {visibleHabits.length === 0 ? (
                         <div className="rounded-2xl border-2 border-dashed border-stone-300 bg-stone-50 px-5 py-10 text-center">
                             <p className="text-sm font-black uppercase tracking-widest text-stone-700">
@@ -280,10 +380,10 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                                         setEditDescription={setEditDescription}
                                         editColor={editColor}
                                         setEditColor={setEditColor}
-                                        frequencyType={frequencyType}
-                                        setFrequencyType={setFrequencyType}
-                                        editFrequency={editFrequency}
-                                        setEditFrequency={setEditFrequency}
+                                        editFreqMode={editFreqMode}
+                                        setEditFreqMode={setEditFreqMode}
+                                        editCustomDays={editCustomDays}
+                                        setEditCustomDays={setEditCustomDays}
                                         editWeeklyTarget={editWeeklyTarget}
                                         setEditWeeklyTarget={setEditWeeklyTarget}
                                         inputRef={inputRef}
@@ -329,12 +429,12 @@ interface HabitItemProps {
     setEditDescription: (val: string) => void;
     editColor: string;
     setEditColor: (val: string) => void;
-    frequencyType: 'fixed' | 'flexible';
-    setFrequencyType: (val: 'fixed' | 'flexible') => void;
-    editFrequency: number[] | undefined;
-    setEditFrequency: (val: number[] | undefined) => void;
-    editWeeklyTarget: number | undefined;
-    setEditWeeklyTarget: (val: number | undefined) => void;
+    editFreqMode: 'everyday' | 'weekdays' | 'weekends' | 'custom' | 'flexible';
+    setEditFreqMode: (val: 'everyday' | 'weekdays' | 'weekends' | 'custom' | 'flexible') => void;
+    editCustomDays: number[];
+    setEditCustomDays: (val: number[]) => void;
+    editWeeklyTarget: number;
+    setEditWeeklyTarget: (val: number) => void;
     inputRef: React.RefObject<HTMLInputElement>;
     saveEdit: (id: string) => void;
     startEditing: (habit: Habit) => void;
@@ -357,9 +457,6 @@ const getHabitFrequencyLabel = (habit: Habit) => {
     return `${habit.frequency.length} days/week`;
 };
 
-const getHabitTypeLabel = (habit: Habit) => {
-    return habit.weeklyTarget ? 'Flexible target' : 'Fixed schedule';
-};
 
 const HabitItem: React.FC<HabitItemProps> = ({
     habit,
@@ -371,10 +468,10 @@ const HabitItem: React.FC<HabitItemProps> = ({
     setEditDescription,
     editColor,
     setEditColor,
-    frequencyType,
-    setFrequencyType,
-    editFrequency,
-    setEditFrequency,
+    editFreqMode,
+    setEditFreqMode,
+    editCustomDays,
+    setEditCustomDays,
     editWeeklyTarget,
     setEditWeeklyTarget,
     inputRef,
@@ -423,262 +520,155 @@ const HabitItem: React.FC<HabitItemProps> = ({
                         {habit.name || t('habitManager.untitled')}
                     </span>
                 </div>
-            ) : (
-            <div className="flex items-center gap-2 p-2">
-                <button
-                    onPointerDown={(e) => {
-                        if (isReorderMode) controls.start(e);
-                    }}
-                    className={`p-1 px-1 rounded transition-all ${isReorderMode ? 'cursor-grab active:cursor-grabbing text-stone-300 hover:text-black hover:bg-stone-50' : 'cursor-default text-stone-200'}`}
-                    title={isReorderMode ? 'Drag to reorder' : 'Enable reorder mode first'}
-                >
-                    <GripVertical size={15} strokeWidth={2.5} />
-                </button>
-
-                <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                        <div className="h-3 w-3 shrink-0 rounded-full border-2 border-black" style={{ backgroundColor: habit.color || themePrimary }}></div>
-                        <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 min-w-0">
-                                <span className="truncate text-sm sm:text-base font-black text-black">
-                                    {habit.name || t('habitManager.untitled')}
-                                </span>
-                                <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-wide ${isArchived ? 'border-stone-300 bg-stone-100 text-stone-500' : 'border-black bg-stone-50 text-black'}`}>
-                                    {isArchived ? 'Archived' : 'Active'}
-                                </span>
-                            </div>
-                            <div className="mt-1 flex flex-wrap gap-1">
-                                <span className="rounded-full bg-stone-100 px-2 py-1 text-[9px] sm:text-[10px] font-black uppercase tracking-wide text-stone-600">
-                                    {getHabitTypeLabel(habit)}
-                                </span>
-                                <span className="rounded-full bg-stone-100 px-2 py-1 text-[9px] sm:text-[10px] font-black uppercase tracking-wide text-stone-600">
-                                    {getHabitFrequencyLabel(habit)}
-                                </span>
-                            </div>
-                            {!!habit.description?.trim() && !isEditing && (
-                                <p className="mt-1 line-clamp-1 text-[10px] leading-relaxed text-stone-600">
-                                    {habit.description}
-                                </p>
-                            )}
+            ) : isEditing ? (
+                /* ── Edit mode: same card as quick-add, no header repetition ── */
+                <div className="p-3 flex flex-col gap-3">
+                    <input
+                        ref={inputRef}
+                        type="text"
+                        value={editName}
+                        onChange={e => setEditName(e.target.value.slice(0, 40))}
+                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); saveEdit(habit.id); } }}
+                        maxLength={40}
+                        className="w-full border-2 border-black px-3 py-2 text-sm font-bold text-black outline-none focus:bg-stone-50 placeholder:text-stone-300"
+                        placeholder={t('habitManager.habitNamePlaceholder')}
+                    />
+                    <div className="flex flex-col gap-1.5">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-stone-400">How often?</span>
+                        <div className="flex flex-wrap gap-1.5">
+                            {([
+                                { key: 'everyday', label: 'Every day' },
+                                { key: 'weekdays', label: 'Weekdays' },
+                                { key: 'weekends', label: 'Weekends' },
+                                { key: 'custom',   label: 'Custom' },
+                                { key: 'flexible', label: '×/week' },
+                            ] as const).map(({ key, label }) => (
+                                <button key={key} type="button" onClick={() => setEditFreqMode(key)}
+                                    className={`px-3 py-1 text-[10px] font-black uppercase tracking-wide border-2 transition-all ${editFreqMode === key ? 'bg-black text-white border-black' : 'bg-white text-stone-600 border-stone-300 hover:border-stone-600'}`}
+                                >{label}</button>
+                            ))}
                         </div>
-                    </div>
-
-                    <div className="mt-2 flex items-center justify-between gap-2">
-                        {isEditing ? (
-                            <button
-                                onClick={() => saveEdit(habit.id)}
-                                className="inline-flex items-center gap-1 rounded-full border-2 border-black px-2.5 py-1 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-black transition-colors hover:bg-stone-100"
-                                title="Save habit"
-                            >
-                                <Check size={12} strokeWidth={3} />
-                                Save
-                            </button>
-                        ) : (
-                            <div />
+                        {editFreqMode === 'custom' && (
+                            <div className="flex gap-1 mt-1">
+                                {['S','M','T','W','T','F','S'].map((day, i) => {
+                                    const sel = editCustomDays.includes(i);
+                                    return (
+                                        <button key={i} type="button"
+                                            onClick={() => setEditCustomDays(sel ? editCustomDays.filter(d => d !== i) : [...editCustomDays, i])}
+                                            className={`w-7 h-7 text-[10px] font-black border-2 transition-all ${sel ? 'bg-black text-white border-black' : 'bg-white text-stone-300 border-stone-200 hover:border-stone-400'}`}
+                                        >{day}</button>
+                                    );
+                                })}
+                            </div>
+                        )}
+                        {editFreqMode === 'flexible' && (
+                            <div className="flex items-center gap-2 mt-1">
+                                <input type="range" min="1" max="7" value={editWeeklyTarget}
+                                    onChange={e => setEditWeeklyTarget(parseInt(e.target.value))}
+                                    className="flex-1 accent-black h-1 bg-stone-200 rounded-lg appearance-none cursor-pointer"
+                                />
+                                <span className="text-xs font-black border-2 border-black bg-stone-50 px-1.5 py-0.5 min-w-[2.5rem] text-center shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]">
+                                    {editWeeklyTarget}×
+                                </span>
+                            </div>
                         )}
                     </div>
-
-                    {confirmDeleteId === habit.id && (
-                        <div className="mt-3 rounded-xl border-2 border-black bg-stone-50 p-3">
-                            <p className="text-[10px] font-black uppercase tracking-wide text-black mb-2">
-                                Delete this habit?
-                            </p>
-                            <div className="grid grid-cols-2 gap-2">
-                                <button
-                                    onClick={() => handleDelete(habit.id)}
-                                    className="border-2 border-black bg-black text-white py-2 text-[10px] font-black uppercase tracking-wide hover:bg-stone-800 transition-colors"
-                                >
-                                    Delete
-                                </button>
-                                <button
-                                    onClick={() => setConfirmDeleteId(null)}
-                                    className="border-2 border-black bg-white text-black py-2 text-[10px] font-black uppercase tracking-wide hover:bg-stone-100 transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                            </div>
+                    <div className="flex flex-col gap-1.5">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-stone-400">Color</span>
+                        <div className="flex gap-1.5 flex-wrap">
+                            {HABIT_COLOR_OPTIONS.map(c => (
+                                <button key={`${habit.id}-${c}`} type="button" onClick={() => setEditColor(c)}
+                                    className="w-5 h-5 rounded-full border-2 transition-all"
+                                    style={{ backgroundColor: c, borderColor: editColor === c ? 'black' : c, transform: editColor === c ? 'scale(1.2)' : 'scale(1)' }}
+                                />
+                            ))}
                         </div>
-                    )}
-
-                    {isEditing && (
-                        <div className="mt-3 rounded-t-2xl border-t-2 border-dashed border-stone-300 pt-3">
-                            <div className="mb-2 flex items-center justify-between">
-                                <p className="text-[11px] font-black uppercase tracking-widest text-stone-500">
-                                    Edit habit details
-                                </p>
-                                <button
-                                    onClick={() => setEditingId(null)}
-                                    className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-stone-500 hover:text-black"
-                                >
-                                    Collapse
-                                    <ChevronUp size={12} />
-                                </button>
-                            </div>
-
-                            <div className="flex flex-col gap-2.5">
-                        <input
-                            ref={inputRef}
-                            type="text"
-                            value={editName}
-                            onChange={(e) => setEditName(e.target.value.slice(0, 40))}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    saveEdit(habit.id);
-                                }
-                            }}
-                            maxLength={40}
-                            className="w-full bg-white border-2 border-black px-2 py-1 text-[13px] sm:text-sm font-bold text-black outline-none focus:ring-0 focus:bg-stone-50"
-                            placeholder={t('habitManager.habitNamePlaceholder')}
-                        />
-                        <textarea
-                            value={editDescription}
-                            onChange={(e) => setEditDescription(e.target.value)}
-                            className="w-full bg-white border-2 border-black px-2 py-1.5 text-xs font-medium text-black outline-none focus:ring-0 focus:bg-stone-50 resize-y min-h-[44px]"
-                            placeholder={t('habitManager.habitDescriptionPlaceholder', { defaultValue: 'Optional description' })}
-                        />
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                    {HABIT_COLOR_OPTIONS.map((color) => (
-                                        <button
-                                            key={`${habit.id}-color-${color}`}
-                                            type="button"
-                                            onClick={() => setEditColor(color)}
-                                            className={`w-6 h-6 rounded-full border-2 ${editColor === color ? 'border-black scale-110' : 'border-stone-300'}`}
-                                            style={{ backgroundColor: color }}
-                                            aria-label={`Set habit color ${color}`}
-                                        />
-                                    ))}
-                                </div>
-                                <div className="flex flex-col gap-2.5">
-                                    <div className="flex border-2 border-black divide-x-2 divide-black self-start overflow-hidden shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                                        <button
-                                            onClick={() => setFrequencyType('fixed')}
-                                            className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest transition-colors ${frequencyType === 'fixed' ? 'bg-black text-white' : 'bg-white text-black hover:bg-stone-50'}`}
-                                        >
-                                            {t('habitManager.fixed')}
-                                        </button>
-                                        <button
-                                            onClick={() => setFrequencyType('flexible')}
-                                            className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest transition-colors ${frequencyType === 'flexible' ? 'bg-black text-white' : 'bg-white text-black hover:bg-stone-50'}`}
-                                        >
-                                            {t('habitManager.flexible')}
-                                        </button>
-                                    </div>
-
-                                    {frequencyType === 'fixed' ? (
-                                        <div className="flex gap-1">
-                                            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => {
-                                                const isSelected = !editFrequency || editFrequency.includes(i);
-                                                return (
-                                                    <button
-                                                        key={i}
-                                                        onClick={() => {
-                                                            if (!editFrequency) {
-                                                                const all = [0, 1, 2, 3, 4, 5, 6];
-                                                                setEditFrequency(all.filter(d => d !== i));
-                                                            } else {
-                                                                if (editFrequency.includes(i)) {
-                                                                    const next = editFrequency.filter(d => d !== i);
-                                                                    setEditFrequency(next.length === 7 ? undefined : next);
-                                                                } else {
-                                                                    const next = [...editFrequency, i].sort();
-                                                                    setEditFrequency(next.length === 7 ? undefined : next);
-                                                                }
-                                                            }
-                                                        }}
-                                                        className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-[10px] font-black border-2 transition-all ${isSelected
-                                                            ? 'bg-black text-white border-black shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]'
-                                                            : 'bg-white text-stone-300 border-stone-200 hover:border-stone-400'
-                                                            }`}
-                                                    >
-                                                        {day}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-col gap-1.5">
-                                            <div className="flex items-center gap-2">
-                                                <input
-                                                    type="range"
-                                                    min="1"
-                                                    max="7"
-                                                    value={editWeeklyTarget || 3}
-                                                    onChange={(e) => setEditWeeklyTarget(parseInt(e.target.value))}
-                                                    className="flex-1 accent-black h-1 bg-stone-200 rounded-lg appearance-none cursor-pointer"
-                                                />
-                                                <span className="text-xs font-black min-w-[2.5rem] text-center border-2 border-black bg-stone-50 px-1 py-0.5 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]">
-                                                    {editWeeklyTarget || 3}x
-                                                </span>
-                                            </div>
-                                            <span className="text-[9px] font-bold text-stone-500 uppercase tracking-tight">{t('habitManager.timesPerWeek')}</span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <button
-                                    onClick={() => saveEdit(habit.id)}
-                                    className="mt-1 inline-flex items-center justify-center gap-2 self-start rounded-full border-2 border-black bg-black px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-white hover:bg-stone-800"
-                                >
-                                    <Check size={12} strokeWidth={3} />
-                                    Save habit
-                                </button>
-                            </div>
-                        </div>
-                    )}
+                    </div>
+                    <div className="flex gap-2">
+                        <button onClick={() => saveEdit(habit.id)}
+                            className="flex-1 py-2 bg-black text-white text-[11px] font-black uppercase tracking-widest border-2 border-black hover:bg-stone-800 transition-colors"
+                            style={{ boxShadow: '2px 2px 0px 0px rgba(0,0,0,1)' }}
+                        >Save</button>
+                        <button onClick={() => setEditingId(null)}
+                            className="px-4 py-2 text-[11px] font-black uppercase tracking-wide border-2 border-stone-300 text-stone-600 hover:border-stone-600 transition-colors"
+                        >Cancel</button>
+                    </div>
                 </div>
-
-                <div className="relative self-center">
-                    <button
-                        onClick={() => {
-                            setConfirmDeleteId(null);
-                            setOpenMenuId(isMenuOpen ? null : habit.id);
-                        }}
-                        className="inline-flex items-center justify-center rounded-full border border-stone-300 p-1.5 text-stone-600 transition-colors hover:bg-stone-100 hover:text-black"
-                        title="More actions"
-                    >
-                        <MoreHorizontal size={15} strokeWidth={2.5} />
-                    </button>
-
-                    {isMenuOpen && (
-                        <div className="absolute right-0 top-full z-20 mt-2 min-w-[150px] rounded-xl border-2 border-black bg-white p-1.5 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-                            {!isEditing && (
+            ) : (
+                /* ── Normal row ── */
+                <div className="flex items-center gap-2 p-2">
+                    <div className="cursor-default text-stone-200 p-1 px-1">
+                        <GripVertical size={15} strokeWidth={2.5} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                            <div className="h-3 w-3 shrink-0 rounded-full border-2 border-black" style={{ backgroundColor: habit.color || themePrimary }} />
+                            <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <span className="truncate text-sm sm:text-base font-black text-black">
+                                        {habit.name || t('habitManager.untitled')}
+                                    </span>
+                                    <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-wide ${isArchived ? 'border-stone-300 bg-stone-100 text-stone-500' : 'border-black bg-stone-50 text-black'}`}>
+                                        {isArchived ? 'Archived' : 'Active'}
+                                    </span>
+                                </div>
+                                <div className="mt-1">
+                                    <span className="rounded-full bg-stone-100 px-2 py-1 text-[9px] sm:text-[10px] font-black uppercase tracking-wide text-stone-600">
+                                        {getHabitFrequencyLabel(habit)}
+                                    </span>
+                                </div>
+                                {!!habit.description?.trim() && (
+                                    <p className="mt-1 line-clamp-1 text-[10px] leading-relaxed text-stone-600">{habit.description}</p>
+                                )}
+                            </div>
+                        </div>
+                        {confirmDeleteId === habit.id && (
+                            <div className="mt-3 rounded-xl border-2 border-black bg-stone-50 p-3">
+                                <p className="text-[10px] font-black uppercase tracking-wide text-black mb-2">Delete this habit?</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button onClick={() => handleDelete(habit.id)}
+                                        className="border-2 border-black bg-black text-white py-2 text-[10px] font-black uppercase tracking-wide hover:bg-stone-800 transition-colors"
+                                    >Delete</button>
+                                    <button onClick={() => setConfirmDeleteId(null)}
+                                        className="border-2 border-black bg-white text-black py-2 text-[10px] font-black uppercase tracking-wide hover:bg-stone-100 transition-colors"
+                                    >Cancel</button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                    <div className="relative self-center">
+                        <button
+                            onClick={() => { setConfirmDeleteId(null); setOpenMenuId(isMenuOpen ? null : habit.id); }}
+                            className="inline-flex items-center justify-center rounded-full border border-stone-300 p-1.5 text-stone-600 transition-colors hover:bg-stone-100 hover:text-black"
+                            title="More actions"
+                        >
+                            <MoreHorizontal size={15} strokeWidth={2.5} />
+                        </button>
+                        {isMenuOpen && (
+                            <div className="absolute right-0 top-full z-20 mt-2 min-w-[150px] rounded-xl border-2 border-black bg-white p-1.5 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                                 <button
-                                    onClick={() => {
-                                        startEditing(habit);
-                                        setOpenMenuId(null);
-                                    }}
+                                    onClick={() => { startEditing(habit); setOpenMenuId(null); }}
                                     className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[10px] font-black uppercase tracking-wide text-black transition-colors hover:bg-stone-100"
                                 >
-                                    <Edit2 size={12} strokeWidth={2.5} />
-                                    Edit
+                                    <Edit2 size={12} strokeWidth={2.5} />Edit
                                 </button>
-                            )}
-                            <button
-                                onClick={() => {
-                                    toggleArchiveHabit(habit.id, !isArchived);
-                                    setOpenMenuId(null);
-                                }}
-                                className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[10px] font-black uppercase tracking-wide text-black transition-colors hover:bg-stone-100"
-                            >
-                                {isArchived ? <RotateCcw size={12} strokeWidth={2.5} /> : <Archive size={12} strokeWidth={2.5} />}
-                                {isArchived ? 'Restore' : 'Archive'}
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setConfirmDeleteId(confirmDeleteId === habit.id ? null : habit.id);
-                                    setOpenMenuId(null);
-                                }}
-                                className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[10px] font-black uppercase tracking-wide text-rose-600 transition-colors hover:bg-rose-50"
-                            >
-                                <Trash2 size={12} strokeWidth={2.5} />
-                                Delete
-                            </button>
-                        </div>
-                    )}
+                                <button
+                                    onClick={() => { toggleArchiveHabit(habit.id, !isArchived); setOpenMenuId(null); }}
+                                    className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[10px] font-black uppercase tracking-wide text-black transition-colors hover:bg-stone-100"
+                                >
+                                    {isArchived ? <RotateCcw size={12} strokeWidth={2.5} /> : <Archive size={12} strokeWidth={2.5} />}
+                                    {isArchived ? 'Restore' : 'Archive'}
+                                </button>
+                                <button
+                                    onClick={() => { setConfirmDeleteId(confirmDeleteId === habit.id ? null : habit.id); setOpenMenuId(null); }}
+                                    className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[10px] font-black uppercase tracking-wide text-rose-600 transition-colors hover:bg-rose-50"
+                                >
+                                    <Trash2 size={12} strokeWidth={2.5} />Delete
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
-
-            </div>
             )}
         </Reorder.Item>
     );

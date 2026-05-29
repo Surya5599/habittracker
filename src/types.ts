@@ -59,6 +59,27 @@ export interface MonthStats {
   percentage: number;
 }
 
+export interface UserList {
+  id: string;
+  name: string;
+  color: string;
+  emoji?: string;
+  sortOrder: number;
+  createdAt?: string;
+  archivedAt?: string | null;
+}
+
+export interface ListItem {
+  id: string;
+  listId: string;
+  text: string;
+  notes?: string;
+  completed: boolean;
+  completedAt?: string | null;
+  sortOrder: number;
+  createdAt?: string;
+}
+
 export interface MonthlyGoal {
   id: string;
   text: string;

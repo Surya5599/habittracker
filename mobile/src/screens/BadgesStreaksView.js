@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { Flame, Trophy, Award, Star } from 'lucide-react-native';
+import { View, Text, ScrollView, TouchableOpacity, Modal, Pressable } from 'react-native';
+import { Flame, Trophy, Award, Star, X } from 'lucide-react-native';
 import tw from 'twrnc';
 
 const toDateKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -79,10 +79,10 @@ const TIER_STYLES = {
   legend: { badgeBg: '#ffd4dc', badgeText: '#8d1832', label: 'Legend' }
 };
 
-const BadgeMedal = ({ badge, theme, isDark }) => {
+const BadgeMedal = ({ badge, theme, isDark, onPress }) => {
   const tier = TIER_STYLES[badge.tier] || TIER_STYLES.core;
   return (
-    <View style={tw`w-[32%] mb-5 items-center`}>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.75} style={tw`w-[32%] mb-5 items-center`}>
       <View style={[tw`w-[92px] h-[92px] rounded-full items-center justify-center`, badge.unlocked ? {} : { opacity: 0.75 }]}>
         <View
           style={[
@@ -112,7 +112,7 @@ const BadgeMedal = ({ badge, theme, isDark }) => {
       <View style={[tw`mt-2 h-1.5 w-[92px] rounded-full overflow-hidden`, { backgroundColor: isDark ? '#1f2937' : '#e5e7eb' }]}>
         <View style={{ height: '100%', width: `${badge.progress}%`, backgroundColor: badge.unlocked ? theme.secondary : (isDark ? '#6b7280' : '#9ca3af') }} />
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -148,6 +148,7 @@ const StreakCard = ({ item, theme, isDark }) => (
 
 export const BadgesStreaksView = ({ habits, completions, theme, colorMode = 'light' }) => {
   const [tab, setTab] = useState('streaks');
+  const [selectedBadge, setSelectedBadge] = useState(null);
   const isDark = colorMode === 'dark';
 
   const streakData = useMemo(() => {
@@ -598,12 +599,78 @@ export const BadgesStreaksView = ({ habits, completions, theme, colorMode = 'lig
             </Text>
             <View style={tw`flex-row flex-wrap justify-between`}>
             {streakData.badges.map((badge) => (
-              <BadgeMedal key={badge.id} badge={badge} theme={theme} isDark={isDark} />
+              <BadgeMedal key={badge.id} badge={badge} theme={theme} isDark={isDark} onPress={() => setSelectedBadge(badge)} />
             ))}
             </View>
           </View>
         )}
       </ScrollView>
+
+      {/* Badge detail modal */}
+      <Modal
+        visible={!!selectedBadge}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedBadge(null)}
+      >
+        <Pressable
+          style={[tw`flex-1 justify-center items-center px-6`, { backgroundColor: 'rgba(0,0,0,0.55)' }]}
+          onPress={() => setSelectedBadge(null)}
+        >
+          <Pressable onPress={() => {}}>
+            {selectedBadge && (() => {
+              const tier = TIER_STYLES[selectedBadge.tier] || TIER_STYLES.core;
+              return (
+                <View style={[tw`w-full rounded-3xl border-[3px] p-6`, { backgroundColor: isDark ? '#0b0b0b' : '#ffffff', borderColor: isDark ? '#ffffff' : '#000000' }]}>
+                  {/* Tier + close row */}
+                  <View style={tw`flex-row items-center justify-between mb-4`}>
+                    <View style={[tw`px-3 py-1 rounded-full`, { backgroundColor: selectedBadge.unlocked ? tier.badgeBg : (isDark ? '#374151' : '#e5e7eb') }]}>
+                      <Text style={[tw`text-[10px] font-black uppercase tracking-widest`, { color: selectedBadge.unlocked ? tier.badgeText : (isDark ? '#9ca3af' : '#6b7280') }]}>
+                        {tier.label}
+                      </Text>
+                    </View>
+                    <TouchableOpacity onPress={() => setSelectedBadge(null)}>
+                      <X size={20} color={isDark ? '#9ca3af' : '#6b7280'} />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Icon */}
+                  <View style={tw`items-center mb-4`}>
+                    <View style={[tw`w-[80px] h-[80px] rounded-full items-center justify-center`, selectedBadge.unlocked ? { backgroundColor: theme.primary } : { backgroundColor: isDark ? '#374151' : '#e5e7eb' }]}>
+                      {selectedBadge.unlocked
+                        ? <Award size={32} color={theme.secondary} />
+                        : <Star size={32} color={isDark ? '#6b7280' : '#9ca3af'} />}
+                    </View>
+                  </View>
+
+                  {/* Title + description */}
+                  <Text style={[tw`text-xl font-black text-center mb-2`, { color: isDark ? '#f3f4f6' : '#111827' }]}>
+                    {selectedBadge.title}
+                  </Text>
+                  <Text style={[tw`text-sm font-medium text-center mb-5`, { color: isDark ? '#9ca3af' : '#6b7280' }]}>
+                    {selectedBadge.description}
+                  </Text>
+
+                  {/* Progress */}
+                  <View style={tw`flex-row justify-between mb-2`}>
+                    <Text style={[tw`text-[10px] font-black uppercase tracking-widest`, { color: isDark ? '#6b7280' : '#9ca3af' }]}>Progress</Text>
+                    <Text style={[tw`text-[10px] font-black uppercase tracking-widest`, { color: isDark ? '#6b7280' : '#9ca3af' }]}>{selectedBadge.progressLabel}</Text>
+                  </View>
+                  <View style={[tw`h-2 rounded-full overflow-hidden`, { backgroundColor: isDark ? '#1f2937' : '#e5e7eb' }]}>
+                    <View style={{ height: '100%', width: `${selectedBadge.progress}%`, backgroundColor: selectedBadge.unlocked ? theme.primary : (isDark ? '#6b7280' : '#9ca3af'), borderRadius: 999 }} />
+                  </View>
+
+                  {selectedBadge.unlocked && (
+                    <Text style={[tw`text-center text-[11px] font-black uppercase tracking-widest mt-4`, { color: theme.primary }]}>
+                      ✓ Unlocked
+                    </Text>
+                  )}
+                </View>
+              );
+            })()}
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 };

@@ -24,7 +24,13 @@ export const MonthlyView = ({
     const { t, i18n } = useTranslation();
     const [mode, setMode] = useState('journals'); // 'journals' | 'habits' | 'tasks'
     const [selectedDate, setSelectedDate] = useState(null);
+    const [selectedFocusView, setSelectedFocusView] = useState('habits');
     const [searchQuery, setSearchQuery] = useState('');
+
+    const openDateCard = (date, focusView) => {
+        setSelectedFocusView(focusView);
+        setSelectedDate(date);
+    };
 
     useEffect(() => {
         if (!initialSelectedDate) return;
@@ -81,7 +87,8 @@ export const MonthlyView = ({
         const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         const dayData = notes?.[dateKey] || {};
         const tasks = Array.isArray(dayData.tasks) ? dayData.tasks : [];
-        const journalText = (dayData.journal || '').trim();
+        const journalEntries = Array.isArray(dayData.journal) ? dayData.journal : (dayData.journal ? [{ text: dayData.journal }] : []);
+        const journalText = journalEntries.map(e => e.text || '').filter(Boolean).join(' ').trim();
         const habitActivity = getHabitActivityForDate(date);
 
         const hasJournal = journalText.length > 0;
@@ -111,6 +118,16 @@ export const MonthlyView = ({
             || habitText.includes(normalizedQuery);
     });
 
+    // For journal mode: one row per entry, not per day
+    const journalRows = visibleDays.flatMap((date) => {
+        const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        const dayData = notes?.[dateKey] || {};
+        const entries = Array.isArray(dayData.journal)
+            ? dayData.journal
+            : (dayData.journal ? [{ id: 'legacy', text: dayData.journal, mood: dayData.mood }] : []);
+        return entries.filter(e => (e.text || '').trim()).map(entry => ({ date, dateKey, entry }));
+    });
+
     return (
         <View style={[tw`flex-1`, { backgroundColor: isDark ? '#000000' : '#f9fafb' }]}>
             {/* Header / Toggle */}
@@ -135,7 +152,7 @@ export const MonthlyView = ({
                         style={[tw`flex-1 py-3 rounded-xl items-center flex-row justify-center gap-2`, mode === 'tasks' && { backgroundColor: panelBg }]}
                     >
                         <ListTodo size={16} color={mode === 'tasks' ? theme.primary : '#a1a1aa'} />
-                        <Text style={[tw`font-black uppercase text-[11px] tracking-widest`, mode === 'tasks' ? { color: theme.primary } : { color: textMuted }]}>Tasks</Text>
+                        <Text style={[tw`font-black uppercase text-[11px] tracking-widest`, mode === 'tasks' ? { color: theme.primary } : { color: textMuted }]}>{t('monthlyView.tasks')}</Text>
                     </TouchableOpacity>
                 </View>
                 <View style={[tw`mt-3 flex-row items-center rounded-xl border px-3`, { borderColor: panelBorder, backgroundColor: panelSoftBg }]}>
@@ -143,7 +160,7 @@ export const MonthlyView = ({
                     <TextInput
                         value={searchQuery}
                         onChangeText={setSearchQuery}
-                        placeholder="Search logs..."
+                        placeholder={t('monthlyView.searchPlaceholder')}
                         placeholderTextColor={textMuted}
                         style={[tw`flex-1 ml-2 py-2.5 text-sm font-bold`, { color: textPrimary }]}
                     />
@@ -155,107 +172,108 @@ export const MonthlyView = ({
                 contentContainerStyle={tw`pb-32 pt-2`}
                 showsVerticalScrollIndicator={false}
             >
-                {visibleDays.map((date, idx) => {
-                    const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-                    const dayData = notes?.[dateKey] || {};
-                    const dayName = date.toLocaleDateString(i18n.language, { weekday: 'short' });
-                    const dayNum = date.getDate();
-                    const monthName = date.toLocaleDateString(i18n.language, { month: 'short' });
-                    const year = date.getFullYear();
-                    const tasks = Array.isArray(dayData.tasks) ? dayData.tasks : [];
-                    const completedTasks = tasks.filter(task => task.completed).length;
-                    const activityHabits = getHabitActivityForDate(date);
-
-                    return (
-                        <TouchableOpacity
-                            key={dateKey}
-                            onPress={() => setSelectedDate(date)}
-                            style={[tw`mx-4 mt-3 border rounded-2xl p-4 flex-row items-center`, { backgroundColor: panelBg, borderColor: panelBorder }]}
-                            activeOpacity={0.7}
-                        >
-                            {/* Date Column */}
-                            <View style={[tw`mr-3 w-[44px] rounded-xl border py-2 items-center`, { backgroundColor: panelSoftBg, borderColor: panelBorder }]}>
-                                <Text style={[tw`text-[9px] font-black uppercase`, { color: theme.primary }]} numberOfLines={1}>{dayName}</Text>
-                                <Text style={[tw`text-xl font-black leading-tight`, { color: textPrimary }]}>{dayNum}</Text>
-                                <Text style={[tw`text-[9px] font-black uppercase`, { color: textMuted }]} numberOfLines={1}>{monthName}</Text>
-                            </View>
-
-                            {/* Content Column */}
-                            <View style={[tw`flex-1 border-l pl-4 py-1 min-h-[40px] justify-center`, { borderColor: divider }]}>
-                                {mode === 'journals' ? (
-                                    <View style={tw`flex-row items-center`}>
-                                        {dayData.mood ? (
-                                            (() => {
-                                                const moodObj = MOODS.find(m => m.value === dayData.mood);
-                                                const MoodIcon = moodObj?.icon || Meh;
-                                                const moodColor = moodObj?.color || '#d1d5db';
-                                                return <MoodIcon size={22} color={moodColor} strokeWidth={2.5} />;
-                                            })()
-                                        ) : (
-                                            <Meh size={22} color={isDark ? '#262626' : '#e5e7eb'} strokeWidth={2} />
-                                        )}
-                                        <View style={tw`flex-1 ml-3`}>
-                                            <Text
-                                                style={[tw`text-sm font-bold`, dayData.journal ? { color: isDark ? '#d1d5db' : '#4b5563' } : { color: isDark ? '#6b7280' : '#d1d5db', fontStyle: 'italic' }]}
-                                            >
-                                                {dayData.journal || t('monthlyView.emptyEntry')}
+                {mode === 'journals' ? (
+                    <>
+                        {journalRows.map(({ date, dateKey, entry }) => {
+                            const dayName = date.toLocaleDateString(i18n.language, { weekday: 'short' });
+                            const dayNum = date.getDate();
+                            const monthName = date.toLocaleDateString(i18n.language, { month: 'short' });
+                            const moodObj = entry.mood ? MOODS.find(m => m.value === entry.mood) : null;
+                            const MoodIcon = moodObj?.icon || Meh;
+                            const moodColor = moodObj?.color || (isDark ? '#262626' : '#e5e7eb');
+                            return (
+                                <TouchableOpacity
+                                    key={`${dateKey}-${entry.id || entry.text}`}
+                                    onPress={() => openDateCard(date, 'journal')}
+                                    style={[tw`mx-4 mt-3 border rounded-2xl p-4 flex-row items-center`, { backgroundColor: panelBg, borderColor: moodObj ? moodColor : panelBorder }]}
+                                    activeOpacity={0.7}
+                                >
+                                    <View style={[tw`mr-3 w-[44px] rounded-xl border py-2 items-center`, { backgroundColor: moodObj ? moodColor + '18' : panelSoftBg, borderColor: moodObj ? moodColor : panelBorder }]}>
+                                        <Text style={[tw`text-[9px] font-black uppercase`, { color: moodObj ? moodColor : theme.primary }]} numberOfLines={1}>{dayName}</Text>
+                                        <Text style={[tw`text-xl font-black leading-tight`, { color: textPrimary }]}>{dayNum}</Text>
+                                        <Text style={[tw`text-[9px] font-black uppercase`, { color: moodObj ? moodColor : textMuted }]} numberOfLines={1}>{monthName}</Text>
+                                    </View>
+                                    <View style={[tw`flex-1 border-l pl-4 py-1 min-h-[40px] justify-center`, { borderColor: moodObj ? moodColor + '44' : divider }]}>
+                                        <View style={tw`flex-row items-start gap-2`}>
+                                            <View style={[tw`rounded-full p-1 mt-0.5`, { backgroundColor: moodColor + '22' }]}>
+                                                <MoodIcon size={14} color={moodColor} strokeWidth={moodObj ? 2.5 : 2} />
+                                            </View>
+                                            <Text style={[tw`flex-1 text-sm font-bold leading-snug`, { color: isDark ? '#d1d5db' : '#4b5563' }]} numberOfLines={3}>
+                                                {entry.text}
                                             </Text>
                                         </View>
                                     </View>
-                                ) : mode === 'habits' ? (
-                                    <View style={tw`flex-row flex-wrap gap-1.5`}>
-                                        {(() => {
-                                            const allToShow = activityHabits;
-
-                                            if (allToShow.length === 0) {
-                                                return <Text style={[tw`text-xs font-bold italic`, { color: isDark ? '#6b7280' : '#d1d5db' }]}>{t('monthlyView.noActivity')}</Text>;
-                                            }
-
-                                            return allToShow.map(h => {
-                                                const done = checkCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
-                                                return (
-                                                    <View
-                                                        key={h.id}
-                                                        style={[
-                                                            tw`w-3 h-3 rounded-full shadow-sm`,
-                                                            {
-                                                                backgroundColor: done ? h.color : panelSoftBg,
-                                                                borderWidth: done ? 0 : 1.5,
-                                                                borderColor: panelBorder
-                                                            }
-                                                        ]}
-                                                    />
-                                                );
-                                            });
-                                        })()}
+                                    <View style={tw`ml-2`}>
+                                        <ChevronRight size={18} color={isDark ? '#6b7280' : '#e5e7eb'} strokeWidth={3} />
                                     </View>
-                                ) : (
-                                    <View style={tw`flex-row items-center justify-between`}>
-                                        <Text
-                                            style={[tw`text-sm font-bold flex-1 mr-2`, { color: isDark ? '#d1d5db' : '#4b5563' }]}
-                                            numberOfLines={1}
-                                        >
-                                            {tasks[0]?.text || 'Task'}
-                                        </Text>
-                                        <Text style={[tw`text-[11px] font-black uppercase`, { color: textMuted }]}>
-                                            {completedTasks}/{tasks.length}
-                                        </Text>
+                                </TouchableOpacity>
+                            );
+                        })}
+                        {journalRows.length === 0 && (
+                            <View style={tw`px-6 pt-8`}>
+                                <Text style={[tw`text-center text-sm font-bold`, { color: textMuted }]}>{t('monthlyView.noLogs')}</Text>
+                            </View>
+                        )}
+                    </>
+                ) : (
+                    <>
+                        {visibleDays.map((date) => {
+                            const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                            const dayData = notes?.[dateKey] || {};
+                            const dayName = date.toLocaleDateString(i18n.language, { weekday: 'short' });
+                            const dayNum = date.getDate();
+                            const monthName = date.toLocaleDateString(i18n.language, { month: 'short' });
+                            const tasks = Array.isArray(dayData.tasks) ? dayData.tasks : [];
+                            const completedTasks = tasks.filter(task => task.completed).length;
+                            const activityHabits = getHabitActivityForDate(date);
+                            return (
+                                <TouchableOpacity
+                                    key={dateKey}
+                                    onPress={() => openDateCard(date, mode === 'tasks' ? 'tasks' : 'habits')}
+                                    style={[tw`mx-4 mt-3 border rounded-2xl p-4 flex-row items-center`, { backgroundColor: panelBg, borderColor: panelBorder }]}
+                                    activeOpacity={0.7}
+                                >
+                                    <View style={[tw`mr-3 w-[44px] rounded-xl border py-2 items-center`, { backgroundColor: panelSoftBg, borderColor: panelBorder }]}>
+                                        <Text style={[tw`text-[9px] font-black uppercase`, { color: theme.primary }]} numberOfLines={1}>{dayName}</Text>
+                                        <Text style={[tw`text-xl font-black leading-tight`, { color: textPrimary }]}>{dayNum}</Text>
+                                        <Text style={[tw`text-[9px] font-black uppercase`, { color: textMuted }]} numberOfLines={1}>{monthName}</Text>
                                     </View>
-                                )}
+                                    <View style={[tw`flex-1 border-l pl-4 py-1 min-h-[40px] justify-center`, { borderColor: divider }]}>
+                                        {mode === 'habits' ? (
+                                            <View style={tw`flex-row flex-wrap gap-1.5`}>
+                                                {activityHabits.length === 0
+                                                    ? <Text style={[tw`text-xs font-bold italic`, { color: isDark ? '#6b7280' : '#d1d5db' }]}>{t('monthlyView.noActivity')}</Text>
+                                                    : activityHabits.map(h => {
+                                                        const done = checkCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
+                                                        return (
+                                                            <View key={h.id} style={[tw`w-3 h-3 rounded-full`, { backgroundColor: done ? h.color : panelSoftBg, borderWidth: done ? 0 : 1.5, borderColor: panelBorder }]} />
+                                                        );
+                                                    })
+                                                }
+                                            </View>
+                                        ) : (
+                                            <View style={tw`flex-row items-center justify-between`}>
+                                                <Text style={[tw`text-sm font-bold flex-1 mr-2`, { color: isDark ? '#d1d5db' : '#4b5563' }]} numberOfLines={1}>
+                                                    {tasks[0]?.text || 'Task'}
+                                                </Text>
+                                                <Text style={[tw`text-[11px] font-black uppercase`, { color: textMuted }]}>
+                                                    {completedTasks}/{tasks.length}
+                                                </Text>
+                                            </View>
+                                        )}
+                                    </View>
+                                    <View style={tw`ml-2`}>
+                                        <ChevronRight size={18} color={isDark ? '#6b7280' : '#e5e7eb'} strokeWidth={3} />
+                                    </View>
+                                </TouchableOpacity>
+                            );
+                        })}
+                        {visibleDays.length === 0 && (
+                            <View style={tw`px-6 pt-8`}>
+                                <Text style={[tw`text-center text-sm font-bold`, { color: textMuted }]}>{t('monthlyView.noLogs')}</Text>
                             </View>
-
-                            <View style={tw`ml-2`}>
-                                <ChevronRight size={18} color={isDark ? '#6b7280' : '#e5e7eb'} strokeWidth={3} />
-                            </View>
-                        </TouchableOpacity>
-                    );
-                })}
-                {visibleDays.length === 0 && (
-                    <View style={tw`px-6 pt-8`}>
-                        <Text style={[tw`text-center text-sm font-bold`, { color: textMuted }]}>
-                            No logs found for this section.
-                        </Text>
-                    </View>
+                        )}
+                    </>
                 )}
             </ScrollView>
 
@@ -306,6 +324,7 @@ export const MonthlyView = ({
                                         dateKey={`${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`}
                                         updateNote={updateNote}
                                         cardStyle={cardStyle}
+                                        initialView={selectedFocusView}
                                     />
                                 </View>
                             )}

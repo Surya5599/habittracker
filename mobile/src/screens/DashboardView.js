@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, Settings, Check, Zap, Trophy, Target, X } fr
 import Svg, { Path, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
 import { buildWeeklyStory, buildMonthlyStory, buildAnnualStory } from '../utils/storyGenerator';
 import { AnalyticsDashboard, HardShadowCardLocal } from '../components/AnalyticsDashboard';
+import { computeAnchorHabit, computeWeakestDay, computeStreakFragility } from '../utils/insightEngine';
 
 import { getHabitMonthStats } from '../utils/stats';
 import { safePercentage } from '../utils/progressMath';
@@ -36,6 +37,7 @@ export const DashboardView = ({
     const [analyticsView, setAnalyticsView] = React.useState('WEEK'); // WEEK, MONTH, YEAR
     const [monthOffset, setMonthOffset] = React.useState(0);
     const [yearOffset, setYearOffset] = React.useState(0);
+    const analyticsScrollRef = React.useRef(null);
     const [showMonthYearPicker, setShowMonthYearPicker] = React.useState(false);
     const [pickerMode, setPickerMode] = React.useState('both'); // 'both' or 'year'
 
@@ -261,6 +263,53 @@ export const DashboardView = ({
             totalPossible: totalPossibleInMonth
         };
     }, [habits, completions, monthOffset, weekStart, i18n.language, t, isDailyHabitDueOnDate]);
+
+    const monthlyWeekBreakdown = React.useMemo(() => {
+        const baseDate = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
+        const currentYear = baseDate.getFullYear();
+        const currentMonth = baseDate.getMonth();
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+        const weeks = [];
+        let week = { completed: 0, possible: 0, startDay: 1 };
+
+        for (let d = 1; d <= daysInMonth; d++) {
+            const currentDate = new Date(currentYear, currentMonth, d);
+            const dateKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            if (dateKey > todayKey && monthOffset === 0) {
+                // don't count future days of current month
+                week.endDay = d - 1;
+                weeks.push({ ...week });
+                break;
+            }
+            const dayOfWeek = currentDate.getDay();
+            const isNewWeekStart = d > 1 && (weekStart === 'SUN' ? dayOfWeek === 0 : dayOfWeek === 1);
+            if (isNewWeekStart) {
+                week.endDay = d - 1;
+                weeks.push({ ...week });
+                week = { completed: 0, possible: 0, startDay: d };
+            }
+            habits.forEach(h => {
+                if (!isDailyHabitDueOnDate(h, currentDate)) return;
+                week.possible++;
+                if (completions[h.id]?.[dateKey]) week.completed++;
+            });
+            if (d === daysInMonth) {
+                week.endDay = daysInMonth;
+                weeks.push({ ...week });
+            }
+        }
+
+        return weeks.map((w, i) => ({
+            label: `W${i + 1}`,
+            percentage: safePercentage(w.completed, w.possible),
+            completed: w.completed,
+            possible: w.possible,
+            startDay: w.startDay,
+            endDay: w.endDay,
+        }));
+    }, [habits, completions, monthOffset, weekStart, isDailyHabitDueOnDate]);
 
     const previousMonthComparison = React.useMemo(() => {
         const baseDate = new Date(today.getFullYear(), today.getMonth() + monthOffset - 1, 1);
@@ -620,6 +669,21 @@ export const DashboardView = ({
 
     const areaPath = `${pathD} L ${chartWidth},${chartHeight} L 0,${chartHeight} Z`;
 
+    const anchorInsight = React.useMemo(
+        () => computeAnchorHabit(habits, completions, notes),
+        [habits, completions, notes]
+    );
+
+    const weakDayInsight = React.useMemo(
+        () => computeWeakestDay(habits, completions, notes),
+        [habits, completions, notes]
+    );
+
+    const fragilityInsight = React.useMemo(
+        () => computeStreakFragility(habits, completions, notes),
+        [habits, completions, notes]
+    );
+
     const activeColor = theme.primary;
     const secondaryColor = theme.secondary;
 
@@ -654,6 +718,7 @@ export const DashboardView = ({
             />
 
             <ScrollView
+                ref={analyticsScrollRef}
                 style={tw`flex-1`}
                 contentContainerStyle={tw`pb-32 pt-1`}
                 stickyHeaderIndices={[1]}
@@ -667,7 +732,10 @@ export const DashboardView = ({
                             return (
                                 <TouchableOpacity
                                     key={viewName}
-                                    onPress={() => setAnalyticsView(viewName)}
+                                    onPress={() => {
+                                        setAnalyticsView(viewName);
+                                        analyticsScrollRef.current?.scrollTo({ y: 0, animated: false });
+                                    }}
                                     style={[
                                         tw`flex-1 py-2 items-center rounded-xl`,
                                         isActive ? { backgroundColor: theme.primary } : {}
@@ -749,6 +817,7 @@ export const DashboardView = ({
                             periodType="MONTH"
                             story={monthlyData.story}
                             chartData={monthlyData.chartData}
+                            weeklyBreakdown={monthlyWeekBreakdown}
                             monthComparison={{
                                 current: monthlyData.chartData.map((d) => ({ label: String(d.label), value: d.value })),
                                 previous: previousMonthComparison.series,
@@ -836,9 +905,13 @@ export const DashboardView = ({
                             weekStart={weekStart}
                             colorMode={colorMode}
                             onRetrospectiveDayPress={handleRetrospectiveDayPress}
+                            anchorInsight={anchorInsight}
+                            weakDayInsight={weakDayInsight}
+                            fragilityInsight={fragilityInsight}
                         />
                     </View>
                 )}
+
             </ScrollView>
 
             <Modal

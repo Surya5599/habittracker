@@ -1,393 +1,483 @@
 {
-    "settings": {
-        "title": "Einstellungen",
-        "general": {
-            "title": "Allgemein",
-            "defaultView": "Standardansicht",
-            "views": {
-                "daily": "Täglich",
-                "monthly": "Monatlich",
-                "dashboard": "Dashboard"
-            },
-            "startOfWeek": "Start of Week"
-        },
-        "language": {
-            "title": "Sprache"
-        },
-        "theme": {
-            "title": "Thema"
-        },
-        "support": {
-            "title": "Support",
-            "reportBug": "Fehler melden oder Vorschlag"
-        },
-        "appearance": {
-            "title": "Darstellung",
-            "light": "Hell",
-            "dark": "Dunkel"
-        },
-        "cardSize": {
-            "title": "Kartengrosse",
-            "compact": "Kompakt",
-            "large": "Gross"
-        },
-        "whatsNew": {
-            "title": "Neuigkeiten",
-            "tutorial": "Tutorial"
-        },
-        "onboardingEntry": {
-            "title": "Tutorial",
-            "open": "Offnen"
-        },
-        "privacy": {
-            "title": "Datenschutz",
-            "policy": "Richtlinie"
-        },
-        "account": {
-            "delete": "Konto loschen",
-            "noSession": "Keine Kontositzung gefunden.",
-            "deleteFailed": "Loschen fehlgeschlagen",
-            "unableDelete": "Das Konto konnte derzeit nicht geloscht werden.",
-            "prompts": {
-                "confirmTitle": "Konto loschen?",
-                "confirmBody": "Dadurch werden Ihr Konto und Ihre Daten dauerhaft entfernt.",
-                "sureTitle": "Sind Sie absolut sicher?",
-                "sureBody": "Diese Aktion kann nicht ruckgangig gemacht werden.",
-                "keep": "Konto behalten",
-                "forever": "Endgultig loschen"
-            }
-        },
-        "errors": {
-            "title": "Fehler",
-            "unableSignOut": "Abmelden nicht moglich"
-        }
+  "settings": {
+    "title": "Einstellungen",
+    "general": {
+      "title": "Allgemein",
+      "defaultView": "Standardansicht",
+      "views": {
+        "daily": "Täglich",
+        "monthly": "Monatlich",
+        "dashboard": "Dashboard"
+      },
+      "startOfWeek": "Wochenbeginn"
     },
-    "header": {
-        "dashboard": "Dashboard",
-        "signIn": "Anmelden",
-        "logout": "Abmelden",
-        "myWeek": "Meine Woche",
-        "myMonth": "Mein Monat",
-        "monthlyTrends": "Monatstrends",
-        "weeklyTrends": "Wochentrends",
-        "annualTrends": "Jahrestrends",
-        "vsLM": "vs VM",
-        "vsLW": "vs VW",
-        "switchChart": "Zum Diagramm wechseln",
-        "monthlySuccess": "Monatserfolg",
-        "weeklySuccess": "Wochenerfolg",
-        "annualPerformance": "Jahresleistung",
-        "monthMastery": "Monatsmeisterung",
-        "habitMaster": "Gewohnheitsmeister",
-        "yourStoryMonth": "Deine Geschichte diesen Monat",
-        "yourStoryWeek": "Deine Geschichte diese Woche",
-        "completed": "Abgeschlossen",
-        "vsPrev": "vs Vorher",
-        "best": "Beste",
-        "thisYearResolutions": "Vorsätze dieses Jahr"
+    "language": {
+      "title": "Sprache"
     },
-    "story": {
-        "annual": {
-            "momentum": {
-                "ascending": "Deine Konstanz hat sich im Jahresverlauf verbessert, du beendest das Jahr also stärker als du gestartet bist.",
-                "descending": "Dein Tempo hat in den letzten Monaten nachgelassen. Nimm das als Signal, die Kernroutine zu vereinfachen und neu zu starten.",
-                "stable": "Du hast trotz wechselnder Wochen einen stabilen Rhythmus gehalten, eine starke Grundlage für den nächsten Schritt.",
-                "main": "In diesem Jahr wurde [[{{habitName}}]] zu einer zentralen Identitätsgewohnheit. {{momentumMsg}}"
-            },
-            "rhythm": {
-                "weekend": "Dein stärkster Rhythmus liegt am Wochenende. Schütze dieses Zeitfenster und übertrage einen Teil davon in die Woche.",
-                "weekday": "Unter der Woche bist du stark strukturiert, am Wochenende weniger konstant. Eine leichtere Wochenend-Version kann die Lücke schließen.",
-                "consistent": "Deine Ausführung blieb zwischen Wochentagen und Wochenende ausgeglichen, ein Zeichen guter Routinenkontrolle."
-            },
-            "consistency": {
-                "high": "Du warst in diesem Jahr an [[{{activeDays}}]] Tagen dran. Das ist ein klares Signal für belastbare Gewohnheitsidentität.",
-                "medium": "Die Basis ist solide. Ein klarerer Trigger oder festeres Zeitfenster kann das deutlich automatischer machen.",
-                "low": "Du bist noch in der Aufbauphase. Kleine, wiederholbare Erfolge sind jetzt wichtiger als Intensität."
-            },
-            "experimental": "Du hast dieses Jahr viele Gewohnheiten ausprobiert. Weniger Prioritäten im nächsten Zyklus lassen Konstanz besser wachsen.",
-            "fading": "[[{{habitName}}]] ist zuletzt abgefallen. Wenn es weiter wichtig ist, starte diese Woche mit einer einfacheren Version neu.",
-            "neglected": "[[{{habitName}}]] ist seit [[{{days}}]] Tagen inaktiv. Ein kurzer Wiedereinstieg kann den Schwung zurückbringen."
-        },
-        "weekly": {
-            "intro": {
-                "elite": "Du hast diese Woche [[{{count}}]] Aktionen abgeschlossen und lagst über dem Soll. Dein System funktioniert.",
-                "strong": "Du hast diese Woche [[{{count}}]] Abschlüsse mit guter Verlässlichkeit geschafft.",
-                "balanced": "Du hast diese Woche [[{{count}}]] Aktionen abgeschlossen. Einige Gewohnheiten hielten, andere brauchen einen klareren Auslöser.",
-                "low": "Du hast diese Woche [[{{count}}]] Abschlüsse geloggt. Halte die Mindestversion klein und fokussiere den Neustart."
-            },
-            "momentum": {
-                "highlight": "[[{{habitName}}]] war diese Woche vorn mit [[{{count}}/{{total}}]] abgeschlossenen Tagen."
-            },
-            "neglected": "[[{{habitName}}]] wurde diese Woche nicht geloggt. Eine 2-Minuten-Version morgen reicht zum Wiedereinstieg.",
-            "growth": {
-                "recovery": "Deine zweite Wochenhälfte war stärker als die erste. Das ist ein klares Erholungssignal.",
-                "friction": "Der starke Start hat gegen Ende nachgelassen. Ein End-of-Week-Trigger kann den Rückgang reduzieren."
-            }
-        },
-        "monthly": {
-            "intro": {
-                "exceptional": "Mit [[{{count}}]] Abschlüssen zeigt dieser Monat hohe und stabile Ausführung.",
-                "solid": "Du hast in diesem Monat [[{{count}}]] Abschlüsse mit verlässlicher Konstanz erreicht.",
-                "exploration": "Du hast diesen Monat [[{{count}}]] Abschlüsse geloggt. Mehr Fokus kann den Übertrag in den nächsten Monat verbessern.",
-                "low": "Du hast diesen Monat [[{{count}}]] Aktionen abgeschlossen. Nutze das, um Umfang zu reduzieren und eine einfache Basis neu aufzubauen."
-            },
-            "momentum": {
-                "growth": "Du liegst [[{{delta}}%]] über dem Vormonat, ein klar positiver Ausführungstrend.",
-                "cooling": "Du liegst [[{{delta}}%]] unter dem Vormonat. Weniger Reibung bei einer Schlüsselgewohnheit sollte den nächsten Monat stabilisieren."
-            },
-            "rhythm": {
-                "anchor": "[[{{habitName}}]] war dein Anker in diesem Monat mit [[{{count}}]] Abschlüssen."
-            }
-        }
+    "theme": {
+      "title": "Thema"
     },
-    "common": {
-        "done": "Fertig",
-        "rate": "Bewerten",
-        "days": "TAGE",
-        "myHabits": "Meine Gewohnheiten",
-        "manageHabits": "Gewohnheiten verwalten",
-        "currentStreak": "Aktuelle Serie",
-        "months": {
-            "jan": "Jan",
-            "feb": "Feb",
-            "mar": "Mär",
-            "apr": "Apr",
-            "may": "Mai",
-            "jun": "Jun",
-            "jul": "Jul",
-            "aug": "Aug",
-            "sep": "Sep",
-            "oct": "Okt",
-            "nov": "Nov",
-            "dec": "Dez"
-        },
-        "selectYear": "Jahr auswählen",
-        "cancel": "Abbrechen",
-        "thisWeek": "diese Woche",
-        "untitled": "Ohne Titel",
-        "daysShort": {
-            "mon": "Mo",
-            "tue": "Di",
-            "wed": "Mi",
-            "thu": "Do",
-            "fri": "Fr",
-            "sat": "Sa",
-            "sun": "So"
-        }
+    "reminders": {
+      "title": "Tägliche Erinnerungen"
     },
-    "dailyCard": {
-        "dailyHabits": "Tägliche Gewohnheiten",
-        "flexibleHabits": "Flexible Gewohnheiten",
-        "tasks": "Aufgaben",
-        "dailyDone": "Täglich Erledigt",
-        "remaining": "Verbleibend",
-        "noDailyHabits": "Keine täglichen Gewohnheiten heute fällig",
-        "addTask": "Klicken Sie auf +, um eine Aufgabe hinzuzufügen",
-        "share": "Errungenschaft teilen",
-        "journal": "Tagebuch",
-        "mood": "Stimmung",
-        "notes": "Notizen",
-        "saveEntry": "Eintrag speichern",
-        "journalPlaceholder": "Schreibe über heute...",
-        "editTask": "Aufgabe bearbeiten",
-        "deleteTask": "Aufgabe löschen",
-        "untitled": "Ohne Titel",
-        "moods": {
-            "veryBad": "Sehr schlecht",
-            "bad": "Schlecht",
-            "neutral": "Neutral",
-            "good": "Gut",
-            "veryGood": "Sehr gut"
-        }
+    "support": {
+      "title": "Support",
+      "reportBug": "Fehler melden oder Vorschlag"
     },
-    "habitManager": {
-        "title": "Meine Gewohnheiten",
-        "addHabit": "Neue Gewohnheit",
-        "noHabits": "Noch keine Gewohnheiten. Fügen Sie eine hinzu!",
-        "dragToReorder": "Ziehen Sie Gewohnheiten, um sie neu zu ordnen.",
-        "fixed": "Fest",
-        "flexible": "Flexibel",
-        "timesPerWeek": "Mal pro Woche",
-        "habitNamePlaceholder": "Gewohnheitsname",
-        "untitled": "Unbenannte Gewohnheit",
-        "deleteConfirm": "Sind Sie sicher, dass Sie diese Gewohnheit löschen möchten? Sie verlieren alle historischen Daten."
+    "appearance": {
+      "title": "Darstellung",
+      "light": "Hell",
+      "dark": "Dunkel"
     },
-    "tasks": {
-        "enterTask": "Aufgabe eingeben",
-        "placeholder": "Schreibe etwas...",
-        "addTask": "Aufgabe hinzufügen",
-        "newTaskPlaceholder": "Neue Aufgabe...",
-        "empty": "Noch keine Aufgaben"
+    "cardSize": {
+      "title": "Kartengrosse",
+      "compact": "Kompakt",
+      "large": "Gross"
     },
-    "journal": {
-        "title": "Tagebuch",
-        "prompt": "Reflexion des Tages",
-        "placeholder": "Schreibe über heute...",
-        "save": "Eintrag speichern"
+    "whatsNew": {
+      "title": "Neuigkeiten",
+      "tutorial": "Tutorial"
     },
-    "weeklyCard": {
-        "title": "Wochenziele",
-        "target": "Ziel: {{count}}x diese Woche"
+    "onboardingEntry": {
+      "title": "Tutorial",
+      "open": "Offnen"
     },
-    "monthlyView": {
-        "journals": "Tagebücher",
-        "habits": "Gewohnheiten",
-        "emptyEntry": "Leerer Eintrag...",
-        "noActivity": "Keine Aktivität heute",
-        "dayDetails": "Tagesdetails"
+    "privacy": {
+      "title": "Datenschutz",
+      "policy": "Richtlinie"
     },
-    "dashboard": {
-        "week": "Woche",
-        "month": "Monat",
-        "year": "Jahr",
-        "weekTab": "WOCHE",
-        "monthTab": "MONAT",
-        "yearTab": "JAHR"
+    "account": {
+      "delete": "Konto loschen",
+      "noSession": "Keine Kontositzung gefunden.",
+      "deleteFailed": "Loschen fehlgeschlagen",
+      "unableDelete": "Das Konto konnte derzeit nicht geloscht werden.",
+      "prompts": {
+        "confirmTitle": "Konto loschen?",
+        "confirmBody": "Dadurch werden Ihr Konto und Ihre Daten dauerhaft entfernt.",
+        "sureTitle": "Sind Sie absolut sicher?",
+        "sureBody": "Diese Aktion kann nicht ruckgangig gemacht werden.",
+        "keep": "Konto behalten",
+        "forever": "Endgultig loschen"
+      },
+      "title": "Konto",
+      "email": "E-Mail",
+      "changePassword": "Passwort ändern",
+      "sendResetEmail": "Link senden",
+      "resetSent": "Überprüfe deine E-Mail",
+      "resetSentBody": "Ein Zurücksetzen-Link wurde an {{email}} gesendet.",
+      "resetFailed": "Zurücksetzen-E-Mail konnte nicht gesendet werden."
     },
-    "analytics": {
-        "success": "{{period}} Erfolg",
-        "mastery": "{{period}} Meisterschaft",
-        "notEnoughData": "Noch nicht genügend Daten für eine Geschichte.",
-        "retrospectiveGrid": "Retrospektives Gitter",
-        "done": "Erledigt",
-        "moodAnalysis": "Stimmungsanalyse",
-        "vibe": "{{period}} Stimmung",
-        "activityMomentum": "Aktivitätsmomentum",
-        "bestHabit": "Beste Gewohnheit {{period}}",
-        "needsFocus": "Braucht Fokus {{period}}",
-        "noData": "Keine Daten",
-        "onTrack": "Auf Kurs"
-    },
-    "bottomNav": {
-        "today": "Heute",
-        "analytics": "Analytik",
-        "logs": "Protokolle",
-        "analysis": "Analyse"
-    },
-    "auth": {
-        "enterEmail": "Bitte E-Mail eingeben",
-        "enterPassword": "Bitte Passwort eingeben",
-        "resetSent": "Passwort-Reset-E-Mail gesendet!",
-        "signInSignUp": "Anmelden / Registrieren",
-        "requestReset": "Pin-Reset anfordern",
-        "returnLogin": "Zurück zur Anmeldung",
-        "forgotPassword": "Passwort vergessen?",
-        "guestEntry": "Gastzugang",
-        "checkEmail": "Überprüfen Sie Ihre E-Mail zur Bestätigung.",
-        "sending": "Senden...",
-        "verifying": "Verifizieren...",
-        "tagline": "Ein beruhigender analytischer Tracker zum Aufbau Ihrer Gewohnheiten",
-        "email": "E-Mail",
-        "password": "Passwort",
-        "signIn": "Anmelden",
-        "createAccount": "Konto erstellen",
-        "or": "ODER"
-    },
-    "dashboardScreen": {
-        "title": "Dashboard",
-        "welcome": "Willkommen!",
-        "description": "Dies ist die mobile Version von HabiCard.",
-        "signOut": "Abmelden"
-    },
-    "aiAnalysis": {
-        "premiumOnly": "Nur Premium",
-        "premiumDesc": "Erhalten Sie tiefe Einblicke in Ihre Gewohnheiten und Lebensmuster mit KI-Analyse. Schalten Sie diese Funktion mit einem Premium-Abonnement frei.",
-        "upgrade": "Auf Premium upgraden",
-        "weeklyUsage": "Wöchentliche Nutzung",
-        "analyses": "Analysen",
-        "limitReached": "Limit erreicht",
-        "generateNew": "Neue Analyse generieren",
-        "resetMessage": "Wird nächsten Montag zurückgesetzt",
-        "analyzeMessage": "KI analysiert Ihre jüngsten Gewohnheiten & Notizen",
-        "history": "Einblicke-Verlauf",
-        "viewReport": "Vollständigen Bericht ansehen",
-        "insight": "Einblick",
-        "mockTitle": "Muster & Energie",
-        "mockContent": "Sie neigen dazu, mehr Gewohnheiten an Tagen zu erledigen, an denen Sie früh morgens eine \"produktive\" Stimmung aufzeichnen. Ihre Beständigkeit beim \"Lesen\" hat sich diese Woche um 15% verbessert."
-    },
-    "onboarding": {
-        "badge": "Tutorial",
-        "step": "Schritt",
-        "back": "Zuruck",
-        "next": "Weiter",
-        "finish": "Fertig",
-        "saving": "Speichern...",
-        "steps": {
-            "language": {
-                "title": "Sprache wahlen",
-                "subtitle": "Lege deine App-Sprache fest. Du kannst sie spater in den Einstellungen andern."
-            },
-            "theme": {
-                "title": "Farbe wahlen",
-                "subtitle": "Wahle dieselbe HabiCard-Farbkombination wie in der App."
-            },
-            "cardStyle": {
-                "title": "Kartengrosse wahlen",
-                "subtitle": "Sieh dir beide Kartenstile an und wahle deinen Standardstil."
-            },
-            "habitsDemo": {
-                "title": "Gewohnheiten an einem Ort",
-                "subtitle": "Hake alle deine Gewohnheiten an einem Ort ab."
-            },
-            "tasksDemo": {
-                "title": "Aufgaben einfach",
-                "subtitle": "Erstelle Aufgaben und hake sie ab, sobald du fertig bist."
-            },
-            "journalDemo": {
-                "title": "Jeden Tag schreiben",
-                "subtitle": "Aktualisiere dein tagliches Tagebuch im gleichen Kartenfluss."
-            },
-            "weekStart": {
-                "title": "Wochenstart",
-                "subtitle": "Wahle, ob deine Woche am Sonntag oder Montag beginnt."
-            }
-        },
-        "languageTitle": "Sprache",
-        "cardStyleTitle": "Kartengrosse",
-        "cardStyleLabels": {
-            "compact": "Kompakt",
-            "large": "Gross"
-        },
-        "habits": [
-            "Sport",
-            "Wasser trinken",
-            "10 Seiten lesen",
-            "Meditieren",
-            "Morgen planen"
-        ],
-        "taskSamples": [
-            "Morgen planen",
-            "Ziele prufen"
-        ],
-        "journalSample": "Hier kannst du in dein Tagebuch schreiben.",
-        "sampleDay": "Donnerstag",
-        "cardStyleDescriptions": {
-            "compact": "Kleines Fortschritts-Badge im Kopfbereich.",
-            "large": "Grosses Tagesfortschrittsfeld unter dem Datum."
-        },
-        "themeNames": {
-            "sageRose": "Salbei und Rose",
-            "oceanSky": "Ozean und Himmel",
-            "sunsetClay": "Sonnenuntergang und Ton",
-            "lavenderSlate": "Lavendel und Schiefer",
-            "forestEarth": "Wald und Erde",
-            "peachMint": "Pfirsich und Minze",
-            "lilacCream": "Flieder und Creme",
-            "dustyBlueMauve": "Staubblau und Mauve",
-            "coralSand": "Koralle und Sand",
-            "mintBlush": "Minze und Rosaton",
-            "honeyFog": "Honig und Nebel",
-            "plumSage": "Pflaume und Salbei",
-            "monochrome": "Monochrom"
-        },
-        "weekStartOptions": {
-            "sun": "SO",
-            "mon": "MO"
-        },
-        "habitInstructions": {
-            "tap": "Tippe, um eine Gewohnheit abzuhaken",
-            "hold": "Gedruckt halten, um die Gewohnheit zu uberspringen",
-            "empty": "Leer lassen, wenn du sie verpasst hast"
-        }
+    "errors": {
+      "title": "Fehler",
+      "unableSignOut": "Abmelden nicht moglich"
     }
+  },
+  "header": {
+    "dashboard": "Dashboard",
+    "signIn": "Anmelden",
+    "logout": "Abmelden",
+    "myWeek": "Meine Woche",
+    "myMonth": "Mein Monat",
+    "monthlyTrends": "Monatstrends",
+    "weeklyTrends": "Wochentrends",
+    "annualTrends": "Jahrestrends",
+    "vsLM": "vs VM",
+    "vsLW": "vs VW",
+    "switchChart": "Zum Diagramm wechseln",
+    "monthlySuccess": "Monatserfolg",
+    "weeklySuccess": "Wochenerfolg",
+    "annualPerformance": "Jahresleistung",
+    "monthMastery": "Monatsmeisterung",
+    "habitMaster": "Gewohnheitsmeister",
+    "yourStoryMonth": "Deine Geschichte diesen Monat",
+    "yourStoryWeek": "Deine Geschichte diese Woche",
+    "completed": "Abgeschlossen",
+    "vsPrev": "vs Vorher",
+    "best": "Beste",
+    "thisYearResolutions": "Vorsätze dieses Jahr"
+  },
+  "story": {
+    "annual": {
+      "momentum": {
+        "ascending": "Deine Konstanz hat sich im Jahresverlauf verbessert, du beendest das Jahr also stärker als du gestartet bist.",
+        "descending": "Dein Tempo hat in den letzten Monaten nachgelassen. Nimm das als Signal, die Kernroutine zu vereinfachen und neu zu starten.",
+        "stable": "Du hast trotz wechselnder Wochen einen stabilen Rhythmus gehalten, eine starke Grundlage für den nächsten Schritt.",
+        "main": "In diesem Jahr wurde [[{{habitName}}]] zu einer zentralen Identitätsgewohnheit. {{momentumMsg}}"
+      },
+      "rhythm": {
+        "weekend": "Dein stärkster Rhythmus liegt am Wochenende. Schütze dieses Zeitfenster und übertrage einen Teil davon in die Woche.",
+        "weekday": "Unter der Woche bist du stark strukturiert, am Wochenende weniger konstant. Eine leichtere Wochenend-Version kann die Lücke schließen.",
+        "consistent": "Deine Ausführung blieb zwischen Wochentagen und Wochenende ausgeglichen, ein Zeichen guter Routinenkontrolle."
+      },
+      "consistency": {
+        "high": "Du warst in diesem Jahr an [[{{activeDays}}]] Tagen dran. Das ist ein klares Signal für belastbare Gewohnheitsidentität.",
+        "medium": "Die Basis ist solide. Ein klarerer Trigger oder festeres Zeitfenster kann das deutlich automatischer machen.",
+        "low": "Du bist noch in der Aufbauphase. Kleine, wiederholbare Erfolge sind jetzt wichtiger als Intensität."
+      },
+      "experimental": "Du hast dieses Jahr viele Gewohnheiten ausprobiert. Weniger Prioritäten im nächsten Zyklus lassen Konstanz besser wachsen.",
+      "fading": "[[{{habitName}}]] ist zuletzt abgefallen. Wenn es weiter wichtig ist, starte diese Woche mit einer einfacheren Version neu.",
+      "neglected": "[[{{habitName}}]] ist seit [[{{days}}]] Tagen inaktiv. Ein kurzer Wiedereinstieg kann den Schwung zurückbringen."
+    },
+    "weekly": {
+      "intro": {
+        "elite": "Du hast diese Woche [[{{count}}]] Aktionen abgeschlossen und lagst über dem Soll. Dein System funktioniert.",
+        "strong": "Du hast diese Woche [[{{count}}]] Abschlüsse mit guter Verlässlichkeit geschafft.",
+        "balanced": "Du hast diese Woche [[{{count}}]] Aktionen abgeschlossen. Einige Gewohnheiten hielten, andere brauchen einen klareren Auslöser.",
+        "low": "Du hast diese Woche [[{{count}}]] Abschlüsse geloggt. Halte die Mindestversion klein und fokussiere den Neustart."
+      },
+      "momentum": {
+        "highlight": "[[{{habitName}}]] war diese Woche vorn mit [[{{count}}/{{total}}]] abgeschlossenen Tagen."
+      },
+      "neglected": "[[{{habitName}}]] wurde diese Woche nicht geloggt. Eine 2-Minuten-Version morgen reicht zum Wiedereinstieg.",
+      "growth": {
+        "recovery": "Deine zweite Wochenhälfte war stärker als die erste. Das ist ein klares Erholungssignal.",
+        "friction": "Der starke Start hat gegen Ende nachgelassen. Ein End-of-Week-Trigger kann den Rückgang reduzieren."
+      }
+    },
+    "monthly": {
+      "intro": {
+        "exceptional": "Mit [[{{count}}]] Abschlüssen zeigt dieser Monat hohe und stabile Ausführung.",
+        "solid": "Du hast in diesem Monat [[{{count}}]] Abschlüsse mit verlässlicher Konstanz erreicht.",
+        "exploration": "Du hast diesen Monat [[{{count}}]] Abschlüsse geloggt. Mehr Fokus kann den Übertrag in den nächsten Monat verbessern.",
+        "low": "Du hast diesen Monat [[{{count}}]] Aktionen abgeschlossen. Nutze das, um Umfang zu reduzieren und eine einfache Basis neu aufzubauen."
+      },
+      "momentum": {
+        "growth": "Du liegst [[{{delta}}%]] über dem Vormonat, ein klar positiver Ausführungstrend.",
+        "cooling": "Du liegst [[{{delta}}%]] unter dem Vormonat. Weniger Reibung bei einer Schlüsselgewohnheit sollte den nächsten Monat stabilisieren."
+      },
+      "rhythm": {
+        "anchor": "[[{{habitName}}]] war dein Anker in diesem Monat mit [[{{count}}]] Abschlüssen."
+      }
+    }
+  },
+  "common": {
+    "done": "Fertig",
+    "rate": "Bewerten",
+    "days": "TAGE",
+    "myHabits": "Meine Gewohnheiten",
+    "manageHabits": "Gewohnheiten verwalten",
+    "currentStreak": "Aktuelle Serie",
+    "months": {
+      "jan": "Jan",
+      "feb": "Feb",
+      "mar": "Mär",
+      "apr": "Apr",
+      "may": "Mai",
+      "jun": "Jun",
+      "jul": "Jul",
+      "aug": "Aug",
+      "sep": "Sep",
+      "oct": "Okt",
+      "nov": "Nov",
+      "dec": "Dez"
+    },
+    "selectYear": "Jahr auswählen",
+    "add": "Hinzufügen",
+    "cancel": "Abbrechen",
+    "thisWeek": "diese Woche",
+    "untitled": "Ohne Titel",
+    "daysShort": {
+      "mon": "Mo",
+      "tue": "Di",
+      "wed": "Mi",
+      "thu": "Do",
+      "fri": "Fr",
+      "sat": "Sa",
+      "sun": "So"
+    }
+  },
+  "dailyCard": {
+    "dailyHabits": "Tägliche Gewohnheiten",
+    "flexibleHabits": "Flexible Gewohnheiten",
+    "tasks": "Aufgaben",
+    "dailyDone": "Täglich Erledigt",
+    "remaining": "Verbleibend",
+    "noDailyHabits": "Keine täglichen Gewohnheiten heute fällig",
+    "addTask": "Klicken Sie auf +, um eine Aufgabe hinzuzufügen",
+    "share": "Errungenschaft teilen",
+    "journal": "Tagebuch",
+    "mood": "Stimmung",
+    "notes": "Notizen",
+    "saveEntry": "Eintrag speichern",
+    "journalPlaceholder": "Schreibe über heute...",
+    "editTask": "Aufgabe bearbeiten",
+    "deleteTask": "Aufgabe löschen",
+    "untitled": "Ohne Titel",
+    "moods": {
+      "veryBad": "Sehr schlecht",
+      "bad": "Schlecht",
+      "neutral": "Neutral",
+      "good": "Gut",
+      "veryGood": "Sehr gut"
+    }
+  },
+  "habitManager": {
+    "title": "Meine Gewohnheiten",
+    "addHabit": "Neue Gewohnheit",
+    "noHabits": "Noch keine Gewohnheiten. Fügen Sie eine hinzu!",
+    "dragToReorder": "Ziehen Sie Gewohnheiten, um sie neu zu ordnen.",
+    "fixed": "Fest",
+    "flexible": "Flexibel",
+    "timesPerWeek": "Mal pro Woche",
+    "habitNamePlaceholder": "Gewohnheitsname",
+    "untitled": "Unbenannte Gewohnheit",
+    "deleteConfirm": "Sind Sie sicher, dass Sie diese Gewohnheit löschen möchten? Sie verlieren alle historischen Daten.",
+    "edit": "Bearbeiten",
+    "restore": "Wiederherstellen",
+    "everyDay": "Jeden Tag",
+    "alreadyExists": "Bereits vorhanden",
+    "alreadyExistsMsg": "Eine Gewohnheit namens \"{{name}}\" existiert bereits."
+  },
+  "tasks": {
+    "enterTask": "Aufgabe eingeben",
+    "placeholder": "Schreibe etwas...",
+    "addTask": "Aufgabe hinzufügen",
+    "newTaskPlaceholder": "Neue Aufgabe...",
+    "empty": "Noch keine Aufgaben"
+  },
+  "journal": {
+    "title": "Tagebuch",
+    "prompt": "Reflexion des Tages",
+    "placeholder": "Schreibe über heute...",
+    "save": "Eintrag speichern"
+  },
+  "weeklyCard": {
+    "title": "Wochenziele",
+    "target": "Ziel: {{count}}x diese Woche"
+  },
+  "monthlyView": {
+    "journals": "Tagebücher",
+    "habits": "Gewohnheiten",
+    "emptyEntry": "Leerer Eintrag...",
+    "noActivity": "Keine Aktivität heute",
+    "dayDetails": "Tagesdetails",
+    "tasks": "Aufgaben",
+    "searchPlaceholder": "Protokolle suchen...",
+    "noLogs": "Keine Einträge für diesen Bereich gefunden."
+  },
+  "dashboard": {
+    "week": "Woche",
+    "month": "Monat",
+    "year": "Jahr",
+    "weekTab": "WOCHE",
+    "monthTab": "MONAT",
+    "yearTab": "JAHR",
+    "insights": "Einblicke",
+    "anchorHabit": "Ankerpunkt",
+    "anchorDesc1": "An Tagen, an denen du dies tust, ist deine Abschlussrate anderer Gewohnheiten",
+    "anchorDesc2": "höher",
+    "anchorDesc3": "({{done}}% vs {{missed}}%). Beginne hier, um den Ton anzugeben.",
+    "weakSpot": "Schwachstelle",
+    "weakSpotDesc1": "Dein schwächster Tag —",
+    "weakSpotDesc2": "Durchschnitt",
+    "weakSpotDesc3": "\"{{habit}}\" wird am {{day}} am häufigsten übersprungen.",
+    "streakPattern": "Streak-Muster",
+    "streakDesc1": "Streaks neigen dazu, nach",
+    "streakDescDay": "Tag",
+    "streakDescDays": "Tagen",
+    "streakDesc2": "zu brechen — dies ist {{count}} Mal passiert. Tag {{day}} ist der entscheidende Moment."
+  },
+  "analytics": {
+    "success": "{{period}} Erfolg",
+    "mastery": "{{period}} Meisterschaft",
+    "notEnoughData": "Noch nicht genügend Daten für eine Geschichte.",
+    "retrospectiveGrid": "Retrospektives Gitter",
+    "done": "Erledigt",
+    "moodAnalysis": "Stimmungsanalyse",
+    "vibe": "{{period}} Stimmung",
+    "activityMomentum": "Aktivitätsmomentum",
+    "bestHabit": "Beste Gewohnheit {{period}}",
+    "needsFocus": "Braucht Fokus {{period}}",
+    "noData": "Keine Daten",
+    "onTrack": "Auf Kurs",
+    "atAGlance": "Auf einen Blick",
+    "completion": "Abschluss",
+    "doneTotal": "Erledigt / Gesamt",
+    "vsPrevious": "Vs Vorherige",
+    "topHabit": "Beste Gewohnheit",
+    "weekOverWeek": "Woche für Woche",
+    "vsLastWeek": "vs letzte Woche",
+    "thisWeek": "Diese Woche",
+    "lastWeek": "Letzte Woche",
+    "monthOverMonth": "Monat für Monat",
+    "vsLastMonth": "vs letzten Monat",
+    "thisMonth": "Diesen Monat",
+    "lastMonth": "Letzter Monat",
+    "weeksThisMonth": "Wochen dieses Monats"
+  },
+  "bottomNav": {
+    "today": "Heute",
+    "analytics": "Analytik",
+    "logs": "Protokolle",
+    "todo": "Aufgaben",
+    "analysis": "Analyse"
+  },
+  "auth": {
+    "enterEmail": "Bitte E-Mail eingeben",
+    "enterPassword": "Bitte Passwort eingeben",
+    "resetSent": "Passwort-Reset-E-Mail gesendet!",
+    "signInSignUp": "Anmelden / Registrieren",
+    "requestReset": "Pin-Reset anfordern",
+    "returnLogin": "Zurück zur Anmeldung",
+    "forgotPassword": "Passwort vergessen?",
+    "guestEntry": "Gastzugang",
+    "checkEmail": "Überprüfen Sie Ihre E-Mail zur Bestätigung.",
+    "sending": "Senden...",
+    "verifying": "Verifizieren...",
+    "tagline": "Ein beruhigender analytischer Tracker zum Aufbau Ihrer Gewohnheiten",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "signIn": "Anmelden",
+    "createAccount": "Konto erstellen",
+    "or": "ODER"
+  },
+  "dashboardScreen": {
+    "title": "Dashboard",
+    "welcome": "Willkommen!",
+    "description": "Dies ist die mobile Version von HabiCard.",
+    "signOut": "Abmelden"
+  },
+  "aiAnalysis": {
+    "premiumOnly": "Nur Premium",
+    "premiumDesc": "Erhalten Sie tiefe Einblicke in Ihre Gewohnheiten und Lebensmuster mit KI-Analyse. Schalten Sie diese Funktion mit einem Premium-Abonnement frei.",
+    "upgrade": "Auf Premium upgraden",
+    "weeklyUsage": "Wöchentliche Nutzung",
+    "analyses": "Analysen",
+    "limitReached": "Limit erreicht",
+    "generateNew": "Neue Analyse generieren",
+    "resetMessage": "Wird nächsten Montag zurückgesetzt",
+    "analyzeMessage": "KI analysiert Ihre jüngsten Gewohnheiten & Notizen",
+    "history": "Einblicke-Verlauf",
+    "viewReport": "Vollständigen Bericht ansehen",
+    "insight": "Einblick",
+    "mockTitle": "Muster & Energie",
+    "mockContent": "Sie neigen dazu, mehr Gewohnheiten an Tagen zu erledigen, an denen Sie früh morgens eine \"produktive\" Stimmung aufzeichnen. Ihre Beständigkeit beim \"Lesen\" hat sich diese Woche um 15% verbessert."
+  },
+  "onboarding": {
+    "badge": "Tutorial",
+    "step": "Schritt",
+    "back": "Zuruck",
+    "next": "Weiter",
+    "finish": "Fertig",
+    "saving": "Speichern...",
+    "steps": {
+      "language": {
+        "title": "Sprache wahlen",
+        "subtitle": "Lege deine App-Sprache fest. Du kannst sie spater in den Einstellungen andern."
+      },
+      "theme": {
+        "title": "Farbe wahlen",
+        "subtitle": "Wahle dieselbe HabiCard-Farbkombination wie in der App."
+      },
+      "cardStyle": {
+        "title": "Kartengrosse wahlen",
+        "subtitle": "Sieh dir beide Kartenstile an und wahle deinen Standardstil."
+      },
+      "habitsDemo": {
+        "title": "Gewohnheiten an einem Ort",
+        "subtitle": "Hake alle deine Gewohnheiten an einem Ort ab."
+      },
+      "tasksDemo": {
+        "title": "Aufgaben einfach",
+        "subtitle": "Erstelle Aufgaben und hake sie ab, sobald du fertig bist."
+      },
+      "journalDemo": {
+        "title": "Jeden Tag schreiben",
+        "subtitle": "Aktualisiere dein tagliches Tagebuch im gleichen Kartenfluss."
+      },
+      "weekStart": {
+        "title": "Wochenstart",
+        "subtitle": "Wahle, ob deine Woche am Sonntag oder Montag beginnt."
+      }
+    },
+    "languageTitle": "Sprache",
+    "cardStyleTitle": "Kartengrosse",
+    "cardStyleLabels": {
+      "compact": "Kompakt",
+      "large": "Gross"
+    },
+    "habits": [
+      "Sport",
+      "Wasser trinken",
+      "10 Seiten lesen",
+      "Meditieren",
+      "Morgen planen"
+    ],
+    "taskSamples": [
+      "Morgen planen",
+      "Ziele prufen"
+    ],
+    "journalSample": "Hier kannst du in dein Tagebuch schreiben.",
+    "sampleDay": "Donnerstag",
+    "cardStyleDescriptions": {
+      "compact": "Kleines Fortschritts-Badge im Kopfbereich.",
+      "large": "Grosses Tagesfortschrittsfeld unter dem Datum."
+    },
+    "themeNames": {
+      "sageRose": "Salbei und Rose",
+      "oceanSky": "Ozean und Himmel",
+      "sunsetClay": "Sonnenuntergang und Ton",
+      "lavenderSlate": "Lavendel und Schiefer",
+      "forestEarth": "Wald und Erde",
+      "peachMint": "Pfirsich und Minze",
+      "lilacCream": "Flieder und Creme",
+      "dustyBlueMauve": "Staubblau und Mauve",
+      "coralSand": "Koralle und Sand",
+      "mintBlush": "Minze und Rosaton",
+      "honeyFog": "Honig und Nebel",
+      "plumSage": "Pflaume und Salbei",
+      "monochrome": "Monochrom"
+    },
+    "weekStartOptions": {
+      "sun": "SO",
+      "mon": "MO"
+    },
+    "habitInstructions": {
+      "tap": "Tippe, um eine Gewohnheit abzuhaken",
+      "hold": "Gedruckt halten, um die Gewohnheit zu uberspringen",
+      "empty": "Leer lassen, wenn du sie verpasst hast"
+    }
+  },
+  "feedback": {
+    "loadError": "Fehler beim Laden des Feedback-Verlaufs.",
+    "missingTitle": "Fehlende Nachricht",
+    "missingMsg": "Bitte gib dein Feedback ein.",
+    "submittedTitle": "Eingereicht",
+    "submittedMsg": "Danke für dein Feedback.",
+    "failedMsg": "Feedback konnte nicht gesendet werden.",
+    "signInRequired": "Anmeldung erforderlich",
+    "signInRequiredMsg": "Bitte melde dich an, um auf Feedback-Threads zu antworten.",
+    "replyFailed": "Antwort konnte nicht gesendet werden.",
+    "unableToOpenLink": "Link kann nicht geöffnet werden",
+    "bugPlaceholder": "Beschreibe das Problem...",
+    "ideaPlaceholder": "Teile deine Idee...",
+    "replyPlaceholder": "Schreibe eine Antwort..."
+  },
+  "tutorial": {
+    "header": "Geführtes Tutorial",
+    "stepCompleted": "Schritt abgeschlossen",
+    "stepPending": "Führe diese Aktion in der App aus, um fortzufahren",
+    "back": "Zurück",
+    "next": "Weiter",
+    "finish": "Fertig",
+    "close": "Schließen",
+    "steps": {
+      "addHabit": {
+        "title": "Eine Gewohnheit erstellen",
+        "description": "Tippe auf den + Knopf oben links und erstelle eine neue Gewohnheit."
+      },
+      "completeSkip": {
+        "title": "Gewohnheit abhaken oder überspringen",
+        "description": "Hake die erstellte Gewohnheit ab. Oder halte sie gedrückt, um sie heute zu überspringen."
+      },
+      "analytics": {
+        "title": "Analysen öffnen",
+        "description": "Nutze die untere Navigation und wechsle zu Analysen."
+      },
+      "logs": {
+        "title": "Protokolle öffnen",
+        "description": "Nutze die untere Navigation und wechsle zu Protokolle, um deinen Verlauf zu sehen."
+      }
+    }
+  }
 }

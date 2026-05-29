@@ -126,3 +126,22 @@ export const loadLastHabitReminderCount = async () => {
   const value = await AsyncStorage.getItem(HABIT_REMINDER_LAST_COUNT_KEY);
   return value ? Number(value) : null;
 };
+
+export const sendTestNotification = async () => {
+  const granted = await requestNotificationPermissions();
+  if (!granted) return false;
+
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: 'Time to fill in your habits',
+      body: 'This is a test reminder — notifications are working!',
+      sound: 'default',
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+      seconds: 5,
+      ...(Platform.OS === 'android' ? { channelId: HABIT_REMINDER_CHANNEL_ID } : {}),
+    },
+  });
+  return true;
+};

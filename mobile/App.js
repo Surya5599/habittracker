@@ -1,9 +1,10 @@
 import 'react-native-url-polyfill/auto';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Linking from 'expo-linking';
 import { supabase } from './src/lib/supabase';
 import { SignInScreen } from './src/screens/SignInScreen';
 import { MainScreen } from './src/screens/MainScreen';
@@ -16,6 +17,15 @@ import { OnboardingModal } from './src/components/OnboardingModal';
 import { AppErrorBoundary } from './src/components/AppErrorBoundary';
 import { initializeErrorReporting, reportError } from './src/lib/errorReporting';
 import { isBenignAuthError } from './src/utils/authErrors';
+import {
+  initializeNotifications,
+  loadHabitReminderSettings,
+  persistHabitReminderSettings,
+  requestNotificationPermissions,
+  scheduleHabitReminder,
+  cancelHabitReminder,
+} from './src/utils/notifications';
+import { isCompleted as checkCompleted } from './src/utils/stats';
 // import { useTranslation } from 'react-i18next'; // Removing hook usage in App.js context
 
 const Stack = createStackNavigator();
@@ -39,6 +49,9 @@ export default function App() {
   const [theme, setTheme] = useState(THEMES[1]); // default ocean
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
+
+  // Notifications
+  const [reminderEnabled, setReminderEnabled] = useState(false);
 
   const handleThemeChange = async (newTheme) => {
     setTheme(newTheme);
@@ -75,6 +88,32 @@ export default function App() {
     setCardStyle(style);
     await AsyncStorage.setItem('habit_card_style', style);
   };
+
+  // Handle deep links (e.g. email confirmation → habicard://#access_token=...&refresh_token=...)
+  useEffect(() => {
+    const handleDeepLink = async ({ url }) => {
+      if (!url) return;
+      const fragment = url.split('#')[1];
+      if (!fragment) return;
+      const params = Object.fromEntries(new URLSearchParams(fragment));
+      if (params.access_token && params.refresh_token) {
+        await supabase.auth.setSession({
+          access_token: params.access_token,
+          refresh_token: params.refresh_token,
+        });
+      }
+    };
+
+    // App was already open when link was tapped
+    const linkingSub = Linking.addEventListener('url', handleDeepLink);
+
+    // App was cold-started by the link
+    Linking.getInitialURL().then(url => {
+      if (url) handleDeepLink({ url });
+    });
+
+    return () => linkingSub?.remove();
+  }, []);
 
   // Initialize Session
   useEffect(() => {
@@ -143,6 +182,10 @@ export default function App() {
       if (savedCardStyle === 'compact' || savedCardStyle === 'large') {
         setCardStyle(savedCardStyle);
       }
+
+      await initializeNotifications();
+      const { enabled } = await loadHabitReminderSettings();
+      setReminderEnabled(enabled);
     };
     checkGuest();
 
@@ -185,6 +228,50 @@ export default function App() {
     weekProgress,
     monthProgress
   } = useHabitStats(habits, completions, currentMonthIndex, currentYear, daysInMonth, monthDates, weekOffset, weekStart);
+
+  // Compute today's remaining habit count for notification body
+  const todayRemainingCount = useMemo(() => {
+    const now = new Date();
+    const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const dayOfWeek = now.getDay();
+    return habits.filter(h => {
+      if (h.archivedAt || h.weeklyTarget) return false;
+      if (h.frequency && !h.frequency.includes(dayOfWeek)) return false;
+      if (h.createdAt) {
+        const created = new Date(h.createdAt);
+        created.setHours(0, 0, 0, 0);
+        const today0 = new Date(now); today0.setHours(0, 0, 0, 0);
+        if (today0 < created) return false;
+      }
+      return !checkCompleted(h.id, now.getDate(), completions, now.getMonth(), now.getFullYear());
+    }).length;
+  }, [habits, completions]);
+
+  // Reschedule notifications whenever remaining count or enabled state changes
+  useEffect(() => {
+    if (!reminderEnabled) return;
+    const now = new Date();
+    const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    scheduleHabitReminder(todayKey, todayRemainingCount);
+  }, [reminderEnabled, todayRemainingCount]);
+
+  const handleToggleReminder = async (enabled) => {
+    setReminderEnabled(enabled);
+    await persistHabitReminderSettings({ enabled });
+    if (enabled) {
+      const granted = await requestNotificationPermissions();
+      if (!granted) {
+        setReminderEnabled(false);
+        await persistHabitReminderSettings({ enabled: false });
+        return;
+      }
+      const now = new Date();
+      const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      await scheduleHabitReminder(todayKey, todayRemainingCount);
+    } else {
+      await cancelHabitReminder();
+    }
+  };
 
   const handleGuestLogin = async () => {
     await AsyncStorage.setItem('habit_guest_mode', 'true');
@@ -290,6 +377,8 @@ export default function App() {
                       setCardStyle={handleCardStyleChange}
                       userId={session?.user?.id}
                       userEmail={session?.user?.email}
+                      reminderEnabled={reminderEnabled}
+                      onToggleReminder={handleToggleReminder}
                     />
                     <OnboardingModal
                       visible={onboardingChecked && showOnboarding}

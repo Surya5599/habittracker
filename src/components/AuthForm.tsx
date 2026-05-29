@@ -59,7 +59,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
             type: 'signup',
             email,
             options: {
-                emailRedirectTo: `${window.location.origin}/app`
+                emailRedirectTo: `${window.location.origin}/auth/callback`
             }
         });
 
@@ -94,7 +94,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
 
         if (isResetMode) {
             const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: `${window.location.origin}/app`,
+                redirectTo: `${window.location.origin}/auth/callback`,
             });
 
             if (error) {
@@ -134,7 +134,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
                 navigate('/app');
             }
         } else {
-            const { error, data } = await supabase.auth.signUp({ email, password });
+            const { error, data } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${window.location.origin}/auth/callback` } });
 
             if (error) {
                 if (isExistingAccountError(error.message)) {

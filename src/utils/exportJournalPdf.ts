@@ -7,10 +7,24 @@ export interface JournalExportEntry {
     journal?: string;
 }
 
+export type PdfFont = 'serif' | 'sans' | 'mono';
+export type PdfLayout = 'compact' | 'fullpage';
+
+export const PDF_FONTS: Record<PdfFont, { label: string; stack: string }> = {
+    serif:  { label: 'Serif',       stack: "Georgia,'Times New Roman',serif" },
+    sans:   { label: 'Sans-serif',  stack: "Arial,Helvetica,sans-serif" },
+    mono:   { label: 'Monospace',   stack: "'Courier New',Courier,monospace" },
+};
+
 interface BuildJournalPrintHtmlOptions {
     entries: JournalExportEntry[];
     theme: Theme;
     userName?: string;
+    font?: PdfFont;
+    layout?: PdfLayout;
+    entryOffset?: number; // index of first entry in the full list (for correct numbering)
+    includeCover?: boolean;
+    previewMode?: boolean;
 }
 
 const escapeHtml = (value: string) => value
@@ -53,7 +67,7 @@ export const getJournalMoodMeta = (mood?: number) => {
 const getJournalText = (journal: DailyNote[string]['journal']): string => {
     if (!journal) return '';
     if (Array.isArray(journal)) return journal.map((e: any) => e?.text || '').filter(Boolean).join('\n\n');
-    return (journal as string).trim();
+    return journal.trim();
 };
 
 export const getJournalExportEntries = (notes: DailyNote): JournalExportEntry[] => {
@@ -78,240 +92,243 @@ export const getJournalExportEntries = (notes: DailyNote): JournalExportEntry[] 
         .sort((a, b) => a.date.getTime() - b.date.getTime());
 };
 
+const MOOD_SVG_ICON: Record<number, string> = {
+    1: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><circle cx="9" cy="9" r="0.5" fill="currentColor"/><circle cx="15" cy="9" r="0.5" fill="currentColor"/></svg>`,
+    2: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="8" y1="15" x2="16" y2="15"/><circle cx="9" cy="9" r="0.5" fill="currentColor"/><circle cx="15" cy="9" r="0.5" fill="currentColor"/></svg>`,
+    3: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="8" y1="15" x2="16" y2="15"/><circle cx="9" cy="9" r="0.5" fill="currentColor"/><circle cx="15" cy="9" r="0.5" fill="currentColor"/></svg>`,
+    4: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 2 4 2 4-2 4-2"/><circle cx="9" cy="9" r="0.5" fill="currentColor"/><circle cx="15" cy="9" r="0.5" fill="currentColor"/></svg>`,
+    5: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 2 4 2 4-2 4-2"/><circle cx="9" cy="9" r="0.5" fill="currentColor"/><circle cx="15" cy="9" r="0.5" fill="currentColor"/></svg>`,
+};
+
+const LINE_HEIGHT_PDF = 32;
+const RULED_LINES_PDF = `repeating-linear-gradient(to bottom, transparent, transparent ${LINE_HEIGHT_PDF - 1}px, #e8e3db ${LINE_HEIGHT_PDF - 1}px, #e8e3db ${LINE_HEIGHT_PDF}px)`;
+const MARGIN_LINE_LEFT = 52;
+const BODY_PADDING_LEFT = 68;
+
+const buildCoverArticleHtml = (
+    entries: JournalExportEntry[],
+    theme: Theme,
+    userName: string,
+    fontStack: string,
+    accentMuted: string,
+): string => {
+    const rangeLabel = entries.length > 0
+        ? `${formatJournalShortDate(entries[0].date)} – ${formatJournalShortDate(entries[entries.length - 1].date)}`
+        : '';
+    const year = entries.length > 0
+        ? entries[entries.length - 1].date.getFullYear().toString()
+        : new Date().getFullYear().toString();
+
+    const gutterNumbers = Array.from({ length: 38 }, (_, i) =>
+        `<div style="height:${LINE_HEIGHT_PDF}px;line-height:${LINE_HEIGHT_PDF}px;text-align:right;padding-right:12px;font-family:monospace;font-size:8px;color:#ece8e2;user-select:none;">${i + 1}</div>`
+    ).join('');
+
+    return `
+<article style="position:relative;background:#fdfdf8;border:3px solid #1c1917;box-shadow:5px 5px 0 0 #1c1917;min-height:9.5in;display:flex;flex-direction:column;overflow:hidden;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+
+  <!-- Ruled texture background -->
+  <div style="position:absolute;inset:0;background-image:${RULED_LINES_PDF};background-position-y:0px;opacity:0.18;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>
+
+  <!-- Margin line -->
+  <div style="position:absolute;left:${MARGIN_LINE_LEFT}px;top:0;bottom:0;width:1px;background:${accentMuted};z-index:1;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>
+
+  <!-- Gutter line numbers (decorative) -->
+  <div style="position:absolute;left:0;top:0;width:${MARGIN_LINE_LEFT}px;padding-top:16px;z-index:1;pointer-events:none;">
+    ${gutterNumbers}
+  </div>
+
+  <!-- Top gradient accent bar -->
+  <div style="height:14px;background:linear-gradient(90deg,${theme.primary},${theme.secondary});flex-shrink:0;position:relative;z-index:2;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>
+
+  <!-- Main content – vertically centered -->
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding-left:${BODY_PADDING_LEFT}px;padding-right:56px;position:relative;z-index:2;">
+
+    <!-- Label above box -->
+    <p style="margin:0 0 18px;font-family:Arial,sans-serif;font-size:8px;font-weight:900;text-transform:uppercase;letter-spacing:0.36em;color:#a8a29e;">Personal Journal</p>
+
+    <!-- Neo-brutalist title card -->
+    <div style="position:relative;display:inline-block;max-width:420px;">
+      <!-- Shadow layer -->
+      <div style="position:absolute;top:9px;left:9px;right:-9px;bottom:-9px;background:#1c1917;-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>
+      <!-- Card -->
+      <div style="position:relative;background:#fdfdf8;border:3px solid #1c1917;padding:34px 36px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+        <p style="margin:0 0 10px;font-family:Arial,sans-serif;font-size:8px;font-weight:900;text-transform:uppercase;letter-spacing:0.32em;color:#c4bdb5;">My</p>
+        <h1 style="margin:0;font-family:${fontStack};font-size:64px;font-weight:900;letter-spacing:-0.04em;color:#1c1917;line-height:0.88;">JOURNAL</h1>
+        <!-- Color rule -->
+        <div style="margin:22px 0 18px;height:5px;width:80px;background:${theme.primary};-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>
+        <!-- Meta -->
+        ${rangeLabel ? `<p style="margin:0 0 5px;font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:#57534e;">${escapeHtml(rangeLabel)}</p>` : ''}
+        <p style="margin:0;font-family:Arial,sans-serif;font-size:11px;font-weight:700;color:#a8a29e;">${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}&nbsp;&nbsp;·&nbsp;&nbsp;${escapeHtml(userName)}</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 56px 10px ${BODY_PADDING_LEFT}px;border-top:1px solid #e8e3db;position:relative;z-index:2;">
+    <span style="font-family:monospace;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.22em;color:#d4cfc9;">Private</span>
+    <span style="font-family:monospace;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.22em;color:#d4cfc9;">${year}</span>
+  </div>
+
+</article>`;
+};
+
+const PREVIEW_STYLES = `
+    html,body{height:100%;overflow:hidden;}
+    .page{height:100vh;display:flex;flex-direction:column;}
+    article{flex:1;min-height:0!important;height:100%!important;}
+`;
+
+export const buildJournalCoverHtml = ({
+    entries,
+    theme,
+    userName = 'You',
+    font = 'serif',
+}: {
+    entries: JournalExportEntry[];
+    theme: Theme;
+    userName?: string;
+    font?: PdfFont;
+}): string => {
+    const fontStack = PDF_FONTS[font].stack;
+    const accentMuted = theme.primary + '55';
+    return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Journal Cover</title>
+  <style>
+    *{box-sizing:border-box;}
+    html,body{margin:0;padding:0;background:#f0ece4;color:#1c1917;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    body{font-family:Arial,Helvetica,sans-serif;padding:0.4in;}
+    @page{size:letter;margin:0;}
+    .page{max-width:7.6in;margin:0 auto;}
+    ${PREVIEW_STYLES}
+  </style>
+</head>
+<body>
+<main class="page">
+  ${buildCoverArticleHtml(entries, theme, userName, fontStack, accentMuted)}
+</main>
+</body>
+</html>`;
+};
+
 export const buildJournalPrintHtml = ({
     entries,
     theme,
-    userName = 'You'
+    userName = 'You',
+    font = 'serif',
+    layout = 'compact',
+    entryOffset = 0,
+    includeCover = true,
+    previewMode = false,
 }: BuildJournalPrintHtmlOptions) => {
+    const fontStack = PDF_FONTS[font].stack;
     const firstDate = entries[0]?.date;
     const lastDate = entries[entries.length - 1]?.date;
     const rangeLabel = firstDate && lastDate
-        ? `${formatJournalShortDate(firstDate)} - ${formatJournalShortDate(lastDate)}`
+        ? `${formatJournalShortDate(firstDate)} – ${formatJournalShortDate(lastDate)}`
         : 'Journal archive';
 
-    const cards = entries.map((entry) => {
+    const accentMuted = theme.primary + '55';
+
+    const cards = entries.map((entry, i) => {
+        const entryIdx = i + entryOffset;
         const mood = getJournalMoodMeta(entry.mood);
-        const journalBody = entry.journal
-            ? entry.journal
-                .split(/\n{2,}/)
-                .map((paragraph) => paragraph.trim())
-                .filter(Boolean)
-                .map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, '<br />')}</p>`)
-                .join('')
-            : '<p class="empty-copy">Mood logged, no entry written for this day.</p>';
+        const moodIcon = entry.mood !== undefined ? (MOOD_SVG_ICON[entry.mood] ?? MOOD_SVG_ICON[4]) : '';
+        const paragraphs = entry.journal
+            ? entry.journal.split(/\n{2,}/).map(p => p.trim()).filter(Boolean)
+            : [];
+        const lineCount = Math.max(8, paragraphs.join('\n').split('\n').length + 2);
+        const dayLong = entry.date.toLocaleDateString(undefined, { weekday: 'long' });
+
+        const journalBody = paragraphs.length
+            ? paragraphs.map(p =>
+                `<p style="font-family:${fontStack};font-size:15px;line-height:${LINE_HEIGHT_PDF}px;margin:0 0 ${LINE_HEIGHT_PDF}px;color:#1c1917;white-space:pre-wrap;">${escapeHtml(p).replace(/\n/g, '<br/>')}</p>`
+              ).join('')
+            : `<p style="font-family:${fontStack};font-size:15px;line-height:${LINE_HEIGHT_PDF}px;margin:0;color:#a8a29e;font-style:italic;">Mood logged — no written entry for this day.</p>`;
+
+        const lineNumbers = Array.from({ length: lineCount }, (_, i) =>
+            `<div style="height:${LINE_HEIGHT_PDF}px;line-height:${LINE_HEIGHT_PDF}px;text-align:right;padding-right:12px;font-family:monospace;font-size:8px;color:#d4cfc9;user-select:none;">${i + 1}</div>`
+        ).join('');
+
+        const moodBadge = entry.mood !== undefined
+            ? `<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:0.14em;white-space:nowrap;background:${mood.fill};color:${mood.accent};flex-shrink:0;margin-top:4px;">
+                <span style="display:inline-flex;align-items:center;color:${mood.accent};">${moodIcon}</span>
+                ${escapeHtml(mood.label)}
+              </span>`
+            : '';
+
+        const articleStyle = layout === 'fullpage'
+            ? `position:relative;background:#fdfdf8;border:3px solid #1c1917;box-shadow:5px 5px 0 0 #1c1917;break-before:page;page-break-before:always;min-height:9.5in;display:flex;flex-direction:column;`
+            : `position:relative;margin:0 0 0.32in;background:#fdfdf8;break-inside:avoid;page-break-inside:avoid;border:3px solid #1c1917;box-shadow:5px 5px 0 0 #1c1917;`;
 
         return `
-            <article class="journal-entry">
-                <header class="entry-header">
-                    <div class="entry-meta">
-                        <p class="eyebrow">Journal Entry</p>
-                        <h2>${escapeHtml(formatJournalLongDate(entry.date))}</h2>
-                        <p class="date-key">${escapeHtml(entry.dateKey)}</p>
-                    </div>
-                    <div class="mood-pill" style="color:${mood.accent}; background:${mood.fill};">
-                        <span class="mood-dot" style="background:${mood.accent};"></span>
-                        <strong>${escapeHtml(mood.label)}</strong>
-                    </div>
-                </header>
-                <section class="journal-copy">
-                    ${journalBody}
-                </section>
-                <footer class="entry-foot">
-                    <span>${escapeHtml(entry.date.toLocaleDateString(undefined, { weekday: 'short' }))}</span>
-                    <span>${entry.journal ? 'Written entry' : 'Mood only'}</span>
-                </footer>
-            </article>
-        `;
+<article style="${articleStyle}">
+
+  <!-- Page header -->
+  <div style="position:relative;padding:20px 20px 16px;border-bottom:1px solid #e8e3db;">
+    <!-- Margin line in header -->
+    <div style="position:absolute;left:${MARGIN_LINE_LEFT}px;top:0;bottom:0;width:1px;background:${accentMuted};"></div>
+    <!-- Entry number in gutter -->
+    <div style="position:absolute;left:0;top:20px;width:${MARGIN_LINE_LEFT}px;text-align:right;padding-right:12px;font-family:monospace;font-size:8px;color:#d4cfc9;">${String(entryIdx + 1).padStart(2, '0')}</div>
+    <!-- Header content -->
+    <div style="padding-left:${BODY_PADDING_LEFT - 20}px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;">
+      <div>
+        <p style="margin:0;font-family:Arial,sans-serif;font-size:8px;font-weight:900;text-transform:uppercase;letter-spacing:0.28em;color:#a8a29e;">Journal Entry</p>
+        <h2 style="margin:4px 0 0;font-family:${fontStack};font-size:26px;font-weight:900;color:#1c1917;line-height:1.2;letter-spacing:-0.02em;">${escapeHtml(formatJournalLongDate(entry.date))}</h2>
+      </div>
+      ${moodBadge}
+    </div>
+  </div>
+
+  <!-- Ruled body -->
+  <div style="position:relative;">
+    <!-- Margin line in body -->
+    <div style="position:absolute;left:${MARGIN_LINE_LEFT}px;top:0;bottom:0;width:1px;z-index:1;background:${accentMuted};"></div>
+    <!-- Line numbers -->
+    <div style="position:absolute;left:0;top:0;width:${MARGIN_LINE_LEFT}px;padding-top:16px;">
+      ${lineNumbers}
+    </div>
+    <!-- Text with ruled background -->
+    <div style="padding-left:${BODY_PADDING_LEFT}px;padding-right:24px;padding-top:16px;padding-bottom:24px;min-height:${layout === 'fullpage' ? '7in' : `${LINE_HEIGHT_PDF * lineCount}px`};flex:${layout === 'fullpage' ? '1' : 'none'};background-image:${RULED_LINES_PDF};background-position-y:12px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+      ${journalBody}
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 20px;border-top:1px solid #e8e3db;">
+    <span style="font-family:Arial,sans-serif;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.22em;color:#d4cfc9;">${escapeHtml(dayLong)}</span>
+    <span style="font-family:Arial,sans-serif;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.22em;color:#d4cfc9;">${entry.journal ? 'Written' : 'Mood only'} · p.${entryIdx + 1}</span>
+  </div>
+
+</article>`;
     }).join('');
 
-    return `
-<!doctype html>
+    return `<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>My Journal PDF</title>
-    <style>
-        :root {
-            --ink: #171717;
-            --paper: #fcfbf7;
-            --card: #ffffff;
-            --muted: #57534e;
-            --soft: #e7e5e4;
-            --theme-primary: ${theme.primary};
-            --theme-secondary: ${theme.secondary};
-        }
-        * { box-sizing: border-box; }
-        html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink); }
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-        }
-        @page {
-            size: letter;
-            margin: 0.5in;
-        }
-        .page {
-            max-width: 7.1in;
-            margin: 0 auto;
-        }
-        .cover {
-            overflow: hidden;
-            margin-bottom: 0.36in;
-            border: 1px solid #e7e5e4;
-            border-radius: 28px;
-            background: var(--card);
-            box-shadow: 0 14px 40px rgba(0,0,0,0.06);
-        }
-        .cover-inner {
-            padding: 0.4in 0.42in 0.42in;
-        }
-        .cover-accent {
-            width: calc(100% + 0.84in);
-            height: 0.08in;
-            margin: -0.4in -0.42in 0.28in;
-            background: linear-gradient(90deg, var(--theme-primary), var(--theme-secondary));
-        }
-        .cover-kicker {
-            display: inline-block;
-            margin: 0 0 0.18in;
-            font-size: 10px;
-            font-weight: 900;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            color: #78716c;
-        }
-        .cover h1 {
-            margin: 0;
-            font-size: 34px;
-            line-height: 1.05;
-            font-weight: 900;
-            letter-spacing: -0.03em;
-        }
-        .cover p {
-            max-width: 5.4in;
-            margin: 0.18in 0 0;
-            font-size: 14px;
-            line-height: 1.8;
-            color: #57534e;
-        }
-        .cover-stats {
-            display: flex;
-            gap: 0.12in;
-            flex-wrap: wrap;
-            margin-top: 0.22in;
-        }
-        .cover-stat {
-            padding: 0.11in 0.16in;
-            border-radius: 999px;
-            background: #f5f5f4;
-            font-size: 11px;
-            font-weight: 700;
-            color: #57534e;
-        }
-        .journal-entry {
-            margin: 0 0 0.28in;
-            padding: 0.34in 0.38in 0.28in;
-            border: 1px solid #e7e5e4;
-            border-radius: 26px;
-            background: var(--card);
-            box-shadow: 0 12px 34px rgba(0,0,0,0.05);
-            break-inside: avoid;
-            page-break-inside: avoid;
-        }
-        .entry-header {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 0.18in;
-            padding-bottom: 0.22in;
-            border-bottom: 1px solid #e7e5e4;
-        }
-        .eyebrow,
-        .date-key {
-            margin: 0;
-            font-size: 10px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 0.2em;
-            color: #78716c;
-        }
-        .entry-meta h2 {
-            margin: 0.1in 0 0.08in;
-            font-size: 26px;
-            line-height: 1.18;
-            font-weight: 900;
-        }
-        .mood-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.08in;
-            padding: 0.1in 0.14in;
-            border-radius: 999px;
-        }
-        .mood-dot {
-            width: 0.1in;
-            height: 0.1in;
-            border-radius: 999px;
-            flex: 0 0 auto;
-        }
-        .mood-pill strong {
-            font-size: 12px;
-            font-weight: 800;
-        }
-        .journal-copy {
-            padding-top: 0.24in;
-            min-height: 1.7in;
-        }
-        .journal-copy p {
-            margin: 0 0 0.18in;
-            font-size: 14px;
-            line-height: 1.9;
-            color: #44403c;
-        }
-        .empty-copy {
-            color: #78716c;
-            font-style: italic;
-        }
-        .entry-foot {
-            display: flex;
-            justify-content: space-between;
-            gap: 0.14in;
-            padding-top: 0.18in;
-            border-top: 1px solid var(--soft);
-            color: #78716c;
-            font-size: 10px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.14em;
-        }
-        @media print {
-            .cover,
-            .journal-entry {
-                break-inside: avoid;
-                page-break-inside: avoid;
-            }
-        }
-    </style>
+  <meta charset="utf-8"/>
+  <title>My Journal</title>
+  <style>
+    *{box-sizing:border-box;}
+    html,body{margin:0;padding:0;background:#f0ece4;color:#1c1917;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    body{font-family:Arial,Helvetica,sans-serif;padding:0.4in;}
+    @page{size:letter;margin:0;}
+    .page{max-width:7.6in;margin:0 auto;}
+    @media print{article{break-inside:avoid;page-break-inside:avoid;}}
+    ${previewMode ? PREVIEW_STYLES : ''}
+  </style>
 </head>
 <body>
-    <main class="page">
-        <section class="cover">
-            <div class="cover-inner">
-                <div class="cover-accent"></div>
-                <span class="cover-kicker">Personal Journal</span>
-                <h1>My Journal</h1>
-                <p>A calm, chronological reading view of your moods and reflections, designed to feel like a private diary.</p>
-                <div class="cover-stats">
-                    <div class="cover-stat">${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}</div>
-                    <div class="cover-stat">${escapeHtml(rangeLabel)}</div>
-                    <div class="cover-stat">${escapeHtml(userName)}</div>
-                </div>
-            </div>
-        </section>
-        ${cards}
-    </main>
+<main class="page">
+
+  ${includeCover ? buildCoverArticleHtml(entries, theme, userName, fontStack, accentMuted) : ''}
+
+  ${cards}
+
+</main>
 </body>
 </html>`;
 };
@@ -320,13 +337,15 @@ export const downloadJournalPdfFromIframe = async (
     iframe: HTMLIFrameElement,
     entries: JournalExportEntry[],
     theme: Theme,
-    userName?: string
+    userName?: string,
+    font?: PdfFont,
+    layout?: PdfLayout,
 ) => {
     if (!entries.length) {
         throw new Error('No journal or mood entries found to export.');
     }
 
-    const html = buildJournalPrintHtml({ entries, theme, userName });
+    const html = buildJournalPrintHtml({ entries, theme, userName, font, layout });
 
     await new Promise<void>((resolve) => {
         const handleLoad = () => {

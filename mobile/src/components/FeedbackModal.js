@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
   Alert,
@@ -26,6 +27,7 @@ export const FeedbackModal = ({
   isGuest,
   colorMode = 'light',
 }) => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('new');
   const [type, setType] = useState('bug');
   const [content, setContent] = useState('');
@@ -82,7 +84,7 @@ export const FeedbackModal = ({
       return normalized;
     } catch (error) {
       console.error('Failed to load feedback history:', error);
-      Alert.alert('Error', 'Failed to load your feedback history.');
+      Alert.alert(t('settings.errors.title'), t('feedback.loadError'));
       return [];
     } finally {
       setLoadingHistory(false);
@@ -91,7 +93,7 @@ export const FeedbackModal = ({
 
   const handleSubmit = async () => {
     if (!content.trim()) {
-      Alert.alert('Missing Message', 'Please enter your feedback.');
+      Alert.alert(t('feedback.missingTitle'), t('feedback.missingMsg'));
       return;
     }
 
@@ -115,14 +117,14 @@ export const FeedbackModal = ({
       if (error) throw error;
 
       setContent('');
-      Alert.alert('Submitted', 'Thanks for your feedback.');
+      Alert.alert(t('feedback.submittedTitle'), t('feedback.submittedMsg'));
       if (userId) {
         setActiveTab('history');
         fetchHistory();
       }
     } catch (error) {
       console.error('Failed to submit feedback:', error);
-      Alert.alert('Error', 'Failed to submit feedback.');
+      Alert.alert(t('settings.errors.title'), t('feedback.failedMsg'));
     } finally {
       setSubmitting(false);
     }
@@ -131,7 +133,7 @@ export const FeedbackModal = ({
   const handleReply = async () => {
     if (!selectedThread || !replyContent.trim()) return;
     if (!userId || isGuest) {
-      Alert.alert('Sign In Required', 'Please sign in to reply to feedback threads.');
+      Alert.alert(t('feedback.signInRequired'), t('feedback.signInRequiredMsg'));
       return;
     }
 
@@ -154,7 +156,7 @@ export const FeedbackModal = ({
       if (refreshed) setSelectedThread(refreshed);
     } catch (error) {
       console.error('Failed to send reply:', error);
-      Alert.alert('Error', 'Failed to send reply.');
+      Alert.alert(t('settings.errors.title'), t('feedback.replyFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -244,7 +246,7 @@ export const FeedbackModal = ({
                 <TextInput
                   value={content}
                   onChangeText={setContent}
-                  placeholder={type === 'bug' ? 'Describe the issue...' : 'Share your idea...'}
+                  placeholder={type === 'bug' ? t('feedback.bugPlaceholder') : t('feedback.ideaPlaceholder')}
                   multiline
                   textAlignVertical="top"
                   style={tw`min-h-[140px] text-sm text-stone-800`}
@@ -259,7 +261,7 @@ export const FeedbackModal = ({
                     if (canOpen) {
                       await Linking.openURL(donationUrl);
                     } else {
-                      Alert.alert('Unable to Open Link', donationUrl);
+                      Alert.alert(t('feedback.unableToOpenLink'), donationUrl);
                     }
                   }}
                 >
@@ -365,7 +367,7 @@ export const FeedbackModal = ({
                 <TextInput
                   value={replyContent}
                   onChangeText={setReplyContent}
-                  placeholder="Write a reply..."
+                  placeholder={t('feedback.replyPlaceholder')}
                   style={tw`flex-1 bg-stone-100 rounded-lg px-3 py-2 text-sm`}
                 />
                 <TouchableOpacity

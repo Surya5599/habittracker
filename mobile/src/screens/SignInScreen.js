@@ -83,8 +83,9 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
             const { error } = await supabase.auth.resetPasswordForEmail(email);
             if (error) {
                 Alert.alert('Error', getFriendlyAuthMessage(error, 'auth.resetFailed'));
+            } else {
+                Alert.alert('Success', t('auth.resetSent'));
             }
-            else Alert.alert('Success', t('auth.resetSent'));
             setLoading(false);
             return;
         }
@@ -95,7 +96,40 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
             return;
         }
 
-        // Try logging in first. Only show the confirmation prompt when the account is truly unconfirmed.
+        if (isNewAccount) {
+            // Create account flow — go straight to signUp
+            const { error: signUpError, data: signUpData } = await supabase.auth.signUp({
+                email,
+                password,
+                options: { emailRedirectTo: 'habicard://auth/callback' },
+            });
+
+            if (signUpError) {
+                if (isExistingAccountError(signUpError.message)) {
+                    Alert.alert('Error', t('auth.accountExists'));
+                } else {
+                    Alert.alert('Error', getFriendlyAuthMessage(signUpError));
+                }
+                setLoading(false);
+                return;
+            }
+
+            // identities.length === 0 means Supabase silently rejected a duplicate (email confirmation off)
+            if (signUpData?.user && Array.isArray(signUpData.user.identities) && signUpData.user.identities.length === 0) {
+                Alert.alert('Error', t('auth.accountExists'));
+                setLoading(false);
+                return;
+            }
+
+            if (!signUpData?.session) {
+                // Account created but email confirmation required
+                Alert.alert('Info', t('auth.checkEmail'));
+            }
+            setLoading(false);
+            return;
+        }
+
+        // Sign-in flow
         const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
 
         if (!loginError) {
@@ -124,38 +158,7 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
             return;
         }
 
-        // If login failed because the account might not exist, try sign up.
-        const { error: signUpError, data: signUpData } = await supabase.auth.signUp({ email, password });
-
-        if (!signUpError) {
-            if (signUpData?.user && Array.isArray(signUpData.user.identities) && signUpData.user.identities.length === 0) {
-                Alert.alert('Error', getFriendlyAuthMessage(loginError));
-                setLoading(false);
-                return;
-            }
-
-            if (!signUpData?.session) {
-                try {
-                    const status = await lookupEmailStatus(email);
-                    if (status.exists && !status.confirmed) {
-                        Alert.alert('Info', t('auth.checkEmail'));
-                    } else {
-                        Alert.alert('Error', getFriendlyAuthMessage(loginError));
-                    }
-                } catch {
-                    Alert.alert('Info', t('auth.checkEmail'));
-                }
-            }
-            setLoading(false);
-            return;
-        }
-
-        if (isExistingAccountError(signUpError.message)) {
-            Alert.alert('Error', getFriendlyAuthMessage(loginError));
-        } else {
-            Alert.alert('Error', getFriendlyAuthMessage(signUpError));
-        }
-
+        Alert.alert('Error', getFriendlyAuthMessage(loginError));
         setLoading(false);
     };
 

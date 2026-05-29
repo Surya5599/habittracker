@@ -74,6 +74,8 @@ export const useHabitStats = (
     const buildWeekProgressForOffset = (offset: number) => {
         const today = new Date();
         const startDate = getStartDate(today, offset);
+        // Only count days up to and including today — future days don't contribute to the denominator
+        const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
 
         let totalPossible = habits.reduce((acc, h) => {
             if (h.weeklyTarget) {
@@ -81,6 +83,7 @@ export const useHabitStats = (
                 for (let i = 0; i < 7; i++) {
                     const d = new Date(startDate);
                     d.setDate(startDate.getDate() + i);
+                    if (d > endOfToday) break;
                     if (!isHabitInactiveOnDate(h, d)) possible += h.weeklyTarget / 7;
                 }
                 return acc + possible;
@@ -89,6 +92,7 @@ export const useHabitStats = (
             for (let i = 0; i < 7; i++) {
                 const d = new Date(startDate);
                 d.setDate(startDate.getDate() + i);
+                if (d > endOfToday) break;
                 if (isHabitDueOnDate(h, d)) count++;
             }
             return acc + count;
@@ -567,6 +571,9 @@ export const useHabitStats = (
             const mCompletions: number[] = new Array(12).fill(0);
             let hMaxStreak = 0;
             let hCurrentStreak = 0;
+            let hBestStreakStart: string | null = null;
+            let hBestStreakEnd: string | null = null;
+            let hCurrentStreakStart: string | null = null;
 
             MONTHS.forEach((_, mIdx) => {
                 const dInM = new Date(currentYear, mIdx + 1, 0).getDate();
@@ -581,14 +588,18 @@ export const useHabitStats = (
                     const done = !isHabitInactiveOnDate(h, date) && isCompleted(h.id, d, completions, mIdx, currentYear);
 
                     if (done) {
+                        const dateStr = `${currentYear}-${String(mIdx + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                        if (hCurrentStreak === 0) hCurrentStreakStart = dateStr;
                         hCompleted++;
                         mCompletions[mIdx]++;
                         hCurrentStreak++;
                         hMaxStreak = Math.max(hMaxStreak, hCurrentStreak);
+                        if (hCurrentStreak >= hMaxStreak) { hBestStreakStart = hCurrentStreakStart; hBestStreakEnd = dateStr; }
                         if (isWeekend) weekendCompletions++;
                         else weekdayCompletions++;
                     } else if (!isFuture && isDue) {
                         hCurrentStreak = 0;
+                        hCurrentStreakStart = null;
                     }
 
                     if (!isFuture || done) {
@@ -638,7 +649,9 @@ export const useHabitStats = (
                 lastCompletedDate,
                 isFading,
                 maxStreak: hMaxStreak,
-                currentStreak: hCurrentStreak
+                currentStreak: hCurrentStreak,
+                streakStart: hBestStreakStart,
+                streakEnd: hBestStreakEnd,
             };
         }).sort((a, b) => b.rate - a.rate || a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
 
@@ -692,6 +705,12 @@ export const useHabitStats = (
             };
         }).sort((a, b) => b.rate - a.rate)[0];
 
+        const streakMilestones = [...habitPerformance]
+            .filter(h => h.maxStreak >= 7 && h.streakStart)
+            .sort((a, b) => b.maxStreak - a.maxStreak)
+            .slice(0, 3)
+            .map(h => ({ name: h.name, length: h.maxStreak, startDate: h.streakStart, endDate: h.streakEnd }));
+
         return {
             totalCompletions,
             totalPossible,
@@ -716,7 +735,8 @@ export const useHabitStats = (
             loggedHabitsCount,
             totalHabitsInYear: activeHabitsInYear.length,
             mostLoggedHabit,
-            weakestHabit
+            weakestHabit,
+            streakMilestones,
         };
     }, [completions, notes, habits, currentYear]);
 

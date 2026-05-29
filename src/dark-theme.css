@@ -57,7 +57,7 @@ html[data-color-mode='light'] {
 }
 
 html[data-color-mode='light'] body {
-  background-color: #f0f0f0;
+  background-color: #F4F4F0;
   color: #444;
 }
 
@@ -75,7 +75,8 @@ html[data-color-mode='dark'] body {
 }
 
 /* Main app wrappers in App.tsx */
-html[data-color-mode='dark'] .bg-\[\#e5e5e5\] {
+html[data-color-mode='dark'] .bg-\[\#e5e5e5\],
+html[data-color-mode='dark'] .bg-\[\#F4F4F0\] {
   background: transparent !important;
 }
 

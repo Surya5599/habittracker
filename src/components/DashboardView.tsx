@@ -29,6 +29,8 @@ interface DashboardViewProps {
         totalHabitsInYear?: number;
         mostLoggedHabit?: any;
         weakestHabit?: any;
+        allTopHabits?: any[];
+        streakMilestones?: { name: string; length: number; startDate: string | null; endDate: string | null }[];
     };
     habits: Habit[];
     theme: Theme;
@@ -60,6 +62,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     const mostLoggedHabit = annualStats.mostLoggedHabit;
     const weakestHabit = annualStats.weakestHabit;
 
+    const card = "rounded-2xl border-[3px] border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] bg-white";
+
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500 w-full">
             <YearView
@@ -75,7 +79,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             />
 
             <div className="p-4 bg-white neo-border neo-shadow rounded-2xl flex flex-col min-h-[220px]">
-                <div className="flex items-center gap-2 mb-3 border-b border-stone-100 pb-2">
+                <div className="flex items-center gap-2 mb-4 border-b-[3px] border-black pb-3">
                     <div className="p-1 bg-amber-100 text-amber-600 rounded"><Sparkles size={14} /></div>
                     <span className="text-[10px] font-black uppercase tracking-widest">{t('annualUi.story.title')}</span>
                 </div>
@@ -84,10 +88,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <div className="flex-1 flex items-center justify-center text-stone-300 italic text-sm">{t('annualUi.story.noSignificantOutcomes')}</div>
                 ) : (
                     <div className="flex-1 flex flex-col gap-5 py-2">
-                        <div className="rounded-2xl border border-stone-200 bg-white p-5 space-y-4">
+                        <div className={`${card} p-5 space-y-4`}>
                             <div className="flex items-center gap-2">
                                 <div className="p-1.5 bg-stone-100 text-black rounded-lg"><Zap size={14} strokeWidth={2.5} /></div>
-                                <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">Year in review</span>
+                                <span className="font-serif text-[10px] font-black uppercase tracking-widest text-stone-500">Year in review</span>
                             </div>
                             <p className="text-base leading-relaxed font-bold text-stone-900">
                                 <FormattedText text={story.annualSummary.review} highlightColor={theme.secondary} />
@@ -95,7 +99,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         </div>
 
                         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(280px,0.75fr)]">
-                            <div className="rounded-2xl border border-stone-200 bg-white p-5 space-y-4">
+                            <div className={`${card} p-5 space-y-4`}>
                                 <div className="flex items-center gap-2">
                                     <div className="p-1.5 bg-amber-100 text-amber-700 rounded-lg"><Sparkles size={14} strokeWidth={2.5} /></div>
                                     <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">What defined the year</span>
@@ -110,31 +114,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             </div>
 
                             <div className="space-y-4">
-                                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 space-y-3">
+                                <div className={`${card} p-5 space-y-3`} style={{ backgroundColor: '#fffbeb' }}>
                                     <div className="text-[10px] font-black uppercase tracking-widest text-amber-700">What needs attention</div>
                                     <p className="text-sm leading-relaxed font-bold text-amber-900">
                                         <FormattedText text={story.annualSummary.attention} highlightColor={theme.secondary} />
                                     </p>
                                 </div>
 
-                                <div className="rounded-2xl border border-stone-200 bg-stone-50 p-5 space-y-3">
+                                <div className={`${card} p-5 space-y-3`} style={{ backgroundColor: '#fafafa' }}>
                                     <div className="text-[10px] font-black uppercase tracking-[0.22em] text-stone-400">{t('annualUi.story.fullStory')}</div>
                                     <div className="space-y-2 text-sm leading-relaxed text-stone-700">
-                                        <p>
-                                            {t('annualUi.story.loggedDays', { logged: loggedDaysCount, total: trackableDaysCount })}
-                                        </p>
-                                        <p>
-                                            {t('annualUi.story.loggedHabits', { logged: loggedHabitsCount, total: totalHabitsInYear })}
-                                        </p>
+                                        <p>{t('annualUi.story.loggedDays', { logged: loggedDaysCount, total: trackableDaysCount })}</p>
+                                        <p>{t('annualUi.story.loggedHabits', { logged: loggedHabitsCount, total: totalHabitsInYear })}</p>
                                         {mostLoggedHabit && (
-                                            <p>
-                                                {t('annualUi.story.mostLoggedHabit', { name: mostLoggedHabit.name, completed: mostLoggedHabit.completed, rate: Math.round(mostLoggedHabit.rate) })}
-                                            </p>
+                                            <p>{t('annualUi.story.mostLoggedHabit', { name: mostLoggedHabit.name, completed: mostLoggedHabit.completed, rate: Math.round(mostLoggedHabit.rate) })}</p>
                                         )}
                                         {weakestHabit && weakestHabit.total > 0 && (
-                                            <p>
-                                                {t('annualUi.story.fellShortHabit', { name: weakestHabit.name, completed: weakestHabit.completed, total: Math.round(weakestHabit.total), rate: Math.round(weakestHabit.rate) })}
-                                            </p>
+                                            <p>{t('annualUi.story.fellShortHabit', { name: weakestHabit.name, completed: weakestHabit.completed, total: Math.round(weakestHabit.total), rate: Math.round(weakestHabit.rate) })}</p>
                                         )}
                                     </div>
                                 </div>
@@ -142,7 +138,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         </div>
 
                         <div className="grid gap-4 md:grid-cols-3">
-                            <div className="rounded-2xl border border-stone-200 bg-white p-4">
+                            <div className={`${card} p-4`}>
                                 <div className="text-[8px] font-black uppercase tracking-[0.22em] text-stone-400">Strongest habit</div>
                                 <div className="mt-2 flex items-center gap-3">
                                     <div className="p-2 bg-amber-50 rounded-xl border border-amber-100">
@@ -157,7 +153,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                 </div>
                             </div>
 
-                            <div className="rounded-2xl border border-stone-200 bg-white p-4">
+                            <div className={`${card} p-4`}>
                                 <div className="text-[8px] font-black uppercase tracking-[0.22em] text-stone-400">Rhythm</div>
                                 <div className="mt-2 text-sm font-black text-stone-900">{story.annualSummary.support.rhythmLabel}</div>
                                 <div className="text-[11px] font-bold text-stone-500 mt-1">
@@ -165,7 +161,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                 </div>
                             </div>
 
-                            <div className="rounded-2xl border border-stone-200 bg-white p-4">
+                            <div className={`${card} p-4`}>
                                 <div className="text-[8px] font-black uppercase tracking-[0.22em] text-stone-400">Best stretch</div>
                                 <div className="mt-2 text-sm font-black text-stone-900">
                                     {story.annualSummary.support.strongestMonth?.month || 'Still emerging'}
@@ -180,6 +176,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     </div>
                 )}
             </div>
-        </div >
+        </div>
     );
 };

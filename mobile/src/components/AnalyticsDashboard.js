@@ -86,17 +86,21 @@ export const AnalyticsDashboard = ({
     chartData,
     stats,
     theme,
-    headerComponent, // For the toggle and date nav
-    completionStats, // { completed, total, percentageLabel }
-    retrospectiveData, // For the grid
-    gridPadding = 0, // Padding for start of month
-    periodLabelSecondary = "", // e.g. "January 2026"
-    moodData, // Mood aggregation
-    weekComparison, // { current, previous, currentPercentage, previousPercentage }
-    monthComparison, // { current, previous, currentPercentage, previousPercentage, previousLabel }
-    weekStart = 'MON', // Start of week preference
+    headerComponent,
+    completionStats,
+    retrospectiveData,
+    gridPadding = 0,
+    periodLabelSecondary = "",
+    moodData,
+    weekComparison,
+    monthComparison,
+    weekStart = 'MON',
     colorMode = 'light',
-    onRetrospectiveDayPress
+    onRetrospectiveDayPress,
+    anchorInsight = null,
+    weakDayInsight = null,
+    fragilityInsight = null,
+    weeklyBreakdown = null,
 }) => {
     const { t } = useTranslation();
     const normalizedPeriod = periodType || ({
@@ -116,7 +120,7 @@ export const AnalyticsDashboard = ({
     const screenWidth = Dimensions.get('window').width;
     const chartWidth = screenWidth - 64;
     const chartHeight = 100;
-    const comparisonChartHeight = 86;
+    const comparisonChartHeight = 84;
 
     // Animation values
     const circleAnim = useRef(new Animated.Value(0)).current;
@@ -483,114 +487,7 @@ export const AnalyticsDashboard = ({
     return (
         <View style={tw`flex-1`}>
 
-            {/* KPI Summary */}
-            <View style={tw`mb-6`}>
-                <HardShadowCardLocal colorMode={colorMode}>
-                    <View style={tw`p-4`}>
-                        <Text style={[tw`text-[10px] font-black uppercase tracking-widest mb-3 leading-none`, { color: textMuted }]}>
-                            At a glance
-                        </Text>
-                        <View style={tw`flex-row flex-wrap`}>
-                            <View style={tw`w-1/2 pr-3 mb-3`}>
-                                <Text style={[tw`text-[9px] font-black uppercase tracking-wider`, { color: textMuted }]}>Completion</Text>
-                                <Text style={[tw`text-2xl font-black mt-1`, { color: theme.primary }]}>{Math.round(completionStats.percentage)}%</Text>
-                            </View>
-                            <View style={tw`w-1/2 pl-3 mb-3`}>
-                                <Text style={[tw`text-[9px] font-black uppercase tracking-wider`, { color: textMuted }]}>Done / Total</Text>
-                                <Text style={[tw`text-2xl font-black mt-1`, { color: textPrimary }]}>{completionStats.completed}/{completionStats.total}</Text>
-                            </View>
-                            <View style={tw`w-1/2 pr-3`}>
-                                <Text style={[tw`text-[9px] font-black uppercase tracking-wider`, { color: textMuted }]}>Vs Previous</Text>
-                                <Text style={[tw`text-lg font-black mt-1`, { color: comparisonDelta === null ? textFaint : (comparisonDelta >= 0 ? theme.primary : '#ef4444') }]}>
-                                    {comparisonDelta === null ? '--' : `${comparisonDelta >= 0 ? '+' : ''}${comparisonDelta}%`}
-                                </Text>
-                            </View>
-                            <View style={tw`w-1/2 pl-3`}>
-                                <Text style={[tw`text-[9px] font-black uppercase tracking-wider`, { color: textMuted }]}>Top Habit</Text>
-                                <Text style={[tw`text-sm font-black mt-1`, { color: textPrimary }]} numberOfLines={1}>
-                                    {stats.best?.name || t('analytics.noData')}
-                                </Text>
-                            </View>
-                        </View>
-                    </View>
-                </HardShadowCardLocal>
-            </View>
-
-            {normalizedPeriod === 'WEEK' && wowCurrent.length > 0 && wowPrevious.length > 0 && (
-                <View style={tw`mb-6`}>
-                    <HardShadowCardLocal colorMode={colorMode}>
-                        <View style={tw`p-5`}>
-                            <View style={tw`flex-row justify-between items-center mb-4`}>
-                                <Text style={[tw`text-xs font-black uppercase tracking-widest leading-none`, { color: textMuted }]}>Week over week</Text>
-                                <View style={[tw`px-2 py-1 rounded-lg`, { backgroundColor: wowDelta >= 0 ? `${theme.primary}22` : '#ef444422' }]}>
-                                    <Text style={[tw`text-[10px] font-black uppercase`, { color: wowDelta >= 0 ? theme.primary : '#ef4444' }]}>
-                                        {wowDelta >= 0 ? `+${wowDelta}%` : `${wowDelta}%`} vs last week
-                                    </Text>
-                                </View>
-                            </View>
-
-                            <Svg width={chartWidth} height={comparisonChartHeight} style={tw`mb-4`}>
-                                <Path d={wowPreviousPath} fill="none" stroke={isDark ? '#a1a1aa' : '#9ca3af'} strokeWidth={2} strokeDasharray="4 4" strokeLinecap="round" />
-                                <Path d={wowCurrentPath} fill="none" stroke={theme.primary} strokeWidth={3} strokeLinecap="round" />
-                            </Svg>
-
-                            <View style={tw`flex-row items-center justify-between mb-3`}>
-                                <View style={tw`flex-row items-center`}>
-                                    <View style={[tw`w-3 h-0.5 mr-2`, { backgroundColor: theme.primary }]} />
-                                    <Text style={[tw`text-[10px] font-black uppercase`, { color: textPrimary }]}>This week</Text>
-                                </View>
-                                <Text style={[tw`text-[10px] font-black uppercase`, { color: theme.primary }]}>{Math.round(wowCurrentPct)}%</Text>
-                            </View>
-                            <View style={tw`flex-row items-center justify-between`}>
-                                <View style={tw`flex-row items-center`}>
-                                    <View style={[tw`w-3 h-0.5 mr-2`, { backgroundColor: isDark ? '#a1a1aa' : '#9ca3af' }]} />
-                                    <Text style={[tw`text-[10px] font-black uppercase`, { color: textPrimary }]}>Last week</Text>
-                                </View>
-                                <Text style={[tw`text-[10px] font-black uppercase`, { color: isDark ? '#a1a1aa' : '#6b7280' }]}>{Math.round(wowPreviousPct)}%</Text>
-                            </View>
-                        </View>
-                    </HardShadowCardLocal>
-                </View>
-            )}
-
-            {normalizedPeriod === 'MONTH' && momCurrent.length > 0 && momPrevious.length > 0 && (
-                <View style={tw`mb-6`}>
-                    <HardShadowCardLocal colorMode={colorMode}>
-                        <View style={tw`p-5`}>
-                            <View style={tw`flex-row justify-between items-center mb-4`}>
-                                <Text style={[tw`text-xs font-black uppercase tracking-widest leading-none`, { color: textMuted }]}>Month over month</Text>
-                                <View style={[tw`px-2 py-1 rounded-lg`, { backgroundColor: momDelta >= 0 ? `${theme.primary}22` : '#ef444422' }]}>
-                                    <Text style={[tw`text-[10px] font-black uppercase`, { color: momDelta >= 0 ? theme.primary : '#ef4444' }]}>
-                                        {momDelta >= 0 ? `+${momDelta}%` : `${momDelta}%`} vs last month
-                                    </Text>
-                                </View>
-                            </View>
-
-                            <Svg width={chartWidth} height={comparisonChartHeight} style={tw`mb-4`}>
-                                <Path d={momPreviousPath} fill="none" stroke={isDark ? '#a1a1aa' : '#9ca3af'} strokeWidth={2} strokeDasharray="4 4" strokeLinecap="round" />
-                                <Path d={momCurrentPath} fill="none" stroke={theme.primary} strokeWidth={3} strokeLinecap="round" />
-                            </Svg>
-
-                            <View style={tw`flex-row items-center justify-between mb-3`}>
-                                <View style={tw`flex-row items-center`}>
-                                    <View style={[tw`w-3 h-0.5 mr-2`, { backgroundColor: theme.primary }]} />
-                                    <Text style={[tw`text-[10px] font-black uppercase`, { color: textPrimary }]}>This month</Text>
-                                </View>
-                                <Text style={[tw`text-[10px] font-black uppercase`, { color: theme.primary }]}>{Math.round(momCurrentPct)}%</Text>
-                            </View>
-                            <View style={tw`flex-row items-center justify-between`}>
-                                <View style={tw`flex-row items-center`}>
-                                    <View style={[tw`w-3 h-0.5 mr-2`, { backgroundColor: isDark ? '#a1a1aa' : '#9ca3af' }]} />
-                                    <Text style={[tw`text-[10px] font-black uppercase`, { color: textPrimary }]}>{monthComparison?.previousLabel || 'Last month'}</Text>
-                                </View>
-                                <Text style={[tw`text-[10px] font-black uppercase`, { color: isDark ? '#a1a1aa' : '#6b7280' }]}>{Math.round(momPreviousPct)}%</Text>
-                            </View>
-                        </View>
-                    </HardShadowCardLocal>
-                </View>
-            )}
-
-            {/* Retrospective Grid */}
+            {/* 1. Retrospective Grid */}
             <View style={tw`mb-6`}>
                 <HardShadowCardLocal colorMode={colorMode}>
                     <View style={tw`p-5`}>
@@ -603,7 +500,83 @@ export const AnalyticsDashboard = ({
                 </HardShadowCardLocal>
             </View>
 
-            {/* Stats Grid */}
+            {/* 2. KPI Summary */}
+            <View style={tw`mb-6`}>
+                <HardShadowCardLocal colorMode={colorMode}>
+                    <View style={tw`p-4`}>
+                        <Text style={[tw`text-[10px] font-black uppercase tracking-widest mb-3 leading-none`, { color: textMuted }]}>
+                            {t('analytics.atAGlance')}
+                        </Text>
+                        <View style={tw`flex-row flex-wrap`}>
+                            <View style={tw`w-1/2 pr-3 mb-3`}>
+                                <Text style={[tw`text-[9px] font-black uppercase tracking-wider`, { color: textMuted }]}>{t('analytics.completion')}</Text>
+                                <Text style={[tw`text-2xl font-black mt-1`, { color: theme.primary }]}>{Math.round(completionStats.percentage)}%</Text>
+                            </View>
+                            <View style={tw`w-1/2 pl-3 mb-3`}>
+                                <Text style={[tw`text-[9px] font-black uppercase tracking-wider`, { color: textMuted }]}>{t('analytics.doneTotal')}</Text>
+                                <Text style={[tw`text-2xl font-black mt-1`, { color: textPrimary }]}>{completionStats.completed}/{completionStats.total}</Text>
+                            </View>
+                            <View style={tw`w-1/2 pr-3`}>
+                                <Text style={[tw`text-[9px] font-black uppercase tracking-wider`, { color: textMuted }]}>{t('analytics.vsPrevious')}</Text>
+                                <Text style={[tw`text-lg font-black mt-1`, { color: comparisonDelta === null ? textFaint : (comparisonDelta >= 0 ? theme.primary : '#ef4444') }]}>
+                                    {comparisonDelta === null ? '--' : `${comparisonDelta >= 0 ? '+' : ''}${comparisonDelta}%`}
+                                </Text>
+                            </View>
+                            <View style={tw`w-1/2 pl-3`}>
+                                <Text style={[tw`text-[9px] font-black uppercase tracking-wider`, { color: textMuted }]}>{t('analytics.topHabit')}</Text>
+                                <Text style={[tw`text-sm font-black mt-1`, { color: textPrimary }]} numberOfLines={1}>
+                                    {stats.best?.name || t('analytics.noData')}
+                                </Text>
+                            </View>
+                        </View>
+                    </View>
+                </HardShadowCardLocal>
+            </View>
+
+            {/* 3. Weekly breakdown (MONTH only) */}
+            {normalizedPeriod === 'MONTH' && weeklyBreakdown && weeklyBreakdown.length > 0 && (() => {
+                const maxPct = Math.max(...weeklyBreakdown.map(w => w.percentage), 1);
+                const MAX_BAR_H = 72;
+                return (
+                    <View style={tw`mb-6`}>
+                        <HardShadowCardLocal colorMode={colorMode}>
+                            <View style={tw`p-5`}>
+                                <View style={tw`flex-row justify-between items-center mb-5`}>
+                                    <Text style={[tw`text-xs font-black uppercase tracking-widest leading-none`, { color: textMuted }]}>{t('analytics.weeksThisMonth')}</Text>
+                                    <Text style={[tw`text-[10px] font-black uppercase tracking-widest leading-none`, { color: theme.primary }]}>
+                                        {t('analytics.completion')}
+                                    </Text>
+                                </View>
+                                <View style={[tw`flex-row items-end justify-between`, { height: MAX_BAR_H + 40 }]}>
+                                    {weeklyBreakdown.map((week, i) => {
+                                        const isBest = week.percentage === maxPct && week.possible > 0;
+                                        const barH = week.possible === 0 ? 4 : Math.max(4, Math.round((week.percentage / maxPct) * MAX_BAR_H));
+                                        return (
+                                            <View key={i} style={tw`flex-1 items-center mx-1`}>
+                                                <Text style={[tw`text-[10px] font-black mb-1`, { color: isBest ? theme.primary : textMuted }]}>
+                                                    {week.possible === 0 ? '—' : `${week.percentage}%`}
+                                                </Text>
+                                                <View style={{
+                                                    height: barH,
+                                                    width: '100%',
+                                                    borderRadius: 6,
+                                                    backgroundColor: isBest ? theme.primary : (isDark ? '#2a2a2a' : '#e5e7eb'),
+                                                    borderWidth: 2,
+                                                    borderColor: isBest ? theme.primary : (isDark ? '#3a3a3a' : '#d1d5db'),
+                                                }} />
+                                                <Text style={[tw`text-[10px] font-black mt-2 uppercase`, { color: isBest ? theme.primary : textPrimary }]}>{week.label}</Text>
+                                                <Text style={[tw`text-[8px] font-bold mt-0.5`, { color: textMuted }]}>{week.startDay}–{week.endDay}</Text>
+                                            </View>
+                                        );
+                                    })}
+                                </View>
+                            </View>
+                        </HardShadowCardLocal>
+                    </View>
+                );
+            })()}
+
+            {/* 4. Best / Worst habits */}
             <View style={tw`gap-3 mb-6`}>
                 <HardShadowCardLocal colorMode={colorMode}>
                     <View style={tw`p-4 flex-row items-center justify-between`}>
@@ -632,7 +605,181 @@ export const AnalyticsDashboard = ({
                 </HardShadowCardLocal>
             </View>
 
-            {/* Mood Analysis */}
+            {/* 4–6. Insights (WEEK only) */}
+            {normalizedPeriod === 'WEEK' && anchorInsight && (
+                <View style={tw`mb-6`}>
+                    <HardShadowCardLocal colorMode={colorMode}>
+                        <View style={tw`p-4`}>
+                            <View style={tw`flex-row items-center mb-2`}>
+                                <View style={[tw`px-2 py-0.5 rounded-full`, { backgroundColor: theme.primary }]}>
+                                    <Text style={tw`text-white text-[9px] font-black tracking-widest`}>{t('dashboard.anchorHabit')}</Text>
+                                </View>
+                            </View>
+                            <Text style={[tw`text-xl font-black leading-tight mb-1.5`, { color: isDark ? '#f5f5f5' : '#171717' }]}>
+                                {anchorInsight.habit.name}
+                            </Text>
+                            <Text style={[tw`text-sm leading-relaxed`, { color: isDark ? '#a8a29e' : '#57534e' }]}>
+                                {t('dashboard.anchorDesc1') + ' '}
+                                <Text style={{ color: theme.primary, fontWeight: '900' }}>
+                                    {anchorInsight.liftPct}% {t('dashboard.anchorDesc2')}
+                                </Text>
+                                {' ' + t('dashboard.anchorDesc3', { done: anchorInsight.doneRatePct, missed: anchorInsight.missedRatePct })}
+                            </Text>
+                        </View>
+                    </HardShadowCardLocal>
+                </View>
+            )}
+
+            {normalizedPeriod === 'WEEK' && weakDayInsight && (
+                <View style={tw`mb-6`}>
+                    <HardShadowCardLocal colorMode={colorMode}>
+                        <View style={tw`p-4`}>
+                            <View style={tw`flex-row items-center mb-2`}>
+                                <View style={[tw`px-2 py-0.5 rounded-full`, { backgroundColor: '#f97316' }]}>
+                                    <Text style={tw`text-white text-[9px] font-black tracking-widest`}>{t('dashboard.weakSpot')}</Text>
+                                </View>
+                            </View>
+                            <Text style={[tw`text-xl font-black leading-tight mb-1.5`, { color: isDark ? '#f5f5f5' : '#171717' }]}>
+                                {weakDayInsight.dayName}
+                            </Text>
+                            <Text style={[tw`text-sm leading-relaxed mb-3`, { color: isDark ? '#a8a29e' : '#57534e' }]}>
+                                {t('dashboard.weakSpotDesc1') + ' '}
+                                <Text style={{ color: '#f97316', fontWeight: '900' }}>
+                                    {weakDayInsight.completionRatePct}% {t('dashboard.weakSpotDesc2')}
+                                </Text>
+                                {weakDayInsight.worstHabit
+                                    ? '. ' + t('dashboard.weakSpotDesc3', { habit: weakDayInsight.worstHabit.name, day: weakDayInsight.dayShort })
+                                    : '.'}
+                            </Text>
+                            {weakDayInsight.dayRates.some(d => d.rate !== null) && (
+                                <View style={[tw`flex-row items-end`, { gap: 4 }]}>
+                                    {weakDayInsight.dayRates.map(({ day, rate }) => {
+                                        const isWeakest = day === weakDayInsight.dayShort;
+                                        const barHeight = rate !== null ? Math.max(4, Math.round(rate * 0.44)) : 4;
+                                        return (
+                                            <View key={day} style={tw`flex-1 items-center`}>
+                                                <View style={{
+                                                    width: '100%',
+                                                    height: barHeight,
+                                                    borderRadius: 2,
+                                                    backgroundColor: rate === null
+                                                        ? (isDark ? '#2a2a2a' : '#e5e7eb')
+                                                        : isWeakest
+                                                            ? '#f97316'
+                                                            : (isDark ? '#444' : '#d1d5db')
+                                                }} />
+                                                <Text style={{
+                                                    fontSize: 9,
+                                                    fontWeight: '900',
+                                                    marginTop: 3,
+                                                    color: isWeakest ? '#f97316' : (isDark ? '#555' : '#9ca3af')
+                                                }}>{day[0]}</Text>
+                                            </View>
+                                        );
+                                    })}
+                                </View>
+                            )}
+                        </View>
+                    </HardShadowCardLocal>
+                </View>
+            )}
+
+            {normalizedPeriod === 'WEEK' && fragilityInsight && (
+                <View style={tw`mb-6`}>
+                    <HardShadowCardLocal colorMode={colorMode}>
+                        <View style={tw`p-4`}>
+                            <View style={tw`flex-row items-center mb-2`}>
+                                <View style={[tw`px-2 py-0.5 rounded-full`, { backgroundColor: '#8b5cf6' }]}>
+                                    <Text style={tw`text-white text-[9px] font-black tracking-widest`}>{t('dashboard.streakPattern')}</Text>
+                                </View>
+                            </View>
+                            <Text style={[tw`text-xl font-black leading-tight mb-1.5`, { color: isDark ? '#f5f5f5' : '#171717' }]}>
+                                {fragilityInsight.habit.name}
+                            </Text>
+                            <Text style={[tw`text-sm leading-relaxed`, { color: isDark ? '#a8a29e' : '#57534e' }]}>
+                                {t('dashboard.streakDesc1') + ' '}
+                                <Text style={{ color: '#8b5cf6', fontWeight: '900' }}>
+                                    {fragilityInsight.breakAtLength} {fragilityInsight.breakAtLength === 1 ? t('dashboard.streakDescDay') : t('dashboard.streakDescDays')}
+                                </Text>
+                                {' ' + t('dashboard.streakDesc2', { count: fragilityInsight.breakCount, day: fragilityInsight.breakAtLength + 1 })}
+                            </Text>
+                        </View>
+                    </HardShadowCardLocal>
+                </View>
+            )}
+
+            {/* 7. Period comparison */}
+            {normalizedPeriod === 'WEEK' && wowMax > 1 && wowCurrent.length > 0 && wowPrevious.length > 0 && (
+                <View style={tw`mb-6`}>
+                    <HardShadowCardLocal colorMode={colorMode}>
+                        <View style={tw`p-5`}>
+                            <View style={tw`flex-row justify-between items-center mb-2`}>
+                                <Text style={[tw`text-xs font-black uppercase tracking-widest leading-none`, { color: textMuted }]}>{t('analytics.weekOverWeek')}</Text>
+                                <View style={[tw`px-2 py-1 rounded-lg`, { backgroundColor: wowDelta >= 0 ? `${theme.primary}22` : '#ef444422' }]}>
+                                    <Text style={[tw`text-[10px] font-black uppercase`, { color: wowDelta >= 0 ? theme.primary : '#ef4444' }]}>
+                                        {wowDelta >= 0 ? `+${wowDelta}%` : `${wowDelta}%`} {t('analytics.vsLastWeek')}
+                                    </Text>
+                                </View>
+                            </View>
+                            <Svg width={chartWidth} height={comparisonChartHeight} style={tw`mb-4`}>
+                                <Path d={wowPreviousPath} fill="none" stroke={isDark ? '#a1a1aa' : '#9ca3af'} strokeWidth={2} strokeDasharray="4 4" strokeLinecap="round" />
+                                <Path d={wowCurrentPath} fill="none" stroke={theme.primary} strokeWidth={3} strokeLinecap="round" />
+                            </Svg>
+                            <View style={tw`flex-row items-center justify-between mb-3`}>
+                                <View style={tw`flex-row items-center`}>
+                                    <View style={[tw`w-3 h-0.5 mr-2`, { backgroundColor: theme.primary }]} />
+                                    <Text style={[tw`text-[10px] font-black uppercase`, { color: textPrimary }]}>{t('analytics.thisWeek')}</Text>
+                                </View>
+                                <Text style={[tw`text-[10px] font-black uppercase`, { color: theme.primary }]}>{Math.round(wowCurrentPct)}%</Text>
+                            </View>
+                            <View style={tw`flex-row items-center justify-between`}>
+                                <View style={tw`flex-row items-center`}>
+                                    <View style={[tw`w-3 h-0.5 mr-2`, { backgroundColor: isDark ? '#a1a1aa' : '#9ca3af' }]} />
+                                    <Text style={[tw`text-[10px] font-black uppercase`, { color: textPrimary }]}>{t('analytics.lastWeek')}</Text>
+                                </View>
+                                <Text style={[tw`text-[10px] font-black uppercase`, { color: isDark ? '#a1a1aa' : '#6b7280' }]}>{Math.round(wowPreviousPct)}%</Text>
+                            </View>
+                        </View>
+                    </HardShadowCardLocal>
+                </View>
+            )}
+
+            {normalizedPeriod === 'MONTH' && momMax > 1 && momCurrent.length > 0 && momPrevious.length > 0 && (
+                <View style={tw`mb-6`}>
+                    <HardShadowCardLocal colorMode={colorMode}>
+                        <View style={tw`p-5`}>
+                            <View style={tw`flex-row justify-between items-center mb-4`}>
+                                <Text style={[tw`text-xs font-black uppercase tracking-widest leading-none`, { color: textMuted }]}>{t('analytics.monthOverMonth')}</Text>
+                                <View style={[tw`px-2 py-1 rounded-lg`, { backgroundColor: momDelta >= 0 ? `${theme.primary}22` : '#ef444422' }]}>
+                                    <Text style={[tw`text-[10px] font-black uppercase`, { color: momDelta >= 0 ? theme.primary : '#ef4444' }]}>
+                                        {momDelta >= 0 ? `+${momDelta}%` : `${momDelta}%`} {t('analytics.vsLastMonth')}
+                                    </Text>
+                                </View>
+                            </View>
+                            <Svg width={chartWidth} height={comparisonChartHeight} style={tw`mb-4`}>
+                                <Path d={momPreviousPath} fill="none" stroke={isDark ? '#a1a1aa' : '#9ca3af'} strokeWidth={2} strokeDasharray="4 4" strokeLinecap="round" />
+                                <Path d={momCurrentPath} fill="none" stroke={theme.primary} strokeWidth={3} strokeLinecap="round" />
+                            </Svg>
+                            <View style={tw`flex-row items-center justify-between mb-3`}>
+                                <View style={tw`flex-row items-center`}>
+                                    <View style={[tw`w-3 h-0.5 mr-2`, { backgroundColor: theme.primary }]} />
+                                    <Text style={[tw`text-[10px] font-black uppercase`, { color: textPrimary }]}>{t('analytics.thisMonth')}</Text>
+                                </View>
+                                <Text style={[tw`text-[10px] font-black uppercase`, { color: theme.primary }]}>{Math.round(momCurrentPct)}%</Text>
+                            </View>
+                            <View style={tw`flex-row items-center justify-between`}>
+                                <View style={tw`flex-row items-center`}>
+                                    <View style={[tw`w-3 h-0.5 mr-2`, { backgroundColor: isDark ? '#a1a1aa' : '#9ca3af' }]} />
+                                    <Text style={[tw`text-[10px] font-black uppercase`, { color: textPrimary }]}>{monthComparison?.previousLabel || t('analytics.lastMonth')}</Text>
+                                </View>
+                                <Text style={[tw`text-[10px] font-black uppercase`, { color: isDark ? '#a1a1aa' : '#6b7280' }]}>{Math.round(momPreviousPct)}%</Text>
+                            </View>
+                        </View>
+                    </HardShadowCardLocal>
+                </View>
+            )}
+
+            {/* 8. Mood */}
             <View style={tw`mb-6`}>
                 <HardShadowCardLocal colorMode={colorMode}>
                     <View style={tw`p-5`}>
@@ -645,7 +792,7 @@ export const AnalyticsDashboard = ({
                 </HardShadowCardLocal>
             </View>
 
-            {/* Narrative Insights */}
+            {/* 9. Narrative Story */}
             <View style={tw`mb-6`}>
                 <HardShadowCardLocal style={{ height: 360 }} colorMode={colorMode}>
                     <View style={[tw`py-1.5 px-4 items-center`, { backgroundColor: theme.primary }]}>
@@ -653,7 +800,6 @@ export const AnalyticsDashboard = ({
                             {t('analytics.success', { period: periodLabel })}
                         </Text>
                     </View>
-
                     <View style={tw`p-5 flex-1`}>
                         <View style={tw`flex-row items-center justify-between mb-6`}>
                             <View>
@@ -687,7 +833,6 @@ export const AnalyticsDashboard = ({
                                 </View>
                             </View>
                         </View>
-
                         <ScrollView showsVerticalScrollIndicator={false} style={tw`flex-1`} contentContainerStyle={tw`pb-6`}>
                             <View style={tw`gap-4 pb-4`}>
                                 {story.sections.map((section, idx) => (

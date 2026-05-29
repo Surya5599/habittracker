@@ -1,394 +1,484 @@
 {
-    "settings": {
-        "title": "设置",
-        "general": {
-            "title": "常规",
-            "defaultView": "默认视图",
-            "views": {
-                "daily": "每日",
-                "monthly": "每月",
-                "dashboard": "仪表板"
-            },
-            "startOfWeek": "Start of Week"
-        },
-        "language": {
-            "title": "语言"
-        },
-        "theme": {
-            "title": "主题"
-        },
-        "support": {
-            "title": "支持",
-            "reportBug": "报告错误或建议"
-        },
-        "appearance": {
-            "title": "外观",
-            "light": "浅色",
-            "dark": "深色"
-        },
-        "cardSize": {
-            "title": "卡片尺寸",
-            "compact": "紧凑",
-            "large": "大号"
-        },
-        "whatsNew": {
-            "title": "新内容",
-            "tutorial": "教程"
-        },
-        "onboardingEntry": {
-            "title": "教程",
-            "open": "打开"
-        },
-        "privacy": {
-            "title": "隐私",
-            "policy": "政策"
-        },
-        "account": {
-            "delete": "删除账户",
-            "noSession": "未找到账户会话。",
-            "deleteFailed": "删除失败",
-            "unableDelete": "当前无法删除账户。",
-            "prompts": {
-                "confirmTitle": "删除账户？",
-                "confirmBody": "这将永久删除你的账户和数据。",
-                "sureTitle": "你确定吗？",
-                "sureBody": "此操作无法撤销。",
-                "keep": "保留账户",
-                "forever": "永久删除"
-            }
-        },
-        "errors": {
-            "title": "错误",
-            "unableSignOut": "无法退出登录"
-        }
+  "settings": {
+    "title": "设置",
+    "general": {
+      "title": "常规",
+      "defaultView": "默认视图",
+      "views": {
+        "daily": "每日",
+        "monthly": "每月",
+        "dashboard": "仪表板"
+      },
+      "startOfWeek": "周起始日"
     },
-    "header": {
-        "dashboard": "仪表板",
-        "signIn": "登录",
-        "logout": "登出",
-        "myWeek": "我的一周",
-        "myMonth": "我的一个月",
-        "monthlyTrends": "月度趋势",
-        "weeklyTrends": "每周趋势",
-        "annualTrends": "年度趋势",
-        "vsLM": "对比上月",
-        "vsLW": "对比上周",
-        "switchChart": "切换到图表",
-        "monthlySuccess": "月度成功",
-        "weeklySuccess": "每周成功",
-        "annualPerformance": "年度表现",
-        "monthMastery": "月度掌握",
-        "habitMaster": "习惯大师",
-        "yourStoryMonth": "本月你的故事",
-        "yourStoryWeek": "本周你的故事",
-        "completed": "已完成",
-        "vsPrev": "对比之前",
-        "best": "最佳",
-        "thisYearResolutions": "今年的决心"
+    "language": {
+      "title": "语言"
     },
-    "story": {
-        "annual": {
-            "momentum": {
-                "ascending": "你的稳定性在全年持续提升，年末状态明显强于年初。",
-                "descending": "最近几个月节奏有所下降。这不是失败，而是提醒你简化并重启核心习惯。",
-                "stable": "即使周节奏变化，你依然保持了稳定执行，这是很强的基础。",
-                "main": "今年，[[{{habitName}}]] 成为你身份中的核心习惯。{{momentumMsg}}"
-            },
-            "rhythm": {
-                "weekend": "你的最佳节奏出现在周末。建议保留这段窗口，并把其中一部分复制到工作日。",
-                "weekday": "你的工作日结构很强，但周末一致性较弱。将周末版本简化可以缩小差距。",
-                "consistent": "你在工作日与周末之间保持了均衡执行，说明你的习惯控制力很稳定。"
-            },
-            "consistency": {
-                "high": "你今年坚持了 [[{{activeDays}}]] 天，这是形成长期习惯身份的有力证据。",
-                "medium": "你已有可靠基础。再固定一个触发器或时段，会更接近自动化。",
-                "low": "你仍在打基础阶段。此时小而可重复的胜利，比强度更重要。"
-            },
-            "experimental": "你今年尝试了很多习惯。下一阶段减少优先项，会更容易累积稳定性。",
-            "fading": "[[{{habitName}}]] 最近有所降温。如果它仍重要，建议本周用更简单版本重启。",
-            "neglected": "[[{{habitName}}]] 已有 [[{{days}}]] 天未执行。一次短行动就能重新起势。"
-        },
-        "weekly": {
-            "intro": {
-                "elite": "本周你完成了 [[{{count}}]] 次行动，且高于预期节奏。你的系统正在发挥作用。",
-                "strong": "本周你完成了 [[{{count}}]] 次，执行稳定且可靠。",
-                "balanced": "本周你完成了 [[{{count}}]] 次。有些习惯保持住了，有些需要更明确的触发条件。",
-                "low": "本周你记录了 [[{{count}}]] 次完成。先把最低版本做小，重点放在稳定重启。"
-            },
-            "momentum": {
-                "highlight": "[[{{habitName}}]] 是本周表现最强的习惯，已完成 [[{{count}}/{{total}}]] 天。"
-            },
-            "neglected": "[[{{habitName}}]] 本周尚未记录。明天做一个 2 分钟版本就能重新接上节奏。",
-            "growth": {
-                "recovery": "你后半周表现优于前半周，这是有意义的回升信号。",
-                "friction": "你前半周起势很好，但后半周有所回落。增加一个周后段提示可减少下滑。"
-            }
-        },
-        "monthly": {
-            "intro": {
-                "exceptional": "截至目前你本月完成 [[{{count}}]] 次，执行力和稳定性都很高。",
-                "solid": "你本月完成了 [[{{count}}]] 次，整体节奏稳定可靠。",
-                "exploration": "你本月记录了 [[{{count}}]] 次完成。若想提升下月延续性，可适当收窄重点。",
-                "low": "你本月完成了 [[{{count}}]] 次。建议先缩小范围，重建更简单的执行基线。"
-            },
-            "momentum": {
-                "growth": "较上月提升 [[{{delta}}%]]，这是执行质量的明确正向变化。",
-                "cooling": "较上月下降 [[{{delta}}%]]。若降低一个关键习惯的摩擦，下月更容易恢复稳定。"
-            },
-            "rhythm": {
-                "anchor": "[[{{habitName}}]] 是你本月的锚点习惯，完成了 [[{{count}}]] 次。"
-            }
-        }
+    "theme": {
+      "title": "主题"
     },
-    "common": {
-        "done": "完成",
-        "rate": "评分",
-        "days": "天",
-        "myHabits": "我的习惯",
-        "manageHabits": "管理习惯",
-        "currentStreak": "当前连续",
-        "months": {
-            "jan": "一月",
-            "feb": "二月",
-            "mar": "三月",
-            "apr": "四月",
-            "may": "五月",
-            "jun": "六月",
-            "jul": "七月",
-            "aug": "八月",
-            "sep": "九月",
-            "oct": "十月",
-            "nov": "十一月",
-            "dec": "十二月"
-        },
-        "selectYear": "选择年份",
-        "cancel": "取消",
-        "thisWeek": "本周",
-        "untitled": "无标题",
-        "daysShort": {
-            "mon": "一",
-            "tue": "二",
-            "wed": "三",
-            "thu": "四",
-            "fri": "五",
-            "sat": "六",
-            "sun": "日"
-        }
+    "reminders": {
+      "title": "每日提醒"
     },
-    "dailyCard": {
-        "dailyHabits": "每日习惯",
-        "flexibleHabits": "灵活习惯",
-        "tasks": "任务",
-        "dailyDone": "今日完成",
-        "remaining": "剩余",
-        "noDailyHabits": "今天没有截止的习惯",
-        "addTask": "点击 + 添加任务",
-        "share": "分享成就",
-        "journal": "日记",
-        "mood": "心情",
-        "notes": "笔记",
-        "saveEntry": "保存条目",
-        "journalPlaceholder": "写下今天...",
-        "editTask": "编辑任务",
-        "deleteTask": "删除任务",
-        "untitled": "无标题",
-        "moods": {
-            "veryBad": "很差",
-            "bad": "差",
-            "neutral": "一般",
-            "good": "好",
-            "veryGood": "很好"
-        },
-        "goal": "目标"
+    "support": {
+      "title": "支持",
+      "reportBug": "报告错误或建议"
     },
-    "tasks": {
-        "enterTask": "输入任务",
-        "placeholder": "写点什么...",
-        "addTask": "添加任务",
-        "newTaskPlaceholder": "新任务...",
-        "empty": "暂无任务"
+    "appearance": {
+      "title": "外观",
+      "light": "浅色",
+      "dark": "深色"
     },
-    "journal": {
-        "title": "日记",
-        "prompt": "反思你的一天",
-        "placeholder": "写下今天...",
-        "save": "保存条目"
+    "cardSize": {
+      "title": "卡片尺寸",
+      "compact": "紧凑",
+      "large": "大号"
     },
-    "habitManager": {
-        "title": "我的习惯",
-        "addHabit": "添加新习惯",
-        "noHabits": "暂无习惯。开始添加一个吧！",
-        "dragToReorder": "拖动习惯进行排序。",
-        "fixed": "固定",
-        "flexible": "灵活",
-        "timesPerWeek": "每周次数",
-        "habitNamePlaceholder": "习惯名称",
-        "untitled": "无标题习惯",
-        "deleteConfirm": "确定要删除这个习惯吗？您将丢失所有历史数据。"
+    "whatsNew": {
+      "title": "新内容",
+      "tutorial": "教程"
     },
-    "weeklyCard": {
-        "title": "每周目标",
-        "target": "目标：本周 {{count}}次"
+    "onboardingEntry": {
+      "title": "教程",
+      "open": "打开"
     },
-    "monthlyView": {
-        "journals": "日记",
-        "habits": "习惯",
-        "emptyEntry": "空条目...",
-        "noActivity": "今天无活动",
-        "dayDetails": "每日详情"
+    "privacy": {
+      "title": "隐私",
+      "policy": "政策"
     },
-    "dashboard": {
-        "week": "周",
-        "month": "月",
-        "year": "年",
-        "weekTab": "周",
-        "monthTab": "月",
-        "yearTab": "年"
+    "account": {
+      "delete": "删除账户",
+      "noSession": "未找到账户会话。",
+      "deleteFailed": "删除失败",
+      "unableDelete": "当前无法删除账户。",
+      "prompts": {
+        "confirmTitle": "删除账户？",
+        "confirmBody": "这将永久删除你的账户和数据。",
+        "sureTitle": "你确定吗？",
+        "sureBody": "此操作无法撤销。",
+        "keep": "保留账户",
+        "forever": "永久删除"
+      },
+      "title": "账户",
+      "email": "邮箱",
+      "changePassword": "修改密码",
+      "sendResetEmail": "发送链接",
+      "resetSent": "请查收邮件",
+      "resetSentBody": "密码重置链接已发送至 {{email}}。",
+      "resetFailed": "无法发送重置邮件。"
     },
-    "analytics": {
-        "success": "{{period}} 成功率",
-        "mastery": "{{period}} 掌握度",
-        "notEnoughData": "数据不足，无法生成故事。",
-        "retrospectiveGrid": "回顾网格",
-        "done": "完成",
-        "moodAnalysis": "心情分析",
-        "vibe": "{{period}} 氛围",
-        "activityMomentum": "活动势头",
-        "bestHabit": "{{period}} 最佳习惯",
-        "needsFocus": "{{period}} 需要关注",
-        "noData": "无数据",
-        "onTrack": "正轨"
-    },
-    "bottomNav": {
-        "today": "今天",
-        "analytics": "分析",
-        "logs": "日志",
-        "analysis": "AI分析"
-    },
-    "auth": {
-        "enterEmail": "请输入您的邮箱",
-        "enterPassword": "请输入您的密码",
-        "resetSent": "重置邮件已发送！",
-        "signInSignUp": "登录 / 注册",
-        "requestReset": "请求重置PIN",
-        "returnLogin": "返回登录",
-        "forgotPassword": "忘记密码？",
-        "guestEntry": "访客进入",
-        "checkEmail": "请检查邮件以确认您的账户。",
-        "sending": "发送中...",
-        "verifying": "验证中...",
-        "tagline": "一个平静的分析追踪器，助你养成习惯",
-        "email": "邮箱",
-        "password": "密码",
-        "signIn": "登录",
-        "createAccount": "创建账户",
-        "or": "或"
-    },
-    "dashboardScreen": {
-        "title": "仪表板",
-        "welcome": "欢迎！",
-        "description": "这是HabiCard的移动版。",
-        "signOut": "登出"
-    },
-    "aiAnalysis": {
-        "premiumOnly": "仅限高级版",
-        "premiumDesc": "通过AI分析深入了解您的习惯和生活模式。订阅高级版以解锁此功能。",
-        "upgrade": "升级到高级版",
-        "weeklyUsage": "每周使用",
-        "analyses": "分析",
-        "limitReached": "达到上限",
-        "generateNew": "生成新分析",
-        "resetMessage": "下周一重置",
-        "analyzeMessage": "AI将分析您最近的习惯和笔记",
-        "history": "洞察历史",
-        "viewReport": "查看完整报告",
-        "insight": "洞察",
-        "mockTitle": "模式与能量",
-        "mockContent": "您倾向于在清晨记录“高效”心情的日子里完成更多习惯。本周您在“阅读”方面的一致性提高了15%。"
-    },
-    "onboarding": {
-        "badge": "教程",
-        "step": "步骤",
-        "back": "返回",
-        "next": "下一步",
-        "finish": "完成",
-        "saving": "保存中...",
-        "steps": {
-            "language": {
-                "title": "选择语言",
-                "subtitle": "设置应用语言，之后也可以在设置中更改。"
-            },
-            "theme": {
-                "title": "选择颜色",
-                "subtitle": "选择应用中使用的 HabiCard 配色。"
-            },
-            "cardStyle": {
-                "title": "选择卡片尺寸",
-                "subtitle": "预览两种卡片样式并选择默认样式。"
-            },
-            "habitsDemo": {
-                "title": "习惯集中管理",
-                "subtitle": "在一个地方勾选你的所有习惯。"
-            },
-            "tasksDemo": {
-                "title": "任务更简单",
-                "subtitle": "创建任务并在完成后勾选。"
-            },
-            "journalDemo": {
-                "title": "每天写日记",
-                "subtitle": "在同一卡片流程中更新每日记录。"
-            },
-            "weekStart": {
-                "title": "一周开始日",
-                "subtitle": "选择一周从周日还是周一开始。"
-            }
-        },
-        "languageTitle": "语言",
-        "cardStyleTitle": "卡片尺寸",
-        "cardStyleLabels": {
-            "compact": "紧凑",
-            "large": "大号"
-        },
-        "habits": [
-            "运动",
-            "喝水",
-            "读10页",
-            "冥想",
-            "计划明天"
-        ],
-        "taskSamples": [
-            "计划明天",
-            "检查目标"
-        ],
-        "journalSample": "你可以在这里写日记。",
-        "sampleDay": "星期四",
-        "cardStyleDescriptions": {
-            "compact": "在标题栏中显示小进度徽章。",
-            "large": "在日期下方显示更大的当日进度面板。"
-        },
-        "themeNames": {
-            "sageRose": "鼠尾草与玫瑰",
-            "oceanSky": "海洋与天空",
-            "sunsetClay": "日落与陶土",
-            "lavenderSlate": "薰衣草与石板",
-            "forestEarth": "森林与大地",
-            "peachMint": "蜜桃与薄荷",
-            "lilacCream": "丁香与奶油",
-            "dustyBlueMauve": "灰蓝与淡紫",
-            "coralSand": "珊瑚与沙色",
-            "mintBlush": "薄荷与粉晕",
-            "honeyFog": "蜂蜜与雾灰",
-            "plumSage": "李子与鼠尾草",
-            "monochrome": "单色"
-        },
-        "weekStartOptions": {
-            "sun": "日",
-            "mon": "一"
-        },
-        "habitInstructions": {
-            "tap": "点击可勾选一个习惯",
-            "hold": "长按可跳过这个习惯",
-            "empty": "如果没完成就留空"
-        }
+    "errors": {
+      "title": "错误",
+      "unableSignOut": "无法退出登录"
     }
+  },
+  "header": {
+    "dashboard": "仪表板",
+    "signIn": "登录",
+    "logout": "登出",
+    "myWeek": "我的一周",
+    "myMonth": "我的一个月",
+    "monthlyTrends": "月度趋势",
+    "weeklyTrends": "每周趋势",
+    "annualTrends": "年度趋势",
+    "vsLM": "对比上月",
+    "vsLW": "对比上周",
+    "switchChart": "切换到图表",
+    "monthlySuccess": "月度成功",
+    "weeklySuccess": "每周成功",
+    "annualPerformance": "年度表现",
+    "monthMastery": "月度掌握",
+    "habitMaster": "习惯大师",
+    "yourStoryMonth": "本月你的故事",
+    "yourStoryWeek": "本周你的故事",
+    "completed": "已完成",
+    "vsPrev": "对比之前",
+    "best": "最佳",
+    "thisYearResolutions": "今年的决心"
+  },
+  "story": {
+    "annual": {
+      "momentum": {
+        "ascending": "你的稳定性在全年持续提升，年末状态明显强于年初。",
+        "descending": "最近几个月节奏有所下降。这不是失败，而是提醒你简化并重启核心习惯。",
+        "stable": "即使周节奏变化，你依然保持了稳定执行，这是很强的基础。",
+        "main": "今年，[[{{habitName}}]] 成为你身份中的核心习惯。{{momentumMsg}}"
+      },
+      "rhythm": {
+        "weekend": "你的最佳节奏出现在周末。建议保留这段窗口，并把其中一部分复制到工作日。",
+        "weekday": "你的工作日结构很强，但周末一致性较弱。将周末版本简化可以缩小差距。",
+        "consistent": "你在工作日与周末之间保持了均衡执行，说明你的习惯控制力很稳定。"
+      },
+      "consistency": {
+        "high": "你今年坚持了 [[{{activeDays}}]] 天，这是形成长期习惯身份的有力证据。",
+        "medium": "你已有可靠基础。再固定一个触发器或时段，会更接近自动化。",
+        "low": "你仍在打基础阶段。此时小而可重复的胜利，比强度更重要。"
+      },
+      "experimental": "你今年尝试了很多习惯。下一阶段减少优先项，会更容易累积稳定性。",
+      "fading": "[[{{habitName}}]] 最近有所降温。如果它仍重要，建议本周用更简单版本重启。",
+      "neglected": "[[{{habitName}}]] 已有 [[{{days}}]] 天未执行。一次短行动就能重新起势。"
+    },
+    "weekly": {
+      "intro": {
+        "elite": "本周你完成了 [[{{count}}]] 次行动，且高于预期节奏。你的系统正在发挥作用。",
+        "strong": "本周你完成了 [[{{count}}]] 次，执行稳定且可靠。",
+        "balanced": "本周你完成了 [[{{count}}]] 次。有些习惯保持住了，有些需要更明确的触发条件。",
+        "low": "本周你记录了 [[{{count}}]] 次完成。先把最低版本做小，重点放在稳定重启。"
+      },
+      "momentum": {
+        "highlight": "[[{{habitName}}]] 是本周表现最强的习惯，已完成 [[{{count}}/{{total}}]] 天。"
+      },
+      "neglected": "[[{{habitName}}]] 本周尚未记录。明天做一个 2 分钟版本就能重新接上节奏。",
+      "growth": {
+        "recovery": "你后半周表现优于前半周，这是有意义的回升信号。",
+        "friction": "你前半周起势很好，但后半周有所回落。增加一个周后段提示可减少下滑。"
+      }
+    },
+    "monthly": {
+      "intro": {
+        "exceptional": "截至目前你本月完成 [[{{count}}]] 次，执行力和稳定性都很高。",
+        "solid": "你本月完成了 [[{{count}}]] 次，整体节奏稳定可靠。",
+        "exploration": "你本月记录了 [[{{count}}]] 次完成。若想提升下月延续性，可适当收窄重点。",
+        "low": "你本月完成了 [[{{count}}]] 次。建议先缩小范围，重建更简单的执行基线。"
+      },
+      "momentum": {
+        "growth": "较上月提升 [[{{delta}}%]]，这是执行质量的明确正向变化。",
+        "cooling": "较上月下降 [[{{delta}}%]]。若降低一个关键习惯的摩擦，下月更容易恢复稳定。"
+      },
+      "rhythm": {
+        "anchor": "[[{{habitName}}]] 是你本月的锚点习惯，完成了 [[{{count}}]] 次。"
+      }
+    }
+  },
+  "common": {
+    "done": "完成",
+    "rate": "评分",
+    "days": "天",
+    "myHabits": "我的习惯",
+    "manageHabits": "管理习惯",
+    "currentStreak": "当前连续",
+    "months": {
+      "jan": "一月",
+      "feb": "二月",
+      "mar": "三月",
+      "apr": "四月",
+      "may": "五月",
+      "jun": "六月",
+      "jul": "七月",
+      "aug": "八月",
+      "sep": "九月",
+      "oct": "十月",
+      "nov": "十一月",
+      "dec": "十二月"
+    },
+    "selectYear": "选择年份",
+    "add": "添加",
+    "cancel": "取消",
+    "thisWeek": "本周",
+    "untitled": "无标题",
+    "daysShort": {
+      "mon": "一",
+      "tue": "二",
+      "wed": "三",
+      "thu": "四",
+      "fri": "五",
+      "sat": "六",
+      "sun": "日"
+    }
+  },
+  "dailyCard": {
+    "dailyHabits": "每日习惯",
+    "flexibleHabits": "灵活习惯",
+    "tasks": "任务",
+    "dailyDone": "今日完成",
+    "remaining": "剩余",
+    "noDailyHabits": "今天没有截止的习惯",
+    "addTask": "点击 + 添加任务",
+    "share": "分享成就",
+    "journal": "日记",
+    "mood": "心情",
+    "notes": "笔记",
+    "saveEntry": "保存条目",
+    "journalPlaceholder": "写下今天...",
+    "editTask": "编辑任务",
+    "deleteTask": "删除任务",
+    "untitled": "无标题",
+    "moods": {
+      "veryBad": "很差",
+      "bad": "差",
+      "neutral": "一般",
+      "good": "好",
+      "veryGood": "很好"
+    },
+    "goal": "目标"
+  },
+  "tasks": {
+    "enterTask": "输入任务",
+    "placeholder": "写点什么...",
+    "addTask": "添加任务",
+    "newTaskPlaceholder": "新任务...",
+    "empty": "暂无任务"
+  },
+  "journal": {
+    "title": "日记",
+    "prompt": "反思你的一天",
+    "placeholder": "写下今天...",
+    "save": "保存条目"
+  },
+  "habitManager": {
+    "title": "我的习惯",
+    "addHabit": "添加新习惯",
+    "noHabits": "暂无习惯。开始添加一个吧！",
+    "dragToReorder": "拖动习惯进行排序。",
+    "fixed": "固定",
+    "flexible": "灵活",
+    "timesPerWeek": "每周次数",
+    "habitNamePlaceholder": "习惯名称",
+    "untitled": "无标题习惯",
+    "deleteConfirm": "确定要删除这个习惯吗？您将丢失所有历史数据。",
+    "edit": "编辑",
+    "restore": "恢复",
+    "everyDay": "每天",
+    "alreadyExists": "已存在",
+    "alreadyExistsMsg": "名为\"{{name}}\"的习惯已存在。"
+  },
+  "weeklyCard": {
+    "title": "每周目标",
+    "target": "目标：本周 {{count}}次"
+  },
+  "monthlyView": {
+    "journals": "日记",
+    "habits": "习惯",
+    "emptyEntry": "空条目...",
+    "noActivity": "今天无活动",
+    "dayDetails": "每日详情",
+    "tasks": "任务",
+    "searchPlaceholder": "搜索记录...",
+    "noLogs": "此栏目未找到记录。"
+  },
+  "dashboard": {
+    "week": "周",
+    "month": "月",
+    "year": "年",
+    "weekTab": "周",
+    "monthTab": "月",
+    "yearTab": "年",
+    "insights": "洞察",
+    "anchorHabit": "锚定习惯",
+    "anchorDesc1": "做了这项习惯的日子，其他习惯完成率",
+    "anchorDesc2": "更高",
+    "anchorDesc3": "（{{done}}% vs {{missed}}%）。从这里开始，奠定基调。",
+    "weakSpot": "薄弱点",
+    "weakSpotDesc1": "完成率最低的日子 —",
+    "weakSpotDesc2": "平均",
+    "weakSpotDesc3": "\"{{habit}}\"在{{day}}最常被跳过。",
+    "streakPattern": "连胜规律",
+    "streakDesc1": "连胜通常在",
+    "streakDescDay": "天",
+    "streakDescDays": "天",
+    "streakDesc2": "后断裂 — 这发生了{{count}}次。第{{day}}天是需要坚持的关键时刻。"
+  },
+  "analytics": {
+    "success": "{{period}} 成功率",
+    "mastery": "{{period}} 掌握度",
+    "notEnoughData": "数据不足，无法生成故事。",
+    "retrospectiveGrid": "回顾网格",
+    "done": "完成",
+    "moodAnalysis": "心情分析",
+    "vibe": "{{period}} 氛围",
+    "activityMomentum": "活动势头",
+    "bestHabit": "{{period}} 最佳习惯",
+    "needsFocus": "{{period}} 需要关注",
+    "noData": "无数据",
+    "onTrack": "正轨",
+    "atAGlance": "概览",
+    "completion": "完成率",
+    "doneTotal": "完成 / 总计",
+    "vsPrevious": "对比上期",
+    "topHabit": "最佳习惯",
+    "weekOverWeek": "周环比",
+    "vsLastWeek": "比上周",
+    "thisWeek": "本周",
+    "lastWeek": "上周",
+    "monthOverMonth": "月环比",
+    "vsLastMonth": "比上月",
+    "thisMonth": "本月",
+    "lastMonth": "上月",
+    "weeksThisMonth": "本月各周"
+  },
+  "bottomNav": {
+    "today": "今天",
+    "analytics": "分析",
+    "logs": "日志",
+    "todo": "待办",
+    "analysis": "AI分析"
+  },
+  "auth": {
+    "enterEmail": "请输入您的邮箱",
+    "enterPassword": "请输入您的密码",
+    "resetSent": "重置邮件已发送！",
+    "signInSignUp": "登录 / 注册",
+    "requestReset": "请求重置PIN",
+    "returnLogin": "返回登录",
+    "forgotPassword": "忘记密码？",
+    "guestEntry": "访客进入",
+    "checkEmail": "请检查邮件以确认您的账户。",
+    "sending": "发送中...",
+    "verifying": "验证中...",
+    "tagline": "一个平静的分析追踪器，助你养成习惯",
+    "email": "邮箱",
+    "password": "密码",
+    "signIn": "登录",
+    "createAccount": "创建账户",
+    "or": "或"
+  },
+  "dashboardScreen": {
+    "title": "仪表板",
+    "welcome": "欢迎！",
+    "description": "这是HabiCard的移动版。",
+    "signOut": "登出"
+  },
+  "aiAnalysis": {
+    "premiumOnly": "仅限高级版",
+    "premiumDesc": "通过AI分析深入了解您的习惯和生活模式。订阅高级版以解锁此功能。",
+    "upgrade": "升级到高级版",
+    "weeklyUsage": "每周使用",
+    "analyses": "分析",
+    "limitReached": "达到上限",
+    "generateNew": "生成新分析",
+    "resetMessage": "下周一重置",
+    "analyzeMessage": "AI将分析您最近的习惯和笔记",
+    "history": "洞察历史",
+    "viewReport": "查看完整报告",
+    "insight": "洞察",
+    "mockTitle": "模式与能量",
+    "mockContent": "您倾向于在清晨记录“高效”心情的日子里完成更多习惯。本周您在“阅读”方面的一致性提高了15%。"
+  },
+  "onboarding": {
+    "badge": "教程",
+    "step": "步骤",
+    "back": "返回",
+    "next": "下一步",
+    "finish": "完成",
+    "saving": "保存中...",
+    "steps": {
+      "language": {
+        "title": "选择语言",
+        "subtitle": "设置应用语言，之后也可以在设置中更改。"
+      },
+      "theme": {
+        "title": "选择颜色",
+        "subtitle": "选择应用中使用的 HabiCard 配色。"
+      },
+      "cardStyle": {
+        "title": "选择卡片尺寸",
+        "subtitle": "预览两种卡片样式并选择默认样式。"
+      },
+      "habitsDemo": {
+        "title": "习惯集中管理",
+        "subtitle": "在一个地方勾选你的所有习惯。"
+      },
+      "tasksDemo": {
+        "title": "任务更简单",
+        "subtitle": "创建任务并在完成后勾选。"
+      },
+      "journalDemo": {
+        "title": "每天写日记",
+        "subtitle": "在同一卡片流程中更新每日记录。"
+      },
+      "weekStart": {
+        "title": "一周开始日",
+        "subtitle": "选择一周从周日还是周一开始。"
+      }
+    },
+    "languageTitle": "语言",
+    "cardStyleTitle": "卡片尺寸",
+    "cardStyleLabels": {
+      "compact": "紧凑",
+      "large": "大号"
+    },
+    "habits": [
+      "运动",
+      "喝水",
+      "读10页",
+      "冥想",
+      "计划明天"
+    ],
+    "taskSamples": [
+      "计划明天",
+      "检查目标"
+    ],
+    "journalSample": "你可以在这里写日记。",
+    "sampleDay": "星期四",
+    "cardStyleDescriptions": {
+      "compact": "在标题栏中显示小进度徽章。",
+      "large": "在日期下方显示更大的当日进度面板。"
+    },
+    "themeNames": {
+      "sageRose": "鼠尾草与玫瑰",
+      "oceanSky": "海洋与天空",
+      "sunsetClay": "日落与陶土",
+      "lavenderSlate": "薰衣草与石板",
+      "forestEarth": "森林与大地",
+      "peachMint": "蜜桃与薄荷",
+      "lilacCream": "丁香与奶油",
+      "dustyBlueMauve": "灰蓝与淡紫",
+      "coralSand": "珊瑚与沙色",
+      "mintBlush": "薄荷与粉晕",
+      "honeyFog": "蜂蜜与雾灰",
+      "plumSage": "李子与鼠尾草",
+      "monochrome": "单色"
+    },
+    "weekStartOptions": {
+      "sun": "日",
+      "mon": "一"
+    },
+    "habitInstructions": {
+      "tap": "点击可勾选一个习惯",
+      "hold": "长按可跳过这个习惯",
+      "empty": "如果没完成就留空"
+    }
+  },
+  "feedback": {
+    "loadError": "无法加载反馈记录。",
+    "missingTitle": "消息为空",
+    "missingMsg": "请输入您的反馈。",
+    "submittedTitle": "已提交",
+    "submittedMsg": "感谢您的反馈。",
+    "failedMsg": "提交反馈失败。",
+    "signInRequired": "需要登录",
+    "signInRequiredMsg": "请登录以回复反馈。",
+    "replyFailed": "发送回复失败。",
+    "unableToOpenLink": "无法打开链接",
+    "bugPlaceholder": "描述问题...",
+    "ideaPlaceholder": "分享您的想法...",
+    "replyPlaceholder": "写一条回复..."
+  },
+  "tutorial": {
+    "header": "引导教程",
+    "stepCompleted": "步骤完成",
+    "stepPending": "在应用中完成此操作以继续",
+    "back": "返回",
+    "next": "下一步",
+    "finish": "完成",
+    "close": "关闭",
+    "steps": {
+      "addHabit": {
+        "title": "创建习惯",
+        "description": "点击左上角的 + 按钮并创建一个新习惯。"
+      },
+      "completeSkip": {
+        "title": "完成或跳过习惯",
+        "description": "勾选您创建的习惯。或长按以跳过今天。"
+      },
+      "analytics": {
+        "title": "打开分析",
+        "description": "使用底部导航切换到分析页面。"
+      },
+      "logs": {
+        "title": "打开记录",
+        "description": "使用底部导航切换到记录页面查看历史。"
+      }
+    }
+  }
 }

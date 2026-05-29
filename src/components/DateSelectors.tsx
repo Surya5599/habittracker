@@ -42,7 +42,7 @@ export const WeekPicker: React.FC<WeekPickerProps> = ({ isOpen, onClose, current
     };
 
     return (
-        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 bg-white border border-stone-200 shadow-xl p-4 rounded-lg w-[280px]">
+        <div className="absolute top-full left-0 mt-2 z-50 bg-white border border-stone-200 shadow-xl p-4 rounded-lg w-[280px]">
             <div className="flex items-center justify-between mb-4">
                 <button onClick={handlePrevMonth} className="p-1 hover:bg-stone-100 rounded-full"><ChevronLeft size={16} /></button>
                 <div className="font-bold text-sm">
@@ -112,7 +112,7 @@ export const MonthPicker: React.FC<MonthPickerProps> = ({ isOpen, onClose, curre
     if (!isOpen) return null;
 
     return (
-        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 bg-white border border-stone-200 shadow-xl p-4 rounded-lg w-[280px]">
+        <div className="absolute top-full left-0 mt-2 z-50 bg-white border border-stone-200 shadow-xl p-4 rounded-lg w-[280px]">
             <div className="flex items-center justify-between mb-4">
                 <button onClick={(e) => { e.stopPropagation(); setViewYear(prev => prev - 1); }} className="p-1 hover:bg-stone-100 rounded-full"><ChevronLeft size={16} /></button>
                 <div className="font-bold text-sm">
@@ -161,35 +161,37 @@ interface YearPickerProps {
 
 export const YearPicker: React.FC<YearPickerProps> = ({ isOpen, onClose, currentYear, onYearSelect, themePrimary }) => {
     const { t } = useTranslation();
+    const [rangeStart, setRangeStart] = React.useState(currentYear - 4);
     if (!isOpen) return null;
 
-    const years = [];
-    for (let i = currentYear - 5; i <= currentYear + 5; i++) {
-        years.push(i);
-    }
+    const years = Array.from({ length: 9 }, (_, i) => rangeStart + i);
 
     return (
-        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 bg-white border border-stone-200 shadow-xl p-4 rounded-lg w-[200px]">
-            <div className="text-center font-bold text-sm mb-3 uppercase tracking-wider text-stone-500">{t('common.selectYear')}</div>
-            <div className="grid grid-cols-3 gap-2 h-[200px] overflow-y-auto custom-scrollbar">
+        <div className="absolute top-full left-0 mt-2 z-50 bg-white border border-stone-200 shadow-xl p-3 rounded-lg w-[200px]">
+            <div className="flex items-center justify-between mb-2">
+                <button onClick={() => setRangeStart(s => s - 9)} className="p-1 rounded hover:bg-stone-100 text-stone-500 hover:text-black transition-colors">
+                    <ChevronLeft size={14} />
+                </button>
+                <span className="text-[10px] font-black uppercase tracking-wider text-stone-400">
+                    {rangeStart}–{rangeStart + 8}
+                </span>
+                <button onClick={() => setRangeStart(s => s + 9)} className="p-1 rounded hover:bg-stone-100 text-stone-500 hover:text-black transition-colors">
+                    <ChevronRight size={14} />
+                </button>
+            </div>
+            <div className="grid grid-cols-3 gap-1.5">
                 {years.map(year => {
                     const isSelected = year === currentYear;
                     return (
                         <button
                             key={year}
-                            onClick={() => {
-                                onYearSelect(year);
-                                onClose();
-                            }}
-                            className={`
-                                py-2 rounded-md text-xs font-bold transition-all
-                                ${isSelected ? 'text-white' : 'hover:bg-stone-100 text-stone-600'}
-                            `}
+                            onClick={() => { onYearSelect(year); onClose(); }}
+                            className={`py-1.5 rounded-md text-xs font-bold transition-all ${isSelected ? 'text-white' : 'hover:bg-stone-100 text-stone-600'}`}
                             style={isSelected ? { backgroundColor: themePrimary } : {}}
                         >
                             {year}
                         </button>
-                    )
+                    );
                 })}
             </div>
             <button onClick={onClose} className="absolute -top-2 -right-2 bg-white border border-stone-200 rounded-full p-1 shadow-md hover:bg-stone-50">

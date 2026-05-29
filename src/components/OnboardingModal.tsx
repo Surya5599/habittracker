@@ -73,7 +73,6 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
     const [didSkipHabit, setDidSkipHabit] = useState(false);
     const [didUncheckHabit, setDidUncheckHabit] = useState(false);
     const [step4Phase, setStep4Phase] = useState<'need_done' | 'need_skip' | 'need_uncheck' | 'complete'>('need_done');
-    const [journalSavedClicked, setJournalSavedClicked] = useState(false);
     const [analyticsPreviewSeen, setAnalyticsPreviewSeen] = useState(false);
     const [arrowPosition, setArrowPosition] = useState<{ left: number; top: number } | null>(null);
     const cardFrameRef = useRef<HTMLDivElement | null>(null);
@@ -131,7 +130,6 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         setDidSkipHabit(false);
         setDidUncheckHabit(false);
         setStep4Phase('need_done');
-        setJournalSavedClicked(false);
         setAnalyticsPreviewSeen(false);
         setArrowPosition(null);
     }, [isOpen]);
@@ -226,7 +224,9 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
     };
 
     const hasJournalMood = typeof tutorialDayData.mood === 'number';
-    const hasJournalText = !!(tutorialDayData.journal || '').trim();
+    const hasJournalText = Array.isArray(tutorialDayData.journal)
+        ? tutorialDayData.journal.some((e: any) => (e.text || '').trim())
+        : !!(tutorialDayData.journal || '').trim();
     const hasTask = (tutorialDayData.tasks || []).length > 0;
     const hasNamedTask = (tutorialDayData.tasks || []).some(task => !!task.text?.trim());
     const hasCompletedTask = (tutorialDayData.tasks || []).some(task => task.completed && !!task.text?.trim());
@@ -246,7 +246,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
             case 5:
                 return tutorialViewMode === 'journal';
             case 6:
-                return hasJournalMood && hasJournalText && journalSavedClicked;
+                return hasJournalMood && hasJournalText;
             case 7:
                 return tutorialViewMode === 'tasks';
             case 8:
@@ -262,9 +262,8 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         if (step === 4) return 'habit-checkbox';
         if (step === 5) return 'status-journal';
         if (step === 6) {
-            if (!hasJournalMood) return 'journal-moods';
             if (!hasJournalText) return 'journal-input';
-            return 'journal-save';
+            return null;
         }
         if (step === 7) return 'status-tasks';
         if (step === 8) {
@@ -322,14 +321,14 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
 
     useEffect(() => {
         if (step !== 6) return;
-        if (!(hasJournalMood && hasJournalText && journalSavedClicked)) return;
+        if (!(hasJournalMood && hasJournalText)) return;
 
         const timer = window.setTimeout(() => {
             setStep(prev => (prev === 6 ? 7 : prev));
         }, 320);
 
         return () => window.clearTimeout(timer);
-    }, [step, hasJournalMood, hasJournalText, journalSavedClicked]);
+    }, [step, hasJournalMood, hasJournalText]);
 
     useEffect(() => {
         if (step !== 7) return;
@@ -629,9 +628,10 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                 {step === 5 && <div className={`${hintClass} animate-pulse`}>{t('onboarding.hints.clickJournal')}</div>}
                 {step === 6 && (
                     <div className="space-y-1.5">
+                        <div className={`${hintClass} ${hasJournalText ? '' : 'animate-pulse'}`}>Click "+ Add entry" to open a new entry</div>
                         <div className={`${hintClass} ${hasJournalMood ? '' : 'animate-pulse'}`}>{t('onboarding.hints.selectMood')}</div>
                         <div className={`${hintClass} ${hasJournalText ? '' : 'animate-pulse'}`}>{t('onboarding.hints.typeJournal')}</div>
-                        <div className={`${hintClass} ${hasJournalMood && hasJournalText ? '' : 'animate-pulse'}`}>{t('onboarding.hints.clickSave')}</div>
+                        <div className={`${hintClass} ${hasJournalMood && hasJournalText ? '' : 'animate-pulse'}`}>Click Save to continue</div>
                     </div>
                 )}
                 {step === 7 && <div className={`${hintClass} animate-pulse`}>{t('onboarding.hints.clickTasks')}</div>}
@@ -661,7 +661,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                                 globalViewMode={tutorialViewMode}
                                 onGlobalViewModeChange={(mode) => setTutorialViewMode(mode)}
                                 fitParentHeight
-                                onJournalSaveClick={() => setJournalSavedClicked(true)}
+                                onJournalSaveClick={() => {}}
                             />
                         </div>
                         {step >= 4 && step <= 8 && arrowPosition && (
@@ -676,8 +676,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                                         {step === 4 && step4Phase === 'need_uncheck' && t('onboarding.hints.clickAgain')}
                                         {step === 4 && didCompleteHabit && didSkipHabit && didUncheckHabit && t('onboarding.hints.great')}
                                         {step === 5 && t('onboarding.hints.clickJournal')}
-                                        {step === 6 && !hasJournalMood && t('onboarding.hints.pickMood')}
-                                        {step === 6 && hasJournalMood && !hasJournalText && t('onboarding.hints.typeJournalSave')}
+                                        {step === 6 && !hasJournalText && 'Click + Add entry, write & save'}
                                         {step === 6 && hasJournalMood && hasJournalText && t('onboarding.hints.great')}
                                         {step === 7 && t('onboarding.hints.clickTasks')}
                                         {step === 8 && !hasTask && t('onboarding.hints.clickNewTask')}

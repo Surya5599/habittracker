@@ -10,37 +10,36 @@ interface BottomNavProps {
 }
 
 export const BottomNav: React.FC<BottomNavProps> = ({ view, setView, resetWeekOffset, theme }) => {
+    const tabs = [
+        { id: 'weekly' as const, label: 'Week', Icon: Clock, onClick: () => { resetWeekOffset(); setView('weekly'); } },
+        { id: 'monthly' as const, label: 'Month', Icon: Calendar, onClick: () => setView('monthly') },
+        { id: 'dashboard' as const, label: 'Year', Icon: LayoutDashboard, onClick: () => setView('dashboard') },
+    ];
+
     return (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t-2 border-black p-1 pb-safe flex justify-around items-center z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
-            <button
-                onClick={() => { resetWeekOffset(); setView('weekly'); }}
-                className={`flex flex-col items-center gap-0.5 p-1 rounded-sm transition-all ${view === 'weekly' ? 'text-black' : 'text-stone-400 hover:text-stone-600'}`}
-            >
-                <div className={`p-1 rounded-full ${view === 'weekly' ? 'bg-black text-white' : ''}`}>
-                    <Clock size={16} />
-                </div>
-                <span className={`text-[9px] font-black uppercase tracking-widest ${view === 'weekly' ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}`}>My Week</span>
-            </button>
-
-            <button
-                onClick={() => setView('monthly')}
-                className={`flex flex-col items-center gap-0.5 p-1 rounded-sm transition-all ${view === 'monthly' ? 'text-black' : 'text-stone-400 hover:text-stone-600'}`}
-            >
-                <div className={`p-1 rounded-full ${view === 'monthly' ? 'bg-black text-white' : ''}`}>
-                    <Calendar size={16} />
-                </div>
-                <span className={`text-[9px] font-black uppercase tracking-widest ${view === 'monthly' ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}`}>My Month</span>
-            </button>
-
-            <button
-                onClick={() => setView('dashboard')}
-                className={`flex flex-col items-center gap-0.5 p-1 rounded-sm transition-all ${view === 'dashboard' ? 'text-black' : 'text-stone-400 hover:text-stone-600'}`}
-            >
-                <div className={`p-1 rounded-full ${view === 'dashboard' ? 'bg-black text-white' : ''}`}>
-                    <LayoutDashboard size={16} />
-                </div>
-                <span className={`text-[9px] font-black uppercase tracking-widest ${view === 'dashboard' ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}`}>Dashboard</span>
-            </button>
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t-[3px] border-black shadow-[0_-6px_0px_0px_rgba(0,0,0,1)] flex justify-around items-center z-50" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+            {tabs.map(({ id, label, Icon, onClick }) => {
+                const isActive = view === id;
+                return (
+                    <button
+                        key={id}
+                        onClick={onClick}
+                        className="flex-1 flex flex-col items-center gap-1 py-2 px-1 transition-all"
+                    >
+                        <div
+                            className="p-1.5 rounded-sm transition-all"
+                            style={isActive ? { backgroundColor: theme.primary } : {}}
+                        >
+                            <Icon size={16} className={isActive ? 'text-white' : 'text-stone-400'} />
+                        </div>
+                        <span
+                            className={`font-serif text-[9px] font-black uppercase tracking-widest transition-colors ${isActive ? 'text-black' : 'text-stone-400'}`}
+                        >
+                            {label}
+                        </span>
+                    </button>
+                );
+            })}
         </div>
     );
 };

@@ -4,23 +4,30 @@ export const toDateKey = (date: Date) => {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 };
 
+// Parse a date string (YYYY-MM-DD or ISO timestamp) as a local-timezone midnight
+// so that '2024-06-10' becomes June 10 in the user's timezone, not June 9.
+const parseDateStringLocal = (dateStr: string): Date => {
+    const ymd = dateStr.split('T')[0].split('-').map(Number);
+    return new Date(ymd[0], ymd[1] - 1, ymd[2]);
+};
+
 export const isHabitActiveOnDate = (habit: Habit, date: Date) => {
     const targetDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
     let activeFrom: Date | null = null;
     if (habit.createdAt) {
-        const started = new Date(habit.createdAt);
+        const started = parseDateStringLocal(habit.createdAt);
         if (!Number.isNaN(started.getTime())) {
-            activeFrom = new Date(started.getFullYear(), started.getMonth(), started.getDate());
+            activeFrom = started;
         }
     }
 
     let activeUntil: Date | null = null;
     if (habit.archivedAt) {
-        const archived = new Date(habit.archivedAt);
+        const archived = parseDateStringLocal(habit.archivedAt);
         if (!Number.isNaN(archived.getTime())) {
             // Archive day is still active; days after are not.
-            activeUntil = new Date(archived.getFullYear(), archived.getMonth(), archived.getDate());
+            activeUntil = archived;
         }
     }
 

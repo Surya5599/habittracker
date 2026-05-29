@@ -19,6 +19,7 @@ interface JournalPdfPreviewModalProps {
     notes: DailyNote;
     theme: Theme;
     userName?: string;
+    isDarkMode?: boolean;
 }
 
 export const JournalPdfPreviewModal: React.FC<JournalPdfPreviewModalProps> = ({
@@ -27,6 +28,7 @@ export const JournalPdfPreviewModal: React.FC<JournalPdfPreviewModalProps> = ({
     notes,
     theme,
     userName = 'You',
+    isDarkMode = false,
 }) => {
     const [pdfFont, setPdfFont] = useState<PdfFont>('serif');
     const [pdfLayout, setPdfLayout] = useState<PdfLayout>('compact');
@@ -114,7 +116,7 @@ export const JournalPdfPreviewModal: React.FC<JournalPdfPreviewModalProps> = ({
     useEffect(() => {
         if (!isOpen || !previewIframeRef.current) return;
         if (totalPages === 0) {
-            previewIframeRef.current.srcdoc = `<html><body style="display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:Arial,sans-serif;color:#a8a29e;font-size:13px;background:#ece8df;">No entries to preview</body></html>`;
+            previewIframeRef.current.srcdoc = `<html><body style="display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:Arial,sans-serif;color:#a8a29e;font-size:13px;background:${isDarkMode ? '#1a1a1a' : '#ece8df'};">No entries to preview</body></html>`;
             return;
         }
         let html: string;
@@ -159,7 +161,7 @@ export const JournalPdfPreviewModal: React.FC<JournalPdfPreviewModalProps> = ({
         >
             <div
                 className="flex flex-col w-full max-w-6xl overflow-hidden border-[3px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
-                style={{ height: 'min(94vh, 900px)', backgroundColor: '#fdfdf8' }}
+                style={{ height: 'min(94vh, 900px)', backgroundColor: isDarkMode ? '#1a1a1a' : '#fdfdf8' }}
                 onClick={e => e.stopPropagation()}
             >
                 {/* Top bar */}

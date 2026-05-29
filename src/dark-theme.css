@@ -1,14 +1,16 @@
 :root {
-  --dark-bg: #0b0b0b;
-  --dark-bg-soft: #121212;
-  --dark-surface: #151515;
-  --dark-surface-2: #1a1a1a;
-  --dark-border: #2d2d2d;
-  --dark-border-strong: #3a3a3a;
-  --dark-text: #ededed;
-  --dark-muted: #a8a8a8;
-  --dark-dim: #7d7d7d;
-  --dark-glow: rgba(0, 0, 0, 0.35);
+  --dark-bg: #0d0d0d;
+  --dark-bg-soft: #111111;
+  --dark-surface: #1a1a1a;
+  --dark-surface-2: #222222;
+  --dark-surface-3: #2a2a2a;
+  --dark-border: rgba(255, 255, 255, 0.10);
+  --dark-border-mid: rgba(255, 255, 255, 0.15);
+  --dark-border-strong: rgba(255, 255, 255, 0.22);
+  --dark-text: #eeeeee;
+  --dark-muted: #9a9a9a;
+  --dark-dim: #636363;
+  --dark-glow: rgba(0, 0, 0, 0.45);
   --landing-neo-yellow: #FFD800;
   --landing-neo-pink: #FF90E8;
   --landing-neo-green: #23A094;
@@ -52,6 +54,8 @@ body {
   background: #9ca3af;
 }
 
+/* ─── Light mode ────────────────────────────────────────────────────────────── */
+
 html[data-color-mode='light'] {
   color-scheme: light;
 }
@@ -61,6 +65,8 @@ html[data-color-mode='light'] body {
   color: #444;
 }
 
+/* ─── Dark mode ─────────────────────────────────────────────────────────────── */
+
 html[data-color-mode='dark'] {
   color-scheme: dark;
 }
@@ -68,13 +74,14 @@ html[data-color-mode='dark'] {
 html[data-color-mode='dark'] body {
   color: var(--dark-text);
   background:
-    radial-gradient(1200px 600px at 18% 0%, rgba(255, 255, 255, 0.04), transparent 60%),
-    radial-gradient(1000px 540px at 85% 8%, rgba(255, 255, 255, 0.02), transparent 62%),
+    radial-gradient(1200px 600px at 18% 0%, rgba(255, 255, 255, 0.025), transparent 60%),
+    radial-gradient(1000px 540px at 85% 8%, rgba(255, 255, 255, 0.015), transparent 62%),
     linear-gradient(180deg, var(--dark-bg-soft), var(--dark-bg));
   background-attachment: fixed;
 }
 
-/* Main app wrappers in App.tsx */
+/* ─── App background wrappers ───────────────────────────────────────────────── */
+
 html[data-color-mode='dark'] .bg-\[\#e5e5e5\],
 html[data-color-mode='dark'] .bg-\[\#F4F4F0\] {
   background: transparent !important;
@@ -84,43 +91,125 @@ html[data-color-mode='dark'] .text-\[\#444\] {
   color: var(--dark-text) !important;
 }
 
-/* Shared card and panel language */
-html[data-color-mode='dark'] .neo-border {
-  border: 1px solid var(--dark-border) !important;
-}
+/* ─── Neo-brutalist shadows → white-tinted offset in dark mode ──────────────── */
+/* Preserves the offset aesthetic while being visible on dark surfaces          */
 
-html[data-color-mode='dark'] .neo-shadow,
-html[data-color-mode='dark'] .neo-shadow-lg,
 html[data-color-mode='dark'] [class*='shadow-['] {
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.03),
-    0 14px 36px rgba(0, 0, 0, 0.55),
-    0 0 32px var(--dark-glow) !important;
+    3px 3px 0px 0px rgba(255, 255, 255, 0.08),
+    0 8px 28px rgba(0, 0, 0, 0.55) !important;
 }
 
-html[data-color-mode='dark'] .bg-white,
-html[data-color-mode='dark'] .bg-stone-50,
-html[data-color-mode='dark'] .bg-stone-100,
-html[data-color-mode='dark'] .bg-stone-200,
-html[data-color-mode='dark'] .bg-amber-50,
-html[data-color-mode='dark'] .bg-amber-100,
-html[data-color-mode='dark'] .bg-orange-50,
-html[data-color-mode='dark'] .bg-green-100,
-html[data-color-mode='dark'] .bg-sky-100,
-html[data-color-mode='dark'] .bg-rose-100 {
+/* Amber accent shadows (keep tinted) */
+html[data-color-mode='dark'] [class*='shadow-['][class*='251,191,36'] {
+  box-shadow:
+    3px 3px 0px 0px rgba(251, 191, 36, 0.35),
+    0 4px 16px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Subtle drop shadows (not offset) */
+html[data-color-mode='dark'] [class*='shadow-[0_'] {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* ─── Borders ───────────────────────────────────────────────────────────────── */
+
+/* border-black: the primary neo-brutalist design border — make it a visible white-ish */
+html[data-color-mode='dark'] .border-black {
+  border-color: var(--dark-border-strong) !important;
+}
+
+html[data-color-mode='dark'] .border-stone-100,
+html[data-color-mode='dark'] .border-stone-200 {
+  border-color: var(--dark-border) !important;
+}
+
+html[data-color-mode='dark'] .border-stone-300,
+html[data-color-mode='dark'] .border-stone-400 {
+  border-color: var(--dark-border-mid) !important;
+}
+
+html[data-color-mode='dark'] .border-amber-300,
+html[data-color-mode='dark'] .border-amber-700,
+html[data-color-mode='dark'] .border-green-500 {
+  border-color: var(--dark-border-mid) !important;
+}
+
+html[data-color-mode='dark'] .divide-black > * + * {
+  border-color: var(--dark-border-mid) !important;
+}
+
+html[data-color-mode='dark'] .divide-stone-200 > * + *,
+html[data-color-mode='dark'] .divide-stone-300 > * + * {
+  border-color: var(--dark-border) !important;
+}
+
+html[data-color-mode='dark'] .ring-black {
+  --tw-ring-color: var(--dark-border-strong) !important;
+}
+
+/* ─── Backgrounds ────────────────────────────────────────────────────────────── */
+
+/* White / near-white → primary dark surface */
+html[data-color-mode='dark'] .bg-white {
   background-color: var(--dark-surface) !important;
 }
 
+html[data-color-mode='dark'] .bg-stone-50,
+html[data-color-mode='dark'] .bg-amber-50,
+html[data-color-mode='dark'] .bg-amber-100,
+html[data-color-mode='dark'] .bg-orange-50,
+html[data-color-mode='dark'] .bg-green-50,
+html[data-color-mode='dark'] .bg-sky-50,
+html[data-color-mode='dark'] .bg-rose-50,
+html[data-color-mode='dark'] .bg-purple-50 {
+  background-color: var(--dark-surface) !important;
+}
+
+html[data-color-mode='dark'] .bg-stone-100,
+html[data-color-mode='dark'] .bg-green-100,
+html[data-color-mode='dark'] .bg-sky-100,
+html[data-color-mode='dark'] .bg-rose-100,
+html[data-color-mode='dark'] .bg-amber-200 {
+  background-color: var(--dark-surface-2) !important;
+}
+
+html[data-color-mode='dark'] .bg-stone-200 {
+  background-color: var(--dark-surface-2) !important;
+}
+
+html[data-color-mode='dark'] .bg-stone-300 {
+  background-color: #181818 !important;
+}
+
+html[data-color-mode='dark'] .bg-stone-400 {
+  background-color: #202020 !important;
+}
+
+/* Black → very dark (slightly different from bg so it's still distinguishable) */
+html[data-color-mode='dark'] .bg-black {
+  background-color: #111111 !important;
+}
+
+/* Named hex backgrounds */
 html[data-color-mode='dark'] [class*='bg-[#fcfcfc]'],
+html[data-color-mode='dark'] [class*='bg-[#f9f9f9]'],
 html[data-color-mode='dark'] [class*='bg-[#f0f0f0]'],
-html[data-color-mode='dark'] [class*='bg-[#e5e5e5]'],
-html[data-color-mode='dark'] [class*='bg-[#f9f2f2]'],
-html[data-color-mode='dark'] [class*='bg-[#f9f9f9]'] {
+html[data-color-mode='dark'] [class*='bg-[#f9f2f2]'] {
+  background-color: var(--dark-surface-2) !important;
+}
+
+html[data-color-mode='dark'] [class*='bg-[#fdfdf8]'],
+html[data-color-mode='dark'] [class*='bg-[#ece8df]'] {
+  background-color: var(--dark-surface) !important;
+}
+
+html[data-color-mode='dark'] [class*='bg-[#e5e5e5]'] {
   background-color: var(--dark-surface-2) !important;
 }
 
 html[data-color-mode='dark'] [class*='bg-[#e5e5e5]/30'] {
-  background-color: rgba(34, 34, 34, 0.42) !important;
+  background-color: rgba(34, 34, 34, 0.5) !important;
 }
 
 html[data-color-mode='dark'] .bg-\[\#f9f2f2\],
@@ -137,20 +226,26 @@ html[data-color-mode='dark'] [class*='!bg-stone-50'] {
 
 html[data-color-mode='dark'] [class*='bg-stone-50/'],
 html[data-color-mode='dark'] [class*='bg-black/'] {
-  background-color: rgba(20, 20, 20, 0.78) !important;
+  background-color: rgba(20, 20, 20, 0.85) !important;
 }
 
-html[data-color-mode='dark'] .bg-black {
-  background: linear-gradient(180deg, #141414, #0f0f0f) !important;
+/* Inline style overrides — journal/PDF cream backgrounds */
+html[data-color-mode='dark'] [style*='fdfdf8'],
+html[data-color-mode='dark'] [style*='ece8df'] {
+  background-color: var(--dark-surface) !important;
 }
+
+/* ─── Header / nav special elements ─────────────────────────────────────────── */
 
 html[data-color-mode='dark'] .day-date-header {
-  background: linear-gradient(180deg, #1a1a1a, #121212) !important;
+  background: linear-gradient(180deg, #1a1a1a, #111111) !important;
 }
 
 html[data-color-mode='dark'] .my-habits-button {
-  background: linear-gradient(180deg, #1a1a1a, #121212) !important;
+  background: linear-gradient(180deg, #1a1a1a, #111111) !important;
 }
+
+/* ─── Text ───────────────────────────────────────────────────────────────────── */
 
 html[data-color-mode='dark'] .text-black,
 html[data-color-mode='dark'] .text-stone-900,
@@ -162,27 +257,17 @@ html[data-color-mode='dark'] .text-stone-600 {
 
 html[data-color-mode='dark'] .text-stone-500,
 html[data-color-mode='dark'] .text-stone-400,
-html[data-color-mode='dark'] .text-stone-300,
+html[data-color-mode='dark'] .text-stone-300 {
+  color: var(--dark-muted) !important;
+}
+
 html[data-color-mode='dark'] .text-amber-900,
 html[data-color-mode='dark'] .text-amber-800,
 html[data-color-mode='dark'] .text-amber-700 {
   color: var(--dark-muted) !important;
 }
 
-html[data-color-mode='dark'] .border-black,
-html[data-color-mode='dark'] .border-stone-100,
-html[data-color-mode='dark'] .border-stone-200,
-html[data-color-mode='dark'] .border-stone-300,
-html[data-color-mode='dark'] .border-stone-400,
-html[data-color-mode='dark'] .border-amber-300,
-html[data-color-mode='dark'] .border-amber-700,
-html[data-color-mode='dark'] .border-green-500 {
-  border-color: var(--dark-border) !important;
-}
-
-html[data-color-mode='dark'] .ring-black {
-  --tw-ring-color: var(--dark-border-strong) !important;
-}
+/* ─── Form elements ─────────────────────────────────────────────────────────── */
 
 html[data-color-mode='dark'] input,
 html[data-color-mode='dark'] textarea,
@@ -190,15 +275,17 @@ html[data-color-mode='dark'] select,
 html[data-color-mode='dark'] kbd {
   background-color: var(--dark-surface-2) !important;
   color: var(--dark-text) !important;
-  border-color: var(--dark-border) !important;
+  border-color: var(--dark-border-mid) !important;
 }
 
 html[data-color-mode='dark'] ::placeholder {
   color: var(--dark-dim) !important;
 }
 
+/* ─── Scrollbars ─────────────────────────────────────────────────────────────── */
+
 html[data-color-mode='dark'] ::-webkit-scrollbar-track {
-  background: #121212;
+  background: #111;
 }
 
 html[data-color-mode='dark'] ::-webkit-scrollbar-thumb {
@@ -208,4 +295,47 @@ html[data-color-mode='dark'] ::-webkit-scrollbar-thumb {
 
 html[data-color-mode='dark'] ::-webkit-scrollbar-thumb:hover {
   background: #444;
+}
+
+/* ─── Hover states ───────────────────────────────────────────────────────────── */
+
+html[data-color-mode='dark'] .hover\:bg-stone-50:hover,
+html[data-color-mode='dark'] .hover\:bg-stone-100:hover {
+  background-color: var(--dark-surface-3) !important;
+}
+
+html[data-color-mode='dark'] .hover\:bg-stone-200:hover {
+  background-color: #303030 !important;
+}
+
+html[data-color-mode='dark'] .hover\:bg-red-50:hover {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+}
+
+/* ─── Backdrop / overlay ─────────────────────────────────────────────────────── */
+
+html[data-color-mode='dark'] .bg-black\/60 {
+  background-color: rgba(0, 0, 0, 0.75) !important;
+}
+
+html[data-color-mode='dark'] .bg-black\/40 {
+  background-color: rgba(0, 0, 0, 0.6) !important;
+}
+
+/* ─── Charts (recharts already receives isDarkMode prop) ────────────────────── */
+
+/* ─── Progress bars / tracks ──────────────────────────────────────────────── */
+
+html[data-color-mode='dark'] .bg-stone-200.rounded-full,
+html[data-color-mode='dark'] .bg-stone-200.rounded-lg {
+  background-color: var(--dark-surface-3) !important;
+}
+
+/* ─── Separator lines ────────────────────────────────────────────────────────── */
+
+html[data-color-mode='dark'] .bg-stone-200.w-px,
+html[data-color-mode='dark'] .bg-stone-200.h-px,
+html[data-color-mode='dark'] .bg-stone-300.w-px,
+html[data-color-mode='dark'] .bg-stone-300.h-px {
+  background-color: var(--dark-border) !important;
 }

@@ -90,7 +90,8 @@ interface HeaderProps {
     tasksCount?: number;
     onOpenLists: () => void;
     listsCount?: number;
-    rightPanel?: 'stats' | 'journal' | 'tasks' | null;
+    panelTop?: 'stats' | 'journal' | 'tasks' | null;
+    panelBottom?: 'stats' | 'journal' | 'tasks' | null;
     onSetRightPanel?: (panel: 'stats' | 'journal' | 'tasks') => void;
 }
 
@@ -175,7 +176,8 @@ export const Header: React.FC<HeaderProps> = ({
     tasksCount,
     onOpenLists,
     listsCount,
-    rightPanel = null,
+    panelTop = null,
+    panelBottom = null,
     onSetRightPanel,
 }) => {
     const { t } = useTranslation();
@@ -461,15 +463,15 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                     onClick={() => onSetRightPanel?.('journal')}
                     className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 border-2 border-black text-[10px] font-black uppercase tracking-wide transition-all duration-100 ml-1 ${
-                        rightPanel === 'journal'
+                        (panelTop === 'journal' || panelBottom === 'journal')
                             ? 'bg-black text-white translate-x-[2px] translate-y-[2px]'
                             : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px]'
                     }`}
                 >
                     <BookOpen size={12} strokeWidth={2.5} />
                     <span className="hidden sm:inline">Journal</span>
-                    <span className={`text-[8px] font-black px-1 py-px leading-none ${rightPanel === 'journal' ? 'bg-white text-black' : 'bg-black text-white'}`}>
-                        {rightPanel === 'journal' ? 'ON' : 'OFF'}
+                    <span className={`text-[8px] font-black px-1 py-px leading-none ${(panelTop === 'journal' || panelBottom === 'journal') ? 'bg-white text-black' : 'bg-black text-white'}`}>
+                        {(panelTop === 'journal' || panelBottom === 'journal') ? 'ON' : 'OFF'}
                     </span>
                 </button>
 
@@ -477,15 +479,15 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                     onClick={() => onSetRightPanel?.('tasks')}
                     className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 border-2 border-black text-[10px] font-black uppercase tracking-wide transition-all duration-100 ml-1 ${
-                        rightPanel === 'tasks'
+                        (panelTop === 'tasks' || panelBottom === 'tasks')
                             ? 'bg-black text-white translate-x-[2px] translate-y-[2px]'
                             : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px]'
                     }`}
                 >
                     <ClipboardList size={12} strokeWidth={2.5} />
                     <span className="hidden sm:inline">Tasks</span>
-                    <span className={`text-[8px] font-black px-1 py-px leading-none ${rightPanel === 'tasks' ? 'bg-white text-black' : 'bg-black text-white'}`}>
-                        {rightPanel === 'tasks' ? 'ON' : 'OFF'}
+                    <span className={`text-[8px] font-black px-1 py-px leading-none ${(panelTop === 'tasks' || panelBottom === 'tasks') ? 'bg-white text-black' : 'bg-black text-white'}`}>
+                        {(panelTop === 'tasks' || panelBottom === 'tasks') ? 'ON' : 'OFF'}
                     </span>
                 </button>
 

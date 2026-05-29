@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Calendar, LogIn, LogOut, BarChart2, Plus, BookOpen, Flame, Sun, CheckCircle, Bell, ArrowUpDown, ListTodo, List } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Calendar, LogIn, LogOut, BarChart2, Plus, BookOpen, Flame, Sun, CheckCircle, Bell, ArrowUpDown, ListTodo, List, ClipboardList } from 'lucide-react';
 import { MONTHS } from '../constants';
 import { Habit, Theme, MonthStats, MonthlyGoal, MonthlyGoals } from '../types';
 import { useTranslation } from 'react-i18next';
@@ -90,6 +90,8 @@ interface HeaderProps {
     tasksCount?: number;
     onOpenLists: () => void;
     listsCount?: number;
+    rightPanel?: 'stats' | 'journal' | 'tasks' | null;
+    onSetRightPanel?: (panel: 'stats' | 'journal' | 'tasks') => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -173,6 +175,8 @@ export const Header: React.FC<HeaderProps> = ({
     tasksCount,
     onOpenLists,
     listsCount,
+    rightPanel = null,
+    onSetRightPanel,
 }) => {
     const { t } = useTranslation();
 
@@ -451,6 +455,38 @@ export const Header: React.FC<HeaderProps> = ({
                 <button onClick={onLogToday} className={`sm:hidden ${logTodayBtnCls}`}>
                     <Plus size={13} strokeWidth={2.5} />
                     Log
+                </button>
+
+                {/* Journal button */}
+                <button
+                    onClick={() => onSetRightPanel?.('journal')}
+                    className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 border-2 border-black text-[10px] font-black uppercase tracking-wide transition-all duration-100 ml-1 ${
+                        rightPanel === 'journal'
+                            ? 'bg-black text-white translate-x-[2px] translate-y-[2px]'
+                            : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px]'
+                    }`}
+                >
+                    <BookOpen size={12} strokeWidth={2.5} />
+                    <span className="hidden sm:inline">Journal</span>
+                    <span className={`text-[8px] font-black px-1 py-px leading-none ${rightPanel === 'journal' ? 'bg-white text-black' : 'bg-black text-white'}`}>
+                        {rightPanel === 'journal' ? 'ON' : 'OFF'}
+                    </span>
+                </button>
+
+                {/* Tasks button */}
+                <button
+                    onClick={() => onSetRightPanel?.('tasks')}
+                    className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 border-2 border-black text-[10px] font-black uppercase tracking-wide transition-all duration-100 ml-1 ${
+                        rightPanel === 'tasks'
+                            ? 'bg-black text-white translate-x-[2px] translate-y-[2px]'
+                            : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px]'
+                    }`}
+                >
+                    <ClipboardList size={12} strokeWidth={2.5} />
+                    <span className="hidden sm:inline">Tasks</span>
+                    <span className={`text-[8px] font-black px-1 py-px leading-none ${rightPanel === 'tasks' ? 'bg-white text-black' : 'bg-black text-white'}`}>
+                        {rightPanel === 'tasks' ? 'ON' : 'OFF'}
+                    </span>
                 </button>
 
                 {/* Stats toggle */}

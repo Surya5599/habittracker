@@ -166,11 +166,14 @@ function isHabitDueOnDate(habit, date) {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function getUserId() {
-  const { data, error } = await supabase.auth.admin.listUsers();
-  if (error) throw error;
-  const user = data.users.find(u => u.email === TEST_EMAIL);
-  if (!user) throw new Error(`User ${TEST_EMAIL} not found`);
-  return user.id;
+  for (let page = 1; page <= 20; page++) {
+    const { data, error } = await supabase.auth.admin.listUsers({ perPage: 200, page });
+    if (error) throw error;
+    if (data.users.length === 0) break;
+    const user = data.users.find(u => u.email === TEST_EMAIL);
+    if (user) return user.id;
+  }
+  throw new Error(`User ${TEST_EMAIL} not found`);
 }
 
 async function clean(userId) {
@@ -200,7 +203,14 @@ async function clean(userId) {
 async function seed(userId) {
   console.log('Seeding test data for', TEST_EMAIL, `(userId: ${userId})...`);
 
-  // 1. Insert habits
+  // 2. Build completions for past 90 days
+  const today = new Date('2026-05-28');
+
+  // 1. Insert habits — created 1 year ago so past completions are in range
+  const oneYearAgo = new Date(today);
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+  const createdAt = oneYearAgo.toISOString();
+
   const habitRows = HABITS.map((h, i) => ({
     user_id: userId,
     name: h.name,
@@ -210,6 +220,7 @@ async function seed(userId) {
     frequency: h.frequency,
     weekly_target: h.weeklyTarget,
     sort_order: i,
+    created_at: createdAt,
   }));
 
   const { data: insertedHabits, error: habitErr } = await supabase
@@ -226,8 +237,6 @@ async function seed(userId) {
     return acc;
   }, {});
 
-  // 2. Build completions for past 90 days
-  const today = new Date('2026-05-27');
   const completionRows = [];
 
   for (let dayOffset = -90; dayOffset <= 0; dayOffset++) {

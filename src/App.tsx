@@ -2163,8 +2163,9 @@ const AppContent: React.FC = () => {
                       const date = new Date(weekStart_dates);
                       date.setDate(weekStart_dates.getDate() + i);
                       const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-                      const dueHabits = habits.filter((h: any) => !h.weeklyTarget && (!h.frequency || h.frequency.includes(date.getDay()))).length;
-                      const pct = dueHabits > 0 ? Math.round((d.count / dueHabits) * 100) : 0;
+                      const dueHabits = habits.filter((h: any) => !h.weeklyTarget && (!h.frequency || h.frequency.includes(date.getDay())));
+                      const doneCount = dueHabits.filter((h: any) => checkCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear())).length;
+                      const pct = dueHabits.length > 0 ? Math.round((doneCount / dueHabits.length) * 100) : 0;
                       const isToday = date.toDateString() === new Date().toDateString();
                       const moodVal = notes[dateKey]?.mood;
                       const moodMeta = typeof moodVal === 'number' ? MOOD_MAP[moodVal] ?? null : null;

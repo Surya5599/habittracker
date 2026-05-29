@@ -372,6 +372,16 @@ export const Header: React.FC<HeaderProps> = ({
                         <LogIn size={11} strokeWidth={3} />Sign in
                     </button>
                 )}
+
+                {!guestMode && (
+                    <button
+                        onClick={handleLogout}
+                        className="p-2 text-stone-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
+                        title="Log out"
+                    >
+                        <LogOut size={15} />
+                    </button>
+                )}
             </div>
 
             {/* ─── ROW 2: Date nav · Week/Month/Year · Sort · Stats ─── */}

@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, ChevronLeft, ChevronRight, Download, Search, X } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { BookOpen, ChevronLeft, ChevronRight, Download, Maximize2, Minus, Plus, Search, X } from 'lucide-react';
 import { DailyNote, Theme } from '../types';
 import {
     buildJournalCoverHtml,
@@ -32,9 +32,30 @@ export const JournalPdfPreviewModal: React.FC<JournalPdfPreviewModalProps> = ({
     const [pdfLayout, setPdfLayout] = useState<PdfLayout>('compact');
     const [query, setQuery] = useState('');
     const [currentIdx, setCurrentIdx] = useState(0);
+    const [pageInputValue, setPageInputValue] = useState('');
+    const [isEditingPage, setIsEditingPage] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
+    const [previewScale, setPreviewScale] = useState(1);
+    const [zoomMultiplier, setZoomMultiplier] = useState(1);
+    const pageInputRef = useRef<HTMLInputElement>(null);
     const downloadIframeRef = useRef<HTMLIFrameElement>(null);
     const previewIframeRef = useRef<HTMLIFrameElement>(null);
+    const previewContainerRef = useRef<HTMLDivElement>(null);
+
+    // Letter page at 96 dpi
+    const PAGE_W = 816;
+    const PAGE_H = 1056;
+
+    useEffect(() => {
+        const el = previewContainerRef.current;
+        if (!el) return;
+        const ro = new ResizeObserver(([entry]) => {
+            const { width, height } = entry.contentRect;
+            setPreviewScale(Math.min(width / PAGE_W, height / PAGE_H) * 0.97);
+        });
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, []);
 
     const entries = useMemo(() => getJournalExportEntries(notes), [notes]);
     const filteredEntries = useMemo(() => {
@@ -61,6 +82,33 @@ export const JournalPdfPreviewModal: React.FC<JournalPdfPreviewModalProps> = ({
     const isCover = totalPages > 0 && clampedIdx === 0;
     const entryPageIdx = isCover ? -1 : clampedIdx - 1;
     const currentEntry = entryPageIdx >= 0 ? filteredEntries[entryPageIdx] : null;
+
+    // Keyboard navigation
+    const goTo = useCallback((idx: number) => {
+        setCurrentIdx(Math.max(0, Math.min(totalPages - 1, idx)));
+    }, [totalPages]);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        const handleKey = (e: KeyboardEvent) => {
+            if (isEditingPage) return;
+            if (e.key === 'ArrowLeft') goTo(clampedIdx - 1);
+            if (e.key === 'ArrowRight') goTo(clampedIdx + 1);
+        };
+        window.addEventListener('keydown', handleKey);
+        return () => window.removeEventListener('keydown', handleKey);
+    }, [isOpen, isEditingPage, clampedIdx, goTo]);
+
+    // Focus page input when editing starts
+    useEffect(() => {
+        if (isEditingPage) pageInputRef.current?.select();
+    }, [isEditingPage]);
+
+    const commitPageInput = () => {
+        const n = parseInt(pageInputValue, 10);
+        if (!isNaN(n)) goTo(n - 1);
+        setIsEditingPage(false);
+    };
 
     // Update preview whenever the current page or options change
     useEffect(() => {
@@ -219,10 +267,10 @@ export const JournalPdfPreviewModal: React.FC<JournalPdfPreviewModalProps> = ({
                     {/* Preview area */}
                     <div className="flex-1 min-w-0 flex flex-col overflow-hidden bg-stone-300">
 
-                        {/* Page navigation bar */}
+                        {/* Top nav bar */}
                         <div className="flex items-center justify-between px-3 py-1.5 border-b-2 border-stone-400 bg-stone-200 shrink-0">
                             <button
-                                onClick={() => setCurrentIdx(i => Math.max(0, i - 1))}
+                                onClick={() => goTo(clampedIdx - 1)}
                                 disabled={!canPrev}
                                 className="flex items-center gap-1 px-2 py-1 border-2 border-stone-400 bg-white text-stone-600 text-[9px] font-black uppercase tracking-wide disabled:opacity-30 hover:border-black hover:text-black transition-all disabled:cursor-not-allowed"
                             >
@@ -231,16 +279,35 @@ export const JournalPdfPreviewModal: React.FC<JournalPdfPreviewModalProps> = ({
                             </button>
 
                             <div className="flex items-center gap-2">
-                                <span className="text-[9px] font-black uppercase tracking-widest text-stone-500">
-                                    {totalPages > 0 ? `${clampedIdx + 1} / ${totalPages}` : '—'}
-                                </span>
+                                {/* Clickable page selector */}
+                                {isEditingPage ? (
+                                    <input
+                                        ref={pageInputRef}
+                                        type="number"
+                                        min={1}
+                                        max={totalPages}
+                                        value={pageInputValue}
+                                        onChange={e => setPageInputValue(e.target.value)}
+                                        onBlur={commitPageInput}
+                                        onKeyDown={e => { if (e.key === 'Enter') commitPageInput(); if (e.key === 'Escape') setIsEditingPage(false); }}
+                                        className="w-10 text-center text-[11px] font-black border-2 border-black outline-none bg-white text-black py-0.5"
+                                    />
+                                ) : (
+                                    <button
+                                        onClick={() => { setPageInputValue(String(clampedIdx + 1)); setIsEditingPage(true); }}
+                                        className="text-[9px] font-black uppercase tracking-widest text-stone-500 hover:text-black transition-colors"
+                                        title="Click to jump to page"
+                                    >
+                                        {totalPages > 0 ? `${clampedIdx + 1} / ${totalPages}` : '—'}
+                                    </button>
+                                )}
                                 <span className="text-[9px] text-stone-400">
                                     {isCover ? 'Cover' : currentEntry ? formatJournalShortDate(currentEntry.date) : ''}
                                 </span>
                             </div>
 
                             <button
-                                onClick={() => setCurrentIdx(i => Math.min(filteredEntries.length - 1, i + 1))}
+                                onClick={() => goTo(clampedIdx + 1)}
                                 disabled={!canNext}
                                 className="flex items-center gap-1 px-2 py-1 border-2 border-stone-400 bg-white text-stone-600 text-[9px] font-black uppercase tracking-wide disabled:opacity-30 hover:border-black hover:text-black transition-all disabled:cursor-not-allowed"
                             >
@@ -249,13 +316,73 @@ export const JournalPdfPreviewModal: React.FC<JournalPdfPreviewModalProps> = ({
                             </button>
                         </div>
 
-                        {/* Iframe page preview */}
-                        <iframe
-                            ref={previewIframeRef}
-                            title="pdf-preview"
-                            className="flex-1 w-full border-none"
-                            sandbox="allow-same-origin"
-                        />
+                        {/* Scaled page preview — scrollable when zoomed in */}
+                        <div ref={previewContainerRef} className="flex-1 min-h-0 overflow-auto bg-stone-300">
+                            <div className="min-w-full min-h-full flex items-center justify-center p-4">
+                                <div style={{
+                                    width: Math.round(PAGE_W * previewScale * zoomMultiplier),
+                                    height: Math.round(PAGE_H * previewScale * zoomMultiplier),
+                                    flexShrink: 0,
+                                    position: 'relative',
+                                }}>
+                                    <iframe
+                                        ref={previewIframeRef}
+                                        title="pdf-preview"
+                                        className="border-none absolute top-0 left-0"
+                                        style={{
+                                            width: PAGE_W,
+                                            height: PAGE_H,
+                                            transform: `scale(${previewScale * zoomMultiplier})`,
+                                            transformOrigin: 'top left',
+                                        }}
+                                        sandbox="allow-same-origin"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Bottom bar: page nav + zoom controls */}
+                        <div className="flex items-center justify-between px-3 py-2 border-t-2 border-stone-400 bg-stone-200 shrink-0">
+                            {/* Page navigation */}
+                            <div className="flex items-center gap-3">
+                                <button onClick={() => goTo(clampedIdx - 1)} disabled={!canPrev} className="p-1 text-stone-500 disabled:opacity-30 hover:text-black transition-colors">
+                                    <ChevronLeft size={14} strokeWidth={2.5} />
+                                </button>
+                                <span className="text-[10px] font-black text-stone-500 tracking-widest">
+                                    {totalPages > 0 ? `${clampedIdx + 1} / ${totalPages}` : '—'}
+                                </span>
+                                <button onClick={() => goTo(clampedIdx + 1)} disabled={!canNext} className="p-1 text-stone-500 disabled:opacity-30 hover:text-black transition-colors">
+                                    <ChevronRight size={14} strokeWidth={2.5} />
+                                </button>
+                            </div>
+
+                            {/* Zoom controls */}
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={() => setZoomMultiplier(z => Math.max(0.25, +(z - 0.25).toFixed(2)))}
+                                    disabled={zoomMultiplier <= 0.25}
+                                    className="p-1.5 border-2 border-stone-400 bg-white text-stone-600 disabled:opacity-30 hover:border-black hover:text-black transition-all disabled:cursor-not-allowed"
+                                    title="Zoom out"
+                                >
+                                    <Minus size={10} strokeWidth={2.5} />
+                                </button>
+                                <button
+                                    onClick={() => setZoomMultiplier(1)}
+                                    className="px-2 py-1 border-2 border-stone-400 bg-white text-stone-600 text-[9px] font-black uppercase tracking-wide hover:border-black hover:text-black transition-all min-w-[44px] text-center"
+                                    title="Reset to fit"
+                                >
+                                    {zoomMultiplier === 1 ? <Maximize2 size={10} strokeWidth={2.5} className="mx-auto" /> : `${Math.round(zoomMultiplier * 100)}%`}
+                                </button>
+                                <button
+                                    onClick={() => setZoomMultiplier(z => Math.min(4, +(z + 0.25).toFixed(2)))}
+                                    disabled={zoomMultiplier >= 4}
+                                    className="p-1.5 border-2 border-stone-400 bg-white text-stone-600 disabled:opacity-30 hover:border-black hover:text-black transition-all disabled:cursor-not-allowed"
+                                    title="Zoom in"
+                                >
+                                    <Plus size={10} strokeWidth={2.5} />
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

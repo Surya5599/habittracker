@@ -304,7 +304,9 @@
     "password": "Password",
     "signIn": "Accedi",
     "createAccount": "Crea account",
-    "or": "O"
+    "or": "O",
+    "privacyConsentPrefix": "Creando un account accetti la nostra",
+    "privacyPolicy": "Informativa sulla privacy"
   },
   "dashboardScreen": {
     "title": "Cruscotto",
@@ -339,6 +341,10 @@
       "language": {
         "title": "Scegli lingua",
         "subtitle": "Imposta la lingua dell app. Potrai cambiarla piu tardi nelle Impostazioni."
+      },
+      "privacy": {
+        "title": "Privacy e dati",
+        "subtitle": "Un breve riepilogo di come gestiamo i tuoi dati."
       },
       "theme": {
         "title": "Scegli colore",
@@ -411,6 +417,10 @@
       "tap": "Tocca per segnare un abitudine",
       "hold": "Tieni premuto per saltare l abitudine",
       "empty": "Lascia vuoto se l hai mancata"
+    },
+    "privacyConsent": {
+      "body": "HabiCard memorizza i tuoi dati di abitudini e diario in modo sicuro con Supabase. Non vendiamo i tuoi dati. Puoi eliminare il tuo account e tutti i tuoi dati in qualsiasi momento dalle Impostazioni.",
+      "viewPolicy": "Visualizza l informativa sulla privacy"
     }
   },
   "feedback": {

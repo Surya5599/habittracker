@@ -40,7 +40,7 @@ module.exports = {
     runtimeVersion: {
       policy: 'appVersion',
     },
-    plugins: ['expo-notifications'],
+    plugins: ['expo-notifications', '@sentry/react-native/expo'],
     splash: {
       image: './assets/splash-icon.png',
       resizeMode: 'contain',

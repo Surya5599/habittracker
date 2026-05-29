@@ -330,7 +330,9 @@
     "password": "Mot de passe",
     "signIn": "Se connecter",
     "createAccount": "Créer un compte",
-    "or": "OU"
+    "or": "OU",
+    "privacyConsentPrefix": "En creant un compte vous acceptez notre",
+    "privacyPolicy": "Politique de confidentialite"
   },
   "dashboardScreen": {
     "title": "Tableau de Bord",
@@ -365,6 +367,10 @@
       "language": {
         "title": "Choisir la langue",
         "subtitle": "Definissez la langue de l application. Vous pourrez la changer plus tard dans les reglages."
+      },
+      "privacy": {
+        "title": "Confidentialite et donnees",
+        "subtitle": "Un bref resume de la facon dont nous gerons vos donnees."
       },
       "theme": {
         "title": "Choisir la couleur",
@@ -437,6 +443,10 @@
       "tap": "Touchez pour cocher une habitude",
       "hold": "Maintenez pour ignorer l habitude",
       "empty": "Laissez vide si vous l avez manquee"
+    },
+    "privacyConsent": {
+      "body": "HabiCard stocke vos donnees d habitudes et de journal de facon securisee avec Supabase. Nous ne vendons pas vos donnees. Vous pouvez supprimer votre compte et toutes vos donnees a tout moment depuis les Reglages.",
+      "viewPolicy": "Voir la politique de confidentialite"
     }
   },
   "feedback": {

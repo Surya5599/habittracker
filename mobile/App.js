@@ -212,13 +212,34 @@ export default function App() {
     updateHabit,
     removeHabit,
     reorderHabits,
-    toggleArchiveHabit
+    toggleArchiveHabit,
+    syncState: habitsSyncState,
+    retryPendingSync: retryHabitsSync,
   } = useHabits(session, guestMode);
 
   const {
     notes,
-    updateNote
+    updateNote,
+    syncState: notesSyncState,
+    retryPendingSync: retryNotesSync,
   } = useDailyNotes(session, guestMode);
+
+  const combinedSyncState = {
+    status: habitsSyncState.status === 'error' || notesSyncState.status === 'error'
+      ? 'error'
+      : habitsSyncState.status === 'syncing' || notesSyncState.status === 'syncing'
+        ? 'syncing'
+        : habitsSyncState.status === 'synced' || notesSyncState.status === 'synced'
+          ? 'synced'
+          : 'idle',
+    error: habitsSyncState.error || notesSyncState.error || null,
+    lastSyncedAt: Math.max(habitsSyncState.lastSyncedAt || 0, notesSyncState.lastSyncedAt || 0) || null,
+  };
+
+  const handleRetrySync = () => {
+    retryHabitsSync();
+    retryNotesSync();
+  };
 
   const daysInMonth = new Date(currentYear, currentMonthIndex + 1, 0).getDate();
   const monthDates = Array.from({ length: daysInMonth }, (_, i) => i + 1);
@@ -379,6 +400,8 @@ export default function App() {
                       userEmail={session?.user?.email}
                       reminderEnabled={reminderEnabled}
                       onToggleReminder={handleToggleReminder}
+                      sync={combinedSyncState}
+                      onRetrySync={handleRetrySync}
                     />
                     <OnboardingModal
                       visible={onboardingChecked && showOnboarding}

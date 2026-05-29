@@ -330,7 +330,9 @@
     "password": "パスワード",
     "signIn": "サインイン",
     "createAccount": "アカウント作成",
-    "or": "または"
+    "or": "または",
+    "privacyConsentPrefix": "アカウントを作成することで、当社の",
+    "privacyPolicy": "プライバシーポリシーに同意したことになります"
   },
   "dashboardScreen": {
     "title": "ダッシュボード",
@@ -365,6 +367,10 @@
       "language": {
         "title": "言語を選択",
         "subtitle": "アプリの言語を設定します。後で設定から変更できます。"
+      },
+      "privacy": {
+        "title": "プライバシーとデータ",
+        "subtitle": "データの取り扱いについての簡単な説明です。"
       },
       "theme": {
         "title": "色を選択",
@@ -437,6 +443,10 @@
       "tap": "タップして習慣を完了にする",
       "hold": "長押しして習慣をスキップする",
       "empty": "できなかった場合は空のままにする"
+    },
+    "privacyConsent": {
+      "body": "HabiCardはSupabaseを使用して習慣・日記データを安全に保存します。データを販売することはありません。設定からいつでもアカウントとすべてのデータを削除できます。",
+      "viewPolicy": "プライバシーポリシーを見る"
     }
   },
   "feedback": {

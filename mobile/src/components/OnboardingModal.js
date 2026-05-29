@@ -12,9 +12,10 @@ import {
   useWindowDimensions
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeft, ChevronRight, Globe, Palette, Calendar, Sparkles, X, CheckSquare, ListTodo, Check, Save } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Globe, Palette, Calendar, Sparkles, X, CheckSquare, ListTodo, Check, Save, Shield } from 'lucide-react-native';
 import tw from 'twrnc';
 import { THEMES, MOODS } from '../constants';
+import { PrivacyPolicyModal } from './PrivacyPolicyModal';
 
 const THEME_NAME_KEYS = {
   'Sage & Rose': 'sageRose',
@@ -50,6 +51,12 @@ const STEP_CONFIG = [
     title: 'Choose language',
     subtitle: 'Set your app language. You can change this later in Settings.',
     icon: Globe
+  },
+  {
+    key: 'privacy',
+    title: 'Privacy & Data',
+    subtitle: 'A quick summary of how we handle your data.',
+    icon: Shield
   },
   {
     key: 'theme',
@@ -112,6 +119,7 @@ export const OnboardingModal = ({
   const [selectedCardStyle, setSelectedCardStyle] = useState(initialCardStyle || 'compact');
   const [selectedWeekStart, setSelectedWeekStart] = useState(initialWeekStart || 'MON');
   const [submitting, setSubmitting] = useState(false);
+  const [privacyPolicyVisible, setPrivacyPolicyVisible] = useState(false);
 
   const [habitDemoDone, setHabitDemoDone] = useState([false, false, false, false, false]);
   const [taskDraft, setTaskDraft] = useState('');
@@ -804,6 +812,24 @@ export const OnboardingModal = ({
                 </View>
               )}
 
+              {stepMeta.key === 'privacy' && (
+                <View style={tw`mt-2 flex-1`}>
+                  <View style={tw`mb-4`}>
+                    <View style={[tw`absolute bg-black rounded-3xl`, { top: 6, left: 6, right: -6, bottom: -6, zIndex: -1 }]} />
+                    <View style={[tw`rounded-3xl border-[3px] p-4`, { backgroundColor: isDark ? '#0b0b0b' : '#ffffff', borderColor: isDark ? '#ffffff' : '#000000' }]}>
+                      <Text style={[tw`text-sm leading-6`, { color: isDark ? '#d1d5db' : '#374151' }]}>
+                        {tt('onboarding.privacyConsent.body')}
+                      </Text>
+                    </View>
+                  </View>
+                  <TouchableOpacity onPress={() => setPrivacyPolicyVisible(true)}>
+                    <Text style={[tw`text-xs font-black uppercase tracking-wide text-center`, { color: selectedTheme.primary }]}>
+                      {tt('onboarding.privacyConsent.viewPolicy')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
               {stepMeta.key === 'weekStart' && (
                 <View style={tw`mt-2`}>
                   <View style={tw`mb-6`}>
@@ -869,6 +895,12 @@ export const OnboardingModal = ({
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
+      <PrivacyPolicyModal
+        isVisible={privacyPolicyVisible}
+        onClose={() => setPrivacyPolicyVisible(false)}
+        colorMode={isDark ? 'dark' : 'light'}
+        theme={selectedTheme}
+      />
     </Modal>
   );
 };

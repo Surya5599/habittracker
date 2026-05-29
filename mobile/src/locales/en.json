@@ -350,7 +350,9 @@
     "password": "Password",
     "signIn": "Sign In",
     "createAccount": "Create Account",
-    "or": "OR"
+    "or": "OR",
+    "privacyConsentPrefix": "By creating an account you agree to our",
+    "privacyPolicy": "Privacy Policy"
   },
   "dashboardScreen": {
     "title": "Dashboard",
@@ -390,6 +392,10 @@
       "language": {
         "title": "Choose language",
         "subtitle": "Set your app language. You can change this later in Settings."
+      },
+      "privacy": {
+        "title": "Privacy & Data",
+        "subtitle": "A quick summary of how we handle your data."
       },
       "theme": {
         "title": "Choose color",
@@ -457,6 +463,10 @@
     "weekStartOptions": {
       "sun": "SUN",
       "mon": "MON"
+    },
+    "privacyConsent": {
+      "body": "HabiCard stores your habit and journal data securely using Supabase with Row Level Security. We do not sell your data. You can delete your account and all data at any time from Settings.",
+      "viewPolicy": "View Privacy Policy"
     }
   },
   "feedback": {

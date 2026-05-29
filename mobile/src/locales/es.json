@@ -329,7 +329,9 @@
     "password": "Contraseña",
     "signIn": "Iniciar sesión",
     "createAccount": "Crear cuenta",
-    "or": "O"
+    "or": "O",
+    "privacyConsentPrefix": "Al crear una cuenta aceptas nuestra",
+    "privacyPolicy": "Política de privacidad"
   },
   "dashboardScreen": {
     "title": "Panel",
@@ -364,6 +366,10 @@
       "language": {
         "title": "Elegir idioma",
         "subtitle": "Configura el idioma de la app. Puedes cambiarlo despues en Ajustes."
+      },
+      "privacy": {
+        "title": "Privacidad y datos",
+        "subtitle": "Un breve resumen de como manejamos tus datos."
       },
       "theme": {
         "title": "Elegir color",
@@ -436,6 +442,10 @@
       "tap": "Toca para marcar un habito",
       "hold": "Manten presionado para omitir el habito",
       "empty": "Dejalo vacio si lo perdiste"
+    },
+    "privacyConsent": {
+      "body": "HabiCard almacena tus datos de habitos y diario de forma segura con Supabase. No vendemos tus datos. Puedes eliminar tu cuenta y todos tus datos en cualquier momento desde Ajustes.",
+      "viewPolicy": "Ver política de privacidad"
     }
   },
   "feedback": {

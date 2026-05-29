@@ -4,6 +4,7 @@ import { View, Text, TouchableOpacity, Alert, SafeAreaView, KeyboardAvoidingView
 import tw from 'twrnc';
 import { supabase } from '../lib/supabase';
 import { NeoButton, NeoInput, NeoCard } from '../components/NeoComponents';
+import { PrivacyPolicyModal } from '../components/PrivacyPolicyModal';
 
 export const SignInScreen = ({ navigation, onGuestLogin }) => {
     const { t } = useTranslation();
@@ -12,6 +13,7 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
     const [loading, setLoading] = useState(false);
     const [isResetMode, setIsResetMode] = useState(false);
     const [isNewAccount, setIsNewAccount] = useState(false);
+    const [privacyPolicyVisible, setPrivacyPolicyVisible] = useState(false);
 
     const isInvalidRefreshTokenError = (error) => {
         const message = (error?.message || '').toLowerCase();
@@ -245,6 +247,18 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
                                         {loading ? t('auth.verifying') : isNewAccount ? (t('auth.createAccount') || 'Create Account') : (t('auth.signIn') || 'Sign In')}
                                     </NeoButton>
 
+                                    {isNewAccount && (
+                                        <Text style={tw`text-center text-[10px] font-medium text-[#999] mt-2`}>
+                                            {t('auth.privacyConsentPrefix')}{' '}
+                                            <Text
+                                                onPress={() => setPrivacyPolicyVisible(true)}
+                                                style={tw`underline text-black font-bold`}
+                                            >
+                                                {t('auth.privacyPolicy')}
+                                            </Text>
+                                        </Text>
+                                    )}
+
                                     <TouchableOpacity onPress={() => setIsResetMode(true)} style={tw`mt-2`}>
                                         <Text style={tw`text-center text-[10px] font-black uppercase tracking-widest text-[#999]`}>
                                             {t('auth.forgotPassword')}
@@ -272,6 +286,10 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
 
                 </View>
             </KeyboardAvoidingView>
+            <PrivacyPolicyModal
+                isVisible={privacyPolicyVisible}
+                onClose={() => setPrivacyPolicyVisible(false)}
+            />
         </SafeAreaView>
     );
 };

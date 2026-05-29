@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Check, Minus, Laugh, Smile, Meh, Frown, Angry, BookOpen } from 'lucide-react';
+import { Check, Minus, Laugh, Smile, Meh, Frown, Angry, BookOpen, type LucideIcon } from 'lucide-react';
 import { Habit, HabitCompletion, Theme, DailyNote, DayData } from '../types';
 import { DAYS_OF_WEEK_SHORT } from '../constants';
 import { getHabitMonthStats, isCompleted as checkCompleted } from '../utils/stats';
@@ -148,7 +148,7 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                     const journalStr = Array.isArray(rawJ) ? rawJ.map((e: any) => (typeof e === 'string' ? e : e?.text || '')).join('') : String(rawJ || '');
                                     const hasJournal = journalStr.trim().length > 0;
 
-                                    const MOOD_CONFIG = {
+                                    const MOOD_CONFIG: Record<number, { icon: LucideIcon; color: string }> = {
                                         1: { icon: Angry, color: '#ef4444' },
                                         2: { icon: Frown, color: '#f97316' },
                                         3: { icon: Meh, color: '#eab308' },
@@ -156,7 +156,6 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                         5: { icon: Laugh, color: '#10b981' },
                                     };
 
-                                    // @ts-ignore
                                     const activeConfig = moodValue ? MOOD_CONFIG[moodValue] : null;
                                     const Icon = activeConfig?.icon;
 

@@ -330,7 +330,9 @@
     "password": "密码",
     "signIn": "登录",
     "createAccount": "创建账户",
-    "or": "或"
+    "or": "或",
+    "privacyConsentPrefix": "创建账户即表示您同意我们的",
+    "privacyPolicy": "隐私政策"
   },
   "dashboardScreen": {
     "title": "仪表板",
@@ -365,6 +367,10 @@
       "language": {
         "title": "选择语言",
         "subtitle": "设置应用语言，之后也可以在设置中更改。"
+      },
+      "privacy": {
+        "title": "隐私与数据",
+        "subtitle": "简要说明我们如何处理您的数据。"
       },
       "theme": {
         "title": "选择颜色",
@@ -437,6 +443,10 @@
       "tap": "点击可勾选一个习惯",
       "hold": "长按可跳过这个习惯",
       "empty": "如果没完成就留空"
+    },
+    "privacyConsent": {
+      "body": "HabiCard 使用 Supabase 安全存储您的习惯和日记数据。我们不会出售您的数据。您可以随时在设置中删除账户及所有数据。",
+      "viewPolicy": "查看隐私政策"
     }
   },
   "feedback": {

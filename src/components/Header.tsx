@@ -1,7 +1,7 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Calendar, LogIn, LogOut, BarChart2, Plus, BookOpen, Flame, Sun, CheckCircle, Bell, ArrowUpDown, ListTodo, List, ClipboardList } from 'lucide-react';
 import { MONTHS } from '../constants';
-import { Habit, Theme, MonthStats, MonthlyGoal, MonthlyGoals } from '../types';
+import { Habit, Theme, MonthStats, MonthlyGoal, MonthlyGoals, DailyStatItem } from '../types';
 import { useTranslation } from 'react-i18next';
 import { SettingsMenu } from './SettingsMenu';
 import { HabitManagerModal } from './HabitManagerModal';
@@ -35,8 +35,8 @@ interface HeaderProps {
     handleLogout: () => void;
     monthProgress: any;
     annualStats: any;
-    dailyStats: any[];
-    previousDailyStats: any[];
+    dailyStats: DailyStatItem[];
+    previousDailyStats: DailyStatItem[];
     weeklyStats: any[];
     previousWeeklyStats: any[];
     weekProgress: any;

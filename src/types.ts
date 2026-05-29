@@ -59,6 +59,12 @@ export interface MonthStats {
   percentage: number;
 }
 
+export interface DailyStatItem {
+  day: number;
+  count: number;
+  totalDue: number;
+}
+
 export interface UserList {
   id: string;
   name: string;

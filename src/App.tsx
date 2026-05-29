@@ -414,7 +414,13 @@ const AppContent: React.FC = () => {
 
     if (session?.user?.id && !isImpersonating) {
       checkUnreadFeedback();
-      // Optional: Set up realtime subscription? For now, fetch on load is enough.
+      const channel = supabase
+        .channel('feedback-unread-badge')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'feedback_replies' }, checkUnreadFeedback)
+        .subscribe();
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [session?.user?.id, isImpersonating]);
 
@@ -928,7 +934,6 @@ const AppContent: React.FC = () => {
   const isDayFullyCompleted = (day: number) => {
     if (habits.length === 0) return false;
     const dayStatsItem = dailyStats.find(s => s.day === day);
-    // @ts-ignore - totalDue is added in hook
     return dayStatsItem && dayStatsItem.totalDue > 0 && dayStatsItem.count === dayStatsItem.totalDue;
   };
 

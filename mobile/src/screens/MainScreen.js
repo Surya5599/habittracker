@@ -54,6 +54,8 @@ export const MainScreen = ({
     userEmail,
     reminderEnabled = false,
     onToggleReminder,
+    sync,
+    onRetrySync,
 }) => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isHabitManagerOpen, setIsHabitManagerOpen] = useState(false);
@@ -509,6 +511,44 @@ export const MainScreen = ({
                                                 </TouchableOpacity>
                                             </View>
                                         </View>
+
+                                        {sync && (
+                                            <View style={[tw`flex-row items-center justify-between p-4 border-b-[3px]`, { borderBottomColor: outlineColor }]}>
+                                                <Text style={[tw`text-sm font-black uppercase tracking-tight`, { color: isDark ? '#e5e7eb' : '#161616' }]}>
+                                                    {t('settings.sync.title') || 'Sync'}
+                                                </Text>
+                                                <View style={tw`flex-row items-center gap-2`}>
+                                                    {sync.status === 'error' ? (
+                                                        <>
+                                                            <Text style={tw`text-xs font-bold text-red-500 uppercase`}>
+                                                                {sync.error || 'Error'}
+                                                            </Text>
+                                                            <TouchableOpacity
+                                                                onPress={onRetrySync}
+                                                                style={[tw`px-2 py-1 rounded-lg border`, { borderColor: '#ef4444' }]}
+                                                                activeOpacity={0.7}
+                                                            >
+                                                                <Text style={tw`text-[10px] font-black uppercase text-red-500`}>
+                                                                    {t('settings.sync.retry') || 'Retry'}
+                                                                </Text>
+                                                            </TouchableOpacity>
+                                                        </>
+                                                    ) : sync.status === 'syncing' ? (
+                                                        <Text style={[tw`text-xs font-bold uppercase`, { color: isDark ? '#9ca3af' : '#6b7280' }]}>
+                                                            {t('settings.sync.syncing') || 'Syncing…'}
+                                                        </Text>
+                                                    ) : sync.status === 'synced' && sync.lastSyncedAt ? (
+                                                        <Text style={[tw`text-xs font-bold uppercase`, { color: isDark ? '#9ca3af' : '#6b7280' }]}>
+                                                            {t('settings.sync.synced') || 'Synced'}
+                                                        </Text>
+                                                    ) : (
+                                                        <Text style={[tw`text-xs font-bold uppercase`, { color: isDark ? '#9ca3af' : '#6b7280' }]}>
+                                                            {t('settings.sync.idle') || 'Up to date'}
+                                                        </Text>
+                                                    )}
+                                                </View>
+                                            </View>
+                                        )}
 
                                         <TouchableOpacity
                                             style={[tw`flex-row items-center justify-between p-4 border-b-[3px] border-black`, { borderBottomColor: outlineColor }]}

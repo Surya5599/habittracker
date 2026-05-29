@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import tw from 'twrnc';
-import { reportError } from '../lib/errorReporting';
+import * as Sentry from '@sentry/react-native';
 
 export class AppErrorBoundary extends React.Component {
   constructor(props) {
@@ -17,8 +17,7 @@ export class AppErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    // Keep logging concise and non-fatal for production fallback UX.
-    reportError(error, { scope: 'error-boundary', componentStack: errorInfo?.componentStack || '' });
+    Sentry.captureException(error, { extra: { componentStack: errorInfo?.componentStack || '' } });
     console.error('AppErrorBoundary caught error:', error, errorInfo);
   }
 

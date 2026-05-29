@@ -599,13 +599,21 @@ export const LandingPage: React.FC = () => {
     const appPath = source === 'extension' ? '/app?source=extension' : '/app';
 
     setMounted(true);
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (active && session) {
-        navigate(appPath, { replace: true });
-      }
-    });
+    // Skip the getSession() redirect when there's a PKCE code in the URL — that means
+    // a password-recovery (or email-confirm) flow is in progress; PasswordRecoveryGuard
+    // or AuthCallback will take over once the code is exchanged.
+    const hasPkceCode = new URLSearchParams(location.search).has('code');
+    if (!hasPkceCode) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (active && session) {
+          navigate(appPath, { replace: true });
+        }
+      });
+    }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Let PasswordRecoveryGuard handle recovery links — don't race it to /app.
+      if (event === 'PASSWORD_RECOVERY') return;
       if (session) {
         navigate(appPath, { replace: true });
       }

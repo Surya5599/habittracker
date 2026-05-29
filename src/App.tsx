@@ -2533,15 +2533,16 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 // before AppContent's own PASSWORD_RECOVERY listener has a chance to mount.
 const PasswordRecoveryGuard: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   useEffect(() => {
+    // Listener must never be torn down mid-route-change — drop location.pathname from deps.
+    // Navigating to /update-password when already there is harmless (replace: true).
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY' && location.pathname !== '/update-password') {
+      if (event === 'PASSWORD_RECOVERY') {
         navigate('/update-password', { replace: true });
       }
     });
     return () => subscription.unsubscribe();
-  }, [navigate, location.pathname]);
+  }, [navigate]);
   return null;
 };
 

@@ -38,6 +38,7 @@ import { LandingPage } from './pages/LandingPage';
 import { isBenignAuthError } from './utils/authErrors';
 import { FormattedText } from './components/FormattedText';
 import { buildAnnualStory, buildWeeklyStory, buildMonthlyStory } from './utils/storyGenerator';
+import { DesignPreview, JournalPreview, PdfExportPreview, GridPreview, TasksPreview } from './components/WhatsNewPreviews';
 
 const ADMIN_EMAILS = ((import.meta.env.VITE_ADMIN_EMAILS as string | undefined) || 'admin@habicard.com,knowheredeveloper@gmail.com')
   .split(',')
@@ -211,9 +212,9 @@ const AppContent: React.FC = () => {
       bullets: [
         'Every card, modal, and panel has been rebuilt from scratch.',
         'Stronger typography, sharper borders, and offset shadows throughout.',
-        'Colored bullet dots next to each habit match their habit color.'
+        'Colored bullet dots next to each habit match their habit color.',
       ],
-      image: undefined
+      image: <DesignPreview />,
     },
     {
       id: 'journal-multi-entry',
@@ -222,9 +223,9 @@ const AppContent: React.FC = () => {
       bullets: [
         'Each entry has its own mood icon and timestamp.',
         'Tap the pencil to edit or the trash to delete any entry.',
-        'Click "+ Add entry" at the bottom of the journal card to start.'
+        'Click "+ Add entry" at the bottom of the journal card to start.',
       ],
-      image: undefined
+      image: <JournalPreview />,
     },
     {
       id: 'journal-pdf-export',
@@ -234,20 +235,19 @@ const AppContent: React.FC = () => {
         'Choose Serif, Sans-serif, or Monospace font.',
         'Pick Multi-page (compact) or Full-page (one entry per page) layout.',
         'Flip through entries page by page in the preview before exporting.',
-        'Opens as a dedicated neo-brutalist notebook cover + entry pages.'
       ],
-      image: undefined
+      image: <PdfExportPreview />,
     },
     {
       id: 'monthly-grid',
       title: 'Monthly Grid Improvements',
       description: 'The monthly habit grid is now cleaner and easier to read.',
       bullets: [
-        'Days where a habit is not scheduled show a greyed "/" box instead of blank space.',
-        'All rows are now a consistent height for a uniform look.',
-        'Stats are shown by default on the right panel.'
+        'Days where a habit is not scheduled show a greyed "/" instead of blank space.',
+        'All rows are a consistent height for a uniform look.',
+        'Stats are shown by default on the right panel.',
       ],
-      image: undefined
+      image: <GridPreview />,
     },
     {
       id: 'tasks-view',
@@ -256,9 +256,9 @@ const AppContent: React.FC = () => {
       bullets: [
         'Add, check off, and delete tasks for any day.',
         'Tasks live alongside habits and journal in the same card.',
-        'Switch between Habits, Journal, and Tasks using the status bar.'
+        'Switch between Habits, Journal, and Tasks using the status bar.',
       ],
-      image: undefined
+      image: <TasksPreview />,
     },
   ]), []);
 

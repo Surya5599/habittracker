@@ -47,7 +47,7 @@ export const FeatureAnnouncementModal: React.FC<FeatureAnnouncementModalProps> =
     };
 
     const handlePrev = () => setActiveIndex(prev => Math.max(prev - 1, 0));
-    const modalSizeClass = 'max-w-xl h-[min(86vh,680px)]';
+    const modalSizeClass = 'max-w-xl h-[min(92vh,780px)]';
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
@@ -79,7 +79,7 @@ export const FeatureAnnouncementModal: React.FC<FeatureAnnouncementModalProps> =
                     </div>
 
                     <div className="px-4 pt-1">
-                        <div className="border border-stone-300 bg-stone-50 p-3 min-h-[112px]">
+                        <div className="border border-stone-300 bg-stone-50 p-3">
                             <h3 className="text-base font-black uppercase tracking-tight text-black">{activeSlide?.title}</h3>
                             <p className="mt-1.5 text-sm font-semibold text-stone-700 leading-snug">{activeSlide?.description}</p>
                             {activeSlide?.bullets && activeSlide.bullets.length > 0 && (

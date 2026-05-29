@@ -68,10 +68,10 @@ export const JournalModal: React.FC<JournalModalProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/55 backdrop-blur-sm animate-in fade-in duration-200">
             <div
                 className="neo-border neo-shadow w-full max-w-lg overflow-hidden flex flex-col max-h-[92vh]"
-                style={{ backgroundColor: '#fdfdf8', borderRadius: '4px' }}
+                style={{ backgroundColor: 'var(--card-bg-soft, #fdfdf8)', borderRadius: '4px' }}
             >
                 {/* Page header — cream with ruled underline */}
-                <div className="relative flex items-start justify-between px-6 pt-5 pb-0" style={{ backgroundColor: '#fdfdf8' }}>
+                <div className="relative flex items-start justify-between px-6 pt-5 pb-0" style={{ backgroundColor: 'var(--card-bg-soft, #fdfdf8)' }}>
                     {/* Left margin line */}
                     <div className="absolute left-14 top-0 bottom-0 w-px" style={{ backgroundColor: theme.primary + '55' }} />
 
@@ -103,7 +103,7 @@ export const JournalModal: React.FC<JournalModalProps> = ({
                 </div>
 
                 {/* Scrollable body */}
-                <div className="flex-1 overflow-y-auto" style={{ backgroundColor: '#fdfdf8' }}>
+                <div className="flex-1 overflow-y-auto" style={{ backgroundColor: 'var(--card-bg-soft, #fdfdf8)' }}>
                     {/* Mood row */}
                     <div className="relative flex items-center px-6 py-3 border-b border-stone-200">
                         <div className="absolute left-14 top-0 bottom-0 w-px" style={{ backgroundColor: theme.primary + '55' }} />
@@ -183,7 +183,7 @@ export const JournalModal: React.FC<JournalModalProps> = ({
                 {/* Footer — ruled line + stamp-style save */}
                 <div
                     className="flex items-center justify-between px-6 py-3 border-t-2 border-stone-200"
-                    style={{ backgroundColor: '#fdfdf8' }}
+                    style={{ backgroundColor: 'var(--card-bg-soft, #fdfdf8)' }}
                 >
                     <p className="text-[9px] font-bold text-stone-300 uppercase tracking-widest">
                         {journal.trim().split(/\s+/).filter(Boolean).length} words

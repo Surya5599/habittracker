@@ -503,7 +503,7 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
                                             ? { backgroundColor: theme.primary + '20' }
                                             : isWorstMonth
                                                 ? { backgroundColor: '#fee2e2' }
-                                                : { backgroundColor: '#ffffff' }
+                                                : { backgroundColor: 'var(--card-bg, #ffffff)' }
                                     }
                                 >
                                     {isBestMonth && (

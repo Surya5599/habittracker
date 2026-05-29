@@ -612,7 +612,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
     const FrontFace = (
         <div
             className="relative w-full h-full neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans"
-            style={{ backgroundColor: '#ffffff' }}
+            style={{ backgroundColor: 'var(--card-bg, #ffffff)' }}
         >
             {/* Header */}
             <div
@@ -819,7 +819,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
     const TasksFace = (
         <div
             className="relative w-full h-full neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans"
-            style={{ backgroundColor: '#ffffff' }}
+            style={{ backgroundColor: 'var(--card-bg, #ffffff)' }}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => {
                 e.preventDefault();

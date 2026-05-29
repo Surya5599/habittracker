@@ -114,7 +114,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             </div>
 
                             <div className="space-y-4">
-                                <div className={`${card} p-5 space-y-3`} style={{ backgroundColor: '#fffbeb' }}>
+                                <div className={`${card} p-5 space-y-3`} style={{ backgroundColor: 'var(--card-bg, #fffbeb)' }}>
                                     <div className="text-[10px] font-black uppercase tracking-widest text-amber-700">What needs attention</div>
                                     <p className="text-sm leading-relaxed font-bold text-amber-900">
                                         <FormattedText text={story.annualSummary.attention} highlightColor={theme.secondary} />

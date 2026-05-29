@@ -1610,9 +1610,9 @@ const AppContent: React.FC = () => {
               {/* ── Journal / Tasks card panel ── */}
               {(rightPanel === 'journal' || rightPanel === 'tasks') && (() => {
                 const today = new Date();
-                const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
                 return (
-                  <div className="flex-1 min-h-0 flex flex-col">
+                  <div className="flex-1 min-h-0 flex justify-center">
+                    <div className="min-h-0 h-full" style={{ width: 'min(100%, 340px)' }}>
                     <DailyCard
                       date={today}
                       habits={sortedHabits}
@@ -1630,6 +1630,7 @@ const AppContent: React.FC = () => {
                       onGlobalViewModeChange={(mode) => setRightPanel(mode === 'habits' ? null : mode)}
                       fitParentHeight={true}
                     />
+                    </div>
                   </div>
                 );
               })()}

@@ -120,9 +120,9 @@ html[data-color-mode='dark'] [class*='shadow-[0_'] {
 
 /* ─── Borders ───────────────────────────────────────────────────────────────── */
 
-/* border-black: the primary neo-brutalist design border — make it a visible white-ish */
+/* border-black: the primary neo-brutalist design border — visible but not glaring */
 html[data-color-mode='dark'] .border-black {
-  border-color: var(--dark-border-strong) !important;
+  border-color: var(--dark-border-mid) !important;
 }
 
 html[data-color-mode='dark'] .border-stone-100,
@@ -235,10 +235,22 @@ html[data-color-mode='dark'] [class*='bg-black/'] {
   background-color: rgba(20, 20, 20, 0.85) !important;
 }
 
+/* Semi-transparent white overlays (stats panel, popovers) */
+html[data-color-mode='dark'] [class*='bg-white/'] {
+  background-color: rgba(18, 18, 18, 0.92) !important;
+}
+
 /* Inline style overrides — journal/PDF cream backgrounds */
 html[data-color-mode='dark'] [style*='fdfdf8'],
 html[data-color-mode='dark'] [style*='ece8df'] {
   background-color: var(--dark-surface) !important;
+}
+
+/* ─── Main app frame — softer border so it doesn't look like a white box ─────── */
+
+html[data-color-mode='dark'] .app-main-frame {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.7) !important;
 }
 
 /* ─── Header / nav special elements ─────────────────────────────────────────── */

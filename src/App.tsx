@@ -1282,7 +1282,7 @@ const AppContent: React.FC = () => {
         isDarkMode={isDarkMode}
       />
 
-      <div className="max-w-full md:h-full mx-auto bg-white border-[3px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] p-2 sm:p-3 flex flex-col gap-3 overflow-visible md:overflow-hidden">
+      <div className="app-main-frame max-w-full md:h-full mx-auto bg-white border-[3px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] p-2 sm:p-3 flex flex-col gap-3 overflow-visible md:overflow-hidden">
 
         <Header
           view={view}

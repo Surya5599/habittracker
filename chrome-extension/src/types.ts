@@ -24,10 +24,16 @@ export interface Task {
   completed: boolean;
 }
 
+export interface JournalEntry {
+  id: string;
+  text: string;
+  createdAt: number;
+}
+
 export interface DayData {
   tasks: Task[];
   mood?: number;
-  journal?: string;
+  journal?: string | JournalEntry[];
 }
 
 export interface DailyNote {

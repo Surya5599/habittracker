@@ -7,7 +7,7 @@ import { MonthlyView } from './MonthlyView';
 import { DashboardView } from './DashboardView';
 import { TodoScreen } from './TodoScreen';
 import { BottomNav } from '../components/BottomNav';
-import { Settings, X, Check, Plus, MessageSquare, Sun, Moon, Shield, Sparkles, Trash2, Mail, Lock, Bell, BellOff } from 'lucide-react-native';
+import { Settings, X, Check, Plus, MessageSquare, Sun, Moon, Shield, Sparkles, Trash2, Mail, Lock, Bell, BellOff, BookOpen, ClipboardList } from 'lucide-react-native';
 import tw from 'twrnc';
 import { THEMES } from '../constants';
 import { HabitManager } from '../components/HabitManager';
@@ -18,7 +18,6 @@ import { HelpTutorialModal } from '../components/HelpTutorialModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { isBenignAuthError } from '../utils/authErrors';
 import { reportError } from '../lib/errorReporting';
-import { sendTestNotification } from '../utils/notifications';
 
 export const MainScreen = ({
     view,
@@ -65,6 +64,8 @@ export const MainScreen = ({
     const [tutorialBaselineHabitsCount, setTutorialBaselineHabitsCount] = useState(0);
     const [tutorialBaselineHabitIds, setTutorialBaselineHabitIds] = useState([]);
     const [selectedDate, setSelectedDate] = useState(null);
+    const [cardInitialView, setCardInitialView] = useState('habits');
+    const [weeklyViewKey, setWeeklyViewKey] = useState(0);
     const { t } = useTranslation();
     const isDark = colorMode === 'dark';
     const outlineColor = isDark ? '#ffffff' : '#000000';
@@ -300,6 +301,47 @@ export const MainScreen = ({
                     </View>
                 </View>
 
+                {/* Journal / Tasks quick-access buttons */}
+                <View style={[tw`flex-row items-center px-4 pb-2 gap-2`, { backgroundColor: isDark ? '#000000' : '#f5f5f4' }]}>
+                    <TouchableOpacity
+                        onPress={() => {
+                            setCardInitialView('journal');
+                            setWeeklyViewKey(k => k + 1);
+                            resetWeekOffset();
+                            setView('weekly');
+                        }}
+                        style={[
+                            tw`flex-row items-center gap-1.5 px-3 py-1.5 rounded-xl`,
+                            { backgroundColor: (view === 'weekly' && cardInitialView === 'journal') ? theme.primary : (isDark ? '#1a1a1a' : '#e7e5e4') }
+                        ]}
+                        activeOpacity={0.75}
+                    >
+                        <BookOpen size={13} color={(view === 'weekly' && cardInitialView === 'journal') ? '#ffffff' : (isDark ? '#9ca3af' : '#78716c')} strokeWidth={2.5} />
+                        <Text style={[tw`text-[11px] font-black uppercase tracking-wider`, { color: (view === 'weekly' && cardInitialView === 'journal') ? '#ffffff' : (isDark ? '#9ca3af' : '#78716c') }]}>
+                            {t('dailyCard.journal')}
+                        </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        onPress={() => {
+                            setCardInitialView('tasks');
+                            setWeeklyViewKey(k => k + 1);
+                            resetWeekOffset();
+                            setView('weekly');
+                        }}
+                        style={[
+                            tw`flex-row items-center gap-1.5 px-3 py-1.5 rounded-xl`,
+                            { backgroundColor: (view === 'weekly' && cardInitialView === 'tasks') ? theme.primary : (isDark ? '#1a1a1a' : '#e7e5e4') }
+                        ]}
+                        activeOpacity={0.75}
+                    >
+                        <ClipboardList size={13} color={(view === 'weekly' && cardInitialView === 'tasks') ? '#ffffff' : (isDark ? '#9ca3af' : '#78716c')} strokeWidth={2} />
+                        <Text style={[tw`text-[11px] font-black uppercase tracking-wider`, { color: (view === 'weekly' && cardInitialView === 'tasks') ? '#ffffff' : (isDark ? '#9ca3af' : '#78716c') }]}>
+                            {t('dailyCard.tasks')}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+
                 {/* ... Modals ... */}
                 <Modal
                     animationType="slide"
@@ -452,16 +494,6 @@ export const MainScreen = ({
                                                 </Text>
                                             </View>
                                             <View style={tw`flex-row items-center gap-3`}>
-                                                <TouchableOpacity
-                                                    onPress={async () => {
-                                                        const sent = await sendTestNotification();
-                                                        if (!sent) Alert.alert('Permission required', 'Enable notifications in your device settings first.');
-                                                    }}
-                                                    style={[tw`px-2 py-1 rounded-lg border`, { borderColor: outlineColor }]}
-                                                    activeOpacity={0.7}
-                                                >
-                                                    <Text style={[tw`text-[10px] font-black uppercase tracking-wide`, { color: isDark ? '#e5e7eb' : '#161616' }]}>Test</Text>
-                                                </TouchableOpacity>
                                                 <TouchableOpacity
                                                     onPress={() => onToggleReminder && onToggleReminder(!reminderEnabled)}
                                                     style={[
@@ -627,6 +659,7 @@ export const MainScreen = ({
 
                 {view === 'weekly' && (
                     <WeeklyScreen
+                        key={weeklyViewKey}
                         habits={habits}
                         completions={completions}
                         weekOffset={weekOffset}
@@ -642,6 +675,7 @@ export const MainScreen = ({
                         weekStart={weekStart}
                         colorMode={colorMode}
                         cardStyle={cardStyle}
+                        initialCardView={cardInitialView}
                     />
                 )}
                 {view === 'monthly' && (
@@ -703,7 +737,13 @@ export const MainScreen = ({
             </SafeAreaView>
             <BottomNav
                 view={view}
-                setView={setView}
+                setView={(v) => {
+                    if (v === 'weekly') {
+                        setCardInitialView('habits');
+                        setWeeklyViewKey(k => k + 1);
+                    }
+                    setView(v);
+                }}
                 resetWeekOffset={resetWeekOffset}
                 theme={theme}
                 colorMode={colorMode}

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
 import { supabase } from './supabase';
-// import { AuthForm } from './components/AuthForm';
 import { useHabits } from './hooks/useHabits';
 import { useTheme } from './hooks/useTheme';
 import { DailyNote, Task, DayData } from './types';

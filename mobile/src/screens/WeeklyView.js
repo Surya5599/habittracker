@@ -22,7 +22,8 @@ export const WeeklyScreen = ({
     initialDate,
     weekStart = 'MON',
     colorMode = 'light',
-    cardStyle = 'large'
+    cardStyle = 'large',
+    initialCardView = 'habits',
 }) => {
     const [mobileDayIndex, setMobileDayIndex] = useState(0);
 
@@ -137,6 +138,7 @@ export const WeeklyScreen = ({
                     updateNote={updateNote}
                     notes={notes}
                     cardStyle={cardStyle}
+                    initialView={initialCardView}
                 />
                 {/* 
                   Note: If WeeklyCard is also present, it will follow the DailyCard. 

@@ -139,10 +139,11 @@ const AppContent: React.FC = () => {
   const [hasUnseenWhatsNew, setHasUnseenWhatsNew] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isJournalExportOpen, setIsJournalExportOpen] = useState(false);
-  const [statsOpen, setStatsOpen] = useState<boolean>(() => localStorage.getItem('header_stats_open') !== 'false');
+  const [rightPanel, setRightPanel] = useState<'stats' | 'journal' | 'tasks' | null>(() => localStorage.getItem('header_stats_open') !== 'false' ? 'stats' : null);
+  const statsOpen = rightPanel === 'stats';
   const [chartType, setChartType] = useState<'area' | 'bar'>(() => (localStorage.getItem('habit_chart_type') as 'area' | 'bar') || 'area');
   const [sortMode, setSortMode] = useState<'default' | 'name' | 'color' | 'completion'>(() => (localStorage.getItem('habit_sort_mode') as 'default' | 'name' | 'color' | 'completion') || 'default');
-  useEffect(() => { localStorage.setItem('header_stats_open', String(statsOpen)); }, [statsOpen]);
+  useEffect(() => { localStorage.setItem('header_stats_open', String(rightPanel === 'stats')); }, [rightPanel]);
   useEffect(() => { localStorage.setItem('habit_chart_type', chartType); }, [chartType]);
   useEffect(() => { localStorage.setItem('habit_sort_mode', sortMode); }, [sortMode]);
   useEffect(() => {
@@ -481,6 +482,9 @@ const AppContent: React.FC = () => {
     habits,
     completions,
     loading,
+    syncError,
+    retryGuestSync,
+    dismissSyncError,
     toggleCompletion: baseToggleCompletion,
     addHabit,
     updateHabit,
@@ -1236,6 +1240,36 @@ const AppContent: React.FC = () => {
     return <LoadingScreen />;
   }
 
+  if (syncError) {
+    return (
+      <div className="min-h-[100svh] flex items-center justify-center bg-[#F4F4F0] p-6 font-sans">
+        <div className="w-full max-w-sm border-[3px] border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] bg-white p-6 flex flex-col gap-4">
+          <div className="flex flex-col gap-1">
+            <h2 className="text-lg font-black uppercase tracking-tight text-black">Sync Failed</h2>
+            <p className="text-sm text-stone-600 leading-relaxed">{syncError}</p>
+          </div>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={retryGuestSync}
+              className="w-full py-2.5 bg-black text-white font-black uppercase tracking-widest text-xs hover:bg-stone-800 transition-colors border-[2px] border-black"
+            >
+              Try Again
+            </button>
+            <button
+              onClick={dismissSyncError}
+              className="w-full py-2.5 bg-white text-black font-black uppercase tracking-widest text-xs hover:bg-stone-100 transition-colors border-[2px] border-black"
+            >
+              Continue Without My History
+            </button>
+          </div>
+          <p className="text-[10px] text-stone-400 text-center leading-relaxed">
+            Your local data is still on this device. You can try again at any time.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-[100svh] md:h-[100svh] overflow-y-auto md:overflow-hidden bg-[#F4F4F0] p-2 sm:p-4 pb-20 sm:pb-4 font-sans text-[#444] relative w-full max-w-full">
 
@@ -1366,13 +1400,15 @@ const AppContent: React.FC = () => {
           }}
           logTodayStatus={logTodayStatus}
           statsOpen={statsOpen}
-          onToggleStats={() => setStatsOpen(prev => !prev)}
+          onToggleStats={() => setRightPanel(p => p === 'stats' ? null : 'stats')}
           sortMode={sortMode}
           onCycleSortMode={() => setSortMode(m => m === 'default' ? 'name' : m === 'name' ? 'color' : m === 'color' ? 'completion' : 'default')}
           onOpenTasks={() => setIsTasksOpen(true)}
           tasksCount={tasksCount}
           onOpenLists={() => setIsListsOpen(true)}
           listsCount={listItems.length}
+          rightPanel={rightPanel}
+          onSetRightPanel={(panel) => setRightPanel(p => p === panel ? null : panel)}
         />
 
         <SearchModal
@@ -1496,7 +1532,7 @@ const AppContent: React.FC = () => {
 
         <div className="flex-1 min-h-0 min-w-0 flex flex-col lg:relative">
           <div
-            className={`min-h-0 lg:h-full transition-[padding] duration-200 ${view === 'weekly' ? 'overflow-visible md:overflow-hidden' : 'overflow-visible md:overflow-y-auto'} ${statsOpen && (view === 'monthly' || view === 'dashboard') ? 'lg:pr-[50%]' : ''} ${statsOpen && view === 'weekly' ? 'lg:pr-[52%]' : ''} ${view === 'monthly' ? 'hidden lg:block' : ''}`}
+            className={`min-h-0 lg:h-full transition-[padding] duration-200 ${view === 'weekly' ? 'overflow-visible md:overflow-hidden' : 'overflow-visible md:overflow-y-auto'} ${rightPanel !== null && (view === 'monthly' || view === 'dashboard') ? 'lg:pr-[50%]' : ''} ${rightPanel !== null && view === 'weekly' ? 'lg:pr-[52%]' : ''} ${view === 'monthly' ? 'hidden lg:block' : ''}`}
           >
             {view === 'monthly' ? (
               <MonthlyView
@@ -1557,14 +1593,44 @@ const AppContent: React.FC = () => {
                 }}
                 startOfWeek={startOfWeek}
                 cardStyle={cardStyle}
-                singleCardMode={statsOpen}
+                singleCardMode={rightPanel !== null}
                 weekProgress={weekProgress}
                 weeklyStats={weeklyStats}
               />
             )}
           </div>
-          {statsOpen && (
+          {rightPanel !== null && (
             <div className="flex flex-col gap-4 p-4 bg-white/90 border-t-[3px] border-black lg:border-t-0 lg:border-l-[3px] lg:absolute lg:right-0 lg:top-0 lg:bottom-0 lg:w-1/2 lg:z-20 lg:overflow-y-auto" style={{ backdropFilter: 'blur(8px)' }}>
+
+              {/* ── Journal / Tasks card panel ── */}
+              {(rightPanel === 'journal' || rightPanel === 'tasks') && (() => {
+                const today = new Date();
+                const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+                return (
+                  <div className="flex-1 min-h-0 flex flex-col">
+                    <DailyCard
+                      date={today}
+                      habits={sortedHabits}
+                      completions={completions}
+                      theme={theme}
+                      toggleCompletion={toggleCompletion}
+                      toggleHabitInactive={toggleHabitInactive}
+                      isHabitInactive={isHabitInactive}
+                      notes={notes}
+                      updateNote={updateNote}
+                      onShareClick={() => {}}
+                      startOfWeek={startOfWeek}
+                      cardStyle={cardStyle}
+                      globalViewMode={rightPanel}
+                      onGlobalViewModeChange={(mode) => setRightPanel(mode === 'habits' ? null : mode)}
+                      fitParentHeight={true}
+                    />
+                  </div>
+                );
+              })()}
+
+              {/* ── Stats panel ── */}
+              {rightPanel === 'stats' && <>
 
               {/* ── At a Glance KPI ── */}
               {view !== 'dashboard' && <div className="neo-border rounded-2xl overflow-hidden bg-white shrink-0">
@@ -2282,6 +2348,7 @@ const AppContent: React.FC = () => {
                   )}
                 </div>
               </div>}
+              </>}
             </div>
           )}
         </div>

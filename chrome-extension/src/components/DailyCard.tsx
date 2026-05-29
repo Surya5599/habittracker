@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Check, Plus, Trash2, Pencil, ChevronLeft, ChevronRight, BookOpen, Save, Meh, Frown, Smile, Laugh, Angry, Share2 } from 'lucide-react';
-import { Habit, HabitCompletion, Theme, DailyNote, Task, DayData } from '../types';
+import { Habit, HabitCompletion, Theme, DailyNote, Task, DayData, JournalEntry } from '../types';
 import { DAYS_OF_WEEK } from '../constants';
 import { isCompleted as checkCompleted } from '../utils/stats';
 import { generateUUID } from '../utils/uuid';
@@ -32,6 +32,31 @@ interface DailyCardProps {
     cardStyle?: 'compact' | 'large';
     headerActions?: React.ReactNode;
 }
+
+// Read the most recent entry's text from string | JournalEntry[].
+// Showing only the latest entry preserves the multi-entry structure on web
+// while giving the extension a single editable text field.
+const getJournalText = (journal: string | JournalEntry[] | undefined): string => {
+    if (!journal) return '';
+    if (typeof journal === 'string') return journal;
+    if (journal.length === 0) return '';
+    return journal[journal.length - 1].text;
+};
+
+// Build the value to save: update the last entry in place (preserving earlier
+// entries written from web), or create a fresh single-entry array.
+const buildJournalUpdate = (
+    existing: string | JournalEntry[] | undefined,
+    newText: string,
+    newId: string
+): JournalEntry[] => {
+    if (!existing || typeof existing === 'string' || existing.length === 0) {
+        return [{ id: newId, text: newText, createdAt: Date.now() }];
+    }
+    const entries = [...existing];
+    entries[entries.length - 1] = { ...entries[entries.length - 1], text: newText };
+    return entries;
+};
 
 const MOODS = [
     { value: 1, icon: Angry,  color: '#ef4444', tooltip: 'Very Bad'  },
@@ -83,7 +108,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
     const dayData = getDayData();
 
     useEffect(() => {
-        setJournalDraft(dayData.journal || '');
+        setJournalDraft(getJournalText(dayData.journal));
         setMoodDraft(dayData.mood);
     }, [dateKey]);
 
@@ -105,7 +130,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
 
     // Journal
     const activeMood = MOODS.find(m => m.value === dayData.mood);
-    const hasJournalEntry = !!(dayData.journal?.trim());
+    const hasJournalEntry = !!(getJournalText(dayData.journal).trim());
 
     const handleFinishEditing = (taskId: string) => {
         const currentTasks = dayData.tasks || [];
@@ -121,7 +146,10 @@ export const DailyCard: React.FC<DailyCardProps> = ({
     };
 
     const handleSaveJournal = () => {
-        updateNote(dateKey, { mood: moodDraft, journal: journalDraft });
+        updateNote(dateKey, {
+            mood: moodDraft,
+            journal: buildJournalUpdate(dayData.journal, journalDraft, generateUUID()),
+        });
     };
 
     const addTask = () => {

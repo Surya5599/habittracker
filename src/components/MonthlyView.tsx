@@ -107,7 +107,7 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                     <table className="w-full border-separate border-spacing-0">
                         <thead>
                             <tr className="text-[10px] font-black uppercase text-stone-700" style={{ backgroundColor: theme.secondary + '40' }}>
-                                <th className="p-2 border-r border-stone-200 text-left sticky left-0 z-40 font-black" style={{ backgroundColor: '#f0efed', width: 250, minWidth: 250 }}>
+                                <th className="p-2 border-r border-stone-200 text-left sticky left-0 z-40 font-black" style={{ backgroundColor: 'var(--card-bg-soft, #f0efed)', width: 250, minWidth: 250 }}>
                                     <span className="text-xs font-black uppercase tracking-widest text-stone-700">Habits</span>
                                 </th>
                                 {monthDates.map(day => {
@@ -135,7 +135,7 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                         <tbody className="divide-y divide-stone-100">
                             {/* Daily Mood Row */}
                             <tr className="group hover:bg-stone-50 transition-colors" style={{ height: '32px' }}>
-                                <td className="p-0 pl-3 sticky left-0 z-10 border-r border-[#e5e5e5] group-hover:bg-stone-100 transition-colors h-[32px]" style={{ backgroundColor: '#fafaf9' }}>
+                                <td className="p-0 pl-3 sticky left-0 z-10 border-r border-[#e5e5e5] group-hover:bg-stone-100 transition-colors h-[32px]" style={{ backgroundColor: 'var(--card-bg-soft, #fafaf9)' }}>
                                     <div className="flex items-center h-full">
                                         <span className="text-xs font-bold text-stone-900 truncate pl-2">Mood</span>
                                     </div>
@@ -203,7 +203,7 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                 const perc = (habitStats.completed / habitStats.totalDays) * 100;
                                 return (
                                     <tr key={habit.id} className="hover:bg-stone-50 transition-colors group" style={{ height: 32 }}>
-                                        <td className="p-0 border-r border-stone-200 text-sm font-bold text-stone-700 sticky left-0 z-30 group-hover:bg-stone-100 transition-colors border-l-4" style={{ borderLeftColor: habit.color || theme.secondary, backgroundColor: '#fafaf9', width: 250, minWidth: 250, maxWidth: 250, height: 32 }}>
+                                        <td className="p-0 border-r border-stone-200 text-sm font-bold text-stone-700 sticky left-0 z-30 group-hover:bg-stone-100 transition-colors border-l-4" style={{ borderLeftColor: habit.color || theme.secondary, backgroundColor: 'var(--card-bg-soft, #fafaf9)', width: 250, minWidth: 250, maxWidth: 250, height: 32 }}>
                                             <div className="flex items-center gap-2 px-2 h-full">
                                                 <span className="break-words flex-1 leading-tight">{habit.name || 'Untitled Habit'}</span>
                                             </div>
@@ -292,7 +292,7 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                                         <span className="text-stone-500 block">Done</span>
                                                         <span className="text-sm font-black leading-none">{habitStats.completed}</span>
                                                     </div>
-                                                    <div className="p-1 px-2" style={{ backgroundColor: '#f0f0f0' }}>
+                                                    <div className="p-1 px-2" style={{ backgroundColor: 'var(--card-bg-soft, #f0f0f0)' }}>
                                                         <span className="text-stone-500 block">Miss</span>
                                                         <span className="text-sm font-black leading-none text-rose-400">{habitStats.missed}</span>
                                                     </div>

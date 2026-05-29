@@ -322,6 +322,11 @@ html[data-color-mode='dark'] .hover\:bg-stone-100:hover {
   background-color: var(--dark-surface-3) !important;
 }
 
+/* group-hover variants used in MonthlyView sticky cells */
+html[data-color-mode='dark'] .group:hover .group-hover\:bg-stone-100 {
+  background-color: var(--dark-surface-3) !important;
+}
+
 html[data-color-mode='dark'] .hover\:bg-stone-200:hover {
   background-color: #303030 !important;
 }

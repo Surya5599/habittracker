@@ -43,7 +43,7 @@ const ADMIN_EMAILS = ((import.meta.env.VITE_ADMIN_EMAILS as string | undefined) 
   .split(',')
   .map(email => email.trim().toLowerCase())
   .filter(Boolean);
-const WHATS_NEW_VERSION = '2026_07';
+const WHATS_NEW_VERSION = '2026_05';
 const WHATS_NEW_SEEN_KEY = 'habit_whats_new_seen_version';
 const LEGACY_DEFAULT_HABIT_NAMES = new Set(['meditation', 'exercise', 'drink 2l water', 'reading', 'journaling']);
 
@@ -135,7 +135,7 @@ const AppContent: React.FC = () => {
   const [hasUnseenWhatsNew, setHasUnseenWhatsNew] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isJournalExportOpen, setIsJournalExportOpen] = useState(false);
-  const [statsOpen, setStatsOpen] = useState<boolean>(() => localStorage.getItem('header_stats_open') === 'true');
+  const [statsOpen, setStatsOpen] = useState<boolean>(() => localStorage.getItem('header_stats_open') !== 'false');
   const [chartType, setChartType] = useState<'area' | 'bar'>(() => (localStorage.getItem('habit_chart_type') as 'area' | 'bar') || 'area');
   const [sortMode, setSortMode] = useState<'default' | 'name' | 'color' | 'completion'>(() => (localStorage.getItem('habit_sort_mode') as 'default' | 'name' | 'color' | 'completion') || 'default');
   useEffect(() => { localStorage.setItem('header_stats_open', String(statsOpen)); }, [statsOpen]);
@@ -205,203 +205,61 @@ const AppContent: React.FC = () => {
 
   const whatsNewSlides = useMemo(() => ([
     {
-      id: 'my-habits-menu',
-      title: 'Edit Or Archive From My Habits',
-      description: 'Use the 3-dot menu on a habit to edit it or archive it.',
+      id: 'v2-redesign',
+      title: 'Fresh Neo-Brutalist Design',
+      description: 'The entire app has been redesigned with a bold, clean neo-brutalist style.',
       bullets: [
-        'Archive removes it from your active list while keeping your history.'
+        'Every card, modal, and panel has been rebuilt from scratch.',
+        'Stronger typography, sharper borders, and offset shadows throughout.',
+        'Colored bullet dots next to each habit match their habit color.'
       ],
-      image: (
-        <img src="/whats-new/my-habits-menu-sample.svg" alt="Single sample habit with the 3-dot menu open showing Edit habit and Archive habit" className="w-full h-44 object-contain bg-stone-100 border border-stone-200 rounded-sm" />
-      )
+      image: undefined
     },
     {
-      id: 'status-bar',
-      title: 'New Status Bar',
-      description: 'Tap Habits, Tasks, or Journal to switch instantly.',
+      id: 'journal-multi-entry',
+      title: 'Multiple Journal Entries Per Day',
+      description: 'Add as many journal entries as you want in a single day — just like the mobile app.',
       bullets: [
-        'Counts and icons update for the day.'
+        'Each entry has its own mood icon and timestamp.',
+        'Tap the pencil to edit or the trash to delete any entry.',
+        'Click "+ Add entry" at the bottom of the journal card to start.'
       ],
-      image: (
-        <img src="/whats-new/status-bar.png" alt="Status bar for Habits, Tasks, and Journal" className="w-full h-44 object-contain bg-stone-100 border border-stone-200 rounded-sm" />
-      )
+      image: undefined
     },
     {
-      id: 'skip-habit',
-      title: 'Skip Habits Without Penalty',
-      description: 'Right-click a habit checkbox to skip it.',
+      id: 'journal-pdf-export',
+      title: 'Journal PDF Export',
+      description: 'Export your entire journal as a beautifully designed PDF — with a live preview before you download.',
       bullets: [
-        'Skipped habits do not lower your completion rate.'
+        'Choose Serif, Sans-serif, or Monospace font.',
+        'Pick Multi-page (compact) or Full-page (one entry per page) layout.',
+        'Flip through entries page by page in the preview before exporting.',
+        'Opens as a dedicated neo-brutalist notebook cover + entry pages.'
       ],
-      image: (
-        <div className="w-full border border-stone-200 rounded-sm bg-white p-3">
-          <div className="flex items-center justify-between border border-stone-200 rounded px-3 py-2 bg-stone-50">
-            <div className="min-w-0">
-              <p className="text-sm font-black text-stone-800 truncate">Morning Run</p>
-              <p className="text-[11px] font-bold text-stone-500">Right-click to skip</p>
-            </div>
-            <div className="w-6 h-6 border-2 border-black rounded-sm bg-[#facc15] flex items-center justify-center">
-              <span className="text-[10px] font-black text-black leading-none">-</span>
-            </div>
-          </div>
-          <p className="mt-2 text-[10px] font-black uppercase tracking-widest text-[#ca8a04]">Skipped = No Penalty</p>
-        </div>
-      )
+      image: undefined
     },
     {
-      id: 'language-support',
-      title: 'Language Support',
-      description: 'Choose your app language in Settings.',
+      id: 'monthly-grid',
+      title: 'Monthly Grid Improvements',
+      description: 'The monthly habit grid is now cleaner and easier to read.',
       bullets: [
-        'Tap Settings → Language, then pick your preferred language.'
+        'Days where a habit is not scheduled show a greyed "/" box instead of blank space.',
+        'All rows are now a consistent height for a uniform look.',
+        'Stats are shown by default on the right panel.'
       ],
-      image: (
-        <img src="/whats-new/language-support.png" alt="Language selection in settings" className="w-full h-44 object-contain bg-stone-100 border border-stone-200 rounded-sm" />
-      )
+      image: undefined
     },
     {
-      id: 'dark-mode',
-      title: 'Dark Mode',
-      description: 'You can use dark mode now.',
+      id: 'tasks-view',
+      title: 'Tasks Panel',
+      description: 'Manage daily tasks directly from your habit card.',
       bullets: [
-        'Tap Settings → Appearance, then choose Dark.'
+        'Add, check off, and delete tasks for any day.',
+        'Tasks live alongside habits and journal in the same card.',
+        'Switch between Habits, Journal, and Tasks using the status bar.'
       ],
-      image: (
-        <div className="w-full h-44 border border-stone-200 rounded-sm bg-[#121212] flex items-center justify-center">
-          <div className="w-[88%] max-w-[300px] border border-[#2d2d2d] rounded-lg p-3 bg-[#1a1a1a]">
-            <div className="h-2.5 w-20 rounded bg-[#2a2a2a] mb-2" />
-            <div className="h-2.5 w-full rounded bg-[#252525] mb-2" />
-            <div className="h-2.5 w-[80%] rounded bg-[#252525]" />
-          </div>
-        </div>
-      )
+      image: undefined
     },
-    {
-      id: 'card-style',
-      title: 'Card Style Options',
-      description: 'Choose how day progress appears on your daily card.',
-      bullets: [
-        'Tap Settings → Appearance → Card Style.'
-      ],
-      image: (
-        <div className="w-full border border-stone-200 rounded-sm bg-stone-100 p-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-xl border border-black overflow-hidden bg-white">
-              <div className="flex items-center justify-between px-2 py-2 bg-[#9ab4c1]">
-                <div className="min-w-0">
-                  <p className="text-[8px] font-black uppercase tracking-wider text-white">Thursday</p>
-                  <p className="text-[7px] font-bold text-white/85">Jan 1, 2026</p>
-                </div>
-                <div className="w-7 h-7 rounded-full border-[3px] border-white/35 border-r-white flex items-center justify-center text-[7px] font-black text-white">
-                  40
-                </div>
-              </div>
-              <div className="px-2 py-3 bg-stone-50">
-                <div className="h-2 rounded bg-stone-200 mb-1.5"></div>
-                <div className="h-2 rounded bg-stone-200 w-4/5"></div>
-              </div>
-              <div className="px-2 py-1 border-t border-stone-200 text-[8px] font-black uppercase tracking-widest text-stone-500">
-                Compact
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-black overflow-hidden bg-white">
-              <div className="px-2 py-2 bg-[#9ab4c1] text-center">
-                <p className="text-[8px] font-black uppercase tracking-wider text-white">Thursday</p>
-                <p className="text-[7px] font-bold text-white/85">Jan 1, 2026</p>
-              </div>
-              <div className="px-2 py-2 bg-stone-50 flex flex-col items-center">
-                <div className="w-12 h-12 rounded-full border-[5px] border-stone-200 border-r-[#9ab4c1] flex items-center justify-center text-[10px] font-black text-stone-700">
-                  40%
-                </div>
-                <div className="mt-2 h-2 rounded bg-stone-200 w-full"></div>
-              </div>
-              <div className="px-2 py-1 border-t border-stone-200 text-[8px] font-black uppercase tracking-widest text-stone-500">
-                Large
-              </div>
-            </div>
-          </div>
-        </div>
-      )
-    },
-    {
-      id: 'export-data',
-      title: 'Export Your Data',
-      description: 'Download your HabiCard data directly from Settings.',
-      bullets: [
-        'Tap Settings → Data → Export Data.'
-      ],
-      image: (
-        <div className="w-full rounded-sm border border-stone-200 bg-stone-100 p-3">
-          <div className="mx-auto max-w-[320px] rounded-2xl border border-black bg-white p-3 shadow-[4px_4px_0_0_rgba(0,0,0,0.08)]">
-            <div className="rounded-xl border border-stone-200 bg-stone-50/70 p-2">
-              <div className="flex items-center gap-2 px-2 pb-2">
-                <div className="h-3 w-3 rounded-sm bg-stone-300" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">Data</span>
-              </div>
-              <div className="flex items-center justify-between rounded-lg border border-stone-200 bg-white p-2">
-                <span className="text-[10px] font-bold uppercase text-stone-600">Export Data</span>
-                <span className="text-[10px] font-black uppercase text-stone-700">Download</span>
-              </div>
-            </div>
-            <p className="mt-3 text-center text-[10px] font-bold uppercase tracking-widest text-stone-500">
-              One tap from Settings
-            </p>
-          </div>
-        </div>
-      )
-    },
-    {
-      id: 'journal-view-export',
-      title: 'My Journal View And Export',
-      description: 'Open your personal journal and download it as a PDF.',
-      bullets: [
-        'Tap My Journal or Settings → View Journal, then use Download PDF inside the preview.'
-      ],
-      image: (
-        <div className="w-full rounded-sm border border-stone-200 bg-stone-100 p-3">
-          <div className="mx-auto max-w-[320px] rounded-[28px] border border-black bg-[#f8f3ea] p-3 shadow-[4px_4px_0_0_rgba(0,0,0,0.08)]">
-            <div className="rounded-[20px] border border-stone-200 bg-white p-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[8px] font-black uppercase tracking-[0.22em] text-stone-400">My Journal</p>
-                  <p className="mt-1 text-sm font-black text-stone-800">Monday, January 12</p>
-                </div>
-                <span className="rounded-full border border-stone-200 bg-stone-50 px-2 py-1 text-[8px] font-black uppercase tracking-wider text-stone-600">
-                  Calm
-                </span>
-              </div>
-              <div className="mt-3 space-y-2">
-                <div className="h-2 rounded-full bg-stone-200" />
-                <div className="h-2 rounded-full bg-stone-200" />
-                <div className="h-2 w-4/5 rounded-full bg-stone-200" />
-              </div>
-              <div className="mt-4 flex items-center justify-between rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2">
-                <span className="text-[9px] font-black uppercase tracking-[0.18em] text-stone-500">Preview</span>
-                <span className="text-[9px] font-black uppercase tracking-[0.18em] text-stone-800">Download PDF</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )
-    },
-    {
-      id: 'daily-view-combined',
-      title: 'Daily View Together',
-      description: 'See Habits, Tasks, and Journal in one daily view.',
-      bullets: [
-        'Click on the Day/Date of the card to see the full day view.'
-      ],
-      image: (
-        <div className="w-full bg-stone-100 border border-stone-200 rounded-sm p-1">
-          <img
-            src="/whats-new/daily-habit-view.gif"
-            alt="Daily view preview with habits tasks and journal together"
-            className="w-full h-56 object-contain rounded-sm bg-stone-100"
-          />
-        </div>
-      )
-    }
   ]), []);
 
   const updateDefaultView = async (newView: 'monthly' | 'dashboard' | 'weekly') => {
@@ -1181,6 +1039,41 @@ const AppContent: React.FC = () => {
     }
   };
 
+  const handleChangePassword = async () => {
+    const email = session?.user?.email;
+    if (!email) return;
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/update-password`,
+      });
+      if (error) throw error;
+      toast.success('Password reset email sent — check your inbox.');
+    } catch (err) {
+      toast.error('Failed to send reset email. Please try again.');
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      setLoading(true);
+      const uid = session?.user?.id;
+      if (!uid) return;
+      const { error } = await supabase.functions.invoke('delete-account', {
+        body: { userId: uid },
+      });
+      if (error) throw error;
+      await supabase.auth.signOut();
+      setSession(null);
+      navigate('/signin');
+      toast.success('Account deleted.');
+    } catch (err) {
+      console.error('Delete account error:', err);
+      toast.error('Failed to delete account. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleExportData = async () => {
     try {
       setIsExportingData(true);
@@ -1458,6 +1351,8 @@ const AppContent: React.FC = () => {
             onViewJournal={handleOpenJournalExport}
             isExportingData={isExportingData}
             hasUnseenWhatsNew={hasUnseenWhatsNew}
+            onChangePassword={handleChangePassword}
+            onDeleteAccount={handleDeleteAccount}
             onSearch={() => setIsSearchOpen(true)}
           onLogToday={() => {
             setSelectedDateForCard(new Date());
@@ -1591,10 +1486,9 @@ const AppContent: React.FC = () => {
           document.body
         )}
 
-        <div className="flex-1 min-h-0 relative min-w-0">
+        <div className="flex-1 min-h-0 min-w-0 flex flex-col lg:relative">
           <div
-            className={`h-full min-h-0 transition-[padding] duration-200 ${view === 'weekly' ? 'overflow-visible md:overflow-hidden' : 'overflow-visible md:overflow-y-auto'} ${statsOpen && (view === 'monthly' || view === 'dashboard') ? 'lg:pr-[50%]' : ''}`}
-            style={statsOpen && view === 'weekly' ? { paddingRight: '52%' } : undefined}
+            className={`min-h-0 lg:h-full transition-[padding] duration-200 ${view === 'weekly' ? 'overflow-visible md:overflow-hidden' : 'overflow-visible md:overflow-y-auto'} ${statsOpen && (view === 'monthly' || view === 'dashboard') ? 'lg:pr-[50%]' : ''} ${statsOpen && view === 'weekly' ? 'lg:pr-[52%]' : ''} ${view === 'monthly' ? 'hidden lg:block' : ''}`}
           >
             {view === 'monthly' ? (
               <MonthlyView
@@ -1662,7 +1556,7 @@ const AppContent: React.FC = () => {
             )}
           </div>
           {statsOpen && (
-            <div className="hidden lg:flex absolute right-0 top-0 bottom-0 w-1/2 z-20 overflow-y-auto flex-col gap-4 p-4 bg-white/90 border-l-[3px] border-black" style={{ backdropFilter: 'blur(8px)' }}>
+            <div className="flex flex-col gap-4 p-4 bg-white/90 border-t-[3px] border-black lg:border-t-0 lg:border-l-[3px] lg:absolute lg:right-0 lg:top-0 lg:bottom-0 lg:w-1/2 lg:z-20 lg:overflow-y-auto" style={{ backdropFilter: 'blur(8px)' }}>
 
               {/* ── At a Glance KPI ── */}
               {view !== 'dashboard' && <div className="neo-border rounded-2xl overflow-hidden bg-white shrink-0">
@@ -2537,6 +2431,26 @@ const SignInPage: React.FC = () => {
   );
 };
 
+// Handles password-reset email links — waits for PASSWORD_RECOVERY event then shows the form
+const UpdatePasswordPage: React.FC = () => {
+  const navigate = useNavigate();
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    // supabase-js auto-exchanges the PKCE code from the URL on init;
+    // we just need to wait for the PASSWORD_RECOVERY event to confirm it worked.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setReady(true);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (!ready) return <LoadingScreen />;
+  return <UpdatePasswordForm onSuccess={() => navigate('/app', { replace: true })} />;
+};
+
 // Handles email confirmation links → establishes session → redirects to app
 const AuthCallback: React.FC = () => {
   const navigate = useNavigate();
@@ -2615,6 +2529,7 @@ const App: React.FC = () => {
         <Route path="/" element={<LandingPage />} />
         <Route path="/signin" element={<LandingPage />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/update-password" element={<UpdatePasswordPage />} />
         <Route
           path="/privacy"
           element={

@@ -74,6 +74,8 @@ export const useHabitStats = (
     const buildWeekProgressForOffset = (offset: number) => {
         const today = new Date();
         const startDate = getStartDate(today, offset);
+        // Only count days up to and including today — future days don't contribute to the denominator
+        const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
 
         let totalPossible = habits.reduce((acc, h) => {
             if (h.weeklyTarget) {
@@ -81,6 +83,7 @@ export const useHabitStats = (
                 for (let i = 0; i < 7; i++) {
                     const d = new Date(startDate);
                     d.setDate(startDate.getDate() + i);
+                    if (d > endOfToday) break;
                     if (!isHabitInactiveOnDate(h, d)) possible += h.weeklyTarget / 7;
                 }
                 return acc + possible;
@@ -89,6 +92,7 @@ export const useHabitStats = (
             for (let i = 0; i < 7; i++) {
                 const d = new Date(startDate);
                 d.setDate(startDate.getDate() + i);
+                if (d > endOfToday) break;
                 if (isHabitDueOnDate(h, d)) count++;
             }
             return acc + count;

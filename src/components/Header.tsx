@@ -77,6 +77,8 @@ interface HeaderProps {
     isExportingData: boolean;
     hasUnreadFeedback: boolean;
     hasUnseenWhatsNew: boolean;
+    onChangePassword?: () => void;
+    onDeleteAccount?: () => void;
     onSearch: () => void;
     onLogToday: () => void;
     logTodayStatus: 'empty' | 'partial' | 'done';
@@ -156,6 +158,8 @@ export const Header: React.FC<HeaderProps> = ({
     isExportingData,
     hasUnreadFeedback,
     hasUnseenWhatsNew,
+    onChangePassword,
+    onDeleteAccount,
     onSearch,
     onLogToday,
     logTodayStatus,
@@ -258,38 +262,26 @@ export const Header: React.FC<HeaderProps> = ({
     return (
         <div className="flex flex-col bg-white rounded-2xl border border-stone-200 shadow-sm">
 
-            {/* ─── ROW 1: Logo · Nav tabs · Streak · CTAs · Icons ─── */}
-            <div className="flex items-center gap-1 px-4 py-3">
+            {/* ─── ROW 1: Logo · Nav tabs (desktop) · Streak (desktop) · CTAs · Icons ─── */}
+            <div className="flex items-center gap-1 px-3 sm:px-4 py-2.5 sm:py-3">
                 {/* Logo */}
-                <span className="font-serif text-xl font-black uppercase tracking-tighter leading-none select-none shrink-0 mr-5">
+                <span className="font-serif text-xl font-black uppercase tracking-tighter leading-none select-none shrink-0 mr-2 sm:mr-5">
                     <span className="text-[#404040]">HABI</span>
                     <span style={{ color: theme.secondary }}>CARD</span>
                 </span>
 
-                {/* Nav tabs */}
+                {/* Nav tabs — desktop only */}
                 <nav className="hidden md:flex items-center gap-0.5">
-                    <button
-                        onClick={() => { resetWeekOffset(); setView('weekly'); }}
-                        className={navTab(view === 'weekly')}
-                    >
+                    <button onClick={() => { resetWeekOffset(); setView('weekly'); }} className={navTab(view === 'weekly')}>
                         <Sun size={14} />Home
                     </button>
-                    <button
-                        onClick={() => { setAutoAddHabitOnOpen(false); setIsHabitModalOpen(true); }}
-                        className={navTab(false)}
-                    >
+                    <button onClick={() => { setAutoAddHabitOnOpen(false); setIsHabitModalOpen(true); }} className={navTab(false)}>
                         <CheckCircle size={14} />Habits
                     </button>
-                    <button
-                        onClick={onViewJournal}
-                        className={navTab(false)}
-                    >
+                    <button onClick={onViewJournal} className={navTab(false)}>
                         <BookOpen size={14} />Journal
                     </button>
-                    <button
-                        onClick={onOpenTasks}
-                        className={navTab(false)}
-                    >
+                    <button onClick={onOpenTasks} className={navTab(false)}>
                         <ListTodo size={14} />Tasks
                         {(tasksCount ?? 0) > 0 && (
                             <span className="ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-black bg-orange-100 text-orange-600 leading-none">
@@ -301,31 +293,36 @@ export const Header: React.FC<HeaderProps> = ({
 
                 <div className="hidden md:block w-px h-5 bg-stone-200 mx-2 shrink-0" />
 
-                {/* Streak */}
+                {/* Streak — sm+ only */}
                 <button
                     onClick={() => setIsStreakModalOpen(true)}
                     className="hidden sm:flex items-center gap-2 transition-all duration-100 shrink-0 px-2 py-1 rounded-lg border border-transparent hover:border-stone-200 hover:bg-stone-50 hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.1)]"
                 >
                     <Flame size={15} className="text-orange-500" />
                     <div className="leading-none text-left">
-                        <div className="text-xs font-black uppercase tracking-wide text-stone-800">
-                            {annualStats.currentStreak} day streak
-                        </div>
-                        <div className="text-[10px] text-stone-400 mt-0.5">
-                            {badgeCount} badge{badgeCount !== 1 ? 's' : ''} unlocked
-                        </div>
+                        <div className="text-xs font-black uppercase tracking-wide text-stone-800">{annualStats.currentStreak} day streak</div>
+                        <div className="text-[10px] text-stone-400 mt-0.5">{badgeCount} badge{badgeCount !== 1 ? 's' : ''} unlocked</div>
                     </div>
                 </button>
 
                 <div className="flex-1" />
 
-                {/* Log Today CTA */}
-                <button onClick={onLogToday} className={logTodayBtnCls}>
+                {/* Add Habit icon — mobile only */}
+                <button
+                    onClick={() => { setAutoAddHabitOnOpen(true); setIsHabitModalOpen(true); }}
+                    className="sm:hidden p-2 rounded-lg border-2 border-black text-stone-900 bg-white active:translate-x-[0.5px] active:translate-y-[0.5px]"
+                    style={{ boxShadow: '2px 2px 0px 0px rgba(0,0,0,1)' }}
+                >
+                    <Plus size={14} strokeWidth={3} />
+                </button>
+
+                {/* Log Today — desktop only (mobile version lives in Row 2) */}
+                <button onClick={onLogToday} className={`hidden sm:flex ${logTodayBtnCls}`}>
                     <Plus size={14} strokeWidth={2.5} />
                     Log Today
                 </button>
 
-                {/* Add Habit */}
+                {/* Add Habit — icon-only on mobile, full label on sm+ */}
                 <button
                     onClick={() => { setAutoAddHabitOnOpen(true); setIsHabitModalOpen(true); }}
                     className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg border-2 border-black text-sm font-black uppercase tracking-wide text-stone-900 bg-white transition-all duration-100 mr-1 active:translate-x-[2px] active:translate-y-[2px]"
@@ -335,14 +332,14 @@ export const Header: React.FC<HeaderProps> = ({
                     onMouseDown={e => (e.currentTarget.style.boxShadow = '0px 0px 0px 0px rgba(0,0,0,1)')}
                     onMouseUp={e => (e.currentTarget.style.boxShadow = '1px 1px 0px 0px rgba(0,0,0,1)')}
                 >
-                    <Plus size={14} strokeWidth={3} />
-                    Add Habit
+                    <Plus size={13} strokeWidth={3} />
+                    <span className="hidden sm:inline">Add Habit</span>
                 </button>
 
                 {/* Notifications */}
                 <button
                     onClick={onOpenWhatsNew}
-                    className="relative p-2 text-stone-400 hover:text-stone-700 transition-all rounded-lg hover:bg-stone-50 hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.15)] hover:border hover:border-stone-200 border border-transparent"
+                    className="relative p-2 text-stone-400 hover:text-stone-700 transition-all rounded-lg hover:bg-stone-50 border border-transparent hover:border-stone-200"
                 >
                     <Bell size={16} />
                     {(hasUnseenWhatsNew || hasUnreadFeedback) && (
@@ -362,6 +359,9 @@ export const Header: React.FC<HeaderProps> = ({
                     onReportBug={onReportBug} onOpenWhatsNew={onOpenWhatsNew} onOpenTutorial={onOpenTutorial}
                     onExportData={onExportData} onViewJournal={onViewJournal}
                     isExportingData={isExportingData} hasUnreadFeedback={hasUnreadFeedback} hasUnseenWhatsNew={hasUnseenWhatsNew}
+                    onLogout={!guestMode ? handleLogout : undefined}
+                    onChangePassword={!guestMode ? onChangePassword : undefined}
+                    onDeleteAccount={!guestMode ? onDeleteAccount : undefined}
                 />
 
                 {guestMode && (
@@ -372,23 +372,15 @@ export const Header: React.FC<HeaderProps> = ({
                         <LogIn size={11} strokeWidth={3} />Sign in
                     </button>
                 )}
-
-                {!guestMode && (
-                    <button
-                        onClick={handleLogout}
-                        className="p-2 text-stone-400 hover:text-stone-700 transition-colors rounded-lg hover:bg-stone-50"
-                        title={t('header.logout')}
-                    >
-                        <LogOut size={15} />
-                    </button>
-                )}
             </div>
 
-            {/* ─── ROW 2: Date nav · View tabs · Stats toggle · Customize ─── */}
-            <div className="flex items-center gap-1 px-4 py-2 border-t border-stone-100 date-selector-container">
+            {/* ─── ROW 2: Date nav · Week/Month/Year · Sort · Stats ─── */}
+            <div className="flex items-center gap-1 px-3 sm:px-4 py-2 border-t border-stone-100 date-selector-container">
+
+                {/* Date navigation */}
                 <button
                     onClick={() => view === 'monthly' ? navigateMonth('prev') : view === 'weekly' ? navigateWeek('prev') : setCurrentYear(prev => prev - 1)}
-                    className="p-1 text-stone-400 hover:text-stone-700 transition-colors"
+                    className="p-1 text-stone-400 hover:text-stone-700 transition-colors shrink-0"
                 >
                     <ChevronLeft size={16} />
                 </button>
@@ -400,9 +392,8 @@ export const Header: React.FC<HeaderProps> = ({
                         else if (view === 'weekly') { setShowWeekSelector(!showWeekSelector); setShowMonthSelector(false); setShowYearSelector(false); }
                         else { setShowYearSelector(!showYearSelector); setShowWeekSelector(false); setShowMonthSelector(false); }
                     }}
-                    className="flex items-center gap-1.5 text-sm font-medium text-stone-700 hover:text-stone-900 transition-colors relative"
+                    className="text-sm font-semibold text-stone-700 hover:text-stone-900 transition-colors relative whitespace-nowrap"
                 >
-                    <Calendar size={14} className="text-stone-400" />
                     {currentLabel}
                     {view === 'monthly' && <MonthPicker isOpen={showMonthSelector} onClose={() => setShowMonthSelector(false)} currentMonthIndex={currentMonthIndex} currentYear={currentYear} onMonthSelect={handleMonthSelect} themePrimary={theme.primary} />}
                     {view === 'dashboard' && <YearPicker isOpen={showYearSelector} onClose={() => setShowYearSelector(false)} currentYear={currentYear} onYearSelect={handleYearSelect} themePrimary={theme.primary} />}
@@ -411,32 +402,39 @@ export const Header: React.FC<HeaderProps> = ({
 
                 <button
                     onClick={() => view === 'monthly' ? navigateMonth('next') : view === 'weekly' ? navigateWeek('next') : setCurrentYear(prev => prev + 1)}
-                    className="p-1 text-stone-400 hover:text-stone-700 transition-colors"
+                    className="p-1 text-stone-400 hover:text-stone-700 transition-colors shrink-0"
                 >
                     <ChevronRight size={16} />
                 </button>
 
-                <div className="flex items-center gap-0.5 bg-stone-100 rounded-lg p-0.5 ml-2">
+                {/* View switcher — desktop only (bottom nav handles this on mobile) */}
+                <div className="hidden sm:flex items-center gap-0.5 bg-stone-100 rounded-lg p-0.5 ml-1">
                     <button onClick={() => { resetWeekOffset(); setView('weekly'); }} className={viewTab(view === 'weekly')}>Week</button>
                     <button onClick={() => { setView('monthly'); const now = new Date(); setCurrentMonthIndex(now.getMonth()); setCurrentYear(now.getFullYear()); }} className={viewTab(view === 'monthly')}>Month</button>
                     <button onClick={() => { setView('dashboard'); setCurrentYear(new Date().getFullYear()); }} className={viewTab(view === 'dashboard')}>Year</button>
                 </div>
 
-                <div className="w-px h-4 bg-stone-200 mx-1 shrink-0" />
+                <div className="flex-1" />
 
+                {/* Sort — icon+label on sm+, icon-only on mobile */}
                 <button
                     onClick={onCycleSortMode}
-                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${sortMode !== 'default' ? 'bg-orange-50 text-orange-600 border border-orange-200' : 'text-stone-500 hover:text-stone-800 hover:bg-stone-50'}`}
+                    className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${sortMode !== 'default' ? 'bg-orange-50 text-orange-600 border border-orange-200' : 'text-stone-500 hover:text-stone-800 hover:bg-stone-50'}`}
                 >
                     <ArrowUpDown size={12} strokeWidth={2.5} />
                     {sortMode === 'name' ? 'A–Z' : sortMode === 'color' ? 'Color' : sortMode === 'completion' ? 'To Do' : 'Sort'}
                 </button>
 
-                <div className="flex-1" />
+                {/* Log Today — mobile only, in row 2 */}
+                <button onClick={onLogToday} className={`sm:hidden ${logTodayBtnCls}`}>
+                    <Plus size={13} strokeWidth={2.5} />
+                    Log
+                </button>
 
+                {/* Stats toggle */}
                 <button
                     onClick={onToggleStats}
-                    className={`flex items-center gap-1.5 px-2.5 py-1 border-2 border-black text-[10px] font-black uppercase tracking-wide transition-all duration-100 ${
+                    className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 border-2 border-black text-[10px] font-black uppercase tracking-wide transition-all duration-100 ml-1 ${
                         statsOpen
                             ? 'bg-black text-white translate-x-[2px] translate-y-[2px]'
                             : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px]'
@@ -448,7 +446,6 @@ export const Header: React.FC<HeaderProps> = ({
                         {statsOpen ? 'ON' : 'OFF'}
                     </span>
                 </button>
-
             </div>
 
             <HabitManagerModal

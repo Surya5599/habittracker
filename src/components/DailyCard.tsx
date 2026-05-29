@@ -77,7 +77,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
     const dailyHabitsRef = useRef<HTMLDivElement>(null);
     const tasksRef = useRef<HTMLDivElement>(null);
     const journalRef = useRef<HTMLDivElement>(null);
-    const journalTextareaRef = useRef<HTMLTextAreaElement>(null);
+
     const longPressTimerRef = useRef<number | null>(null);
     const longPressTriggeredRef = useRef(false);
     const touchMovedRef = useRef(false);
@@ -247,50 +247,73 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
 
     const dayData = getDayData();
 
-    const normalizeJournal = (j: string | any[] | undefined): string => {
-        if (!j) return '';
-        if (Array.isArray(j)) return j.map((e: any) => (typeof e === 'string' ? e : e?.text || '')).filter(Boolean).join('\n\n');
-        return String(j);
+    interface JournalEntry { id: string; text: string; mood?: number; createdAt: number; }
+
+    const parseJournalEntries = (j: string | any[] | undefined): JournalEntry[] => {
+        if (!j) return [];
+        if (Array.isArray(j)) return j.map((e: any) => typeof e === 'string'
+            ? { id: String(Date.now() + Math.random()), text: e, createdAt: Date.now() }
+            : { id: e.id || String(Date.now() + Math.random()), text: e.text || '', mood: e.mood, createdAt: e.createdAt || Date.now() }
+        ).filter(e => e.text);
+        if (typeof j === 'string' && j.trim()) return [{ id: '1', text: j, createdAt: Date.now() }];
+        return [];
     };
 
+    const formatEntryTime = (ts: number) => new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
     const [mood, setMood] = useState<number | undefined>(dayData.mood);
-    const [journal, setJournal] = useState(() => normalizeJournal(dayData.journal));
+    const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(() => parseJournalEntries(dayData.journal));
+    const [isAddingEntry, setIsAddingEntry] = useState(false);
+    const [newEntryText, setNewEntryText] = useState('');
+    const [newEntryMood, setNewEntryMood] = useState<number | undefined>(undefined);
+    const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
+    const [editingEntryText, setEditingEntryText] = useState('');
+    const [editingEntryMood, setEditingEntryMood] = useState<number | undefined>(undefined);
 
     useEffect(() => {
         setMood(dayData.mood);
-        setJournal(normalizeJournal(dayData.journal));
-    }, [dateKey, dayData.mood, dayData.journal]);
+        setJournalEntries(parseJournalEntries(dayData.journal));
+    }, [dateKey]);
 
-    // Lazy save effect
-    useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            // Only save if the state differs from the prop (DB) state
-            const currentJournal = journal || '';
-            const propJournal = normalizeJournal(dayData.journal);
-
-            if (mood !== dayData.mood || currentJournal !== propJournal) {
-                updateNote(dateKey, { mood, journal });
-            }
-        }, 1500);
-
-        return () => clearTimeout(timeoutId);
-    }, [mood, journal, dayData.mood, dayData.journal, dateKey, updateNote]);
+    const saveEntries = (updated: JournalEntry[]) => {
+        const latestMood = [...updated].reverse().find(e => e.mood)?.mood ?? mood;
+        setMood(latestMood);
+        updateNote(dateKey, { journal: updated, mood: latestMood });
+    };
 
     useEffect(() => {
-        const el = journalTextareaRef.current;
-        const container = journalRef.current;
-        if (!el || !container) return;
-        const wasNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 80;
-        el.style.height = 'auto';
-        el.style.height = `${el.scrollHeight}px`;
-        if (wasNearBottom) {
-            container.scrollTop = container.scrollHeight;
+        if (isAddingEntry && journalRef.current) {
+            setTimeout(() => {
+                journalRef.current!.scrollTo({ top: journalRef.current!.scrollHeight, behavior: 'smooth' });
+            }, 50);
         }
-    }, [journal]);
+    }, [isAddingEntry]);
 
-    const handleSaveJournal = () => {
-        onJournalSaveClick?.();
-        updateNote(dateKey, { mood, journal });
+    const handleAddEntry = () => {
+        if (!newEntryText.trim()) return;
+        const entry: JournalEntry = { id: generateUUID(), text: newEntryText.trim(), mood: newEntryMood, createdAt: Date.now() };
+        const updated = [...journalEntries, entry];
+        setJournalEntries(updated);
+        setIsAddingEntry(false);
+        setNewEntryText('');
+        setNewEntryMood(undefined);
+        saveEntries(updated);
+    };
+
+    const handleUpdateEntry = (id: string) => {
+        if (!editingEntryText.trim()) return;
+        const updated = journalEntries.map(e => e.id === id ? { ...e, text: editingEntryText, mood: editingEntryMood } : e);
+        setJournalEntries(updated);
+        setEditingEntryId(null);
+        setEditingEntryText('');
+        setEditingEntryMood(undefined);
+        saveEntries(updated);
+    };
+
+    const handleDeleteEntry = (id: string) => {
+        const updated = journalEntries.filter(e => e.id !== id);
+        setJournalEntries(updated);
+        saveEntries(updated);
     };
 
     const openTasksView = () => {
@@ -358,7 +381,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
     const totalHabitsCount = visibleHabitsForDate.filter(h => !isHabitInactive(h.id, dateKey)).length;
     const totalTasksCount = (dayData.tasks || []).length;
     const completedTasksCount = (dayData.tasks || []).filter(task => task.completed).length;
-    const hasJournalEntry = Boolean(normalizeJournal(dayData.journal).trim());
+    const hasJournalEntry = journalEntries.some(e => e.text.trim());
     const hasMoodTracked = typeof mood === 'number';
 
     const clearLongPress = () => {
@@ -729,7 +752,11 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                 className={`flex items-start justify-between group cursor-pointer hover:bg-black/5 rounded-lg px-1.5 -mx-1.5 transition-all touch-pan-y relative ${cardStyle === 'compact' ? 'py-1' : 'py-1.5'}`}
                                 style={{ touchAction: 'pan-y' }}
                             >
-                                <div className="flex items-center flex-1 min-w-0">
+                                <div className="flex items-center flex-1 min-w-0 gap-1.5">
+                                    <div
+                                        className="w-1.5 h-1.5 rounded-full shrink-0"
+                                        style={{ backgroundColor: habit.color || '#d1d5db', opacity: done ? 0.35 : 1 }}
+                                    />
                                     <span className={`text-[11px] font-bold break-words leading-tight transition-all duration-300 ${inactive ? 'text-amber-700' : (done ? 'text-stone-400 line-through' : 'text-stone-700')}`}>
                                         {(habit.name || t('dailyCard.untitled')).slice(0, 40)}{(habit.name || '').length > 40 ? '…' : ''}
                                     </span>
@@ -973,13 +1000,9 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
         </div>
     );
 
-    const LINE_HEIGHT_J = 26;
-    const RULED_LINES_J = `repeating-linear-gradient(to bottom, transparent, transparent ${LINE_HEIGHT_J - 1}px, #e2ddd6 ${LINE_HEIGHT_J - 1}px, #e2ddd6 ${LINE_HEIGHT_J}px)`;
-
     const JournalFace = (
         <div
-            className="relative w-full h-full neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans"
-            style={{ backgroundColor: '#fdfdf8' }}
+            className="relative w-full h-full neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans bg-white"
         >
             {/* Header */}
             <div className="day-date-header p-3 text-center border-b-[2px] border-black relative" style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}>
@@ -1009,7 +1032,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
             </div>
 
             {combinedView && (
-                <div className="border-b-2 border-stone-200 px-4 py-2" style={{ backgroundColor: '#fdfdf8' }}>
+                <div className="border-b-2 border-stone-200 px-4 py-2">
                     <div className="flex items-center justify-between gap-2">
                         <div>
                             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-stone-400">Journal</p>
@@ -1023,77 +1046,128 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 </div>
             )}
 
-            {/* Mood row */}
-            <div className="flex items-center justify-between px-2 py-1.5 border-b border-stone-200 gap-1" style={{ backgroundColor: '#fdfdf8' }}>
-                {MOODS.map((m) => {
-                    const isSelected = mood === m.value;
-                    const Icon = m.icon;
-                    return (
-                        <button
-                            key={m.value}
-                            onClick={() => setMood(isSelected ? undefined : m.value)}
-                            title={m.tooltip}
-                            className={`flex-1 flex items-center justify-center py-1.5 rounded-xl border-2 transition-all ${
-                                isSelected
-                                    ? 'border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5'
-                                    : 'border-stone-200 hover:border-stone-400'
-                            }`}
-                            style={isSelected ? { backgroundColor: m.color + '18' } : {}}
-                            data-onboarding="journal-moods"
-                        >
-                            <Icon
-                                size={16}
-                                strokeWidth={isSelected ? 2.5 : 1.8}
-                                style={{ color: isSelected ? m.color : '#d4cfc9' }}
-                            />
-                        </button>
-                    );
-                })}
-            </div>
-
-            {/* Ruled writing area — background lives on the scroll container so it travels with content */}
+            {/* Entries list */}
             <div
                 ref={journalRef}
-                className="relative flex-1 min-h-0 overflow-y-auto scroll-container touch-pan-y"
-                style={{
-                    WebkitOverflowScrolling: 'touch',
-                    touchAction: 'pan-y',
-                    overscrollBehavior: 'contain',
-                    backgroundColor: '#fdfdf8',
-                }}
+                className="flex-1 min-h-0 overflow-y-auto p-3 space-y-2.5 scroll-container touch-pan-y"
+                style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
             >
-                <textarea
-                    ref={journalTextareaRef}
-                    value={journal}
-                    onChange={(e) => setJournal(e.target.value)}
-                    placeholder="Write about your day…"
-                    className="w-full px-4 pt-3 pb-8 resize-none outline-none font-serif text-[13px] text-stone-800 placeholder:text-stone-300"
-                    style={{
-                        backgroundColor: 'transparent',
-                        backgroundImage: RULED_LINES_J,
-                        backgroundPositionY: '4px',
-                        lineHeight: `${LINE_HEIGHT_J}px`,
-                        overflow: 'hidden',
-                        caretColor: theme.primary,
-                    }}
-                    data-onboarding="journal-input"
-                />
-            </div>
+                {journalEntries.length === 0 && !isAddingEntry && (
+                    <p className="text-center text-[10px] font-black uppercase tracking-widest text-stone-300 py-4" data-onboarding="journal-input">
+                        No entries yet
+                    </p>
+                )}
 
-            {/* Footer */}
-            <div className="flex items-center justify-between px-4 py-2 border-t border-stone-200" style={{ backgroundColor: '#fdfdf8' }}>
-                <p className="text-[9px] font-bold text-stone-300 uppercase tracking-widest">
-                    {journal.trim().split(/\s+/).filter(Boolean).length} words
-                </p>
-                <button
-                    onClick={handleSaveJournal}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-white text-[9px] font-black uppercase tracking-widest border-[3px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-none transition-all"
-                    style={{ backgroundColor: theme.primary }}
-                    data-onboarding="journal-save"
-                >
-                    <Save size={10} strokeWidth={3} />
-                    Save
-                </button>
+                {journalEntries.map(entry => {
+                    const entryMoodObj = MOODS.find(m => m.value === entry.mood);
+                    const EntryMoodIcon = entryMoodObj?.icon;
+                    const isEditing = editingEntryId === entry.id;
+                    return (
+                        <div key={entry.id} className={`border-2 rounded-xl overflow-hidden ${isEditing ? 'border-black' : 'border-stone-200'}`}>
+                            {isEditing ? (
+                                <>
+                                    <textarea
+                                        value={editingEntryText}
+                                        onChange={e => setEditingEntryText(e.target.value)}
+                                        autoFocus
+                                        className="w-full px-3 pt-3 pb-2 text-[13px] text-stone-800 resize-none outline-none bg-white leading-relaxed"
+                                        style={{ minHeight: 80, caretColor: theme.primary }}
+                                    />
+                                    <div className="flex items-center justify-between gap-1 px-2 py-1.5 border-t border-stone-200" data-onboarding="journal-moods">
+                                        {MOODS.map(m => {
+                                            const Icon = m.icon;
+                                            const sel = editingEntryMood === m.value;
+                                            return (
+                                                <button key={m.value} onClick={() => setEditingEntryMood(sel ? undefined : m.value)}
+                                                    className={`flex-1 flex items-center justify-center py-1 rounded-lg border-2 transition-all ${sel ? 'border-black' : 'border-transparent'}`}
+                                                    style={sel ? { backgroundColor: m.color + '18' } : {}}>
+                                                    <Icon size={15} strokeWidth={sel ? 2.5 : 1.8} style={{ color: sel ? m.color : '#d4cfc9' }} />
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    <div className="flex items-center justify-between px-3 py-2 border-t border-stone-200">
+                                        <button onClick={() => { setEditingEntryId(null); setEditingEntryText(''); setEditingEntryMood(undefined); }}
+                                            className="text-[9px] font-black uppercase tracking-widest text-stone-400 hover:text-black transition-colors">Cancel</button>
+                                        <button onClick={() => handleUpdateEntry(entry.id)}
+                                            className="flex items-center gap-1 px-2.5 py-1.5 text-[9px] font-black uppercase tracking-widest text-white border-[2px] border-black shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all"
+                                            style={{ backgroundColor: theme.primary }}>
+                                            <Save size={10} strokeWidth={3} /> Save
+                                        </button>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    {EntryMoodIcon && entryMoodObj && (
+                                        <div className="px-3 py-1.5 border-b border-stone-200">
+                                            <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full"
+                                                style={{ backgroundColor: entryMoodObj.color + '18', color: entryMoodObj.color }}>
+                                                <EntryMoodIcon size={11} strokeWidth={2.5} />
+                                                {entryMoodObj.label}
+                                            </span>
+                                        </div>
+                                    )}
+                                    <p className="px-3 py-3 text-[13px] text-stone-700 leading-relaxed whitespace-pre-wrap">{entry.text}</p>
+                                    <div className="flex items-center justify-between px-3 py-2 border-t border-stone-200">
+                                        <span className="text-[9px] font-black uppercase tracking-widest text-stone-300">{formatEntryTime(entry.createdAt)}</span>
+                                        <div className="flex items-center gap-3">
+                                            <button onClick={() => { setEditingEntryId(entry.id); setEditingEntryText(entry.text); setEditingEntryMood(entry.mood); }}
+                                                className="text-stone-300 hover:text-stone-600 transition-colors"><Pencil size={12} /></button>
+                                            <button onClick={() => handleDeleteEntry(entry.id)}
+                                                className="text-stone-300 hover:text-red-500 transition-colors"><Trash2 size={12} /></button>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    );
+                })}
+
+                {isAddingEntry ? (
+                    <div className="border-2 border-black rounded-xl overflow-hidden">
+                        <textarea
+                            value={newEntryText}
+                            onChange={e => setNewEntryText(e.target.value)}
+                            placeholder="Write about your day…"
+                            autoFocus
+                            className="w-full px-3 pt-3 pb-2 text-[13px] text-stone-800 placeholder:text-stone-300 resize-none outline-none bg-white leading-relaxed"
+                            style={{ minHeight: 100, caretColor: theme.primary }}
+                            data-onboarding="journal-input"
+                        />
+                        <div className="flex items-center justify-between gap-1 px-2 py-1.5 border-t border-stone-200" data-onboarding="journal-moods">
+                            {MOODS.map(m => {
+                                const Icon = m.icon;
+                                const sel = newEntryMood === m.value;
+                                return (
+                                    <button key={m.value} onClick={() => setNewEntryMood(sel ? undefined : m.value)}
+                                        className={`flex-1 flex items-center justify-center py-1 rounded-lg border-2 transition-all ${sel ? 'border-black' : 'border-transparent'}`}
+                                        style={sel ? { backgroundColor: m.color + '18' } : {}}>
+                                        <Icon size={15} strokeWidth={sel ? 2.5 : 1.8} style={{ color: sel ? m.color : '#d4cfc9' }} />
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <div className="flex items-center justify-between px-3 py-2 border-t border-stone-200">
+                            <button onClick={() => { setIsAddingEntry(false); setNewEntryText(''); setNewEntryMood(undefined); }}
+                                className="text-[9px] font-black uppercase tracking-widest text-stone-400 hover:text-black transition-colors">Cancel</button>
+                            <button onClick={handleAddEntry}
+                                className="flex items-center gap-1 px-2.5 py-1.5 text-[9px] font-black uppercase tracking-widest text-white border-[2px] border-black shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all"
+                                style={{ backgroundColor: theme.primary }}
+                                data-onboarding="journal-save">
+                                <Save size={10} strokeWidth={3} /> Save
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <button
+                        onClick={() => setIsAddingEntry(true)}
+                        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-stone-200 hover:border-stone-400 text-stone-400 hover:text-stone-600 transition-colors"
+                        style={{ borderColor: theme.primary + '60', color: theme.primary }}
+                    >
+                        <Plus size={13} strokeWidth={2.5} />
+                        <span className="text-[9px] font-black uppercase tracking-widest">Add entry</span>
+                    </button>
+                )}
             </div>
 
             {!combinedView && StatusBar}

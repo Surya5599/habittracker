@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings, LayoutDashboard, Calendar, Clock, MessageSquare, ChevronRight, ChevronDown, Check, Shield, Moon, Sun, Sparkles, Download, Globe, SlidersHorizontal, Palette } from 'lucide-react';
+import { Settings, LayoutDashboard, Calendar, Clock, MessageSquare, ChevronRight, ChevronDown, Check, Shield, Moon, Sun, Sparkles, Download, Globe, SlidersHorizontal, Palette, LogOut, KeyRound, Trash2, User } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Theme } from '../types';
 
@@ -29,6 +29,9 @@ interface SettingsMenuProps {
     isExportingData?: boolean;
     hasUnreadFeedback?: boolean;
     hasUnseenWhatsNew?: boolean;
+    onLogout?: () => void;
+    onChangePassword?: () => void;
+    onDeleteAccount?: () => void;
 }
 
 export const SettingsMenu: React.FC<SettingsMenuProps> = ({
@@ -56,10 +59,14 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     isExportingData = false,
     hasUnreadFeedback = false,
     hasUnseenWhatsNew = false,
+    onLogout,
+    onChangePassword,
+    onDeleteAccount,
 }) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [expandedSection, setExpandedSection] = useState<'language' | 'theme' | 'cardStyle' | null>(null);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     const toggleSection = (section: 'language' | 'theme' | 'cardStyle') => {
         setExpandedSection(expandedSection === section ? null : section);
@@ -79,31 +86,11 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
             </button>
 
             {settingsOpen && (
-                <div className="absolute top-10 right-0 z-50 bg-white border-[3px] border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] rounded-xl p-2 w-72 animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col gap-2">
+                <div className="absolute top-10 right-0 z-50 bg-white border-[3px] border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] rounded-xl p-2 w-72 animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col gap-2 max-h-[80vh] overflow-y-auto">
                     <div className="rounded-xl border border-stone-200 bg-stone-50/70 p-2">
                         <div className="flex items-center gap-2 px-2 pb-2">
                             <SlidersHorizontal size={12} className="text-stone-400" />
                             <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">Preferences</span>
-                        </div>
-
-                        <div className="flex items-center justify-between p-2 rounded-lg hover:bg-white transition-colors">
-                            <span className="text-[10px] font-bold uppercase text-stone-500">{t('settings.general.defaultView')}</span>
-                            <div className="flex bg-stone-100 p-0.5 rounded-md">
-                                {[
-                                    { id: 'weekly', icon: Clock, label: t('settings.general.views.daily') },
-                                    { id: 'monthly', icon: Calendar, label: t('settings.general.views.monthly') },
-                                    { id: 'dashboard', icon: LayoutDashboard, label: t('settings.general.views.dashboard') }
-                                ].map((view) => (
-                                    <button
-                                        key={view.id}
-                                        onClick={() => setDefaultView(view.id as any)}
-                                        className={`p-1.5 rounded flex items-center justify-center transition-all ${defaultView === view.id ? 'bg-white shadow-sm text-black' : 'text-stone-400 hover:text-stone-600'}`}
-                                        title={view.label}
-                                    >
-                                        <view.icon size={12} />
-                                    </button>
-                                ))}
-                            </div>
                         </div>
 
                         <div className="flex items-center justify-between p-2 rounded-lg hover:bg-white transition-colors">
@@ -389,6 +376,82 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                         </div>
                     </button>
                     </div>
+
+                    {(onLogout || onChangePassword || onDeleteAccount) && (
+                        <div className="rounded-xl border border-stone-200 bg-stone-50/70 p-2">
+                            <div className="flex items-center gap-2 px-2 pb-2">
+                                <User size={12} className="text-stone-400" />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">Account</span>
+                            </div>
+
+                            {onChangePassword && (
+                                <button
+                                    onClick={() => {
+                                        onChangePassword();
+                                        setSettingsOpen(false);
+                                    }}
+                                    className="flex items-center justify-between p-2 rounded-lg hover:bg-white transition-colors w-full text-left group"
+                                >
+                                    <span className="text-[10px] font-bold uppercase text-stone-500 group-hover:text-stone-700">Change Password</span>
+                                    <div className="flex items-center gap-1.5 text-stone-400 group-hover:text-black transition-colors">
+                                        <span className="text-[10px] font-bold">Email reset</span>
+                                        <KeyRound size={12} />
+                                    </div>
+                                </button>
+                            )}
+
+                            {onLogout && (
+                                <button
+                                    onClick={() => {
+                                        setSettingsOpen(false);
+                                        onLogout();
+                                    }}
+                                    className="flex items-center justify-between p-2 rounded-lg hover:bg-white transition-colors w-full text-left group"
+                                >
+                                    <span className="text-[10px] font-bold uppercase text-stone-500 group-hover:text-stone-700">Log Out</span>
+                                    <div className="flex items-center gap-1.5 text-stone-400 group-hover:text-black transition-colors">
+                                        <LogOut size={12} />
+                                    </div>
+                                </button>
+                            )}
+
+                            {onDeleteAccount && !showDeleteConfirm && (
+                                <button
+                                    onClick={() => setShowDeleteConfirm(true)}
+                                    className="flex items-center justify-between p-2 rounded-lg hover:bg-red-50 transition-colors w-full text-left group"
+                                >
+                                    <span className="text-[10px] font-bold uppercase text-red-400 group-hover:text-red-600">Delete Account</span>
+                                    <div className="flex items-center gap-1.5 text-red-300 group-hover:text-red-500 transition-colors">
+                                        <Trash2 size={12} />
+                                    </div>
+                                </button>
+                            )}
+
+                            {onDeleteAccount && showDeleteConfirm && (
+                                <div className="mx-2 mb-1 p-3 rounded-lg border-2 border-red-400 bg-red-50">
+                                    <p className="text-[10px] font-bold text-red-700 mb-2 leading-relaxed">This permanently deletes all your habits, completions, and journal entries. This cannot be undone.</p>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => {
+                                                setShowDeleteConfirm(false);
+                                                setSettingsOpen(false);
+                                                onDeleteAccount();
+                                            }}
+                                            className="flex-1 py-1.5 text-[10px] font-black uppercase bg-red-500 text-white rounded border-2 border-red-600 hover:bg-red-600 transition-colors"
+                                        >
+                                            Delete
+                                        </button>
+                                        <button
+                                            onClick={() => setShowDeleteConfirm(false)}
+                                            className="flex-1 py-1.5 text-[10px] font-black uppercase bg-white text-stone-600 rounded border-2 border-stone-300 hover:border-stone-500 transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             )}
         </div>

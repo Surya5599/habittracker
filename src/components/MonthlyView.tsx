@@ -202,9 +202,9 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                 );
                                 const perc = (habitStats.completed / habitStats.totalDays) * 100;
                                 return (
-                                    <tr key={habit.id} className="hover:bg-stone-50 transition-colors group">
-                                        <td className="p-0 border-r border-stone-200 text-sm font-bold text-stone-700 sticky left-0 z-30 group-hover:bg-stone-100 transition-colors border-l-4" style={{ borderLeftColor: habit.color || theme.secondary, backgroundColor: '#fafaf9', width: 250, minWidth: 250, maxWidth: 250 }}>
-                                            <div className="flex items-center gap-2 p-1 px-2 min-h-[26px]">
+                                    <tr key={habit.id} className="hover:bg-stone-50 transition-colors group" style={{ height: 32 }}>
+                                        <td className="p-0 border-r border-stone-200 text-sm font-bold text-stone-700 sticky left-0 z-30 group-hover:bg-stone-100 transition-colors border-l-4" style={{ borderLeftColor: habit.color || theme.secondary, backgroundColor: '#fafaf9', width: 250, minWidth: 250, maxWidth: 250, height: 32 }}>
+                                            <div className="flex items-center gap-2 px-2 h-full">
                                                 <span className="break-words flex-1 leading-tight">{habit.name || 'Untitled Habit'}</span>
                                             </div>
                                         </td>
@@ -221,14 +221,16 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
 
                                             if (!isDue) {
                                                 return (
-                                                    <td key={day} className="p-0.5 border-r border-stone-50 bg-[#e5e5e5]/30"></td>
+                                                    <td key={day} className="p-0.5 border-r border-stone-50 bg-[#e5e5e5]/30" style={{ height: 32 }}>
+                                                        <div className="w-5 h-5 mx-auto flex items-center justify-center border-2 border-stone-200 bg-stone-100 text-stone-300 text-[10px] font-black select-none">/</div>
+                                                    </td>
                                                 );
                                             }
 
                                             return (
                                                 <td key={day}
                                                     className={`p-0.5 border-r border-stone-50 transition-colors duration-300`}
-                                                    style={{ backgroundColor: isToday ? theme.primary + '15' : (isFull ? theme.primary + '20' : undefined) }}
+                                                    style={{ height: 32, backgroundColor: isToday ? theme.primary + '15' : (isFull ? theme.primary + '20' : undefined) }}
                                                 >
                                                     <button
                                                         onClick={() => {
@@ -284,7 +286,7 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                         })}
 
                                         {!statsOpen && (
-                                            <td className="p-0 border-l border-stone-100 bg-[#fcfcfc]">
+                                            <td className="p-0 border-l border-stone-100 bg-[#fcfcfc]" style={{ height: 32 }}>
                                                 <div className="grid grid-cols-2 text-center text-[11px] font-black uppercase tracking-tight h-full">
                                                     <div className="p-1 px-2 border-r border-stone-200" style={{ backgroundColor: theme.secondary + '20' }}>
                                                         <span className="text-stone-500 block">Done</span>

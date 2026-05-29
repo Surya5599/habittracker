@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Calendar, LogIn, LogOut, BarChart2, Plus, BookOpen, Flame, Sun, CheckCircle, Bell, ArrowUpDown, ListTodo } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Calendar, LogIn, LogOut, BarChart2, Plus, BookOpen, Flame, Sun, CheckCircle, Bell, ArrowUpDown, ListTodo, List } from 'lucide-react';
 import { MONTHS } from '../constants';
 import { Habit, Theme, MonthStats, MonthlyGoal, MonthlyGoals } from '../types';
 import { useTranslation } from 'react-i18next';
@@ -88,6 +88,8 @@ interface HeaderProps {
     onCycleSortMode: () => void;
     onOpenTasks: () => void;
     tasksCount?: number;
+    onOpenLists: () => void;
+    listsCount?: number;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -169,6 +171,8 @@ export const Header: React.FC<HeaderProps> = ({
     onCycleSortMode,
     onOpenTasks,
     tasksCount,
+    onOpenLists,
+    listsCount,
 }) => {
     const { t } = useTranslation();
 
@@ -286,6 +290,14 @@ export const Header: React.FC<HeaderProps> = ({
                         {(tasksCount ?? 0) > 0 && (
                             <span className="ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-black bg-orange-100 text-orange-600 leading-none">
                                 {tasksCount}
+                            </span>
+                        )}
+                    </button>
+                    <button onClick={onOpenLists} className={navTab(false)}>
+                        <List size={14} />Lists
+                        {(listsCount ?? 0) > 0 && (
+                            <span className="ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-100 text-indigo-600 leading-none">
+                                {listsCount}
                             </span>
                         )}
                     </button>

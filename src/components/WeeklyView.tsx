@@ -58,7 +58,6 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
     // Mobile navigation state
     const [mobileDayIndex, setMobileDayIndex] = useState(0);
 
-
     // Shared card mode state (applies to all weekly cards)
     const [weekViewMode, setWeekViewMode] = useState<'habits' | 'tasks' | 'journal'>('habits');
 

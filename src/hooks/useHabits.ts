@@ -8,6 +8,8 @@ export const useHabits = (session: any, guestMode: boolean, overrideUserId?: str
     const [habits, setHabits] = useState<Habit[]>([]);
     const [completions, setCompletions] = useState<HabitCompletion>({});
     const [loading, setLoading] = useState(true);
+    const [syncing, setSyncing] = useState(false);
+    const [syncError, setSyncError] = useState<string | null>(null);
 
     const fetchUserData = useCallback(async (userId: string) => {
         setLoading(true);
@@ -104,10 +106,17 @@ export const useHabits = (session: any, guestMode: boolean, overrideUserId?: str
         }
     }, []);
 
-    const syncGuestToCloud = useCallback(async (userId: string, localHabits: Habit[], localCompletions: HabitCompletion) => {
-        if (localHabits.length === 0) return;
+    const syncGuestToCloud = useCallback(async (
+        userId: string,
+        localHabits: Habit[],
+        localCompletions: HabitCompletion
+    ): Promise<boolean> => {
+        if (localHabits.length === 0) return true;
 
-        // const toastId = toast.loading('Syncing guest data to your account...');
+        setSyncing(true);
+        setSyncError(null);
+        let insertedHabitIds: string[] = [];
+
         try {
             const { data: existingHabits, error: fetchError } = await supabase
                 .from('habits')
@@ -120,7 +129,7 @@ export const useHabits = (session: any, guestMode: boolean, overrideUserId?: str
             if (existingHabits && existingHabits.length > 0) {
                 localStorage.removeItem(LOCAL_HABITS_KEY);
                 localStorage.removeItem(LOCAL_COMPLETIONS_KEY);
-                return;
+                return true;
             }
 
             await supabase.from('habits').delete().eq('user_id', userId);
@@ -147,6 +156,8 @@ export const useHabits = (session: any, guestMode: boolean, overrideUserId?: str
                 .order('sort_order', { ascending: true });
 
             if (hError) throw hError;
+
+            insertedHabitIds = insertedHabits?.map(h => h.id) || [];
 
             const idMap: Record<string, string> = {};
             insertedHabits?.forEach((h, idx) => {
@@ -175,11 +186,21 @@ export const useHabits = (session: any, guestMode: boolean, overrideUserId?: str
 
             localStorage.removeItem(LOCAL_HABITS_KEY);
             localStorage.removeItem(LOCAL_COMPLETIONS_KEY);
+            toast.success('Your habits have been saved to your account!');
+            return true;
 
-            toast.success('Local data synced successfully!');
         } catch (err) {
-            console.error('Sync failed:', err);
-            toast.error('Sync failed, but your account is ready.');
+            console.error('Guest sync failed:', err);
+            // Roll back any habits that were inserted before the failure so the
+            // account stays empty — a clean retry is possible from localStorage.
+            if (insertedHabitIds.length > 0) {
+                await supabase.from('habits').delete().in('id', insertedHabitIds).eq('user_id', userId);
+            }
+            setSyncError('We couldn\'t transfer your local habits to your account. Your data is still saved on this device.');
+            setLoading(false);
+            return false;
+        } finally {
+            setSyncing(false);
         }
     }, []);
 
@@ -190,7 +211,9 @@ export const useHabits = (session: any, guestMode: boolean, overrideUserId?: str
             const localH = JSON.parse(localStorage.getItem(LOCAL_HABITS_KEY) || '[]');
             const localC = JSON.parse(localStorage.getItem(LOCAL_COMPLETIONS_KEY) || '{}');
             if (localH.length > 0 && !overrideUserId) {
-                syncGuestToCloud(userId, localH, localC).then(() => fetchUserData(userId));
+                syncGuestToCloud(userId, localH, localC).then((success) => {
+                    if (success) fetchUserData(userId);
+                });
             } else {
                 fetchUserData(userId);
             }
@@ -445,12 +468,36 @@ export const useHabits = (session: any, guestMode: boolean, overrideUserId?: str
         }
     };
 
+    const retryGuestSync = useCallback(() => {
+        if (!userId) return;
+        setSyncError(null);
+        setLoading(true);
+        const localH = JSON.parse(localStorage.getItem(LOCAL_HABITS_KEY) || '[]');
+        const localC = JSON.parse(localStorage.getItem(LOCAL_COMPLETIONS_KEY) || '{}');
+        if (localH.length > 0) {
+            syncGuestToCloud(userId, localH, localC).then((success) => {
+                if (success) fetchUserData(userId);
+            });
+        } else {
+            fetchUserData(userId);
+        }
+    }, [userId, syncGuestToCloud, fetchUserData]);
+
+    const dismissSyncError = useCallback(() => {
+        setSyncError(null);
+        if (userId) fetchUserData(userId);
+    }, [userId, fetchUserData]);
+
     return {
         habits,
         setHabits,
         completions,
         setCompletions,
         loading,
+        syncing,
+        syncError,
+        retryGuestSync,
+        dismissSyncError,
         toggleCompletion,
         addHabit,
         updateHabit,

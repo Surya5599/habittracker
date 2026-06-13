@@ -67,6 +67,8 @@ Deno.serve(async (req) => {
       ['daily_notes',          admin.from('daily_notes').delete().eq('user_id', uid)],
       ['monthly_goals',        admin.from('monthly_goals').delete().eq('user_id', uid)],
       ['user_achievements',    admin.from('user_achievements').delete().eq('user_id', uid)],
+      ['list_items',           admin.from('list_items').delete().eq('user_id', uid)],
+      ['lists',                admin.from('lists').delete().eq('user_id', uid)],
       ['profiles',             admin.from('profiles').delete().eq('id', uid)],
       ['feedback (anonymise)', admin.from('feedback').update({ user_id: null }).eq('user_id', uid)],
     ];

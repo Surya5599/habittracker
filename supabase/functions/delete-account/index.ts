@@ -1,5 +1,10 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
-import { corsHeaders } from '../_shared/cors.ts';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, stripe-signature',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+};
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
@@ -59,8 +64,10 @@ Deno.serve(async (req) => {
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const uid = user.id;
 
-    // Delete user data. Errors from individual tables are logged but not fatal —
-    // the auth user deletion at the end cascades remaining ON DELETE CASCADE tables.
+    // Delete user data explicitly before removing the auth user.
+    // Tables with ON DELETE CASCADE will auto-clean on deleteUser, but we delete
+    // them here too so the cascade is never the last line of defence.
+    // Any error here is fatal — it means a FK constraint would block deleteUser.
     const steps: Array<[string, Promise<unknown>]> = [
       ['completions',          admin.from('completions').delete().eq('user_id', uid)],
       ['habits',               admin.from('habits').delete().eq('user_id', uid)],
@@ -70,13 +77,25 @@ Deno.serve(async (req) => {
       ['list_items',           admin.from('list_items').delete().eq('user_id', uid)],
       ['lists',                admin.from('lists').delete().eq('user_id', uid)],
       ['profiles',             admin.from('profiles').delete().eq('id', uid)],
-      ['feedback (anonymise)', admin.from('feedback').update({ user_id: null }).eq('user_id', uid)],
     ];
 
     for (const [label, op] of steps) {
       const { error } = await op as { error: { message: string } | null };
       if (error) {
-        console.warn(`[delete-account] Non-fatal error on "${label}":`, error.message);
+        console.error(`[delete-account] Fatal error on "${label}":`, error.message);
+        throw new Error(`Failed to delete "${label}": ${error.message}`);
+      }
+      console.log(`[delete-account] OK: ${label}`);
+    }
+
+    // Anonymise feedback + replies — non-fatal since both FKs are SET NULL.
+    for (const [label, op] of [
+      ['feedback (anonymise)',         admin.from('feedback').update({ user_id: null }).eq('user_id', uid)],
+      ['feedback_replies (anonymise)', admin.from('feedback_replies').update({ user_id: null }).eq('user_id', uid)],
+    ] as Array<[string, Promise<unknown>]>) {
+      const { error } = await op as { error: { message: string } | null };
+      if (error) {
+        console.warn(`[delete-account] Non-fatal: ${label} failed:`, error.message);
       } else {
         console.log(`[delete-account] OK: ${label}`);
       }

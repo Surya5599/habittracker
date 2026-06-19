@@ -440,8 +440,6 @@ export const Header: React.FC<HeaderProps> = ({
                     <button onClick={() => { setView('dashboard'); setCurrentYear(new Date().getFullYear()); }} className={viewTab(view === 'dashboard')}>Year</button>
                 </div>
 
-                <div className="flex-1" />
-
                 {/* Sort — icon+label on sm+, icon-only on mobile */}
                 <button
                     onClick={onCycleSortMode}
@@ -450,6 +448,8 @@ export const Header: React.FC<HeaderProps> = ({
                     <ArrowUpDown size={12} strokeWidth={2.5} />
                     {sortMode === 'name' ? 'A–Z' : sortMode === 'color' ? 'Color' : sortMode === 'completion' ? 'To Do' : 'Sort'}
                 </button>
+
+                <div className="flex-1" />
 
                 {/* Log Today — mobile only, in row 2 */}
                 <button onClick={onLogToday} className={`sm:hidden ${logTodayBtnCls}`}>

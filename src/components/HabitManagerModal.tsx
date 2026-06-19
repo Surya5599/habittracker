@@ -533,6 +533,14 @@ const HabitItem: React.FC<HabitItemProps> = ({
                         className="w-full border-2 border-black px-3 py-2 text-sm font-bold text-black outline-none focus:bg-stone-50 placeholder:text-stone-300"
                         placeholder={t('habitManager.habitNamePlaceholder')}
                     />
+                    <textarea
+                        value={editDescription}
+                        onChange={e => setEditDescription(e.target.value.slice(0, 200))}
+                        rows={2}
+                        maxLength={200}
+                        className="w-full border-2 border-black px-3 py-2 text-sm text-black outline-none focus:bg-stone-50 placeholder:text-stone-300 resize-none"
+                        placeholder="Description (optional)"
+                    />
                     <div className="flex flex-col gap-1.5">
                         <span className="text-[9px] font-black uppercase tracking-widest text-stone-400">How often?</span>
                         <div className="flex flex-wrap gap-1.5">

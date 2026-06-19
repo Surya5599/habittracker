@@ -52,6 +52,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
     // Quick-add form state
     const [isQuickAdding, setIsQuickAdding] = useState(false);
     const [quickName, setQuickName] = useState('');
+    const [quickDescription, setQuickDescription] = useState('');
     const [quickColor, setQuickColor] = useState(themePrimary);
     const [quickFreqMode, setQuickFreqMode] = useState<'everyday' | 'weekdays' | 'weekends' | 'custom' | 'flexible'>('everyday');
     const [quickCustomDays, setQuickCustomDays] = useState<number[]>([0,1,2,3,4,5,6]);
@@ -89,6 +90,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
         const autoColor = HABIT_COLOR_OPTIONS[habits.filter(h => !h.archivedAt).length % HABIT_COLOR_OPTIONS.length];
         setQuickColor(autoColor);
         setQuickName('');
+        setQuickDescription('');
         setQuickFreqMode('everyday');
         setQuickCustomDays([0,1,2,3,4,5,6]);
         setQuickWeeklyTarget(3);
@@ -115,7 +117,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
         else if (quickFreqMode === 'flexible') { weeklyTarget = quickWeeklyTarget; }
 
         const newId = await addHabit(quickColor);
-        if (newId) await updateHabit(newId, { name, color: quickColor, frequency, weeklyTarget });
+        if (newId) await updateHabit(newId, { name, description: quickDescription.trim() || undefined, color: quickColor, frequency, weeklyTarget });
         setIsQuickAdding(false);
     };
 
@@ -280,6 +282,14 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                                 onChange={e => setQuickName(e.target.value.slice(0, 40))}
                                 placeholder="What habit do you want to build?"
                                 className="w-full border-2 border-black px-3 py-2 text-sm font-bold text-black outline-none focus:bg-stone-50 placeholder:text-stone-300"
+                            />
+                            <textarea
+                                value={quickDescription}
+                                onChange={e => setQuickDescription(e.target.value.slice(0, 200))}
+                                rows={2}
+                                maxLength={200}
+                                className="w-full border-2 border-black px-3 py-2 text-sm text-black outline-none focus:bg-stone-50 placeholder:text-stone-300 resize-none"
+                                placeholder="Description (optional)"
                             />
 
                             <div className="flex flex-col gap-1.5">

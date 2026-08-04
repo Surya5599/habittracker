@@ -524,6 +524,11 @@ const AppContent: React.FC = () => {
     setShowAiDisclaimer(false);
   };
 
+  const handleDeclineAiDisclaimer = () => {
+    setShowAiDisclaimer(false);
+    setRightPanel(null);
+  };
+
   useEffect(() => {
     if (rightPanel === 'ai' && aiDayLoaded && hasAcceptedAiDisclaimer && !hasPickedAiPersonalityToday) {
       setShowAiPersonalityPicker(true);
@@ -1775,6 +1780,7 @@ const AppContent: React.FC = () => {
         <AiDisclaimerModal
           isOpen={showAiDisclaimer}
           onAccept={handleAcceptAiDisclaimer}
+          onCancel={handleDeclineAiDisclaimer}
           themePrimary={theme.primary}
         />
 

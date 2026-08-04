@@ -4,10 +4,11 @@ import { Bot, AlertTriangle } from 'lucide-react';
 interface AiDisclaimerModalProps {
     isOpen: boolean;
     onAccept: () => void;
+    onCancel: () => void;
     themePrimary: string;
 }
 
-export const AiDisclaimerModal: React.FC<AiDisclaimerModalProps> = ({ isOpen, onAccept, themePrimary }) => {
+export const AiDisclaimerModal: React.FC<AiDisclaimerModalProps> = ({ isOpen, onAccept, onCancel, themePrimary }) => {
     if (!isOpen) return null;
 
     return (
@@ -33,13 +34,21 @@ export const AiDisclaimerModal: React.FC<AiDisclaimerModalProps> = ({ isOpen, on
                         Your habit names, completion history, and chat messages are sent to a third-party AI
                         service to generate responses. Don't share anything sensitive in the chat.
                     </p>
-                    <button
-                        onClick={onAccept}
-                        className="mt-1 w-full py-2.5 rounded-xl border-2 border-black text-sm font-black uppercase tracking-wide text-white transition-all duration-100 active:translate-x-[1px] active:translate-y-[1px]"
-                        style={{ backgroundColor: themePrimary, boxShadow: '3px 3px 0px 0px rgba(0,0,0,1)' }}
-                    >
-                        I understand, continue
-                    </button>
+                    <div className="mt-1 flex gap-2">
+                        <button
+                            onClick={onCancel}
+                            className="px-4 py-2.5 rounded-xl border-2 border-stone-300 text-sm font-black uppercase tracking-wide text-stone-600 transition-colors hover:border-stone-500 hover:text-stone-800"
+                        >
+                            Not now
+                        </button>
+                        <button
+                            onClick={onAccept}
+                            className="flex-1 py-2.5 rounded-xl border-2 border-black text-sm font-black uppercase tracking-wide text-white transition-all duration-100 active:translate-x-[1px] active:translate-y-[1px]"
+                            style={{ backgroundColor: themePrimary, boxShadow: '3px 3px 0px 0px rgba(0,0,0,1)' }}
+                        >
+                            I understand, continue
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

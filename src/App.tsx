@@ -569,7 +569,7 @@ const AppContent: React.FC = () => {
     const { habits: richHabits, overall: richOverall } = computeRichContext(
       sortedHabits, completions, annualStats, weekDelta ?? null, monthDelta ?? null
     );
-    const prompt = buildInsightPrompt(todayKey, richHabits, richOverall, aiPersonality);
+    const prompt = buildInsightPrompt(todayKey, richHabits, richOverall, aiPersonality, language);
 
     supabase.functions.invoke('gemini-proxy', {
       body: { contents: [{ role: 'user', parts: [{ text: prompt }] }] },
@@ -618,7 +618,7 @@ const AppContent: React.FC = () => {
       const { habits: richHabits, overall: richOverall } = computeRichContext(
         sortedHabits, completions, annualStats, weekDelta ?? null, monthDelta ?? null
       );
-      const systemPrompt = buildChatSystemPrompt(todayKey, richHabits, richOverall, aiPersonality);
+      const systemPrompt = buildChatSystemPrompt(todayKey, richHabits, richOverall, aiPersonality, language);
 
       // Build contents array — grows as the tool-call loop runs
       const contents: any[] = [

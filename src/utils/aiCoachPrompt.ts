@@ -69,6 +69,25 @@ export function personalityVoice(personality: AiCoachPersonality = 'direct'): st
   return PERSONALITY_VOICE[personality] ?? PERSONALITY_VOICE.direct;
 }
 
+// Matches the language codes offered in Settings (SettingsMenu.tsx).
+const LANGUAGE_NAMES: Record<string, string> = {
+  en: 'English',
+  es: 'Spanish',
+  fr: 'French',
+  de: 'German',
+  it: 'Italian',
+  pt: 'Portuguese',
+  ja: 'Japanese',
+  ko: 'Korean',
+  zh: 'Chinese',
+};
+
+function languageInstruction(language?: string): string {
+  if (!language || language === 'en') return '';
+  const name = LANGUAGE_NAMES[language] ?? language;
+  return ` Respond entirely in ${name}, regardless of what language the habit names or data labels below are in.`;
+}
+
 export interface HabitLine {
   name: string;
   description?: string;
@@ -89,6 +108,7 @@ export function buildInsightPrompt(
   habits: RichHabitStat[],
   overall: RichOverallContext,
   personality: AiCoachPersonality = 'direct',
+  language?: string,
 ): string {
   const habitBlock = habits.map(h => {
     const lines = [
@@ -119,7 +139,7 @@ export function buildInsightPrompt(
     `Active habits: ${overall.activeHabitCount} of ${overall.habitCount} total`,
   ].filter(Boolean).join('\n');
 
-  return `${personalityVoice(personality)} The user is opening their AI Coach panel right now. Hit them with something they've never noticed about themselves.
+  return `${personalityVoice(personality)}${languageInstruction(language)} The user is opening their AI Coach panel right now. Hit them with something they've never noticed about themselves.
 
 Today: ${todayKey}
 
@@ -148,7 +168,7 @@ Rules:
 - Habit names must match exactly.
 - Omit a category if nothing genuinely fits — do not fabricate.
 - No generic motivational language. Every sentence must be falsifiable — if the number weren't true, the sentence would be different.
-- Always leave the user with a path forward. Even when a note is critical or delivers bad news, it must point at one specific, doable next step — never end on a bare diagnosis with nothing to do about it.`;
+- Always leave the user with a path forward. Even when a note is critical or delivers bad news, it must point at one specific, doable next step — never end on a bare diagnosis with nothing to do about it.${language && language !== 'en' ? ' The JSON keys and "category" values must stay exactly as shown (e.g. "message", "habits", "note", "solid", "dead") — only translate the "message" and "note" text content, and keep habit names exactly as given.' : ''}`;
 }
 
 export function buildChatSystemPrompt(
@@ -156,12 +176,13 @@ export function buildChatSystemPrompt(
   habits: RichHabitStat[],
   overall: RichOverallContext,
   personality: AiCoachPersonality = 'direct',
+  language?: string,
 ): string {
   const habitSummary = habits.map(h =>
     `- ${h.name}: today=${h.doneToday ? 'done' : 'not done'}, month=${h.thisMonthRate ?? 'n/a'}%, year=${h.thisYearRate ?? 'n/a'}%, streak=${h.currentStreak}d`
   ).join('\n');
 
-  return `${personalityVoice(personality)} You are this coach for HabiCard. Today is ${todayKey}.
+  return `${personalityVoice(personality)}${languageInstruction(language)} You are this coach for HabiCard. Today is ${todayKey}.
 Overall consistency: ${Math.round(overall.consistencyRate)}%, momentum: ${overall.momentum}.
 Best day: ${overall.bestDayOfWeek}, worst day: ${overall.worstDayOfWeek}.
 

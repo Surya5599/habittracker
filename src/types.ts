@@ -5,6 +5,7 @@ export interface Habit {
   id: string;
   name: string;
   description?: string;
+  target?: string;
   type: HabitType;
   color: string;
   goal: number; // Percentage goal

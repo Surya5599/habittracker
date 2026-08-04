@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 export const useHabits = (session: any, guestMode: boolean, overrideUserId?: string) => {
     const [habits, setHabits] = useState<Habit[]>([]);
     const [completions, setCompletions] = useState<HabitCompletion>({});
+    const [completionTimestamps, setCompletionTimestamps] = useState<Record<string, Record<string, string>>>({});
     const [loading, setLoading] = useState(true);
     const [syncing, setSyncing] = useState(false);
     const [syncError, setSyncError] = useState<string | null>(null);
@@ -73,6 +74,7 @@ export const useHabits = (session: any, guestMode: boolean, overrideUserId?: str
                 id: h.id,
                 name: h.name,
                 description: h.description || '',
+                target: h.target || '',
                 type: h.type,
                 color: h.color,
                 goal: h.goal,
@@ -86,17 +88,23 @@ export const useHabits = (session: any, guestMode: boolean, overrideUserId?: str
 
             const { data: completionsData, error: compError } = await supabase
                 .from('completions')
-                .select('habit_id, date_key')
+                .select('habit_id, date_key, created_at')
                 .eq('user_id', userId);
 
             if (compError) throw compError;
 
             const compMap: HabitCompletion = {};
+            const compTimestamps: Record<string, Record<string, string>> = {};
             completionsData?.forEach(c => {
                 if (!compMap[c.habit_id]) compMap[c.habit_id] = {};
                 compMap[c.habit_id][c.date_key] = true;
+                if (c.created_at) {
+                    if (!compTimestamps[c.habit_id]) compTimestamps[c.habit_id] = {};
+                    compTimestamps[c.habit_id][c.date_key] = c.created_at;
+                }
             });
             setCompletions(compMap);
+            setCompletionTimestamps(compTimestamps);
 
         } catch (err) {
             console.error('Error fetching data:', err);
@@ -138,6 +146,7 @@ export const useHabits = (session: any, guestMode: boolean, overrideUserId?: str
             const habitsToInsert = localHabits.map((h, idx) => ({
                 name: h.name,
                 description: h.description || null,
+                target: h.target || null,
                 type: h.type,
                 color: h.color,
                 goal: h.goal,
@@ -292,6 +301,16 @@ export const useHabits = (session: any, guestMode: boolean, overrideUserId?: str
             };
         });
 
+        setCompletionTimestamps(prev => {
+            const habitTimestamps = { ...(prev[habitId] || {}) };
+            if (alreadyDone) {
+                delete habitTimestamps[dateKey];
+            } else {
+                habitTimestamps[dateKey] = new Date().toISOString();
+            }
+            return { ...prev, [habitId]: habitTimestamps };
+        });
+
         if ((session || overrideUserId) && !guestMode) {
             try {
                 if (alreadyDone) {
@@ -394,6 +413,10 @@ export const useHabits = (session: any, guestMode: boolean, overrideUserId?: str
                     dbUpdates.weekly_target = dbUpdates.weeklyTarget === undefined ? null : dbUpdates.weeklyTarget;
                     delete dbUpdates.weeklyTarget;
                 }
+                if ('createdAt' in dbUpdates) {
+                    dbUpdates.created_at = dbUpdates.createdAt;
+                    delete dbUpdates.createdAt;
+                }
 
                 await supabase
                     .from('habits')
@@ -493,6 +516,7 @@ export const useHabits = (session: any, guestMode: boolean, overrideUserId?: str
         setHabits,
         completions,
         setCompletions,
+        completionTimestamps,
         loading,
         syncing,
         syncError,

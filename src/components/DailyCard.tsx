@@ -493,7 +493,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
     const remainingHabitsCount = Math.max(0, totalHabitsCount - completedHabitsCount);
     const openTasksCount = Math.max(0, totalTasksCount - completedTasksCount);
     const StatusBar = (
-        <div className="flex border-y-2 border-black bg-stone-50">
+        <div className="flex border-y-2 border-black" style={{ backgroundColor: theme.secondary + '18' }}>
             <button
                 onClick={() => {
                     if (onGlobalViewModeChange) {
@@ -611,8 +611,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
 
     const FrontFace = (
         <div
-            className="relative w-full h-full neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans"
-            style={{ backgroundColor: 'var(--card-bg, #ffffff)' }}
+            className="relative w-full h-full neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans bg-white"
         >
             {/* Header */}
             <div
@@ -785,6 +784,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
             {!combinedView && (
                 <div
                     className="mt-auto border-t-2 border-black flex flex-col"
+                    style={{ backgroundColor: theme.secondary + '18' }}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => {
                         e.preventDefault();
@@ -818,8 +818,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
 
     const TasksFace = (
         <div
-            className="relative w-full h-full neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans"
-            style={{ backgroundColor: 'var(--card-bg, #ffffff)' }}
+            className="relative w-full h-full neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans bg-white"
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => {
                 e.preventDefault();

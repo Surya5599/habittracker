@@ -1,9 +1,10 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Calendar, LogIn, LogOut, BarChart2, Plus, BookOpen, Flame, Sun, CheckCircle, Bell, ArrowUpDown, ListTodo, List, ClipboardList } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Calendar, LogIn, LogOut, BarChart2, Plus, BookOpen, Flame, Sun, CheckCircle, Bell, ArrowUpDown, ListTodo, List, Bot, Sparkles } from 'lucide-react';
 import { MONTHS } from '../constants';
 import { Habit, Theme, MonthStats, MonthlyGoal, MonthlyGoals } from '../types';
 import { useTranslation } from 'react-i18next';
 import { SettingsMenu } from './SettingsMenu';
+import { AiCoachPersonality } from '../utils/aiCoachPrompt';
 import { HabitManagerModal } from './HabitManagerModal';
 import { ResolutionsModal } from './ResolutionsModal';
 import { WeekPicker, MonthPicker, YearPicker } from './DateSelectors';
@@ -47,6 +48,8 @@ interface HeaderProps {
     setColorMode: (mode: 'light' | 'dark') => void;
     cardStyle: 'compact' | 'large';
     setCardStyle: (style: 'compact' | 'large') => void;
+    aiPersonality: AiCoachPersonality;
+    setAiPersonality: (personality: AiCoachPersonality) => void;
     addHabit: (themePrimary: string) => Promise<string>;
     updateHabit: (id: string, updates: Partial<Habit>) => Promise<void>;
     removeHabit: (id: string) => Promise<void>;
@@ -90,8 +93,8 @@ interface HeaderProps {
     tasksCount?: number;
     onOpenLists: () => void;
     listsCount?: number;
-    rightPanel?: 'stats' | 'journal' | 'tasks' | null;
-    onSetRightPanel?: (panel: 'stats' | 'journal' | 'tasks') => void;
+    rightPanel?: 'stats' | 'ai' | 'insights' | null;
+    onSetRightPanel?: (panel: 'stats' | 'ai' | 'insights') => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -132,6 +135,8 @@ export const Header: React.FC<HeaderProps> = ({
     setColorMode,
     cardStyle,
     setCardStyle,
+    aiPersonality,
+    setAiPersonality,
     addHabit,
     updateHabit,
     removeHabit,
@@ -372,6 +377,7 @@ export const Header: React.FC<HeaderProps> = ({
                     defaultView={defaultView} setDefaultView={setDefaultView}
                     colorMode={colorMode} setColorMode={setColorMode}
                     cardStyle={cardStyle} setCardStyle={setCardStyle}
+                    aiPersonality={aiPersonality} setAiPersonality={setAiPersonality}
                     onReportBug={onReportBug} onOpenWhatsNew={onOpenWhatsNew} onOpenTutorial={onOpenTutorial}
                     onExportData={onExportData} onViewJournal={onViewJournal}
                     isExportingData={isExportingData} hasUnreadFeedback={hasUnreadFeedback} hasUnseenWhatsNew={hasUnseenWhatsNew}
@@ -449,6 +455,15 @@ export const Header: React.FC<HeaderProps> = ({
                     {sortMode === 'name' ? 'A–Z' : sortMode === 'color' ? 'Color' : sortMode === 'completion' ? 'To Do' : 'Sort'}
                 </button>
 
+                {/* Today button */}
+                <button
+                    onClick={onLogToday}
+                    className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-stone-500 hover:text-stone-800 hover:bg-stone-50 transition-colors"
+                >
+                    <Sun size={12} strokeWidth={2.5} />
+                    Today
+                </button>
+
                 <div className="flex-1" />
 
                 {/* Log Today — mobile only, in row 2 */}
@@ -457,35 +472,35 @@ export const Header: React.FC<HeaderProps> = ({
                     Log
                 </button>
 
-                {/* Journal button */}
+                {/* AI Coach button */}
                 <button
-                    onClick={() => onSetRightPanel?.('journal')}
+                    onClick={() => onSetRightPanel?.('ai')}
                     className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 border-2 border-black text-[10px] font-black uppercase tracking-wide transition-all duration-100 ml-1 ${
-                        rightPanel === 'journal'
+                        rightPanel === 'ai'
                             ? 'bg-black text-white translate-x-[2px] translate-y-[2px]'
                             : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px]'
                     }`}
                 >
-                    <BookOpen size={12} strokeWidth={2.5} />
-                    <span className="hidden sm:inline">Journal</span>
-                    <span className={`text-[8px] font-black px-1 py-px leading-none ${rightPanel === 'journal' ? 'bg-white text-black' : 'bg-black text-white'}`}>
-                        {rightPanel === 'journal' ? 'ON' : 'OFF'}
+                    <Bot size={12} strokeWidth={2.5} />
+                    <span className="hidden sm:inline">AI Coach</span>
+                    <span className={`text-[8px] font-black px-1 py-px leading-none ${rightPanel === 'ai' ? 'bg-white text-black' : 'bg-black text-white'}`}>
+                        {rightPanel === 'ai' ? 'ON' : 'OFF'}
                     </span>
                 </button>
 
-                {/* Tasks button */}
+                {/* Insights button */}
                 <button
-                    onClick={() => onSetRightPanel?.('tasks')}
+                    onClick={() => onSetRightPanel?.('insights')}
                     className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 border-2 border-black text-[10px] font-black uppercase tracking-wide transition-all duration-100 ml-1 ${
-                        rightPanel === 'tasks'
+                        rightPanel === 'insights'
                             ? 'bg-black text-white translate-x-[2px] translate-y-[2px]'
                             : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px]'
                     }`}
                 >
-                    <ClipboardList size={12} strokeWidth={2.5} />
-                    <span className="hidden sm:inline">Tasks</span>
-                    <span className={`text-[8px] font-black px-1 py-px leading-none ${rightPanel === 'tasks' ? 'bg-white text-black' : 'bg-black text-white'}`}>
-                        {rightPanel === 'tasks' ? 'ON' : 'OFF'}
+                    <Sparkles size={12} strokeWidth={2.5} />
+                    <span className="hidden sm:inline">Insights</span>
+                    <span className={`text-[8px] font-black px-1 py-px leading-none ${rightPanel === 'insights' ? 'bg-white text-black' : 'bg-black text-white'}`}>
+                        {rightPanel === 'insights' ? 'ON' : 'OFF'}
                     </span>
                 </button>
 

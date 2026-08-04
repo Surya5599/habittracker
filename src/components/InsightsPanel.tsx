@@ -1,0 +1,76 @@
+import React, { useMemo } from 'react';
+import { Sparkles, AlertTriangle, CalendarDays, RotateCcw, Clock, TrendingUp, Link2 } from 'lucide-react';
+import { Insight } from '../utils/habitInsights';
+import { Theme } from '../types';
+
+interface InsightsPanelProps {
+    insights: Insight[];
+    theme: Theme;
+}
+
+const CATEGORY_ORDER: Insight['category'][] = ['atRisk', 'consistency', 'weekday', 'resilience', 'timing', 'correlation'];
+
+const CATEGORY_META: Record<Insight['category'], { label: string; Icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>; accent: string; chip: string }> = {
+    atRisk: { label: 'At Risk', Icon: AlertTriangle, accent: 'border-amber-400', chip: 'bg-amber-50 text-amber-700 border-amber-200' },
+    consistency: { label: 'Trend', Icon: TrendingUp, accent: 'border-purple-400', chip: 'bg-purple-50 text-purple-700 border-purple-200' },
+    weekday: { label: 'Day Pattern', Icon: CalendarDays, accent: 'border-blue-400', chip: 'bg-blue-50 text-blue-700 border-blue-200' },
+    resilience: { label: 'Resilience', Icon: RotateCcw, accent: 'border-emerald-400', chip: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    timing: { label: 'Cutting It Close', Icon: Clock, accent: 'border-rose-400', chip: 'bg-rose-50 text-rose-700 border-rose-200' },
+    correlation: { label: 'Linked Habits', Icon: Link2, accent: 'border-indigo-400', chip: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+};
+
+export const InsightsPanel: React.FC<InsightsPanelProps> = ({ insights, theme }) => {
+    const groups = useMemo(() => {
+        return CATEGORY_ORDER
+            .map(category => ({ category, items: insights.filter(i => i.category === category) }))
+            .filter(g => g.items.length > 0);
+    }, [insights]);
+
+    return (
+        <div className="flex flex-col h-full min-h-[400px]">
+            <div className="neo-border rounded-2xl overflow-hidden bg-white flex flex-col flex-1 min-h-0">
+                <div className="h-[3px]" style={{ backgroundColor: theme.primary }} />
+                <div className="px-3 py-2 border-b-[2px] border-black flex items-center gap-2 shrink-0">
+                    <Sparkles size={13} strokeWidth={2.5} className="text-stone-500" />
+                    <p className="flex-1 text-[9px] font-black uppercase tracking-[0.22em] text-stone-500">Insights</p>
+                    {insights.length > 0 && (
+                        <span className="px-1.5 py-0.5 text-[9px] font-black bg-black text-white rounded">{insights.length}</span>
+                    )}
+                </div>
+
+                <div className="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col gap-4">
+                    {groups.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center flex-1 gap-2 text-center px-4 py-10">
+                            <Sparkles size={20} className="text-stone-300" />
+                            <p className="text-sm font-bold text-stone-500">Not enough history yet</p>
+                            <p className="text-xs text-stone-400 max-w-[240px]">Keep logging your habits — patterns like weekday slip-ups, at-risk habits, and streak resilience will show up here once there's enough data.</p>
+                        </div>
+                    ) : (
+                        groups.map(({ category, items }) => {
+                            const meta = CATEGORY_META[category];
+                            return (
+                                <div key={category} className="flex flex-col gap-2">
+                                    <div className="flex items-center gap-1.5 px-0.5">
+                                        <meta.Icon size={12} strokeWidth={2.5} className="text-stone-400" />
+                                        <span className="text-[9px] font-black uppercase tracking-widest text-stone-400">{meta.label}</span>
+                                        <span className="text-[9px] font-bold text-stone-300">· {items.length}</span>
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        {items.map(insight => (
+                                            <div
+                                                key={insight.id}
+                                                className={`rounded-lg border-2 border-stone-200 ${meta.accent} border-l-4 bg-stone-50 p-3`}
+                                            >
+                                                <p className="text-[12px] leading-relaxed text-stone-700">{insight.text}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};

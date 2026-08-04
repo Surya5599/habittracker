@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings, LayoutDashboard, Calendar, Clock, MessageSquare, ChevronRight, ChevronDown, Check, Shield, Moon, Sun, Sparkles, Download, Globe, SlidersHorizontal, Palette, LogOut, KeyRound, Trash2, User } from 'lucide-react';
+import { Settings, LayoutDashboard, Calendar, Clock, MessageSquare, ChevronRight, ChevronDown, Check, Shield, Moon, Sun, Sparkles, Download, Globe, SlidersHorizontal, Palette, LogOut, KeyRound, Trash2, User, Bot } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Theme } from '../types';
+import { AI_COACH_PERSONALITIES, AiCoachPersonality, personalityAvatarUrl } from '../utils/aiCoachPrompt';
 
 interface SettingsMenuProps {
     theme: Theme;
@@ -21,6 +22,8 @@ interface SettingsMenuProps {
     setColorMode: (mode: 'light' | 'dark') => void;
     cardStyle: 'compact' | 'large';
     setCardStyle: (style: 'compact' | 'large') => void;
+    aiPersonality: AiCoachPersonality;
+    setAiPersonality: (personality: AiCoachPersonality) => void;
     onReportBug: () => void;
     onOpenWhatsNew: () => void;
     onOpenTutorial: () => void;
@@ -51,6 +54,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     setColorMode,
     cardStyle,
     setCardStyle,
+    aiPersonality,
+    setAiPersonality,
     onReportBug,
     onOpenWhatsNew,
     onOpenTutorial,
@@ -65,10 +70,10 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
 }) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const [expandedSection, setExpandedSection] = useState<'language' | 'theme' | 'cardStyle' | null>(null);
+    const [expandedSection, setExpandedSection] = useState<'language' | 'theme' | 'cardStyle' | 'aiPersonality' | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-    const toggleSection = (section: 'language' | 'theme' | 'cardStyle') => {
+    const toggleSection = (section: 'language' | 'theme' | 'cardStyle' | 'aiPersonality') => {
         setExpandedSection(expandedSection === section ? null : section);
     };
 
@@ -265,6 +270,59 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                                         <div className="mt-2 text-[10px] font-black uppercase text-stone-700">Large</div>
                                         <div className="text-[9px] text-stone-500">Big day progress panel under the date.</div>
                                     </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="rounded-xl border border-stone-200 bg-stone-50/70 p-2">
+                        <div className="flex items-center gap-2 px-2 pb-2">
+                            <Bot size={12} className="text-stone-400" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">AI Coach</span>
+                        </div>
+
+                        <div className="flex flex-col">
+                            <button
+                                onClick={() => toggleSection('aiPersonality')}
+                                className={`flex items-center justify-between p-2 rounded-lg hover:bg-white transition-colors w-full ${expandedSection === 'aiPersonality' ? 'bg-white' : ''}`}
+                            >
+                                <span className="text-[10px] font-bold uppercase text-stone-500">Personality</span>
+                                <div className="flex items-center gap-1.5">
+                                    <img
+                                        src={personalityAvatarUrl(aiPersonality)}
+                                        alt=""
+                                        className="w-4 h-4 rounded-full border border-black bg-stone-100"
+                                    />
+                                    <span className="text-[10px] font-bold uppercase text-black">
+                                        {AI_COACH_PERSONALITIES.find(p => p.id === aiPersonality)?.label ?? 'Direct'}
+                                    </span>
+                                    {expandedSection === 'aiPersonality' ? <ChevronDown size={12} className="text-stone-400" /> : <ChevronRight size={12} className="text-stone-400" />}
+                                </div>
+                            </button>
+
+                            {expandedSection === 'aiPersonality' && (
+                                <div className="flex flex-col gap-1 p-2 pt-0 animate-in slide-in-from-top-1 duration-200">
+                                    {AI_COACH_PERSONALITIES.map((p) => (
+                                        <button
+                                            key={p.id}
+                                            onClick={() => { setAiPersonality(p.id); setExpandedSection(null); }}
+                                            className={`flex items-start gap-2 p-2 rounded transition-colors text-left ${aiPersonality === p.id ? 'bg-stone-100' : 'hover:bg-stone-50'}`}
+                                        >
+                                            <img
+                                                src={personalityAvatarUrl(p.id)}
+                                                alt={p.label}
+                                                className="w-7 h-7 rounded-full border border-black bg-white shrink-0"
+                                                loading="lazy"
+                                            />
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center justify-between w-full">
+                                                    <span className="text-[10px] font-bold text-stone-700 uppercase">{p.label}</span>
+                                                    {aiPersonality === p.id && <Check size={12} className="text-black shrink-0" />}
+                                                </div>
+                                                <span className="text-[9px] text-stone-500">{p.description}</span>
+                                            </div>
+                                        </button>
+                                    ))}
                                 </div>
                             )}
                         </div>

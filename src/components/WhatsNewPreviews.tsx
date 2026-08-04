@@ -1,5 +1,98 @@
 import React, { useEffect, useState } from 'react';
 
+// ─── Slide 6: Habit Insights ─────────────────────────────────────────────────
+export const InsightsPreview: React.FC = () => {
+    const cards = [
+        { badge: 'AT RISK', color: '#f59e0b', text: '"Meditate" is at 55% completion — right in the zone where habits either lock in or fade out.' },
+        { badge: 'DAY PATTERN', color: '#3b82f6', text: 'You skip "Read 20 mins" most on Fridays (40%) vs. Mondays (95%).' },
+        { badge: 'RESILIENCE', color: '#10b981', text: 'Longest streak: 18 days. You typically bounce back within 2 days of a miss.' },
+    ];
+    const [revealed, setRevealed] = useState(0);
+    useEffect(() => {
+        const iv = setInterval(() => setRevealed(r => (r < cards.length ? r + 1 : 0)), 900);
+        return () => clearInterval(iv);
+    }, []);
+
+    return (
+        <div className="border-[3px] border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] bg-white p-3 select-none">
+            <div className="flex items-center gap-1.5 mb-2.5">
+                <span className="text-[9px] font-black uppercase tracking-widest text-black">Insights</span>
+                <span className="ml-auto text-[8px] font-black bg-black text-white px-1 py-0.5 leading-none">{Math.min(revealed, cards.length)}</span>
+            </div>
+            <div className="space-y-1.5">
+                {cards.map((c, i) => (
+                    <div
+                        key={i}
+                        className="border-[2px] border-stone-200 rounded-lg p-2 transition-all duration-500"
+                        style={{
+                            opacity: i < revealed ? 1 : 0,
+                            transform: i < revealed ? 'translateY(0)' : 'translateY(6px)',
+                        }}
+                    >
+                        <span
+                            className="inline-block text-[7px] font-black uppercase tracking-wide px-1.5 py-0.5 mb-1 leading-none"
+                            style={{ backgroundColor: `${c.color}1a`, color: c.color }}
+                        >
+                            {c.badge}
+                        </span>
+                        <p className="text-[9px] text-stone-600 leading-snug font-medium">{c.text}</p>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+// ─── Slide 7: AI Coach ────────────────────────────────────────────────────────
+export const AiCoachPreview: React.FC = () => {
+    const [step, setStep] = useState(0);
+    const [blink, setBlink] = useState(true);
+    const reply = "You're on a 12-day streak for Meditate 🔥 Keep going — Fridays are your riskiest day.";
+
+    useEffect(() => {
+        const t1 = setTimeout(() => setStep(1), 500);
+        const t2 = setTimeout(() => setStep(2), 1300);
+        const t3 = setTimeout(() => setStep(0), 5000);
+        return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    }, [step]);
+
+    useEffect(() => {
+        const iv = setInterval(() => setBlink(b => !b), 500);
+        return () => clearInterval(iv);
+    }, []);
+
+    return (
+        <div className="border-[3px] border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] bg-indigo-50 p-3 select-none flex flex-col gap-2">
+            <div className="flex items-center gap-1.5">
+                <div className="w-4 h-4 rounded-full border-2 border-black bg-indigo-400 shrink-0" />
+                <span className="text-[9px] font-black uppercase tracking-widest text-black">AI Coach</span>
+            </div>
+
+            <div className="self-end max-w-[80%] border-[2px] border-black bg-white px-2 py-1.5">
+                <p className="text-[9px] font-semibold text-stone-700">How's my streak looking?</p>
+            </div>
+
+            <div
+                className="self-start max-w-[85%] border-[2px] border-black bg-black px-2 py-1.5 transition-opacity duration-300"
+                style={{ opacity: step >= 1 ? 1 : 0 }}
+            >
+                {step === 1 ? (
+                    <div className="flex gap-0.5 py-0.5">
+                        {[0, 1, 2].map(i => (
+                            <span key={i} className="w-1 h-1 rounded-full bg-white/60 animate-pulse" style={{ animationDelay: `${i * 150}ms` }} />
+                        ))}
+                    </div>
+                ) : (
+                    <p className="text-[9px] font-semibold text-white leading-snug">
+                        {reply}
+                        {step === 2 && blink && <span className="font-black text-indigo-300">|</span>}
+                    </p>
+                )}
+            </div>
+        </div>
+    );
+};
+
 // ─── Slide 1: Neo-Brutalist Design ────────────────────────────────────────────
 export const DesignPreview: React.FC = () => (
     <div className="border-[3px] border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] bg-stone-50 p-3 select-none">

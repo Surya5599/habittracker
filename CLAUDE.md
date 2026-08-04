@@ -82,7 +82,10 @@ The web app's `src/App.tsx` (~70KB) is a monolithic file containing routing, aut
 - Admin impersonation: add `?impersonate=userId` to URL when logged in as admin
 
 ### AI Features
-Story generation (`src/utils/storyGenerator.ts`) and AI analytics screen (mobile) call the Gemini API. The `VITE_GEMINI_API_KEY` / mobile equivalent must be set for these features to work.
+AI Coach (`src/utils/aiCoachPrompt.ts`, `aiCoachTools.ts`) and the DailyCard quick-chat call Gemini through the
+`gemini-proxy` Supabase Edge Function (`supabase/functions/gemini-proxy`) — the client never holds the Gemini API
+key. The key is a `GEMINI_API_KEY` secret set on the Edge Function (`supabase secrets set GEMINI_API_KEY=... --project-ref <ref>`
+or via the dashboard), not a `VITE_` client var.
 
 ## Environment Variables
 
@@ -91,7 +94,6 @@ Story generation (`src/utils/storyGenerator.ts`) and AI analytics screen (mobile
 VITE_SUPABASE_URL=
 VITE_SUPABASE_ANON_KEY=
 VITE_ADMIN_EMAILS=
-VITE_GEMINI_API_KEY=   # optional, for AI features
 ```
 
 **Mobile** (`mobile/.env`, loaded via react-native-dotenv):

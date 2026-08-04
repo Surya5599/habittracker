@@ -28,27 +28,41 @@ import { generateUUID } from './utils/uuid';
 import { getInactiveHabitsForDate, isHabitActiveOnDate, isHabitManuallyInactive } from './utils/habitActivity';
 import { exportUserDataCsv } from './utils/exportUserDataCsv';
 import { isCompleted as checkCompleted } from './utils/stats';
+import { buildInsightPrompt, buildChatSystemPrompt, AI_COACH_PERSONALITIES, AiCoachPersonality, personalityAvatarUrl } from './utils/aiCoachPrompt';
+import { GEMINI_TOOLS, executeTool, computeRichContext } from './utils/aiCoachTools';
 import { OnboardingModal } from './components/OnboardingModal';
 import { FeatureAnnouncementModal } from './components/FeatureAnnouncementModal';
 import { LoadingScreen } from './components/LoadingScreen';
 import { FeedbackModal } from './components/FeedbackModal';
 import { StreakModal, buildAchievements } from './components/StreakModal';
 import { SearchModal } from './components/SearchModal';
+import { AiPersonalityPickerModal } from './components/AiPersonalityPickerModal';
+import { AiDisclaimerModal } from './components/AiDisclaimerModal';
 import { JournalPdfPreviewModal } from './components/JournalPdfPreviewModal';
+import { InsightsPanel } from './components/InsightsPanel';
+import { generateInsights } from './utils/habitInsights';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
 import { LandingPage } from './pages/LandingPage';
 import { isBenignAuthError } from './utils/authErrors';
 import { FormattedText } from './components/FormattedText';
 import { buildAnnualStory, buildWeeklyStory, buildMonthlyStory } from './utils/storyGenerator';
-import { DesignPreview, JournalPreview, PdfExportPreview, GridPreview, TasksPreview } from './components/WhatsNewPreviews';
+import { DesignPreview, JournalPreview, PdfExportPreview, GridPreview, TasksPreview, InsightsPreview, AiCoachPreview } from './components/WhatsNewPreviews';
 
 const ADMIN_EMAILS = ((import.meta.env.VITE_ADMIN_EMAILS as string | undefined) || 'admin@habicard.com,knowheredeveloper@gmail.com')
   .split(',')
   .map(email => email.trim().toLowerCase())
   .filter(Boolean);
-const WHATS_NEW_VERSION = '2026_05';
+const WHATS_NEW_VERSION = '2026_08';
 const WHATS_NEW_SEEN_KEY = 'habit_whats_new_seen_version';
 const LEGACY_DEFAULT_HABIT_NAMES = new Set(['meditation', 'exercise', 'drink 2l water', 'reading', 'journaling']);
+
+const AI_SUGGESTED_QUESTIONS = [
+  "What's a pattern in my habits I probably haven't noticed?",
+  'Why do I keep falling off the same habits?',
+  'If I could only fix one thing this week, what should it be?',
+  "What's actually working for me right now, and why?",
+  'Am I close to burning out on any of these, or slacking?',
+];
 
 const DEMO_HABITS: Habit[] = [
   { id: '1', name: 'Morning Meditation', type: 'daily', goal: 7, color: '#C19A9A' },
@@ -114,6 +128,13 @@ const AppContent: React.FC = () => {
     const saved = localStorage.getItem('habit_card_style');
     return saved === 'compact' ? 'compact' : 'large';
   });
+  const [aiPersonality, setAiPersonality] = useState<AiCoachPersonality>(() => {
+    const saved = localStorage.getItem('habit_ai_personality') as AiCoachPersonality | null;
+    return saved && AI_COACH_PERSONALITIES.some(p => p.id === saved) ? saved : 'direct';
+  });
+  useEffect(() => {
+    localStorage.setItem('habit_ai_personality', aiPersonality);
+  }, [aiPersonality]);
 
   // Sync i18n with state
   useEffect(() => {
@@ -139,13 +160,119 @@ const AppContent: React.FC = () => {
   const [hasUnseenWhatsNew, setHasUnseenWhatsNew] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isJournalExportOpen, setIsJournalExportOpen] = useState(false);
-  const [rightPanel, setRightPanel] = useState<'stats' | 'journal' | 'tasks' | null>(() => localStorage.getItem('header_stats_open') !== 'false' ? 'stats' : null);
+  const [rightPanel, setRightPanel] = useState<'stats' | 'ai' | 'insights' | null>(() => localStorage.getItem('header_stats_open') !== 'false' ? 'stats' : null);
+  const aiTodayKey = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })();
+  const AI_CACHE_KEY = `aiCoach_${aiTodayKey}`;
+  const AI_PERSONALITY_PICKED_KEY = `habit_ai_personality_picked_${aiTodayKey}`;
+  const [hasPickedAiPersonalityToday, setHasPickedAiPersonalityToday] = useState(false);
+  const [showAiPersonalityPicker, setShowAiPersonalityPicker] = useState(false);
+  const [hasAcceptedAiDisclaimer, setHasAcceptedAiDisclaimer] = useState(() => localStorage.getItem('habit_ai_disclaimer_accepted') === 'true');
+  const [showAiDisclaimer, setShowAiDisclaimer] = useState(false);
+  const [aiMessages, setAiMessages] = useState<{ role: 'user' | 'model'; text: string }[]>([]);
+  const [aiInput, setAiInput] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiInsightFired, setAiInsightFired] = useState(false);
+  const [aiInsight, setAiInsight] = useState<{ message: string; categories: { category: string; habits: string[]; note: string }[] } | null>(null);
+  // Guards the AI effects until the day's state (insight/messages/personality) has
+  // loaded from the DB (logged-in) or localStorage (guest) — avoids racing a fresh
+  // fetch/personality-prompt before we know what already exists for today.
+  const [aiDayLoaded, setAiDayLoaded] = useState(false);
+
+  // AI Coach persistence: DB-backed for logged-in users (survives cache clears /
+  // device switches), localStorage for guests (no account to store it against).
+  useEffect(() => {
+    let cancelled = false;
+    setAiDayLoaded(false);
+
+    if (effectiveUserId && !guestMode) {
+      supabase
+        .from('ai_coach_chats')
+        .select('insight, messages, personality')
+        .eq('user_id', effectiveUserId)
+        .eq('date_key', aiTodayKey)
+        .maybeSingle()
+        .then(({ data, error }) => {
+          if (cancelled) return;
+          if (error) logAiError('load_day_db', 'Failed to load AI coach day from DB', error);
+          setAiInsight(data?.insight ?? null);
+          setAiInsightFired(!!data?.insight);
+          setAiMessages(data?.messages ?? []);
+          setHasPickedAiPersonalityToday(!!data?.personality);
+          if (data?.personality && AI_COACH_PERSONALITIES.some(p => p.id === data.personality)) {
+            setAiPersonality(data.personality);
+          }
+          setAiDayLoaded(true);
+        });
+    } else if (guestMode) {
+      try {
+        const cached = JSON.parse(localStorage.getItem(AI_CACHE_KEY) ?? 'null');
+        setAiInsight(cached?.insight ?? null);
+        setAiInsightFired(!!cached?.insight);
+        setAiMessages(cached?.messages ?? []);
+      } catch {
+        setAiInsight(null);
+        setAiInsightFired(false);
+        setAiMessages([]);
+      }
+      setHasPickedAiPersonalityToday(localStorage.getItem(AI_PERSONALITY_PICKED_KEY) === 'true');
+      setAiDayLoaded(true);
+    } else {
+      setAiInsight(null);
+      setAiInsightFired(false);
+      setAiMessages([]);
+      setHasPickedAiPersonalityToday(false);
+      setAiDayLoaded(true);
+    }
+
+    return () => { cancelled = true; };
+  }, [effectiveUserId, guestMode, aiTodayKey]);
+
+  const saveAiDay = (updates: {
+    insight?: { message: string; categories: { category: string; habits: string[]; note: string }[] } | null;
+    messages?: { role: 'user' | 'model'; text: string }[];
+    personality?: AiCoachPersonality;
+  }) => {
+    if (effectiveUserId && !guestMode) {
+      const payload: any = { user_id: effectiveUserId, date_key: aiTodayKey, ...updates };
+      supabase.from('ai_coach_chats').upsert(payload, { onConflict: 'user_id,date_key' }).then(({ error }) => {
+        if (error) logAiError('save_day_db', 'Failed to save AI coach day to DB', error);
+      });
+    } else if (guestMode) {
+      try {
+        const cached = JSON.parse(localStorage.getItem(AI_CACHE_KEY) ?? '{}') ?? {};
+        localStorage.setItem(AI_CACHE_KEY, JSON.stringify({ ...cached, ...updates }));
+      } catch (err) {
+        logAiError('save_day_local', 'Failed to save AI coach day to localStorage (guest)', err);
+      }
+      if ('personality' in updates) {
+        localStorage.setItem(AI_PERSONALITY_PICKED_KEY, 'true');
+      }
+    }
+  };
+
+  // Persists AI Coach errors to the DB (not just console.error) so they can
+  // actually be reviewed later — guests log with a null user_id.
+  const logAiError = (context: string, message: string, detail?: unknown) => {
+    console.error(`[AI Coach] ${context}:`, message, detail);
+    supabase.from('ai_error_logs').insert({
+      user_id: effectiveUserId ?? null,
+      context,
+      message,
+      detail: detail === undefined ? null : JSON.parse(JSON.stringify(detail, (_k, v) => v instanceof Error ? { name: v.name, message: v.message, stack: v.stack } : v)),
+    }).then(({ error }) => {
+      if (error) console.error('Failed to write ai_error_logs row:', error);
+    });
+  };
   const statsOpen = rightPanel === 'stats';
   const [chartType, setChartType] = useState<'area' | 'bar'>(() => (localStorage.getItem('habit_chart_type') as 'area' | 'bar') || 'area');
   const [sortMode, setSortMode] = useState<'default' | 'name' | 'color' | 'completion'>(() => (localStorage.getItem('habit_sort_mode') as 'default' | 'name' | 'color' | 'completion') || 'default');
   useEffect(() => { localStorage.setItem('header_stats_open', String(rightPanel === 'stats')); }, [rightPanel]);
   useEffect(() => { localStorage.setItem('habit_chart_type', chartType); }, [chartType]);
   useEffect(() => { localStorage.setItem('habit_sort_mode', sortMode); }, [sortMode]);
+  useEffect(() => {
+    Object.keys(localStorage).filter(k => k.startsWith('aiCoach_') && k !== AI_CACHE_KEY).forEach(k => localStorage.removeItem(k));
+    Object.keys(localStorage).filter(k => k.startsWith('habit_ai_personality_picked_') && k !== AI_PERSONALITY_PICKED_KEY).forEach(k => localStorage.removeItem(k));
+  }, []);
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Cmd+K or Ctrl+K
@@ -264,6 +391,28 @@ const AppContent: React.FC = () => {
       ],
       image: <TasksPreview />,
     },
+    {
+      id: 'habit-insights',
+      title: 'Habit Insights',
+      description: 'Plain-language insights about your habits — no charts to decode, just what\'s actually going on.',
+      bullets: [
+        'See which days you\'re most likely to skip a habit.',
+        'Get flagged when a habit is at risk of fading out — before it does.',
+        'Spot habits that quietly succeed or fail together.',
+      ],
+      image: <InsightsPreview />,
+    },
+    {
+      id: 'ai-coach',
+      title: 'Meet Your AI Coach',
+      description: 'Chat with a coach that actually knows your habit data — your streaks, your patterns, your history.',
+      bullets: [
+        'Ask about your streaks, patterns, and progress in plain English.',
+        'Pick a coaching personality that matches how you want to be pushed.',
+        'Get a fresh, personalized insight waiting for you every day.',
+      ],
+      image: <AiCoachPreview />,
+    },
   ]), []);
 
   const updateDefaultView = async (newView: 'monthly' | 'dashboard' | 'weekly') => {
@@ -354,6 +503,195 @@ const AppContent: React.FC = () => {
       }
     }
   }, [session?.user?.id]);
+
+  const AI_DAILY_LIMIT = 5;
+  const aiUsageKey = `habicard_ai_${new Date().toISOString().slice(0, 10)}`;
+  const getAiUsage = () => parseInt(localStorage.getItem(aiUsageKey) || '0', 10);
+  const aiRemaining = AI_DAILY_LIMIT - getAiUsage();
+  // AI service failures (rate limits, hiccups, network errors) shouldn't burn a
+  // message from the daily quota — refund the optimistic bump those paths take.
+  const refundAiUsage = () => localStorage.setItem(aiUsageKey, String(Math.max(0, getAiUsage() - 1)));
+
+  useEffect(() => {
+    if (rightPanel === 'ai' && aiDayLoaded && !hasAcceptedAiDisclaimer) {
+      setShowAiDisclaimer(true);
+    }
+  }, [rightPanel, aiDayLoaded, hasAcceptedAiDisclaimer]);
+
+  const handleAcceptAiDisclaimer = () => {
+    localStorage.setItem('habit_ai_disclaimer_accepted', 'true');
+    setHasAcceptedAiDisclaimer(true);
+    setShowAiDisclaimer(false);
+  };
+
+  useEffect(() => {
+    if (rightPanel === 'ai' && aiDayLoaded && hasAcceptedAiDisclaimer && !hasPickedAiPersonalityToday) {
+      setShowAiPersonalityPicker(true);
+    }
+  }, [rightPanel, hasPickedAiPersonalityToday, aiDayLoaded, hasAcceptedAiDisclaimer]);
+
+  const handlePickAiPersonality = (personality: AiCoachPersonality) => {
+    setAiPersonality(personality);
+    setHasPickedAiPersonalityToday(true);
+    saveAiDay({ personality });
+    setShowAiPersonalityPicker(false);
+  };
+
+  useEffect(() => {
+    if (rightPanel !== 'ai' || aiInsightFired || aiLoading || !hasPickedAiPersonalityToday || !hasAcceptedAiDisclaimer || !aiDayLoaded) return;
+
+    setAiInsightFired(true);
+    setAiLoading(true);
+
+    const today = new Date();
+    const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+    const { habits: richHabits, overall: richOverall } = computeRichContext(
+      sortedHabits, completions, annualStats, weekDelta ?? null, monthDelta ?? null
+    );
+    const prompt = buildInsightPrompt(todayKey, richHabits, richOverall, aiPersonality);
+
+    supabase.functions.invoke('gemini-proxy', {
+      body: { contents: [{ role: 'user', parts: [{ text: prompt }] }] },
+    })
+      .then(({ data, error }) => {
+        if (error) {
+          logAiError('insight_fetch', 'Insight fetch returned an error', error);
+          setAiInsight({ message: 'Could not load insights right now.', categories: [] });
+          return;
+        }
+        const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+        const cleaned = raw.replace(/```json|```/g, '').trim();
+        try {
+          const parsed = JSON.parse(cleaned);
+          setAiInsight(parsed);
+          saveAiDay({ insight: parsed, messages: [] });
+        } catch (err) {
+          logAiError('insight_parse', 'Failed to parse insight JSON', { err: err instanceof Error ? err.message : err, raw });
+          const fallback = { message: cleaned, categories: [] };
+          setAiInsight(fallback);
+          saveAiDay({ insight: fallback, messages: [] });
+        }
+      })
+      .catch((err) => {
+        logAiError('insight_fetch_exception', 'Insight fetch threw', err);
+        setAiInsight({ message: 'Could not load insights right now.', categories: [] });
+      })
+      .finally(() => setAiLoading(false));
+  }, [rightPanel, hasPickedAiPersonalityToday, hasAcceptedAiDisclaimer, aiDayLoaded]);
+
+  const sendAiMessage = async (override?: string) => {
+    const text = (override ?? aiInput).trim();
+    if (!text || aiLoading || aiRemaining <= 0 || !aiDayLoaded || !hasAcceptedAiDisclaimer) return;
+
+    localStorage.setItem(aiUsageKey, String(getAiUsage() + 1));
+    const userMsg = { role: 'user' as const, text };
+    const updated = [...aiMessages, userMsg];
+    setAiMessages(updated);
+    saveAiDay({ messages: updated });
+    setAiInput('');
+    setAiLoading(true);
+
+    try {
+      const today = new Date();
+      const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      const { habits: richHabits, overall: richOverall } = computeRichContext(
+        sortedHabits, completions, annualStats, weekDelta ?? null, monthDelta ?? null
+      );
+      const systemPrompt = buildChatSystemPrompt(todayKey, richHabits, richOverall, aiPersonality);
+
+      // Build contents array — grows as the tool-call loop runs
+      const contents: any[] = [
+        { role: 'user', parts: [{ text: systemPrompt }] },
+        { role: 'model', parts: [{ text: "Got it, I'm ready to help." }] },
+        ...updated.map(m => ({ role: m.role, parts: [{ text: m.text }] })),
+      ];
+
+      const pushReply = (text: string) => {
+        setAiMessages(prev => {
+          const next = [...prev, { role: 'model' as const, text }];
+          saveAiDay({ messages: next });
+          return next;
+        });
+      };
+
+      // Agentic loop: keep going until Gemini returns text instead of a tool call
+      const MAX_ROUNDS = 5;
+      let done = false;
+      for (let round = 0; round < MAX_ROUNDS; round++) {
+        const { data: invokeData, error: invokeError } = await supabase.functions.invoke('gemini-proxy', {
+          body: { contents, tools: GEMINI_TOOLS },
+        });
+
+        let httpStatus = 200;
+        let data = invokeData;
+        if (invokeError) {
+          httpStatus = invokeError.context?.status ?? 500;
+          try { data = await invokeError.context.json(); } catch { data = null; }
+        }
+
+        // Surface API-level errors (rate limits, bad key, quota) instead of silently
+        // falling through to a generic "could not respond".
+        if (httpStatus < 200 || httpStatus >= 300 || data?.error) {
+          const status = data?.error?.status;
+          logAiError('chat_request_failed', 'Chat request returned an error', { httpStatus, status, data, invokeError });
+          refundAiUsage();
+          if (httpStatus === 429 || status === 'RESOURCE_EXHAUSTED') {
+            pushReply("I'm getting a lot of requests right now — give it a few seconds and try again.");
+          } else {
+            pushReply('The AI service had a hiccup. Please try again in a moment.');
+          }
+          done = true;
+          break;
+        }
+
+        const candidate = data?.candidates?.[0];
+        const parts = candidate?.content?.parts ?? [];
+
+        // Model refused/blocked the response (safety filter, recitation, etc.)
+        if (parts.length === 0 && candidate?.finishReason && candidate.finishReason !== 'STOP') {
+          logAiError('chat_blocked', 'Chat response was blocked or empty', { finishReason: candidate?.finishReason, data });
+          pushReply("I couldn't answer that one — try rephrasing your question.");
+          done = true;
+          break;
+        }
+
+        // Check if Gemini wants to call a tool
+        const toolCallPart = parts.find((p: any) => p.functionCall);
+        if (toolCallPart) {
+          const { name, args } = toolCallPart.functionCall;
+          const result = executeTool(name, args ?? {}, sortedHabits, completions);
+
+          // Append the tool call + result to the conversation. thoughtSignature must be
+          // echoed back on Gemini 3.x models or the next request 400s with
+          // "Function call is missing a thought_signature in functionCall parts".
+          contents.push({
+            role: 'model',
+            parts: [{ functionCall: { name, args: args ?? {} }, thoughtSignature: toolCallPart.thoughtSignature }],
+          });
+          contents.push({ role: 'user', parts: [{ functionResponse: { name, response: result } }] });
+          continue; // next round
+        }
+
+        // Gemini returned a text response — done
+        const reply = parts.find((p: any) => p.text)?.text ?? "I couldn't answer that one — try rephrasing your question.";
+        pushReply(reply);
+        done = true;
+        break;
+      }
+
+      if (!done) {
+        logAiError('chat_max_rounds', 'Chat exhausted MAX_ROUNDS without a final reply', { contents });
+        pushReply("That took too many steps to answer — try asking something more specific.");
+      }
+    } catch (err) {
+      logAiError('chat_exception', 'Chat threw an unexpected error', err);
+      refundAiUsage();
+      setAiMessages(prev => [...prev, { role: 'model', text: 'Something went wrong. Please try again.' }]);
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [currentMonthIndex, setCurrentMonthIndex] = useState(new Date().getMonth());
@@ -481,6 +819,7 @@ const AppContent: React.FC = () => {
   const {
     habits,
     completions,
+    completionTimestamps,
     loading,
     syncError,
     retryGuestSync,
@@ -1004,6 +1343,11 @@ const AppContent: React.FC = () => {
     });
   }, [habits, sortMode, completions]);
 
+  const insights = useMemo(
+    () => generateInsights(habits, completions, notes, completionTimestamps),
+    [habits, completions, notes, completionTimestamps]
+  );
+
   const tasksCount = useMemo(() => {
     const todayStr = (() => {
       const now = new Date();
@@ -1366,6 +1710,8 @@ const AppContent: React.FC = () => {
           setColorMode={setColorMode}
           cardStyle={cardStyle}
           setCardStyle={updateCardStyle}
+          aiPersonality={aiPersonality}
+          setAiPersonality={setAiPersonality}
           addHabit={addHabit}
           updateHabit={updateHabit}
           removeHabit={removeHabit}
@@ -1423,6 +1769,18 @@ const AppContent: React.FC = () => {
           onSelectDate={(date) => {
             setSelectedDateForCard(date);
           }}
+          themePrimary={theme.primary}
+        />
+
+        <AiDisclaimerModal
+          isOpen={showAiDisclaimer}
+          onAccept={handleAcceptAiDisclaimer}
+          themePrimary={theme.primary}
+        />
+
+        <AiPersonalityPickerModal
+          isOpen={showAiPersonalityPicker}
+          onSelect={handlePickAiPersonality}
           themePrimary={theme.primary}
         />
 
@@ -1601,33 +1959,6 @@ const AppContent: React.FC = () => {
           </div>
           {rightPanel !== null && (
             <div className="flex flex-col gap-4 p-4 bg-white/90 border-t-[3px] border-black lg:border-t-0 lg:border-l-[3px] lg:absolute lg:right-0 lg:top-0 lg:bottom-0 lg:w-1/2 lg:z-20 lg:overflow-y-auto" style={{ backdropFilter: 'blur(8px)' }}>
-
-              {/* ── Journal / Tasks card panel ── */}
-              {(rightPanel === 'journal' || rightPanel === 'tasks') && (() => {
-                const today = new Date();
-                const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-                return (
-                  <div className="flex-1 min-h-0 flex flex-col">
-                    <DailyCard
-                      date={today}
-                      habits={sortedHabits}
-                      completions={completions}
-                      theme={theme}
-                      toggleCompletion={toggleCompletion}
-                      toggleHabitInactive={toggleHabitInactive}
-                      isHabitInactive={isHabitInactive}
-                      notes={notes}
-                      updateNote={updateNote}
-                      onShareClick={() => {}}
-                      startOfWeek={startOfWeek}
-                      cardStyle={cardStyle}
-                      globalViewMode={rightPanel}
-                      onGlobalViewModeChange={(mode) => setRightPanel(mode === 'habits' ? null : mode)}
-                      fitParentHeight={true}
-                    />
-                  </div>
-                );
-              })()}
 
               {/* ── Stats panel ── */}
               {rightPanel === 'stats' && <>
@@ -2349,6 +2680,175 @@ const AppContent: React.FC = () => {
                 </div>
               </div>}
               </>}
+
+              {/* ── AI Coach panel ── */}
+              {rightPanel === 'ai' && (() => {
+                const catMeta: Record<string, { badge: string; label: string }> = {
+                  solid:   { badge: 'bg-emerald-100 text-emerald-700 border-emerald-200', label: '✓ Locked In' },
+                  dead:    { badge: 'bg-rose-100 text-rose-700 border-rose-200',          label: '✕ Dead Weight' },
+                  auto:    { badge: 'bg-blue-100 text-blue-700 border-blue-200',          label: '⚡ Automatic' },
+                  improve: { badge: 'bg-amber-100 text-amber-700 border-amber-200',       label: '↑ Track Smarter' },
+                  pattern: { badge: 'bg-purple-100 text-purple-700 border-purple-200',    label: '◈ Pattern' },
+                };
+                return (
+                  <div className="flex flex-col h-full min-h-[400px]">
+                    <div className="neo-border rounded-2xl overflow-hidden bg-white flex flex-col flex-1 min-h-0">
+                      <div className="h-[3px] rounded-t-2xl" style={{ backgroundColor: theme.primary }} />
+                      <div className="px-3 py-2 border-b-[2px] border-black flex items-center justify-between gap-2 shrink-0">
+                        <p className="text-[9px] font-black uppercase tracking-[0.22em] text-stone-500 shrink-0">AI Coach</p>
+                        <div className="flex items-center gap-2">
+                          <img
+                            src={personalityAvatarUrl(aiPersonality)}
+                            alt={AI_COACH_PERSONALITIES.find(p => p.id === aiPersonality)?.label ?? 'Coach'}
+                            className="w-5 h-5 rounded-full border border-black bg-stone-100 shrink-0"
+                          />
+                          <select
+                            value={aiPersonality}
+                            onChange={e => setAiPersonality(e.target.value as AiCoachPersonality)}
+                            title="Coach personality"
+                            className="text-[9px] font-bold uppercase tracking-wide text-stone-600 bg-stone-50 border border-stone-200 rounded px-1 py-0.5 focus:outline-none focus:border-stone-400"
+                          >
+                            {AI_COACH_PERSONALITIES.map(p => (
+                              <option key={p.id} value={p.id}>{p.label}</option>
+                            ))}
+                          </select>
+                          <span className="text-[9px] font-bold text-stone-400 whitespace-nowrap">{Math.max(0, aiRemaining)} left today</span>
+                        </div>
+                      </div>
+
+                      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
+
+                        {/* Loading skeleton */}
+                        {aiLoading && !aiInsight && (
+                          <div className="space-y-2 animate-pulse">
+                            <div className="rounded-xl border-2 border-stone-100 p-3 bg-stone-50">
+                              <div className="h-2.5 w-full bg-stone-200 rounded mb-1.5" />
+                              <div className="h-2.5 w-4/5 bg-stone-200 rounded mb-1.5" />
+                              <div className="h-2.5 w-3/5 bg-stone-200 rounded" />
+                            </div>
+                            <div className="h-2 w-full bg-stone-100 rounded" />
+                            <div className="h-2 w-full bg-stone-100 rounded" />
+                            <div className="h-2 w-2/3 bg-stone-100 rounded" />
+                          </div>
+                        )}
+
+                        {/* Initial insight: chat bubble + category rows */}
+                        {aiInsight && (
+                          <>
+                            {/* Coach message bubble */}
+                            <div className="flex justify-start">
+                              <div
+                                className="rounded-xl rounded-bl-none px-3 py-2.5 text-[11px] font-medium leading-relaxed text-stone-800 border-[2px] border-black"
+                                style={{ backgroundColor: theme.secondary + '18' }}
+                              >
+                                {aiInsight.message}
+                              </div>
+                            </div>
+
+                            {/* Category rows */}
+                            {aiInsight.categories.length > 0 && (
+                              <div className="flex flex-col gap-2">
+                                {aiInsight.categories.map((cat, i) => {
+                                  const meta = catMeta[cat.category] ?? catMeta.pattern;
+                                  return (
+                                    <div key={i} className="flex flex-col gap-0.5">
+                                      <div className="flex items-center gap-1.5 flex-wrap">
+                                        <span className={`shrink-0 text-[9px] font-black px-1.5 py-0.5 rounded border ${meta.badge}`}>{meta.label}</span>
+                                        {cat.habits.length > 0 && (
+                                          <span className="text-[11px] font-black text-stone-700 leading-snug">{cat.habits.join(', ')}</span>
+                                        )}
+                                      </div>
+                                      <p className="text-[11px] text-stone-500 font-medium leading-snug pl-0.5">{cat.note}</p>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </>
+                        )}
+
+                        {/* Chat separator */}
+                        {aiMessages.length > 0 && (
+                          <div className="flex items-center gap-2 py-1">
+                            <div className="flex-1 h-px bg-stone-200" />
+                            <span className="text-[9px] font-black uppercase tracking-wider text-stone-300">Chat</span>
+                            <div className="flex-1 h-px bg-stone-200" />
+                          </div>
+                        )}
+
+                        {/* Follow-up messages */}
+                        {aiMessages.map((msg, i) => (
+                          <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                            <div
+                              className={`max-w-[85%] rounded-xl px-3 py-2 text-[11px] font-medium leading-snug border-[2px] border-black ${msg.role === 'user' ? 'rounded-br-none' : 'rounded-bl-none text-stone-800'}`}
+                              style={msg.role === 'user' ? { backgroundColor: theme.primary, color: '#fff' } : { backgroundColor: theme.secondary + '18' }}
+                            >
+                              {msg.text.split(/(\*\*[^*]+\*\*)/).map((part, j) =>
+                                part.startsWith('**') && part.endsWith('**')
+                                  ? <strong key={j}>{part.slice(2, -2)}</strong>
+                                  : part
+                              )}
+                            </div>
+                          </div>
+                        ))}
+
+                        {aiLoading && aiInsight && (
+                          <div className="flex justify-start">
+                            <div className="rounded-xl px-3 py-2 border-[2px] border-black text-stone-400 text-[11px]" style={{ backgroundColor: theme.secondary + '18' }}>
+                              <span className="animate-pulse">···</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="border-t-[2px] border-black p-2 flex flex-col gap-2 shrink-0">
+                        {aiInsight && !aiLoading && aiRemaining > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {AI_SUGGESTED_QUESTIONS.map((q) => (
+                              <button
+                                key={q}
+                                onClick={() => sendAiMessage(q)}
+                                className="text-[10px] font-semibold px-2 py-1 rounded-lg border-[2px] border-black bg-white hover:bg-stone-50 transition-colors text-left"
+                              >
+                                {q}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex gap-2">
+                        {aiRemaining <= 0 ? (
+                          <p className="flex-1 text-[10px] text-stone-400 font-bold text-center py-2">Daily limit reached. Come back tomorrow!</p>
+                        ) : (
+                          <>
+                            <input
+                              type="text"
+                              value={aiInput}
+                              onChange={e => setAiInput(e.target.value)}
+                              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAiMessage(); } }}
+                              placeholder="Ask your coach..."
+                              className="flex-1 text-[11px] font-medium border-[2px] border-black rounded-lg px-2 py-1.5 focus:outline-none focus:border-stone-600 bg-stone-50"
+                            />
+                            <button
+                              onClick={() => sendAiMessage()}
+                              disabled={aiLoading || !aiInput.trim()}
+                              className="border-[2px] border-black rounded-lg px-2 py-1.5 flex items-center justify-center disabled:opacity-40 transition-opacity"
+                              style={{ backgroundColor: theme.primary }}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                            </button>
+                          </>
+                        )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* ── Insights panel ── */}
+              {rightPanel === 'insights' && (
+                <InsightsPanel insights={insights} theme={theme} />
+              )}
             </div>
           )}
         </div>
@@ -2457,6 +2957,7 @@ const SignInPage: React.FC = () => {
     const saved = localStorage.getItem('habit_card_style');
     return saved === 'compact' ? 'compact' : 'large';
   });
+  const [aiPersonality, setAiPersonality] = useState<AiCoachPersonality>('direct');
   const [currentYear] = useState(new Date().getFullYear());
   const [currentMonthIndex] = useState(new Date().getMonth());
 
@@ -2491,6 +2992,7 @@ const SignInPage: React.FC = () => {
               habits={DEMO_HABITS} defaultView="dashboard" setDefaultView={() => { }}
               colorMode={colorMode} setColorMode={setColorMode}
               cardStyle={cardStyle} setCardStyle={setCardStyle}
+              aiPersonality={aiPersonality} setAiPersonality={setAiPersonality}
               addHabit={async () => ''} updateHabit={async () => { }} removeHabit={async () => { }}
               weekDelta={12} monthDelta={5} annualDelta={9} monthlyGoals={{}} updateMonthlyGoals={() => { }}
               previousAnnualMonthlySummaries={DEMO_ANNUAL_STATS.monthlySummaries}

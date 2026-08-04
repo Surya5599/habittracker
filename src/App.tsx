@@ -136,6 +136,20 @@ const AppContent: React.FC = () => {
     localStorage.setItem('habit_ai_personality', aiPersonality);
   }, [aiPersonality]);
 
+  const [aiCoachEnabled, setAiCoachEnabled] = useState<boolean>(() => {
+    return localStorage.getItem('habit_ai_coach_enabled') !== 'false';
+  });
+  useEffect(() => {
+    localStorage.setItem('habit_ai_coach_enabled', String(aiCoachEnabled));
+  }, [aiCoachEnabled]);
+
+  const handleSetAiCoachEnabled = (enabled: boolean) => {
+    setAiCoachEnabled(enabled);
+    if (!enabled) {
+      setRightPanel(p => p === 'ai' ? null : p);
+    }
+  };
+
   // Sync i18n with state
   useEffect(() => {
     if (i18n.language !== language) {
@@ -527,6 +541,7 @@ const AppContent: React.FC = () => {
   const handleDeclineAiDisclaimer = () => {
     setShowAiDisclaimer(false);
     setRightPanel(null);
+    setAiCoachEnabled(false);
   };
 
   useEffect(() => {
@@ -1717,6 +1732,8 @@ const AppContent: React.FC = () => {
           setCardStyle={updateCardStyle}
           aiPersonality={aiPersonality}
           setAiPersonality={setAiPersonality}
+          aiCoachEnabled={aiCoachEnabled}
+          setAiCoachEnabled={handleSetAiCoachEnabled}
           addHabit={addHabit}
           updateHabit={updateHabit}
           removeHabit={removeHabit}
@@ -2999,6 +3016,7 @@ const SignInPage: React.FC = () => {
               colorMode={colorMode} setColorMode={setColorMode}
               cardStyle={cardStyle} setCardStyle={setCardStyle}
               aiPersonality={aiPersonality} setAiPersonality={setAiPersonality}
+              aiCoachEnabled={true} setAiCoachEnabled={() => { }}
               addHabit={async () => ''} updateHabit={async () => { }} removeHabit={async () => { }}
               weekDelta={12} monthDelta={5} annualDelta={9} monthlyGoals={{}} updateMonthlyGoals={() => { }}
               previousAnnualMonthlySummaries={DEMO_ANNUAL_STATS.monthlySummaries}

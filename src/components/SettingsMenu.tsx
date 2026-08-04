@@ -24,6 +24,8 @@ interface SettingsMenuProps {
     setCardStyle: (style: 'compact' | 'large') => void;
     aiPersonality: AiCoachPersonality;
     setAiPersonality: (personality: AiCoachPersonality) => void;
+    aiCoachEnabled: boolean;
+    setAiCoachEnabled: (enabled: boolean) => void;
     onReportBug: () => void;
     onOpenWhatsNew: () => void;
     onOpenTutorial: () => void;
@@ -56,6 +58,8 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
     setCardStyle,
     aiPersonality,
     setAiPersonality,
+    aiCoachEnabled,
+    setAiCoachEnabled,
     onReportBug,
     onOpenWhatsNew,
     onOpenTutorial,
@@ -281,7 +285,21 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                             <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">AI Coach</span>
                         </div>
 
-                        <div className="flex flex-col">
+                        <div className="flex items-center justify-between p-2 rounded-lg hover:bg-white transition-colors">
+                            <span className="text-[10px] font-bold uppercase text-stone-500">Enabled</span>
+                            <button
+                                type="button"
+                                onClick={() => setAiCoachEnabled(!aiCoachEnabled)}
+                                className={`relative w-9 h-5 rounded-full border-2 border-black transition-colors ${aiCoachEnabled ? 'bg-black' : 'bg-white'}`}
+                                aria-label="Toggle AI Coach"
+                            >
+                                <span
+                                    className={`absolute top-0.5 left-0.5 h-3 w-3 rounded-full border border-black bg-white transition-transform ${aiCoachEnabled ? 'translate-x-4' : 'translate-x-0'}`}
+                                />
+                            </button>
+                        </div>
+
+                        <div className={`flex flex-col transition-opacity ${aiCoachEnabled ? '' : 'opacity-40 pointer-events-none'}`}>
                             <button
                                 onClick={() => toggleSection('aiPersonality')}
                                 className={`flex items-center justify-between p-2 rounded-lg hover:bg-white transition-colors w-full ${expandedSection === 'aiPersonality' ? 'bg-white' : ''}`}

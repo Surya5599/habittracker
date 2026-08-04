@@ -49,6 +49,8 @@ interface HeaderProps {
     cardStyle: 'compact' | 'large';
     setCardStyle: (style: 'compact' | 'large') => void;
     aiPersonality: AiCoachPersonality;
+    aiCoachEnabled: boolean;
+    setAiCoachEnabled: (enabled: boolean) => void;
     setAiPersonality: (personality: AiCoachPersonality) => void;
     addHabit: (themePrimary: string) => Promise<string>;
     updateHabit: (id: string, updates: Partial<Habit>) => Promise<void>;
@@ -136,6 +138,8 @@ export const Header: React.FC<HeaderProps> = ({
     cardStyle,
     setCardStyle,
     aiPersonality,
+    aiCoachEnabled,
+    setAiCoachEnabled,
     setAiPersonality,
     addHabit,
     updateHabit,
@@ -378,6 +382,7 @@ export const Header: React.FC<HeaderProps> = ({
                     colorMode={colorMode} setColorMode={setColorMode}
                     cardStyle={cardStyle} setCardStyle={setCardStyle}
                     aiPersonality={aiPersonality} setAiPersonality={setAiPersonality}
+                    aiCoachEnabled={aiCoachEnabled} setAiCoachEnabled={setAiCoachEnabled}
                     onReportBug={onReportBug} onOpenWhatsNew={onOpenWhatsNew} onOpenTutorial={onOpenTutorial}
                     onExportData={onExportData} onViewJournal={onViewJournal}
                     isExportingData={isExportingData} hasUnreadFeedback={hasUnreadFeedback} hasUnseenWhatsNew={hasUnseenWhatsNew}
@@ -473,20 +478,22 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
 
                 {/* AI Coach button */}
-                <button
-                    onClick={() => onSetRightPanel?.('ai')}
-                    className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 border-2 border-black text-[10px] font-black uppercase tracking-wide transition-all duration-100 ml-1 ${
-                        rightPanel === 'ai'
-                            ? 'bg-black text-white translate-x-[2px] translate-y-[2px]'
-                            : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px]'
-                    }`}
-                >
-                    <Bot size={12} strokeWidth={2.5} />
-                    <span className="hidden sm:inline">AI Coach</span>
-                    <span className={`text-[8px] font-black px-1 py-px leading-none ${rightPanel === 'ai' ? 'bg-white text-black' : 'bg-black text-white'}`}>
-                        {rightPanel === 'ai' ? 'ON' : 'OFF'}
-                    </span>
-                </button>
+                {aiCoachEnabled && (
+                    <button
+                        onClick={() => onSetRightPanel?.('ai')}
+                        className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 border-2 border-black text-[10px] font-black uppercase tracking-wide transition-all duration-100 ml-1 ${
+                            rightPanel === 'ai'
+                                ? 'bg-black text-white translate-x-[2px] translate-y-[2px]'
+                                : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px]'
+                        }`}
+                    >
+                        <Bot size={12} strokeWidth={2.5} />
+                        <span className="hidden sm:inline">AI Coach</span>
+                        <span className={`text-[8px] font-black px-1 py-px leading-none ${rightPanel === 'ai' ? 'bg-white text-black' : 'bg-black text-white'}`}>
+                            {rightPanel === 'ai' ? 'ON' : 'OFF'}
+                        </span>
+                    </button>
+                )}
 
                 {/* Insights button */}
                 <button

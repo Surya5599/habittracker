@@ -3084,6 +3084,34 @@ const UpdatePasswordPage: React.FC = () => {
   return <UpdatePasswordForm onSuccess={() => navigate('/app', { replace: true })} />;
 };
 
+// Public /support page — reuses the same bug/suggestion FeedbackModal used inside the app,
+// so a shared link works whether or not the visitor is signed in.
+const SupportPage: React.FC = () => {
+  const navigate = useNavigate();
+  const [session, setSession] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) return <LoadingScreen />;
+
+  return (
+    <div className="min-h-screen bg-[#F4F4F0]">
+      <FeedbackModal
+        isOpen={true}
+        onClose={() => navigate('/')}
+        userId={session?.user?.id}
+        userEmail={session?.user?.email}
+      />
+    </div>
+  );
+};
+
 // Handles email confirmation links → establishes session → redirects to app
 const AuthCallback: React.FC = () => {
   const navigate = useNavigate();
@@ -3183,6 +3211,7 @@ const App: React.FC = () => {
         <Route path="/signin" element={<LandingPage />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/update-password" element={<UpdatePasswordPage />} />
+        <Route path="/support" element={<SupportPage />} />
         <Route
           path="/privacy"
           element={

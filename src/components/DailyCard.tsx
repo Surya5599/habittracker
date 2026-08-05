@@ -507,8 +507,8 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 title={t('dailyCard.habitsLabel', { defaultValue: 'Habits' })}
                 data-onboarding="status-habits"
             >
-                <span className="text-[9px] font-black uppercase tracking-wider text-stone-500">{t('dailyCard.habitsLabel', { defaultValue: 'Habits' })}</span>
-                <span className="text-[10px] font-black text-stone-700 mt-1">{completedHabitsCount}/{totalHabitsCount}</span>
+                <span className="text-[10px] font-black uppercase tracking-wider text-stone-500">{t('dailyCard.habitsLabel', { defaultValue: 'Habits' })}</span>
+                <span className="text-[12px] sm:text-[13px] font-black text-stone-700 mt-1">{completedHabitsCount}/{totalHabitsCount}</span>
             </button>
             <button
                 onClick={openTasksView}
@@ -516,8 +516,8 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 title={t('dailyCard.tasks')}
                 data-onboarding="status-tasks"
             >
-                <span className="text-[9px] font-black uppercase tracking-wider text-stone-500">{t('dailyCard.tasks')}</span>
-                <span className="text-[10px] font-black text-stone-700 mt-1">
+                <span className="text-[10px] font-black uppercase tracking-wider text-stone-500">{t('dailyCard.tasks')}</span>
+                <span className="text-[12px] sm:text-[13px] font-black text-stone-700 mt-1">
                     {totalTasksCount > 0 ? `${completedTasksCount}/${totalTasksCount}` : '+'}
                 </span>
             </button>
@@ -527,11 +527,11 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 title={t('dailyCard.journal')}
                 data-onboarding="status-journal"
             >
-                <span className="text-[9px] font-black uppercase tracking-wider text-stone-500">{t('dailyCard.journal')}</span>
+                <span className="text-[10px] font-black uppercase tracking-wider text-stone-500">{t('dailyCard.journal')}</span>
                 {hasMoodTracked ? (
-                    <MoodStatusIcon size={16} strokeWidth={2.8} color={selectedMood?.color} />
+                    <MoodStatusIcon size={18} strokeWidth={2.8} color={selectedMood?.color} />
                 ) : (
-                    <BookOpen size={16} strokeWidth={2.8} className={hasJournalEntry ? 'text-green-700' : 'text-stone-400'} />
+                    <BookOpen size={18} strokeWidth={2.8} className={hasJournalEntry ? 'text-green-700' : 'text-stone-400'} />
                 )}
             </button>
         </div>
@@ -543,7 +543,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 <span className="sm:hidden">{dayNameShort}</span>
                 <span className="hidden sm:inline">{dayName}</span>
             </h3>
-            <p className="text-white/80 font-bold text-[9px] sm:text-[10px] tracking-wide whitespace-nowrap truncate">{dateString}</p>
+            <p className="text-white/80 font-bold text-[10px] sm:text-[11px] tracking-wide whitespace-nowrap truncate">{dateString}</p>
         </div>
     );
 
@@ -572,7 +572,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-[10px] font-black text-white">{Math.round(progress)}%</span>
+                <span className="text-[11px] font-black text-white">{Math.round(progress)}%</span>
             </div>
         </div>
     );
@@ -671,12 +671,12 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 <div className="border-b-2 border-black bg-stone-50 px-3 py-2">
                     <div className="flex items-center justify-between gap-2">
                         <div>
-                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-stone-400">Habits</p>
-                            <p className="mt-1 text-sm font-black text-stone-900">{completedHabitsCount}/{totalHabitsCount} complete</p>
+                            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-stone-400">Habits</p>
+                            <p className="mt-1 text-base font-black text-stone-900">{completedHabitsCount}/{totalHabitsCount} complete</p>
                         </div>
                         <div className="text-right">
-                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-stone-400">Focus</p>
-                            <p className="mt-1 text-xs font-black text-stone-600">{remainingHabitsCount > 0 ? `${remainingHabitsCount} left` : 'All done'}</p>
+                            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-stone-400">Focus</p>
+                            <p className="mt-1 text-sm font-black text-stone-600">{remainingHabitsCount > 0 ? `${remainingHabitsCount} left` : 'All done'}</p>
                         </div>
                     </div>
                 </div>
@@ -756,11 +756,11 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                         className="w-1.5 h-1.5 rounded-full shrink-0"
                                         style={{ backgroundColor: habit.color || '#d1d5db', opacity: done ? 0.35 : 1 }}
                                     />
-                                    <span className={`text-[11px] font-bold break-words leading-tight transition-all duration-300 ${inactive ? 'text-amber-700' : (done ? 'text-stone-400 line-through' : 'text-stone-700')}`}>
+                                    <span className={`text-[12px] sm:text-[13px] font-bold break-words leading-tight transition-all duration-300 ${inactive ? 'text-amber-700' : (done ? 'text-stone-400 line-through' : 'text-stone-700')}`}>
                                         {(habit.name || t('dailyCard.untitled')).slice(0, 40)}{(habit.name || '').length > 40 ? '…' : ''}
                                     </span>
                                     {habit.weeklyTarget && (
-                                        <span className={`ml-1 text-[9px] px-1 py-0 border-[1px] font-black uppercase tracking-tighter ${goalMet ? 'bg-black text-white border-black' : 'bg-stone-50 text-stone-400 border-stone-200'}`}>
+                                        <span className={`ml-1 text-[10px] px-1.5 py-0.5 border-[1px] font-black uppercase tracking-tighter ${goalMet ? 'bg-black text-white border-black' : 'bg-stone-50 text-stone-400 border-stone-200'}`}>
                                             {weekCompletions}/{habit.weeklyTarget}
                                         </span>
                                     )}
@@ -776,7 +776,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                             </div>
                         );
                     }) : (
-                        <div className="text-[9px] text-stone-300 italic py-1">{t('dailyCard.noDailyHabits')}</div>
+                        <div className="text-[10px] text-stone-300 italic py-1">{t('dailyCard.noDailyHabits')}</div>
                     )}
                 </div>
             </div>
@@ -898,14 +898,20 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
             >
                 {(dayData.tasks || []).map((task, taskIndex) => (
-                    <div
-                        key={task.id}
-                        draggable={editingTaskId !== task.id}
-                        onDragStart={(e) => {
-                            e.dataTransfer.setData('application/json', JSON.stringify({ taskId: task.id, sourceDateKey: dateKey }));
-                            e.dataTransfer.effectAllowed = 'move';
+                        <motion.div
+                            key={task.id}
+                            draggable={editingTaskId !== task.id}
+                            onDragStart={(e) => {
+                                e.dataTransfer.setData('application/json', JSON.stringify({ taskId: task.id, sourceDateKey: dateKey }));
+                                e.dataTransfer.effectAllowed = 'move';
+                            }}
+                        animate={{
+                            backgroundColor: task.completed ? '#f0fdf4' : '#ffffff',
+                            borderColor: task.completed ? '#86efac' : 'rgba(0,0,0,0)',
+                            boxShadow: task.completed ? '0 0 0 1px rgba(34,197,94,0.25)' : 'none',
                         }}
-                        className={`relative flex items-start gap-1.5 group bg-white border border-transparent hover:border-stone-200 p-1.5 rounded shadow-sm hover:shadow-md transition-all ${editingTaskId === task.id ? 'ring-2 ring-black' : 'cursor-move'}`}
+                        transition={{ duration: 0.22, ease: 'easeOut' }}
+                        className={`relative flex items-center gap-1.5 group border p-1.5 rounded neo-shadow-sm transition-all ${editingTaskId === task.id ? 'ring-2 ring-black' : 'cursor-move'}`}
                     >
                         <button
                             onClick={(e) => {
@@ -917,9 +923,13 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                             className="p-1 -m-1 flex-shrink-0 flex items-center justify-center focus:outline-none"
                             data-onboarding={taskIndex === 0 ? 'task-checkbox' : undefined}
                         >
-                            <div className={`w-2.5 h-2.5 border border-black flex items-center justify-center transition-all ${task.completed ? 'bg-black text-white' : 'bg-white hover:bg-stone-100'}`}>
-                                {task.completed && <Check size={8} strokeWidth={4} />}
-                            </div>
+                            <motion.div
+                                animate={{ scale: task.completed ? [1, 1.25, 1] : 1 }}
+                                transition={{ duration: 0.18 }}
+                                className={`w-5 h-5 rounded-[3px] border-2 border-black flex items-center justify-center transition-colors duration-300 ${task.completed ? 'bg-green-500 border-green-600 text-white' : 'bg-white hover:bg-stone-100'}`}
+                            >
+                                {task.completed && <Check size={10} strokeWidth={3.2} />}
+                            </motion.div>
                         </button>
 
                         {editingTaskId === task.id ? (
@@ -932,14 +942,14 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter') handleFinishEditing(task.id);
                                 }}
-                                className="w-full text-[10px] font-medium bg-transparent outline-none leading-tight border-none p-0 focus:ring-0 text-stone-800"
+                                className="w-full text-[12px] sm:text-[13px] font-medium bg-transparent outline-none leading-tight border-none p-0 focus:ring-0 text-stone-800"
                                 autoFocus
                                 data-onboarding={taskIndex === 0 ? 'task-input' : undefined}
                             />
                         ) : (
                             <>
                                 <span
-                                    className={`flex-1 text-[10px] font-medium leading-tight break-all ${task.completed ? 'text-stone-400 line-through' : 'text-stone-800'}`}
+                                    className={`flex-1 text-[12px] sm:text-[13px] font-medium leading-tight break-all ${task.completed ? 'text-stone-400 line-through' : 'text-stone-800'}`}
                                     onDoubleClick={() => {
                                         clearTaskReveal();
                                         setEditingTaskId(task.id);
@@ -955,7 +965,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                 </span>
 
                                 {revealedTaskId === task.id && (
-                                    <div className="absolute left-8 right-2 top-0 z-20 -translate-y-[calc(100%+4px)] rounded border border-black bg-white px-2 py-1 text-[10px] font-bold leading-tight text-stone-800 shadow-[3px_3px_0_0_rgba(0,0,0,0.12)]">
+                                    <div className="absolute left-8 right-2 top-0 z-20 -translate-y-[calc(100%+4px)] rounded border border-black bg-white px-2 py-1 text-[12px] sm:text-[13px] font-bold leading-tight text-stone-800 shadow-[3px_3px_0_0_rgba(0,0,0,0.12)]">
                                         {task.text}
                                     </div>
                                 )}
@@ -969,10 +979,10 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                     setEditingTaskId(task.id);
                                     setEditingTaskText(task.text);
                                 }}
-                                className="text-stone-400 hover:text-black transition-colors"
+                                className="p-1.5 text-stone-400 hover:text-black transition-colors"
                                 title={t('dailyCard.editTask')}
                             >
-                                <Pencil size={9} />
+                                <Pencil size={11} />
                             </button>
                             <button
                                 onClick={() => {
@@ -981,14 +991,14 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                     const newTasks = currentTasks.filter(t => t.id !== task.id);
                                     updateNote(dateKey, { tasks: newTasks });
                                 }}
-                                className="text-stone-400 hover:text-red-500 transition-colors"
+                                className="p-1.5 text-stone-400 hover:text-red-500 transition-colors"
                                 title={t('dailyCard.deleteTask')}
                             >
-                                <Trash2 size={9} />
+                                <Trash2 size={11} />
                             </button>
                         </div>
-                    </div>
-                ))}
+                    </motion.div>
+                    ))}
                 {(!dayData.tasks || dayData.tasks.length === 0) && (
                     <div className="text-[10px] text-stone-400 text-center py-4 italic">
                         {t('dailyCard.noTasksToday')}

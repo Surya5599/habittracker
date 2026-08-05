@@ -414,6 +414,13 @@ export const Header: React.FC<HeaderProps> = ({
             {/* ─── ROW 2: Date nav · Week/Month/Year · Sort · Stats ─── */}
             <div className="flex items-center gap-1 px-3 sm:px-4 py-2 border-t border-stone-100 date-selector-container">
 
+                {/* View switcher — desktop only (bottom nav handles this on mobile) */}
+                <div className="hidden sm:flex items-center gap-0.5 bg-stone-100 rounded-lg p-0.5 ml-1">
+                    <button onClick={() => { resetWeekOffset(); setView('weekly'); }} className={viewTab(view === 'weekly')}>Week</button>
+                    <button onClick={() => { setView('monthly'); const now = new Date(); setCurrentMonthIndex(now.getMonth()); setCurrentYear(now.getFullYear()); }} className={viewTab(view === 'monthly')}>Month</button>
+                    <button onClick={() => { setView('dashboard'); setCurrentYear(new Date().getFullYear()); }} className={viewTab(view === 'dashboard')}>Year</button>
+                </div>
+
                 {/* Date navigation */}
                 <button
                     onClick={() => view === 'monthly' ? navigateMonth('prev') : view === 'weekly' ? navigateWeek('prev') : setCurrentYear(prev => prev - 1)}
@@ -443,13 +450,6 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                     <ChevronRight size={16} />
                 </button>
-
-                {/* View switcher — desktop only (bottom nav handles this on mobile) */}
-                <div className="hidden sm:flex items-center gap-0.5 bg-stone-100 rounded-lg p-0.5 ml-1">
-                    <button onClick={() => { resetWeekOffset(); setView('weekly'); }} className={viewTab(view === 'weekly')}>Week</button>
-                    <button onClick={() => { setView('monthly'); const now = new Date(); setCurrentMonthIndex(now.getMonth()); setCurrentYear(now.getFullYear()); }} className={viewTab(view === 'monthly')}>Month</button>
-                    <button onClick={() => { setView('dashboard'); setCurrentYear(new Date().getFullYear()); }} className={viewTab(view === 'dashboard')}>Year</button>
-                </div>
 
                 {/* Sort — icon+label on sm+, icon-only on mobile */}
                 <button

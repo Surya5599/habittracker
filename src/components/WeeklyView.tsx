@@ -165,27 +165,24 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                 transition={{ duration: 0.25 }}
             >
                 {/* Weekly summary strip */}
-                <div className="shrink-0 flex items-stretch gap-px rounded-xl overflow-hidden border-2 border-black">
-                    <div className="flex-1 flex flex-col items-center justify-center py-2 px-3 bg-white gap-0.5">
-                        <span className="text-[8px] font-black uppercase tracking-wider text-stone-400">Week</span>
-                        <span className="text-base font-black leading-none" style={{ color: theme.primary }}>{weeklySummary.weekPct}%</span>
+                <div className="shrink-0 grid grid-cols-[1fr_1fr_1.2fr_auto] items-stretch gap-px rounded-2xl overflow-hidden border-[2px] border-black bg-black/10 shadow-[3px_3px_0_0_rgba(0,0,0,0.10)]">
+                    <div className="flex items-center justify-between gap-4 px-4 py-2 bg-gradient-to-br from-white to-[#fff7ef]">
+                        <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.16em] text-stone-400">Week</span>
+                        <span className="text-lg font-black leading-none" style={{ color: theme.primary }}>{weeklySummary.weekPct}%</span>
                     </div>
-                    <div className="w-px bg-black/10" />
-                    <div className="flex-1 flex flex-col items-center justify-center py-2 px-3 bg-white gap-0.5">
-                        <span className="text-[8px] font-black uppercase tracking-wider text-stone-400">Done</span>
-                        <span className="text-base font-black leading-none text-stone-800">{weeklySummary.totalDone}<span className="text-stone-300 text-xs">/{weeklySummary.totalPossible}</span></span>
+                    <div className="flex items-center justify-between gap-4 px-4 py-2 bg-gradient-to-br from-white to-[#f6fbf6]">
+                        <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.16em] text-stone-400">Done</span>
+                        <span className="text-lg font-black leading-none text-stone-800">{weeklySummary.totalDone}<span className="text-stone-300 text-xs">/{weeklySummary.totalPossible}</span></span>
                     </div>
-                    <div className="w-px bg-black/10" />
-                    <div className="flex-1 flex flex-col items-center justify-center py-2 px-3 bg-white gap-0.5">
-                        <span className="text-[8px] font-black uppercase tracking-wider text-stone-400">Best Day</span>
-                        <span className="text-base font-black leading-none text-stone-800">{weeklySummary.bestDayLabel || '—'}<span className="text-stone-300 text-xs ml-0.5">{weeklySummary.bestDayPct >= 0 ? ` ${weeklySummary.bestDayPct}%` : ''}</span></span>
+                    <div className="flex items-center justify-between gap-4 px-4 py-2 bg-gradient-to-br from-white to-[#f2f0fb]">
+                        <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.16em] text-stone-400">Best Day</span>
+                        <span className="text-lg font-black leading-none text-stone-800">{weeklySummary.bestDayLabel || '—'}<span className="text-stone-300 text-xs ml-1">{weeklySummary.bestDayPct >= 0 ? ` ${weeklySummary.bestDayPct}%` : ''}</span></span>
                     </div>
-                    <div className="w-px bg-black/10" />
                     {/* Mini day bars */}
-                    <div className="flex items-end gap-px px-3 py-2 bg-white">
+                    <div className="flex items-end gap-px px-3 py-2 bg-gradient-to-br from-white to-[#fafafa]">
                         {weeklySummary.dayStats.map((d, i) => (
                             <div key={i} className="flex flex-col items-center gap-0.5">
-                                <div className="w-4 h-6 rounded-sm overflow-hidden bg-stone-100 flex items-end">
+                                <div className="w-4 h-6 rounded-sm overflow-hidden bg-stone-100 flex items-end border border-black/5">
                                     <div
                                         className="w-full rounded-sm transition-all duration-500"
                                         style={{
@@ -195,7 +192,7 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                                         }}
                                     />
                                 </div>
-                                <span className="text-[7px] font-black text-stone-300">{d.label}</span>
+                                <span className="text-[8px] font-black tracking-wide text-stone-400">{d.label}</span>
                             </div>
                         ))}
                     </div>

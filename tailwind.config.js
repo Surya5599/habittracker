@@ -11,15 +11,11 @@
    for the 13 runtime-selectable themes and for the token-level dark swap).
    This file maps Tailwind utility names onto those vars.
 
-   1. Web (src/) — currently Tailwind v3 via cdn.tailwindcss.com (index.html:34),
-      which cannot read a config FILE. Two options, in preference order:
-        (a) RECOMMENDED: `npm i -D tailwindcss@3 postcss autoprefixer`, add a
-            postcss.config.js, import a CSS entry with the three @tailwind
-            directives, and drop the CDN <script>. This file then works as-is.
-        (b) INTERIM: inline this object into index.html as
-            `tailwind.config = { … }` before the CDN script runs. The `content`
-            key below is ignored by the CDN build.
-      Either way, src/styles/tokens.css must be imported before dark-theme.css.
+   1. Web (src/) — real Tailwind v3 build via postcss.config.js. The entry is
+      src/styles/app.css (@tailwind base/components/utilities), imported from
+      src/index.tsx ahead of tokens.css and dark-theme.css. The
+      cdn.tailwindcss.com script and its inline `tailwind.config` bridge have
+      been removed from index.html.
 
    2. Chrome extension — Tailwind v4.1.18 (@tailwindcss/vite). v4 ignores JS
       configs unless explicitly loaded. Use src/styles/tailwind-v4-theme.css,
@@ -29,10 +25,15 @@
       so mobile must consume the LITERAL values exported as `tokens` at the
       bottom of this file. See MIGRATION_NOTES.md §P3.
 
-   ── WHAT IS REPLACED vs EXTENDED ──────────────────────────────────────────
-   REPLACED (old class names stop resolving, which is how the migration gets
-   surfaced): borderRadius, borderWidth, boxShadow, fontSize, fontWeight.
-   EXTENDED (additive, nothing breaks): colors, zIndex, spacing, fontFamily.
+   ── ADDITIVE, ON PURPOSE ──────────────────────────────────────────────────
+   Every family is EXTENDED, not replaced. The first draft replaced
+   borderRadius / borderWidth / boxShadow / fontSize / fontWeight so the removed
+   class names would stop resolving and force the migration. In practice 142
+   legacy utilities are still deliberately live pending design decisions
+   (21 soft shadows, 57 font-medium, 23 font-semibold, 41 display sizes — see
+   UNRESOLVED.md §M5/§M6/§M7), and replacing silently drops their styles rather
+   than erroring. So the stock scales stay available alongside the tokens.
+   Tighten to replacement once those 142 sites are resolved.
 
    `colors` is deliberately EXTENDED, not replaced: ~1000 usages of the stock
    stone/amber/rose/gray palette are still live. Replacing it would break the
@@ -76,22 +77,7 @@ export default {
        matches the dominant main-view card radius (rounded-2xl, 66 uses), so
        one value settles both halves of DESIGN_SYSTEM.md §6 / §9 #3.
        The 10 square modals and the square app frame (App.tsx:1721) adopt it. */
-    borderRadius: {
-      none: '0',
-      DEFAULT: '0.25rem', // 4px  — rounded (63 uses); absorbs rounded-sm/2px/3px/4px
-      lg: '0.5rem',       // 8px  — rounded-lg (72); absorbs rounded-md/6px
-      xl: '0.75rem',      // 12px — rounded-xl (51); absorbs rounded-[10px]/[12px]/[14px]
-      '2xl': '1rem',      // 16px — rounded-2xl (66); absorbs [20px]/[22px]/[24px]
-      full: '9999px',     // rounded-full (113)
 
-      // Semantic aliases — the preferred API. Same 5 values, no new steps.
-      control: '0.5rem',  // 8px  — buttons, inputs, icon buttons
-      card: '1rem',       // 16px — all main-view cards
-      modal: '1rem',      // 16px — ALL modal shells + the app frame
-      chip: '9999px',     // pills, badges, avatars
-      // REMOVED: sm(2) md(6) 3xl(24) and every arbitrary [2px][3px][4px][10px]
-      // [12px][14px][20px][22px][24px][28px][30px]. See MIGRATION_NOTES §M3.
-    },
 
     /* ══ BORDER WIDTH ═════════════════════════════════════════════════════
        Resolves the three co-existing "heavy" weights 2 / 2.5 / 3px.
@@ -100,14 +86,7 @@ export default {
        modal shell); 2px stays the internal/divider weight (154 uses); 4px is
        kept only for the accent bars (border-l-4 / border-t-4, 7 uses).
        `border-3` replaces the 40 `border-[3px]` arbitraries. */
-    borderWidth: {
-      0: '0',
-      DEFAULT: '1px', // 854 uses — hairlines, dividers
-      2: '2px',       // 154 uses — internal borders, controls; absorbs 2.5px
-      3: '3px',       // structural: app frame, modal shells, card outlines
-      4: '4px',       // accent bars only; absorbs mobile's border-[5px]
-      // REMOVED: border-[2.5px] (ShareCustomizationModal.tsx:115), border-[5px] (mobile)
-    },
+
 
     /* ══ SHADOW ═══════════════════════════════════════════════════════════
        ONE hard-offset scale, 3 tiers, from the dominant offsets.
@@ -127,17 +106,7 @@ export default {
 
        Dark mode swaps VALUES via tokens.css, so all three tiers survive
        instead of collapsing to one as the old blanket selector did. */
-    boxShadow: {
-      none: 'none',
-      'neo-sm': 'var(--neo-shadow-sm)',       // 2px — chips, inline controls, hover-press state
-      neo: 'var(--neo-shadow)',               // 4px — cards, popovers, buttons (DEFAULT tier)
-      'neo-lg': 'var(--neo-shadow-lg)',       // 8px — modal shells, app frame
-      'neo-accent': 'var(--neo-shadow-accent)', // amber CTA, FeatureAnnouncementModal.tsx:127
-      frame: 'var(--neo-shadow-frame)',       // ambient; dark mode only
-      // REMOVED: 103 inline shadow-[Npx_Npx_0…] arbitraries, the 1px/6px/12px
-      // tiers, every alpha variant (0.5/0.3/0.2/0.12/0.1), and the whole soft
-      // family. See MIGRATION_NOTES §M5.
-    },
+
 
     /* ══ TYPE SCALE ═══════════════════════════════════════════════════════
        18 sizes collapsed to 8. Anchors kept at their current values:
@@ -148,6 +117,24 @@ export default {
        299 existing uses are untouched. Two micro steps are added below xs
        because the app's real workhorse sizes are 9-11px, and one display step
        replaces the five landing-page display sizes. */
+
+
+    /* ══ WEIGHT ═══════════════════════════════════════════════════════════
+       Restricted to the three faces actually loaded — Inter 400/700/900
+       (index.html:35; chrome-extension/src/index.css:8-45).
+       (DESIGN_SYSTEM.md §2.3, §9 #15)
+       font-medium (57 uses) and font-semibold (23) had NO loaded face and were
+       rendering synthetically. They are removed, not aliased, so every one of
+       those 80 call sites must be consciously reassigned. See §M7. */
+
+
+    extend: {
+    fontWeight: {
+      normal: '400',
+      bold: '700',
+      black: '900', // 493 uses — the app's default voice
+      // REMOVED: thin, extralight, light, medium(57), semibold(23), extrabold
+    },
     fontSize: {
       '3xs': ['0.5625rem', { lineHeight: '1.2' }], // 9px  — 115 uses; absorbs 8px (39)
       '2xs': ['0.625rem', { lineHeight: '1.3' }],  // 10px — 241 uses, the de-facto label size
@@ -165,22 +152,41 @@ export default {
       // ALSO REMOVED: 2xl 3xl 4xl 5xl 6xl 7xl 8xl 9xl, text-[15vw], text-[1.7rem],
       // text-[18px]. The landing page's display type is out-of-system; see §P6.
     },
-
-    /* ══ WEIGHT ═══════════════════════════════════════════════════════════
-       Restricted to the three faces actually loaded — Inter 400/700/900
-       (index.html:35; chrome-extension/src/index.css:8-45).
-       (DESIGN_SYSTEM.md §2.3, §9 #15)
-       font-medium (57 uses) and font-semibold (23) had NO loaded face and were
-       rendering synthetically. They are removed, not aliased, so every one of
-       those 80 call sites must be consciously reassigned. See §M7. */
-    fontWeight: {
-      normal: '400',
-      bold: '700',
-      black: '900', // 493 uses — the app's default voice
-      // REMOVED: thin, extralight, light, medium(57), semibold(23), extrabold
+    boxShadow: {
+      none: 'none',
+      'neo-sm': 'var(--neo-shadow-sm)',       // 2px — chips, inline controls, hover-press state
+      neo: 'var(--neo-shadow)',               // 4px — cards, popovers, buttons (DEFAULT tier)
+      'neo-lg': 'var(--neo-shadow-lg)',       // 8px — modal shells, app frame
+      'neo-accent': 'var(--neo-shadow-accent)', // amber CTA, FeatureAnnouncementModal.tsx:127
+      frame: 'var(--neo-shadow-frame)',       // ambient; dark mode only
+      // REMOVED: 103 inline shadow-[Npx_Npx_0…] arbitraries, the 1px/6px/12px
+      // tiers, every alpha variant (0.5/0.3/0.2/0.12/0.1), and the whole soft
+      // family. See MIGRATION_NOTES §M5.
     },
+    borderWidth: {
+      0: '0',
+      DEFAULT: '1px', // 854 uses — hairlines, dividers
+      2: '2px',       // 154 uses — internal borders, controls; absorbs 2.5px
+      3: '3px',       // structural: app frame, modal shells, card outlines
+      4: '4px',       // accent bars only; absorbs mobile's border-[5px]
+      // REMOVED: border-[2.5px] (ShareCustomizationModal.tsx:115), border-[5px] (mobile)
+    },
+    borderRadius: {
+      none: '0',
+      DEFAULT: '0.25rem', // 4px  — rounded (63 uses); absorbs rounded-sm/2px/3px/4px
+      lg: '0.5rem',       // 8px  — rounded-lg (72); absorbs rounded-md/6px
+      xl: '0.75rem',      // 12px — rounded-xl (51); absorbs rounded-[10px]/[12px]/[14px]
+      '2xl': '1rem',      // 16px — rounded-2xl (66); absorbs [20px]/[22px]/[24px]
+      full: '9999px',     // rounded-full (113)
 
-    extend: {
+      // Semantic aliases — the preferred API. Same 5 values, no new steps.
+      control: '0.5rem',  // 8px  — buttons, inputs, icon buttons
+      card: '1rem',       // 16px — all main-view cards
+      modal: '1rem',      // 16px — ALL modal shells + the app frame
+      chip: '9999px',     // pills, badges, avatars
+      // REMOVED: sm(2) md(6) 3xl(24) and every arbitrary [2px][3px][4px][10px]
+      // [12px][14px][20px][22px][24px][28px][30px]. See MIGRATION_NOTES §M3.
+    },
       /* ══ FONT FAMILY ════════════════════════════════════════════════════
          `serif` (Playfair Display) is RESERVED FOR DISPLAY/HERO TEXT ONLY —
          pair it with `text-display`, `text-xl`, or `text-lg`. It must not be

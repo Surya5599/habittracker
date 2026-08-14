@@ -28,14 +28,25 @@ Three constraints forced this, and the rewrite pass needs to know all three:
 
 ## Prerequisites before any component rewrite
 
-1. **Get the web app off the CDN.** `cdn.tailwindcss.com` (`index.html:34`)
-   — *partially satisfied:* batch 1 added an **additive** `tailwind.config` bridge at
-   `index.html:35-52` (boxShadow only). The full switch is still required.
-   cannot read `tailwind.config.js`. Either
-   `npm i -D tailwindcss@3 postcss autoprefixer` + a `postcss.config.js` + a CSS
-   entry with the `@tailwind` directives (**recommended**), or inline the config
-   object into `index.html` as `tailwind.config = { … }`.
-   *Until this is done none of the new utilities exist.*
+1. ~~**Get the web app off the CDN.**~~ **DONE.** The web app now builds Tailwind
+   for real: `vite.config.ts` declares the postcss plugins inline (a root
+   `postcss.config.js` gets picked up by the extension's build via directory walk
+   and breaks it, since that one is Tailwind v4), the entry is
+   `src/styles/app.css`, and the CDN script plus its inline `tailwind.config`
+   bridge are gone from `index.html`. `tailwind.config.js` is now fully additive
+   rather than replacing families — 142 legacy utilities are still deliberately
+   live, and replacing drops their styles silently instead of erroring.
+
+   <details><summary>how it got here</summary>
+
+   Originally the app loaded `cdn.tailwindcss.com`, which cannot read a config
+   file at all — so none of the token utilities existed. Batches 1–4 worked around
+   that with an additive `tailwind.config = { … }` object inlined in `index.html`
+   ahead of the CDN script, growing one family per batch (shadows, then radius,
+   then border width, then colour). That bridge is now deleted; the real build
+   supersedes it.
+
+   </details>
 2. ~~`import './styles/tokens.css'` in `src/index.tsx` **before** `dark-theme.css`.~~
    **DONE** (batch 1).
 3. ~~Have `useTheme` write the active preset to `--theme-primary` /

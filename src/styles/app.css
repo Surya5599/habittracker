@@ -1,0 +1,8 @@
+/* Tailwind entry for the real build.
+   Replaces the cdn.tailwindcss.com script that used to sit in index.html, which
+   logged "should not be used in production" and could not read a config file.
+   Import order matters: utilities first, then the token values they resolve
+   against, then the remaining dark-mode overrides. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

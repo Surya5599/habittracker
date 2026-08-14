@@ -25,3 +25,8 @@ dist-ssr
 .env
 .env.example
 **/.env.example
+# agent tooling / accidental artifacts
+.claude/worktrees/
+relative/
+mobile/expo-start.out
+mobile/expo-start.err

@@ -538,7 +538,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                                                 setHabitFrequency(next.length === 7 ? undefined : next);
                                             }
                                         }}
-                                        className={`w-7 h-7 flex items-center justify-center text-[10px] font-black border-2 transition-all ${isSelected ? 'bg-theme-primary text-theme-ink border-edge-strong' : 'bg-surface text-ink-dim border-edge hover:border-edge-muted'}`}
+                                        className={`w-7 h-7 flex items-center justify-center text-[10px] font-black border-2 transition-all ${isSelected ? 'bg-theme-primary text-white border-edge-strong' : 'bg-surface text-ink-dim border-edge hover:border-edge-muted'}`}
                                     >
                                         {day}
                                     </button>
@@ -609,7 +609,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                     <div className="pt-1">
                         <button
                             onClick={() => setAnalyticsPreviewSeen(true)}
-                            className={`px-4 py-2 border-2 border-edge-strong text-xs font-black uppercase tracking-widest ${analyticsPreviewSeen ? 'bg-theme-primary text-theme-ink' : 'bg-surface text-ink-strong'}`}
+                            className={`px-4 py-2 border-2 border-edge-strong text-xs font-black uppercase tracking-widest ${analyticsPreviewSeen ? 'bg-theme-primary text-white' : 'bg-surface text-ink-strong'}`}
                         >
                             {analyticsPreviewSeen ? t('onboarding.analytics.previewViewed') : t('onboarding.analytics.markSeen')}
                         </button>

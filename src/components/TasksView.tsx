@@ -221,7 +221,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ notes, updateNote, theme, 
                 {totalCount > 0 && (
                     <span
                         className="px-2 py-1 rounded-chip text-[10px] font-black tabular-nums"
-                        style={{ backgroundColor: theme.primary, color: 'var(--theme-primary-ink)' }}
+                        style={{ backgroundColor: theme.primary, color: '#ffffff' }}
                     >
                         {totalCount}
                     </span>
@@ -239,7 +239,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ notes, updateNote, theme, 
                 </div>
                 <button
                     onClick={toggleSearch}
-                    className={`sm:hidden p-1.5 border-2 transition-all ${searchQuery || searchOpen ? 'bg-theme-primary text-theme-ink border-edge-strong' : 'border-edge text-ink-subtle hover:border-edge-strong hover:text-ink-strong'}`}
+                    className={`sm:hidden p-1.5 border-2 transition-all ${searchQuery || searchOpen ? 'bg-theme-primary text-white border-edge-strong' : 'border-edge text-ink-subtle hover:border-edge-strong hover:text-ink-strong'}`}
                 >
                     <Search size={12} />
                 </button>
@@ -388,7 +388,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ notes, updateNote, theme, 
                     <button
                         onClick={handleAddTask}
                         disabled={!newText.trim()}
-                        style={{ backgroundColor: theme.primary, color: 'var(--theme-primary-ink)' }}
+                        style={{ backgroundColor: theme.primary, color: '#ffffff' }}
                         className="px-3.5 py-2 rounded-control text-[10px] font-black uppercase tracking-wide disabled:opacity-25 shadow-neo-sm hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none active:translate-y-[2px] active:translate-x-[2px] transition-all flex items-center gap-1.5 shrink-0"
                     >
                         <Plus size={12} strokeWidth={3} />
@@ -434,7 +434,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ notes, updateNote, theme, 
                         <button
                             onClick={handleMoveToDate}
                             disabled={!assignDate}
-                            style={{ backgroundColor: theme.primary, color: 'var(--theme-primary-ink)' }}
+                            style={{ backgroundColor: theme.primary, color: '#ffffff' }}
                             className="w-full py-2.5 rounded-control text-sm font-black uppercase tracking-wide disabled:opacity-30 transition-opacity"
                         >
                             Move to date

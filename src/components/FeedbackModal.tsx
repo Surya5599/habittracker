@@ -878,7 +878,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                             )}
                         </button>
                         {isAdmin && (
-                            <div className={`flex flex-1 items-center ${activeTab === 'admin' ? 'bg-theme-primary text-theme-ink' : 'text-ink-muted hover:text-ink-strong'}`}>
+                            <div className={`flex flex-1 items-center ${activeTab === 'admin' ? 'bg-theme-primary text-white' : 'text-ink-muted hover:text-ink-strong'}`}>
                                 <button
                                     onClick={() => handleTabChange('admin')}
                                     className="flex-1 py-2 text-[10px] font-black uppercase tracking-widest transition-colors"
@@ -931,7 +931,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                                     <button
                                         type="button"
                                         onClick={() => setType('bug')}
-                                        className={`flex items-center justify-center gap-2 py-2 neo-border transition-all ${type === 'bug' ? 'bg-theme-primary text-theme-ink' : 'bg-surface text-ink hover:border-edge-muted'}`}
+                                        className={`flex items-center justify-center gap-2 py-2 neo-border transition-all ${type === 'bug' ? 'bg-theme-primary text-white' : 'bg-surface text-ink hover:border-edge-muted'}`}
                                     >
                                         <Bug size={14} />
                                         <span className="text-xs font-bold uppercase">Bug Report</span>
@@ -939,7 +939,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                                     <button
                                         type="button"
                                         onClick={() => setType('suggestion')}
-                                        className={`flex items-center justify-center gap-2 py-2 neo-border transition-all ${type === 'suggestion' ? 'bg-theme-primary text-theme-ink' : 'bg-surface text-ink hover:border-edge-muted'}`}
+                                        className={`flex items-center justify-center gap-2 py-2 neo-border transition-all ${type === 'suggestion' ? 'bg-theme-primary text-white' : 'bg-surface text-ink hover:border-edge-muted'}`}
                                     >
                                         <MessageSquare size={14} />
                                         <span className="text-xs font-bold uppercase">Suggestion</span>
@@ -1193,7 +1193,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                                 {/* Replies */}
                                 {selectedThread.replies?.map(reply => (
                                     <div key={reply.id} className={`flex gap-3 ${reply.is_admin_reply ? 'flex-row-reverse' : ''}`}>
-                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border border-edge-strong ${reply.is_admin_reply ? 'bg-theme-primary text-theme-ink' : 'bg-edge text-ink-muted'}`}>
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border border-edge-strong ${reply.is_admin_reply ? 'bg-theme-primary text-white' : 'bg-edge text-ink-muted'}`}>
                                             {reply.is_admin_reply ? <Shield size={14} /> : <User size={14} />}
                                         </div>
                                         <div className={`flex-1 space-y-1 flex flex-col ${reply.is_admin_reply ? 'items-end' : 'items-start'}`}>
@@ -1202,7 +1202,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                                                 <span className="text-[10px] text-ink-subtle">{new Date(reply.created_at).toLocaleString()}</span>
                                             </div>
                                             <div className={`p-3 neo-border text-sm leading-relaxed shadow-sm max-w-[90%] ${reply.is_admin_reply
-                                                ? 'bg-theme-primary text-theme-ink rounded-tr-none'
+                                                ? 'bg-theme-primary text-white rounded-tr-none'
                                                 : 'bg-surface text-ink-strong rounded-tl-none'
                                                 }`}>
                                                 {reply.content}

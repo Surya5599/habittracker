@@ -43,17 +43,19 @@
        '12' -> 7%   '15' -> 8%   '18' -> 9%
        '20' -> 12.5%  '30' -> 19%  '40' -> 25%
      Collapsed to three steps at the low / mid / high of that observed range. */
-  /* Readable foreground for theme-filled surfaces. Set at runtime by
-     useTheme from each preset's luminance; these are the light-theme
-     defaults so the tokens resolve before the first paint. */
-  --theme-primary-ink: #1c1917;
-  --theme-secondary-ink: #1c1917;
   --theme-primary-faint: color-mix(in srgb, var(--theme-primary) 8%, transparent);
   --theme-primary-soft: color-mix(in srgb, var(--theme-primary) 12%, transparent);
   --theme-primary-strong: color-mix(in srgb, var(--theme-primary) 25%, transparent);
   --theme-secondary-faint: color-mix(in srgb, var(--theme-secondary) 8%, transparent);
   --theme-secondary-soft: color-mix(in srgb, var(--theme-secondary) 12%, transparent);
   --theme-secondary-strong: color-mix(in srgb, var(--theme-secondary) 25%, transparent);
+
+  /* Readable foreground for a theme-filled surface, chosen at runtime by
+     useTheme from each preset's measured contrast. Used where the label must
+     adapt; selected/active surfaces instead pair the theme colour with white by
+     deliberate design choice — see the note in DESIGN_SYSTEM.md. */
+  --theme-primary-ink: #1c1917;
+  --theme-secondary-ink: #1c1917;
 
   /* ── Surfaces ───────────────────────────────────────────────────────────── */
   --canvas: #f4f4f0;         /* app background; also the removed --neo-bg. index.html:39, App.tsx:1671 */

@@ -761,7 +761,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                         {(habit.name || t('dailyCard.untitled')).slice(0, 40)}{(habit.name || '').length > 40 ? '…' : ''}
                                     </span>
                                     {habit.weeklyTarget && (
-                                        <span className={`ml-1 text-[10px] px-1.5 py-1 border font-black uppercase tracking-tighter ${goalMet ? 'bg-theme-primary text-theme-ink border-edge-strong' : 'bg-surface-muted text-ink-subtle border-edge'}`}>
+                                        <span className={`ml-1 text-[10px] px-1.5 py-1 border font-black uppercase tracking-tighter ${goalMet ? 'bg-theme-primary text-white border-edge-strong' : 'bg-surface-muted text-ink-subtle border-edge'}`}>
                                             {weekCompletions}/{habit.weeklyTarget}
                                         </span>
                                     )}

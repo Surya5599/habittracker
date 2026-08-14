@@ -30,7 +30,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ view, setView, resetWeekOf
                             className="p-1.5 rounded transition-all"
                             style={isActive ? { backgroundColor: theme.primary } : {}}
                         >
-                            <Icon size={16} className={isActive ? 'text-theme-ink' : 'text-ink-subtle'} />
+                            <Icon size={16} className={isActive ? 'text-white' : 'text-ink-subtle'} />
                         </div>
                         <span
                             className={`font-serif text-[9px] font-black uppercase tracking-widest transition-colors ${isActive ? 'text-ink-strong' : 'text-ink-subtle'}`}

@@ -121,7 +121,7 @@ export const DesignPreview: React.FC = () => (
         ))}
         <div className="flex gap-1.5 mt-1">
             {['Weekly', 'Monthly', 'Year'].map((v, i) => (
-                <div key={v} className={`flex-1 text-center text-[8px] font-black uppercase py-1 border-2 border-edge-strong ${i === 0 ? 'bg-theme-primary text-theme-ink shadow-neo-sm' : 'bg-surface text-ink-muted'}`}>{v}</div>
+                <div key={v} className={`flex-1 text-center text-[8px] font-black uppercase py-1 border-2 border-edge-strong ${i === 0 ? 'bg-theme-primary text-white shadow-neo-sm' : 'bg-surface text-ink-muted'}`}>{v}</div>
             ))}
         </div>
     </div>
@@ -180,11 +180,11 @@ export const PdfExportPreview: React.FC = () => {
             <div className="w-[72px] shrink-0 border-2 border-edge-strong bg-surface-muted p-2 space-y-1.5">
                 <div className="text-[7px] font-black uppercase text-ink-subtle tracking-widest">Font</div>
                 {['Serif', 'Sans', 'Mono'].map((f, i) => (
-                    <div key={f} className={`text-[9px] font-bold px-1 py-1 border border-edge-strong ${i === 0 ? 'bg-theme-primary text-theme-ink' : 'bg-surface text-ink-muted'}`}>{f}</div>
+                    <div key={f} className={`text-[9px] font-bold px-1 py-1 border border-edge-strong ${i === 0 ? 'bg-theme-primary text-white' : 'bg-surface text-ink-muted'}`}>{f}</div>
                 ))}
                 <div className="text-[7px] font-black uppercase text-ink-subtle tracking-widest pt-1">Layout</div>
                 {['Multi-page', 'Full page'].map((l, i) => (
-                    <div key={l} className={`text-[8px] font-bold px-1 py-1 border border-edge-strong ${i === 0 ? 'bg-theme-primary text-theme-ink' : 'bg-surface text-ink-muted'}`}>{l}</div>
+                    <div key={l} className={`text-[8px] font-bold px-1 py-1 border border-edge-strong ${i === 0 ? 'bg-theme-primary text-white' : 'bg-surface text-ink-muted'}`}>{l}</div>
                 ))}
             </div>
 

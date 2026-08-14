@@ -96,7 +96,7 @@ export const ShareCustomizationModal: React.FC<ShareCustomizationModalProps> = (
                                         key={message}
                                         onClick={() => setSelectedMessage(message)}
                                         className={`border-2 border-edge-strong px-3 py-2 text-[11px] font-black uppercase tracking-tight transition-all ${selectedMessage === message
-                                            ? 'bg-theme-primary text-theme-ink shadow-none translate-y-0.5'
+                                            ? 'bg-theme-primary text-white shadow-none translate-y-0.5'
                                             : 'bg-surface text-ink-strong shadow-neo-sm hover:-translate-y-0.5'
                                             }`}
                                     >

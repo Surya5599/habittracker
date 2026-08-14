@@ -278,13 +278,13 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                             return !prev;
                         });
                     }}
-                    className={`sm:hidden p-1.5 border-2 transition-all ${searchQuery || searchOpen ? 'bg-theme-primary text-theme-ink border-edge-strong' : 'border-edge text-ink-subtle hover:border-edge-strong hover:text-ink-strong'}`}
+                    className={`sm:hidden p-1.5 border-2 transition-all ${searchQuery || searchOpen ? 'bg-theme-primary text-white border-edge-strong' : 'border-edge text-ink-subtle hover:border-edge-strong hover:text-ink-strong'}`}
                 >
                     <Search size={12} />
                 </button>
                 <button
                     onClick={() => setIsReorderMode(prev => !prev)}
-                    className={`px-2 py-1 text-[10px] font-black uppercase tracking-wide border-2 border-edge-strong transition-all ${isReorderMode ? 'bg-theme-primary text-theme-ink' : 'bg-surface text-ink-strong hover:bg-surface-strong'}`}
+                    className={`px-2 py-1 text-[10px] font-black uppercase tracking-wide border-2 border-edge-strong transition-all ${isReorderMode ? 'bg-theme-primary text-white' : 'bg-surface text-ink-strong hover:bg-surface-strong'}`}
                 >
                     {isReorderMode ? 'Done' : 'Reorder'}
                 </button>
@@ -314,13 +314,13 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                     <div className="px-3 py-2 border-b-2 border-edge-strong grid grid-cols-2 gap-2 bg-surface-strong shrink-0">
                         <button
                             onClick={() => setShowArchived(false)}
-                            className={`w-full min-w-0 h-8 px-2 text-[9px] leading-tight text-center font-black uppercase tracking-normal border-2 transition-all ${!showArchived ? 'bg-theme-primary text-theme-ink border-edge-strong' : 'bg-surface text-ink-subtle border-edge hover:border-edge-strong hover:text-ink-strong'}`}
+                            className={`w-full min-w-0 h-8 px-2 text-[9px] leading-tight text-center font-black uppercase tracking-normal border-2 transition-all ${!showArchived ? 'bg-theme-primary text-white border-edge-strong' : 'bg-surface text-ink-subtle border-edge hover:border-edge-strong hover:text-ink-strong'}`}
                         >
                             Active Habits ({activeHabitsCount})
                         </button>
                         <button
                             onClick={() => setShowArchived(true)}
-                            className={`w-full min-w-0 h-8 px-2 text-[9px] leading-tight text-center font-black uppercase tracking-normal border-2 transition-all ${showArchived ? 'bg-theme-primary text-theme-ink border-edge-strong' : 'bg-surface text-ink-subtle border-edge hover:border-edge-strong hover:text-ink-strong'}`}
+                            className={`w-full min-w-0 h-8 px-2 text-[9px] leading-tight text-center font-black uppercase tracking-normal border-2 transition-all ${showArchived ? 'bg-theme-primary text-white border-edge-strong' : 'bg-surface text-ink-subtle border-edge hover:border-edge-strong hover:text-ink-strong'}`}
                         >
                             Archived ({archivedHabitsCount})
                         </button>
@@ -437,13 +437,13 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                                 <div className="flex flex-wrap gap-1.5">
                                     {primaryFreqButtons.map(({ key, label }) => (
                                         <button key={key} type="button" onClick={() => setFormFreqMode(key)}
-                                            className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wide border-2 transition-all ${formFreqMode === key ? 'bg-theme-primary text-theme-ink border-edge-strong' : 'bg-surface text-ink border-edge-muted hover:border-edge-hover'}`}
+                                            className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wide border-2 transition-all ${formFreqMode === key ? 'bg-theme-primary text-white border-edge-strong' : 'bg-surface text-ink border-edge-muted hover:border-edge-hover'}`}
                                         >{label}</button>
                                     ))}
                                     <select
                                         value={isMoreFreqMode ? formFreqMode : ''}
                                         onChange={e => setFormFreqMode(e.target.value as FreqMode)}
-                                        className={`px-2 py-1.5 text-[10px] font-black uppercase tracking-wide border-2 transition-all outline-none ${isMoreFreqMode ? 'bg-theme-primary text-theme-ink border-edge-strong' : 'bg-surface text-ink border-edge-muted hover:border-edge-hover'}`}
+                                        className={`px-2 py-1.5 text-[10px] font-black uppercase tracking-wide border-2 transition-all outline-none ${isMoreFreqMode ? 'bg-theme-primary text-white border-edge-strong' : 'bg-surface text-ink border-edge-muted hover:border-edge-hover'}`}
                                     >
                                         <option value="" disabled hidden>More…</option>
                                         <option value="custom">Custom</option>
@@ -457,7 +457,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                                             return (
                                                 <button key={i} type="button"
                                                     onClick={() => setFormCustomDays(prev => sel ? prev.filter(d => d !== i) : [...prev, i])}
-                                                    className={`w-7 h-7 text-[10px] font-black border-2 transition-all ${sel ? 'bg-theme-primary text-theme-ink border-edge-strong' : 'bg-surface text-ink-dim border-edge hover:border-edge-muted'}`}
+                                                    className={`w-7 h-7 text-[10px] font-black border-2 transition-all ${sel ? 'bg-theme-primary text-white border-edge-strong' : 'bg-surface text-ink-dim border-edge hover:border-edge-muted'}`}
                                                 >{day}</button>
                                             );
                                         })}

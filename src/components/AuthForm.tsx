@@ -224,7 +224,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
                                         <div>
                                             <label htmlFor="email" className="mb-2 block text-[10px] font-black uppercase tracking-[0.18em] text-ink-muted">Email</label>
                                         <div className="flex items-center gap-3 rounded-2xl border-3 border-edge-strong bg-surface px-4 py-3">
-                                            <div className={`flex h-8 w-8 items-center justify-center rounded-xl border-2 border-edge-strong ${emailValid(email) ? 'bg-theme-primary text-theme-ink' : 'bg-surface-strong text-ink-strong'}`}>
+                                            <div className={`flex h-8 w-8 items-center justify-center rounded-xl border-2 border-edge-strong ${emailValid(email) ? 'bg-theme-primary text-white' : 'bg-surface-strong text-ink-strong'}`}>
                                                 {emailValid(email) ? <Check size={14} strokeWidth={3} /> : <Mail size={14} strokeWidth={2.5} />}
                                             </div>
                                             <input
@@ -246,7 +246,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
                                             <div>
                                                 <label htmlFor="password" className="mb-2 block text-[10px] font-black uppercase tracking-[0.18em] text-ink-muted">Password</label>
                                                 <div className="flex items-center gap-3 rounded-2xl border-3 border-edge-strong bg-surface px-4 py-3">
-                                                    <div className={`flex h-8 w-8 items-center justify-center rounded-xl border-2 border-edge-strong ${fieldFilled(password) ? 'bg-theme-primary text-theme-ink' : 'bg-surface-strong text-ink-strong'}`}>
+                                                    <div className={`flex h-8 w-8 items-center justify-center rounded-xl border-2 border-edge-strong ${fieldFilled(password) ? 'bg-theme-primary text-white' : 'bg-surface-strong text-ink-strong'}`}>
                                                         {fieldFilled(password) ? <Check size={14} strokeWidth={3} /> : <Lock size={14} strokeWidth={2.5} />}
                                                     </div>
                                                     <input

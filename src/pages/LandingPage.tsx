@@ -457,7 +457,7 @@ const InteractiveCard: React.FC = () => {
                     </span>
                   )}
                 </div>
-                <div className={`flex h-5 w-5 items-center justify-center rounded border-2 border-edge-strong transition-colors duration-300 ${habit.done ? 'bg-theme-primary text-theme-ink' : 'bg-surface'}`}>
+                <div className={`flex h-5 w-5 items-center justify-center rounded border-2 border-edge-strong transition-colors duration-300 ${habit.done ? 'bg-theme-primary text-white' : 'bg-surface'}`}>
                   {habit.done && <Check className="h-3 w-3 stroke-[4]" />}
                 </div>
               </div>
@@ -490,7 +490,7 @@ const InteractiveCard: React.FC = () => {
             )}
             {tasks.map((task) => (
               <div key={task.text} className="flex items-center gap-3">
-                <div className={`flex h-5 w-5 items-center justify-center rounded border-2 border-edge-strong transition-colors duration-300 ${task.done ? 'bg-theme-primary text-theme-ink' : 'bg-surface'}`}>
+                <div className={`flex h-5 w-5 items-center justify-center rounded border-2 border-edge-strong transition-colors duration-300 ${task.done ? 'bg-theme-primary text-white' : 'bg-surface'}`}>
                   {task.done && <Check className="h-3 w-3 stroke-[4]" />}
                 </div>
                 <span className={`text-sm font-bold transition-colors duration-300 ${task.done ? 'text-ink-subtle line-through decoration-2' : 'text-ink'}`}>

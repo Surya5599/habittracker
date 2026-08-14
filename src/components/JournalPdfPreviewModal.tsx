@@ -328,7 +328,7 @@ export const JournalPdfPreviewModal: React.FC<JournalPdfPreviewModalProps> = ({
                                     <button
                                         key={f}
                                         onClick={() => setPdfFont(f)}
-                                        className={`px-3 py-2.5 text-left transition-colors ${pdfFont === f ? 'bg-theme-primary text-theme-ink' : 'bg-surface text-ink hover:bg-surface-muted'}`}
+                                        className={`px-3 py-2.5 text-left transition-colors ${pdfFont === f ? 'bg-theme-primary text-white' : 'bg-surface text-ink hover:bg-surface-muted'}`}
                                     >
                                         <p
                                             className="text-[12px] font-bold leading-none"
@@ -358,10 +358,10 @@ export const JournalPdfPreviewModal: React.FC<JournalPdfPreviewModalProps> = ({
                                     <button
                                         key={opt.value}
                                         onClick={() => setPdfLayout(opt.value)}
-                                        className={`px-3 py-2.5 text-left transition-colors ${pdfLayout === opt.value ? 'bg-theme-primary text-theme-ink' : 'bg-surface text-ink hover:bg-surface-muted'}`}
+                                        className={`px-3 py-2.5 text-left transition-colors ${pdfLayout === opt.value ? 'bg-theme-primary text-white' : 'bg-surface text-ink hover:bg-surface-muted'}`}
                                     >
                                         <p className="text-[10px] font-black uppercase tracking-wide leading-none">{opt.label}</p>
-                                        <p className={`text-[9px] mt-1 leading-snug ${pdfLayout === opt.value ? 'text-theme-ink/70' : 'text-ink-subtle'}`}>{opt.desc}</p>
+                                        <p className={`text-[9px] mt-1 leading-snug ${pdfLayout === opt.value ? 'text-white/70' : 'text-ink-subtle'}`}>{opt.desc}</p>
                                     </button>
                                 ))}
                             </div>

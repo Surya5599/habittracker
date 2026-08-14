@@ -198,7 +198,7 @@ export const Header: React.FC<HeaderProps> = ({
         `flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-all duration-100 border ${active ? 'text-orange-600 bg-orange-50 border-orange-200 shadow-[2px_2px_0px_0px_rgba(234,88,12,0.22)]' : 'text-ink-muted border-transparent hover:text-ink-strong hover:bg-surface-muted hover:border-edge hover:shadow-neo-sm'}`;
 
     const viewTab = (active: boolean) =>
-        `px-3 py-1 text-xs font-semibold rounded-lg transition-all duration-100 ${active ? 'bg-theme-primary text-theme-ink shadow-neo-sm' : 'text-ink-muted hover:text-ink-strong hover:bg-surface hover:shadow-neo-sm'}`;
+        `px-3 py-1 text-xs font-semibold rounded-lg transition-all duration-100 ${active ? 'bg-theme-primary text-white shadow-neo-sm' : 'text-ink-muted hover:text-ink-strong hover:bg-surface hover:shadow-neo-sm'}`;
 
     const logTodayBtnCls = logTodayStatus === 'done'
         ? 'flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-emerald-500 hover:bg-emerald-600 text-ink-inverse transition-colors mr-2'
@@ -483,7 +483,7 @@ export const Header: React.FC<HeaderProps> = ({
                         onClick={() => onSetRightPanel?.('ai')}
                         className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 border-2 border-edge-strong text-[10px] font-black uppercase tracking-wide transition-all duration-100 ml-1 ${
                             rightPanel === 'ai'
-                                ? 'bg-theme-primary text-theme-ink translate-x-[2px] translate-y-[2px]'
+                                ? 'bg-theme-primary text-white translate-x-[2px] translate-y-[2px]'
                                 : 'bg-surface text-ink-strong shadow-neo-sm hover:shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px]'
                         }`}
                     >
@@ -500,7 +500,7 @@ export const Header: React.FC<HeaderProps> = ({
                     onClick={() => onSetRightPanel?.('insights')}
                     className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 border-2 border-edge-strong text-[10px] font-black uppercase tracking-wide transition-all duration-100 ml-1 ${
                         rightPanel === 'insights'
-                            ? 'bg-theme-primary text-theme-ink translate-x-[2px] translate-y-[2px]'
+                            ? 'bg-theme-primary text-white translate-x-[2px] translate-y-[2px]'
                             : 'bg-surface text-ink-strong shadow-neo-sm hover:shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px]'
                     }`}
                 >
@@ -516,7 +516,7 @@ export const Header: React.FC<HeaderProps> = ({
                     onClick={onToggleStats}
                     className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 border-2 border-edge-strong text-[10px] font-black uppercase tracking-wide transition-all duration-100 ml-1 ${
                         statsOpen
-                            ? 'bg-theme-primary text-theme-ink translate-x-[2px] translate-y-[2px]'
+                            ? 'bg-theme-primary text-white translate-x-[2px] translate-y-[2px]'
                             : 'bg-surface text-ink-strong shadow-neo-sm hover:shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px]'
                     }`}
                 >

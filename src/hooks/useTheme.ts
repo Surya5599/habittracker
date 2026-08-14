@@ -36,6 +36,7 @@ const readableInk = (hex: string) =>
         ? INK_ON_THEME
         : INVERSE_ON_THEME);
 
+
 export const useTheme = () => {
     const [theme, setTheme] = useState<Theme>(() => {
         const saved = localStorage.getItem('habit_theme');

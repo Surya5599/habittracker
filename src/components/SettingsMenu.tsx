@@ -142,7 +142,7 @@ export const SettingsMenu: React.FC<SettingsMenuProps> = ({
                                         <button
                                             key={lang}
                                             onClick={() => { setLanguage(lang); setExpandedSection(null); }}
-                                            className={`flex items-center justify-center py-2 rounded border transition-all ${language === lang ? 'bg-theme-primary text-theme-ink border-edge-strong' : 'bg-surface text-ink-muted border-edge hover:border-edge-muted'}`}
+                                            className={`flex items-center justify-center py-2 rounded border transition-all ${language === lang ? 'bg-theme-primary text-white border-edge-strong' : 'bg-surface text-ink-muted border-edge hover:border-edge-muted'}`}
                                         >
                                             <span className="text-[10px] font-bold uppercase">{lang === 'en' ? 'ENG' : lang.toUpperCase()}</span>
                                         </button>

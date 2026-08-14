@@ -217,7 +217,7 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                                         onClick={() => setMobileDayIndex(i)}
                                         className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-colors ${
                                             isActive
-                                                ? 'bg-theme-primary text-theme-ink'
+                                                ? 'bg-theme-primary text-white'
                                                 : isToday
                                                 ? 'bg-edge text-ink-strong'
                                                 : 'text-ink-subtle hover:text-ink-strong hover:bg-surface-strong'
@@ -270,7 +270,7 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                                     <div
                                         key={i}
                                         className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider ${
-                                            isToday ? 'bg-theme-primary text-theme-ink' : 'text-ink-subtle'
+                                            isToday ? 'bg-theme-primary text-white' : 'text-ink-subtle'
                                         }`}
                                     >
                                         {label}

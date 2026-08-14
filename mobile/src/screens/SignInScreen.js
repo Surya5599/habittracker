@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, TouchableOpacity, Alert, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
+import * as Linking from 'expo-linking';
 import tw from 'twrnc';
 import { supabase } from '../lib/supabase';
 import { NeoButton, NeoInput, NeoCard } from '../components/NeoComponents';
@@ -12,6 +13,7 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
     const [loading, setLoading] = useState(false);
     const [isResetMode, setIsResetMode] = useState(false);
     const [isNewAccount, setIsNewAccount] = useState(false);
+    const authCallbackUrl = Linking.createURL('auth/callback');
 
     const isInvalidRefreshTokenError = (error) => {
         const message = (error?.message || '').toLowerCase();
@@ -80,7 +82,9 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
         setLoading(true);
 
         if (isResetMode) {
-            const { error } = await supabase.auth.resetPasswordForEmail(email);
+            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: authCallbackUrl,
+            });
             if (error) {
                 Alert.alert('Error', getFriendlyAuthMessage(error, 'auth.resetFailed'));
             } else {
@@ -101,7 +105,7 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
             const { error: signUpError, data: signUpData } = await supabase.auth.signUp({
                 email,
                 password,
-                options: { emailRedirectTo: 'habicard://auth/callback' },
+                options: { emailRedirectTo: authCallbackUrl },
             });
 
             if (signUpError) {

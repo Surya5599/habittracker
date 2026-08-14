@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, SafeAreaView, TouchableOpacity } from 'react-native';
 import tw from 'twrnc';
 import { DailyCard } from '../components/DailyCard';
-import { WeeklyCard } from '../components/WeeklyCard';
 
 import { THEMES } from '../constants';
+import { getPalette } from '../constants/theme';
+import { BOTTOM_NAV_HEIGHT } from '../components/BottomNav';
 import Svg, { Circle } from 'react-native-svg';
 
 export const WeeklyScreen = ({
@@ -24,8 +25,17 @@ export const WeeklyScreen = ({
     colorMode = 'light',
     cardStyle = 'large',
     initialCardView = 'habits',
+    bottomNavHeight = BOTTOM_NAV_HEIGHT,
 }) => {
     const [mobileDayIndex, setMobileDayIndex] = useState(0);
+    const [slotHeight, setSlotHeight] = useState(0);
+
+    // Undefined until the slot is measured, which leaves the card on its own fallback
+    // for a single frame.
+    const CARD_GAP = 10;
+    const dailyCardHeight = slotHeight > 0
+        ? Math.max(260, slotHeight - bottomNavHeight - CARD_GAP)
+        : undefined;
 
     const getWeekStartIndex = (date, start) => {
         const d = date.getDay();
@@ -118,9 +128,16 @@ export const WeeklyScreen = ({
     const progressOffset = circumference - (weekProgress.percentage / 100) * circumference;
 
     return (
-        <View style={[tw`flex-1`, { backgroundColor: colorMode === 'dark' ? '#000000' : '#f3f4f6' }]}>
-            {/* Daily Card and Weekly Card container */}
-            <View style={tw`px-4 flex-1 pt-2`}>
+        <View style={[tw`flex-1`, { backgroundColor: getPalette(colorMode).pageBg }]}>
+            {/* The day card is the whole screen now. Measured rather than the old
+                `screenHeight - 220` guess, so it ends exactly at the nav. */}
+            <View
+                style={tw`px-4 flex-1 pt-2`}
+                onLayout={(e) => {
+                    const h = Math.round(e.nativeEvent.layout.height);
+                    if (h > 0 && h !== slotHeight) setSlotHeight(h);
+                }}
+            >
                 <DailyCard
                     date={currentDate}
                     habits={habits}
@@ -139,21 +156,7 @@ export const WeeklyScreen = ({
                     notes={notes}
                     cardStyle={cardStyle}
                     initialView={initialCardView}
-                />
-                {/* 
-                  Note: If WeeklyCard is also present, it will follow the DailyCard. 
-                  Since DailyCard height is screen-relative, WeeklyCard might be off-screen.
-                  However, the user wants the card fixed, so we follow that lead.
-                */}
-                <WeeklyCard
-                    habits={habits}
-                    completions={completions}
-                    theme={theme}
-                    toggleCompletion={toggleCompletion}
-                    date={currentDate}
-                    weekOffset={weekOffset}
-                    weekStart={weekStart}
-                    colorMode={colorMode}
+                    cardHeight={dailyCardHeight}
                 />
             </View>
         </View>

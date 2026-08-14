@@ -1,12 +1,34 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, ScrollView, TouchableOpacity, Modal, TextInput } from 'react-native';
+import { View, Text, FlatList, ScrollView, TouchableOpacity, Modal, TextInput, ActivityIndicator } from 'react-native';
 import tw from 'twrnc';
-import { ChevronRight, BookOpen, CheckSquare, X, Meh, ListTodo, Search } from 'lucide-react-native';
+import { ChevronRight, X, Meh, Search, CheckSquare, BookOpen, ScrollText, Check } from 'lucide-react-native';
 import { isCompleted as checkCompleted } from '../utils/stats';
 import { DailyCard } from '../components/DailyCard';
 import { MOODS } from '../constants';
+import { dayMood } from '../utils/mood';
+import { BACKLOG_KEY, isDateKey, todayKey, toDateKey, parseDateKey, parseDateStringLocal } from '../utils/dateKeys';
+import { ScreenScaffold } from '../components/ScreenScaffold';
+import { BOTTOM_NAV_HEIGHT } from '../components/BottomNav';
+import { getPalette, alpha } from '../constants/theme';
 
+const SEARCH_DEBOUNCE_MS = 350;
+
+// "Habits 3/5" under a journal entry. A finished count goes full-contrast so a
+// complete day is legible at a glance without needing a colour to carry it.
+const MetaStat = ({ icon: Icon, label, done, total, mutedColor, valueColor, doneColor }) => {
+    const complete = total > 0 && done === total;
+    const labelColor = complete ? doneColor : mutedColor;
+    return (
+        <View style={tw`flex-row items-center gap-1.5`}>
+            <Icon size={11} color={labelColor} strokeWidth={2.5} />
+            <Text style={[tw`text-[9px] font-black uppercase tracking-widest`, { color: labelColor }]}>{label}</Text>
+            <Text style={[tw`text-[10px] font-black`, { color: complete ? doneColor : valueColor }]}>
+                {done}/{total}
+            </Text>
+        </View>
+    );
+};
 
 export const MonthlyView = ({
     habits,
@@ -19,18 +41,37 @@ export const MonthlyView = ({
     updateNote,
     colorMode = 'light',
     cardStyle = 'large',
-    initialSelectedDate = null
+    initialSelectedDate = null,
+    // Paging window from useDailyNotes — older logs load as the list is scrolled.
+    windowStartKey = null,
+    hasMore = false,
+    isLoadingMore = false,
+    onLoadMore,
+    onSearchNotes,
+    isSearchingNotes = false,
+    onEnsureDate,
+    bottomNavHeight = BOTTOM_NAV_HEIGHT,
+    // When the Journal uses this screen as its index, a result should turn the book to
+    // that page rather than stack a second day view on top of it.
+    onSelectDate = null,
 }) => {
     const { t, i18n } = useTranslation();
-    const [mode, setMode] = useState('journals'); // 'journals' | 'habits' | 'tasks'
     const [selectedDate, setSelectedDate] = useState(null);
     const [selectedFocusView, setSelectedFocusView] = useState('habits');
     const [searchQuery, setSearchQuery] = useState('');
 
     const openDateCard = (date, focusView) => {
+        if (onSelectDate) { onSelectDate(date, focusView); return; }
         setSelectedFocusView(focusView);
         setSelectedDate(date);
     };
+
+    // The day-detail card can be paged back past the loaded window; make sure the
+    // date being viewed is actually fetched.
+    useEffect(() => {
+        if (!selectedDate || !onEnsureDate) return;
+        onEnsureDate(toDateKey(selectedDate));
+    }, [selectedDate, onEnsureDate]);
 
     useEffect(() => {
         if (!initialSelectedDate) return;
@@ -39,123 +80,354 @@ export const MonthlyView = ({
         setSelectedDate(d);
     }, [initialSelectedDate]);
 
-    const generateLast30Days = () => {
-        const days = [];
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+
+    // Ask the server for matches outside the loaded window so searching isn't
+    // limited to whatever has been paged in. Results land in `notes`.
+    useEffect(() => {
+        if (!onSearchNotes || normalizedQuery.length < 2) return;
+        const timer = setTimeout(() => { onSearchNotes(normalizedQuery); }, SEARCH_DEBOUNCE_MS);
+        return () => clearTimeout(timer);
+    }, [normalizedQuery, onSearchNotes]);
+
+    const {
+        pageBg, panelBg, panelSoftBg, cardBorder: panelBorder, divider,
+        textPrimary, textSecondary, textMuted,
+    } = getPalette(colorMode);
+    const accent = theme?.primary || '#C19A9A';
+
+    // Newest-first candidate dates. Normally the loaded window; while searching,
+    // every date we hold a note for, so server matches from older months show up.
+    const days = useMemo(() => {
         const today = new Date();
-        for (let i = 0; i < 30; i++) {
-            const d = new Date(today);
-            d.setDate(today.getDate() - i);
-            days.push(d);
+        today.setHours(0, 0, 0, 0);
+        const todayStr = todayKey();
+        const keys = new Set();
+
+        const oldest = windowStartKey || toDateKey(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 29));
+        const cursor = new Date(today);
+        while (toDateKey(cursor) >= oldest) {
+            keys.add(toDateKey(cursor));
+            cursor.setDate(cursor.getDate() - 1);
         }
-        return days;
-    };
 
-    const days = generateLast30Days();
+        if (normalizedQuery.length >= 2) {
+            Object.keys(notes || {}).forEach((key) => {
+                if (key === BACKLOG_KEY || !isDateKey(key) || key > todayStr) return;
+                keys.add(key);
+            });
+        }
 
-    const isDark = colorMode === 'dark';
-    const panelBg = isDark ? '#0a0a0a' : '#ffffff';
-    const panelSoftBg = isDark ? '#111111' : '#f3f4f6';
-    const panelBorder = isDark ? '#ffffff' : '#f3f4f6';
-    const divider = isDark ? '#ffffff' : '#f9fafb';
-    const textPrimary = isDark ? '#f5f5f5' : '#161616';
-    const textMuted = isDark ? '#a3a3a3' : '#9ca3af';
+        return Array.from(keys).sort((a, b) => b.localeCompare(a)).map(parseDateKey);
+    }, [normalizedQuery, notes, windowStartKey]);
+
     const isHabitStartedByDate = (habit, date) => {
         if (!habit?.createdAt) return true;
-        const createdDate = new Date(habit.createdAt);
-        createdDate.setHours(0, 0, 0, 0);
+        const createdDate = parseDateStringLocal(habit.createdAt);
+        if (!createdDate) return true;
         const target = new Date(date);
         target.setHours(0, 0, 0, 0);
         return target >= createdDate;
     };
 
-    const getHabitActivityForDate = (date) => {
-        const dailyDue = habits.filter(h =>
-            isHabitStartedByDate(h, date) &&
-            !h.weeklyTarget &&
-            (!h.frequency || h.frequency.includes(date.getDay()))
-        );
-        const flexibleDone = habits.filter(h =>
-            isHabitStartedByDate(h, date) &&
-            h.weeklyTarget &&
-            checkCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear())
-        );
-        return [...dailyDue, ...flexibleDone];
+    // This screen is a journal reader first: one row per written entry, newest first,
+    // with that day's habit/task numbers attached as a compact meta strip. Days with
+    // no writing stay out of the default feed — they surface only as search hits.
+    const rows = useMemo(() => {
+        const summarize = (date) => {
+            const dateKey = toDateKey(date);
+            const dayData = notes?.[dateKey] || {};
+
+            const dailyDue = habits.filter(h =>
+                isHabitStartedByDate(h, date) &&
+                !h.weeklyTarget &&
+                (!h.frequency || h.frequency.includes(date.getDay())) &&
+                !(isHabitInactive && isHabitInactive(h.id, dateKey))
+            );
+            const flexibleDone = habits.filter(h =>
+                isHabitStartedByDate(h, date) &&
+                h.weeklyTarget &&
+                checkCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear())
+            );
+            // Only id and done are needed: habits contribute the "Habits 3/5" count but
+            // are deliberately not searchable, so the name never leaves this scope.
+            const habitActivity = [...dailyDue, ...flexibleDone].map(h => ({
+                id: h.id,
+                done: checkCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear()),
+            }));
+            const habitsDone = habitActivity.filter(h => h.done).length;
+
+            const tasks = Array.isArray(dayData.tasks) ? dayData.tasks : [];
+            const tasksDone = tasks.filter(task => task.completed).length;
+
+            const entries = Array.isArray(dayData.journal)
+                ? dayData.journal
+                : (dayData.journal ? [{ id: 'legacy', text: dayData.journal, mood: dayData.mood }] : []);
+            const written = entries.filter(e => (e.text || '').trim());
+            // Averaged across the day’s entries — see utils/mood.
+            const mood = dayMood(written, dayData.mood);
+
+            const dateLabel = date.toLocaleDateString(i18n.language, {
+                weekday: 'long', month: 'short', day: 'numeric', year: 'numeric',
+            });
+
+            return {
+                date,
+                dateKey,
+                habitActivity,
+                habitsDone,
+                tasks,
+                tasksDone,
+                entries: written,
+                mood,
+                dateLabel: dateLabel.toLowerCase(),
+                // Journal text, task text, and the date — habit names are excluded on
+                // purpose. Habits are due on most days, so matching their names turned a
+                // search into a wall of days that had nothing to do with what you typed.
+                searchBlob: [
+                    dateLabel,
+                    written.map(e => e.text || '').join(' '),
+                    tasks.map(task => task.text || '').join(' '),
+                ].join(' ').toLowerCase(),
+            };
+        };
+
+        const out = [];
+        days.forEach((date) => {
+            const day = summarize(date);
+            if (normalizedQuery && !day.searchBlob.includes(normalizedQuery)) return;
+
+            const base = {
+                date: day.date,
+                dateKey: day.dateKey,
+                habitActivity: day.habitActivity,
+                habitsDone: day.habitsDone,
+                tasks: day.tasks,
+                tasksDone: day.tasksDone,
+                dayMood: day.mood,
+            };
+
+            if (day.entries.length === 0) {
+                // No writing. Only worth a row when the query matched a task or the date.
+                if (normalizedQuery) {
+                    out.push({
+                        ...base,
+                        key: `${day.dateKey}-day`,
+                        entry: null,
+                        showMeta: true,
+                        // Say what matched, or the row is an unexplained result.
+                        matchTaskText: day.tasks.find(tk => (tk.text || '').toLowerCase().includes(normalizedQuery))?.text || '',
+                    });
+                }
+                return;
+            }
+
+            // When a query matches specific entries, show just those; when it matched
+            // the day some other way (a task, a habit, the date), show the whole day.
+            const textHits = normalizedQuery
+                ? day.entries.filter(e => (e.text || '').toLowerCase().includes(normalizedQuery))
+                : day.entries;
+            const shown = textHits.length > 0 ? textHits : day.entries;
+
+            shown.forEach((entry, i) => {
+                out.push({
+                    ...base,
+                    key: `${day.dateKey}-${entry.id || i}`,
+                    entry,
+                    // Repeating the day's counts on every entry of one day is noise.
+                    showMeta: i === 0,
+                });
+            });
+        });
+        return out;
+    }, [days, habits, completions, isHabitInactive, notes, normalizedQuery, i18n.language]);
+
+    const handleEndReached = useCallback(() => {
+        if (hasMore && !isLoadingMore && onLoadMore) onLoadMore();
+    }, [hasMore, isLoadingMore, onLoadMore]);
+
+    const listFooter = () => {
+        if (isLoadingMore) {
+            return (
+                <View style={tw`py-6 items-center`}>
+                    <ActivityIndicator size="small" color={accent} />
+                </View>
+            );
+        }
+        if (hasMore) {
+            return (
+                <TouchableOpacity
+                    onPress={onLoadMore}
+                    style={[tw`mx-4 mt-4 py-3 rounded-2xl border items-center`, { borderColor: panelBorder, backgroundColor: panelBg }]}
+                >
+                    <Text style={[tw`text-[10px] font-black uppercase tracking-widest`, { color: textSecondary }]}>
+                        {t('monthlyView.loadOlder', { defaultValue: 'Load older logs' })}
+                    </Text>
+                </TouchableOpacity>
+            );
+        }
+        if (windowStartKey) {
+            const since = parseDateKey(windowStartKey).toLocaleDateString(i18n.language, { month: 'short', day: 'numeric', year: 'numeric' });
+            return (
+                <Text style={[tw`text-[10px] font-bold text-center mt-4 px-6`, { color: textMuted }]}>
+                    {t('monthlyView.allLoaded', { defaultValue: 'History loaded back to {{date}}', date: since })}
+                </Text>
+            );
+        }
+        return null;
     };
 
-    const normalizedQuery = searchQuery.trim().toLowerCase();
-    const visibleDays = days.filter((date) => {
-        const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-        const dayData = notes?.[dateKey] || {};
-        const tasks = Array.isArray(dayData.tasks) ? dayData.tasks : [];
-        const journalEntries = Array.isArray(dayData.journal) ? dayData.journal : (dayData.journal ? [{ text: dayData.journal }] : []);
-        const journalText = journalEntries.map(e => e.text || '').filter(Boolean).join(' ').trim();
-        const habitActivity = getHabitActivityForDate(date);
+    const emptyState = (
+        <View style={tw`px-4 pt-3`}>
+            {isSearchingNotes ? (
+                <View style={tw`py-8 items-center`}>
+                    <ActivityIndicator size="small" color={accent} />
+                </View>
+            ) : (
+                <View style={[
+                    tw`rounded-2xl border items-center px-6 py-8`,
+                    { backgroundColor: panelBg, borderColor: panelBorder },
+                ]}>
+                    <View style={[tw`w-11 h-11 rounded-2xl items-center justify-center`, { backgroundColor: accent + alpha.soft }]}>
+                        <ScrollText size={20} color={textPrimary} />
+                    </View>
+                    <Text style={[tw`mt-3 text-[11px] font-black uppercase tracking-widest text-center`, { color: textPrimary }]}>
+                        {normalizedQuery
+                            ? t('monthlyView.noResultsTitle', { defaultValue: 'No matches' })
+                            : t('monthlyView.emptyTitle', { defaultValue: 'Nothing written yet' })}
+                    </Text>
+                    <Text style={[tw`mt-1.5 text-xs font-bold leading-snug text-center`, { color: textMuted }]}>
+                        {normalizedQuery
+                            ? t('monthlyView.noResultsBody', { defaultValue: 'Search covers journal entries, tasks, and dates like "Aug 3".' })
+                            : t('monthlyView.emptyBody', { defaultValue: 'Journal entries you write on the day card collect here, newest first, ready to read back.' })}
+                    </Text>
+                </View>
+            )}
+        </View>
+    );
 
-        const hasJournal = journalText.length > 0;
+    const renderRow = useCallback(({ item: row }) => {
+        const { date, entry, showMeta, habitActivity, habitsDone, tasks, tasksDone, dayMood } = row;
+        const dayName = date.toLocaleDateString(i18n.language, { weekday: 'short' });
+        const dayNum = date.getDate();
+        const monthName = date.toLocaleDateString(i18n.language, { month: 'short' });
+
+        const mood = entry?.mood ?? dayMood;
+        const moodObj = mood ? MOODS.find(m => m.value === mood) : null;
+        const MoodIcon = moodObj?.icon || Meh;
+        const moodColor = moodObj?.color || textMuted;
+
         const hasHabits = habitActivity.length > 0;
         const hasTasks = tasks.length > 0;
+        // Meta is a footnote under an entry, but it's the whole point of a search hit
+        // that has no writing on it.
+        const showMetaStrip = showMeta && (hasHabits || hasTasks);
 
-        const modeMatch =
-            mode === 'journals' ? hasJournal :
-                mode === 'habits' ? hasHabits :
-                    hasTasks;
+        return (
+            <TouchableOpacity
+                onPress={() => openDateCard(date, entry ? 'journal' : hasTasks ? 'tasks' : 'habits')}
+                style={[
+                    tw`mx-4 mt-3 border rounded-2xl p-3.5 flex-row items-center`,
+                    { backgroundColor: panelBg, borderColor: moodObj ? moodColor : panelBorder },
+                ]}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+            >
+                <View style={[
+                    tw`mr-3 w-[44px] rounded-xl border py-2 items-center`,
+                    {
+                        backgroundColor: moodObj ? moodColor + '18' : panelSoftBg,
+                        borderColor: moodObj ? moodColor : panelBorder,
+                    },
+                ]}>
+                    <Text style={[tw`text-[9px] font-black uppercase`, { color: moodObj ? moodColor : accent }]} numberOfLines={1}>{dayName}</Text>
+                    <Text style={[tw`text-xl font-black leading-tight`, { color: textPrimary }]}>{dayNum}</Text>
+                    <Text style={[tw`text-[9px] font-black uppercase`, { color: textMuted }]} numberOfLines={1}>{monthName}</Text>
+                </View>
 
-        if (!modeMatch) return false;
-        if (!normalizedQuery) return true;
+                <View style={[
+                    tw`flex-1 border-l pl-3.5 py-0.5 min-h-[40px] justify-center`,
+                    { borderColor: moodObj ? moodColor + alpha.strong : divider },
+                ]}>
+                    {/* The entry itself — the thing you came here to read. */}
+                    {entry ? (
+                        <View style={tw`flex-row items-start gap-2`}>
+                            <View style={[tw`rounded-full p-1 mt-0.5`, { backgroundColor: moodColor + '22' }]}>
+                                <MoodIcon size={14} color={moodColor} strokeWidth={moodObj ? 2.5 : 2} />
+                            </View>
+                            <Text
+                                style={[tw`flex-1 text-sm font-bold leading-snug`, { color: textSecondary }]}
+                                numberOfLines={4}
+                            >
+                                {entry.text}
+                            </Text>
+                        </View>
+                    ) : row.matchTaskText ? (
+                        <View style={tw`flex-row items-center gap-2`}>
+                            <CheckSquare size={13} color={textMuted} strokeWidth={2.5} />
+                            <Text style={[tw`flex-1 text-sm font-bold`, { color: textSecondary }]} numberOfLines={2}>
+                                {row.matchTaskText}
+                            </Text>
+                        </View>
+                    ) : (
+                        <View style={tw`flex-row items-center gap-2`}>
+                            <BookOpen size={13} color={textMuted} strokeWidth={2.5} />
+                            <Text style={[tw`text-xs font-bold italic`, { color: textMuted }]}>
+                                {t('monthlyView.noEntry', { defaultValue: 'No entry written' })}
+                            </Text>
+                        </View>
+                    )}
 
-        const dateLabel = date.toLocaleDateString(i18n.language, {
-            weekday: 'long',
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
-        }).toLowerCase();
-        const taskText = tasks.map(task => task.text || '').join(' ').toLowerCase();
-        const habitText = habitActivity.map(h => h.name || '').join(' ').toLowerCase();
+                    {showMetaStrip && (
+                        <View style={[
+                            tw`flex-row items-center flex-wrap gap-x-4 gap-y-1 mt-2 pt-2`,
+                            { borderTopWidth: 1, borderTopColor: divider },
+                        ]}>
+                            {hasHabits && (
+                                <MetaStat
+                                    icon={Check}
+                                    label={t('monthlyView.habits', { defaultValue: 'Habits' })}
+                                    done={habitsDone}
+                                    total={habitActivity.length}
+                                    mutedColor={textMuted}
+                                    valueColor={textSecondary}
+                                    doneColor={textPrimary}
+                                />
+                            )}
+                            {hasTasks && (
+                                <MetaStat
+                                    icon={CheckSquare}
+                                    label={t('bottomNav.todo', { defaultValue: 'To-Do' })}
+                                    done={tasksDone}
+                                    total={tasks.length}
+                                    mutedColor={textMuted}
+                                    valueColor={textSecondary}
+                                    doneColor={textPrimary}
+                                />
+                            )}
+                        </View>
+                    )}
+                </View>
 
-        return dateLabel.includes(normalizedQuery)
-            || journalText.toLowerCase().includes(normalizedQuery)
-            || taskText.includes(normalizedQuery)
-            || habitText.includes(normalizedQuery);
-    });
-
-    // For journal mode: one row per entry, not per day
-    const journalRows = visibleDays.flatMap((date) => {
-        const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-        const dayData = notes?.[dateKey] || {};
-        const entries = Array.isArray(dayData.journal)
-            ? dayData.journal
-            : (dayData.journal ? [{ id: 'legacy', text: dayData.journal, mood: dayData.mood }] : []);
-        return entries.filter(e => (e.text || '').trim()).map(entry => ({ date, dateKey, entry }));
-    });
+                <View style={tw`ml-2`}>
+                    <ChevronRight size={18} color={textMuted} strokeWidth={3} />
+                </View>
+            </TouchableOpacity>
+        );
+    }, [accent, divider, i18n.language, panelBg, panelBorder, panelSoftBg, t, textMuted, textPrimary, textSecondary]);
 
     return (
-        <View style={[tw`flex-1`, { backgroundColor: isDark ? '#000000' : '#f9fafb' }]}>
-            {/* Header / Toggle */}
-            <View style={[tw`p-5 border-b`, { backgroundColor: panelBg, borderColor: panelBorder }]}>
-                <View style={[tw`flex-row p-1.5 rounded-2xl border`, { backgroundColor: panelSoftBg, borderColor: panelBorder }]}>
-                    <TouchableOpacity
-                        onPress={() => setMode('journals')}
-                        style={[tw`flex-1 py-3 rounded-xl items-center flex-row justify-center gap-2`, mode === 'journals' && { backgroundColor: panelBg }]}
-                    >
-                        <BookOpen size={16} color={mode === 'journals' ? theme.primary : '#a1a1aa'} />
-                        <Text style={[tw`font-black uppercase text-[11px] tracking-widest`, mode === 'journals' ? { color: theme.primary } : { color: textMuted }]}>{t('monthlyView.journals')}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        onPress={() => setMode('habits')}
-                        style={[tw`flex-1 py-3 rounded-xl items-center flex-row justify-center gap-2`, mode === 'habits' && { backgroundColor: panelBg }]}
-                    >
-                        <CheckSquare size={16} color={mode === 'habits' ? theme.primary : '#a1a1aa'} />
-                        <Text style={[tw`font-black uppercase text-[11px] tracking-widest`, mode === 'habits' ? { color: theme.primary } : { color: textMuted }]}>{t('monthlyView.habits')}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        onPress={() => setMode('tasks')}
-                        style={[tw`flex-1 py-3 rounded-xl items-center flex-row justify-center gap-2`, mode === 'tasks' && { backgroundColor: panelBg }]}
-                    >
-                        <ListTodo size={16} color={mode === 'tasks' ? theme.primary : '#a1a1aa'} />
-                        <Text style={[tw`font-black uppercase text-[11px] tracking-widest`, mode === 'tasks' ? { color: theme.primary } : { color: textMuted }]}>{t('monthlyView.tasks')}</Text>
-                    </TouchableOpacity>
-                </View>
-                <View style={[tw`mt-3 flex-row items-center rounded-xl border px-3`, { borderColor: panelBorder, backgroundColor: panelSoftBg }]}>
+        <ScreenScaffold
+            colorMode={colorMode}
+            theme={theme}
+            title={t('monthlyView.title', { defaultValue: 'Logs' })}
+            icon={ScrollText}
+            count={rows.length}
+            bottomNavHeight={bottomNavHeight}
+            // The old Journals/Habits/Tasks segments are gone — the feed is the journal,
+            // and search reaches tasks and habits too.
+            headerExtra={(
+                <View style={[tw`flex-row items-center rounded-xl border px-3`, { borderColor: panelBorder, backgroundColor: panelSoftBg }]}>
                     <Search size={14} color={textMuted} />
                     <TextInput
                         value={searchQuery}
@@ -164,120 +436,40 @@ export const MonthlyView = ({
                         placeholderTextColor={textMuted}
                         style={[tw`flex-1 ml-2 py-2.5 text-sm font-bold`, { color: textPrimary }]}
                     />
+                    {isSearchingNotes && <ActivityIndicator size="small" color={accent} />}
+                    {searchQuery.length > 0 && !isSearchingNotes && (
+                        <TouchableOpacity
+                            onPress={() => setSearchQuery('')}
+                            accessibilityRole="button"
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            style={tw`p-1`}
+                        >
+                            <X size={14} color={textMuted} />
+                        </TouchableOpacity>
+                    )}
                 </View>
-            </View>
-
-            <ScrollView
-                style={tw`flex-1`}
-                contentContainerStyle={tw`pb-32 pt-2`}
+            )}
+        >
+            {({ contentBottomInset }) => (
+                <>
+            <FlatList
+                data={rows}
+                keyExtractor={(row) => row.key}
+                renderItem={renderRow}
+                contentContainerStyle={{ paddingTop: 8, paddingBottom: contentBottomInset }}
                 showsVerticalScrollIndicator={false}
-            >
-                {mode === 'journals' ? (
-                    <>
-                        {journalRows.map(({ date, dateKey, entry }) => {
-                            const dayName = date.toLocaleDateString(i18n.language, { weekday: 'short' });
-                            const dayNum = date.getDate();
-                            const monthName = date.toLocaleDateString(i18n.language, { month: 'short' });
-                            const moodObj = entry.mood ? MOODS.find(m => m.value === entry.mood) : null;
-                            const MoodIcon = moodObj?.icon || Meh;
-                            const moodColor = moodObj?.color || (isDark ? '#262626' : '#e5e7eb');
-                            return (
-                                <TouchableOpacity
-                                    key={`${dateKey}-${entry.id || entry.text}`}
-                                    onPress={() => openDateCard(date, 'journal')}
-                                    style={[tw`mx-4 mt-3 border rounded-2xl p-4 flex-row items-center`, { backgroundColor: panelBg, borderColor: moodObj ? moodColor : panelBorder }]}
-                                    activeOpacity={0.7}
-                                >
-                                    <View style={[tw`mr-3 w-[44px] rounded-xl border py-2 items-center`, { backgroundColor: moodObj ? moodColor + '18' : panelSoftBg, borderColor: moodObj ? moodColor : panelBorder }]}>
-                                        <Text style={[tw`text-[9px] font-black uppercase`, { color: moodObj ? moodColor : theme.primary }]} numberOfLines={1}>{dayName}</Text>
-                                        <Text style={[tw`text-xl font-black leading-tight`, { color: textPrimary }]}>{dayNum}</Text>
-                                        <Text style={[tw`text-[9px] font-black uppercase`, { color: moodObj ? moodColor : textMuted }]} numberOfLines={1}>{monthName}</Text>
-                                    </View>
-                                    <View style={[tw`flex-1 border-l pl-4 py-1 min-h-[40px] justify-center`, { borderColor: moodObj ? moodColor + '44' : divider }]}>
-                                        <View style={tw`flex-row items-start gap-2`}>
-                                            <View style={[tw`rounded-full p-1 mt-0.5`, { backgroundColor: moodColor + '22' }]}>
-                                                <MoodIcon size={14} color={moodColor} strokeWidth={moodObj ? 2.5 : 2} />
-                                            </View>
-                                            <Text style={[tw`flex-1 text-sm font-bold leading-snug`, { color: isDark ? '#d1d5db' : '#4b5563' }]} numberOfLines={3}>
-                                                {entry.text}
-                                            </Text>
-                                        </View>
-                                    </View>
-                                    <View style={tw`ml-2`}>
-                                        <ChevronRight size={18} color={isDark ? '#6b7280' : '#e5e7eb'} strokeWidth={3} />
-                                    </View>
-                                </TouchableOpacity>
-                            );
-                        })}
-                        {journalRows.length === 0 && (
-                            <View style={tw`px-6 pt-8`}>
-                                <Text style={[tw`text-center text-sm font-bold`, { color: textMuted }]}>{t('monthlyView.noLogs')}</Text>
-                            </View>
-                        )}
-                    </>
-                ) : (
-                    <>
-                        {visibleDays.map((date) => {
-                            const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-                            const dayData = notes?.[dateKey] || {};
-                            const dayName = date.toLocaleDateString(i18n.language, { weekday: 'short' });
-                            const dayNum = date.getDate();
-                            const monthName = date.toLocaleDateString(i18n.language, { month: 'short' });
-                            const tasks = Array.isArray(dayData.tasks) ? dayData.tasks : [];
-                            const completedTasks = tasks.filter(task => task.completed).length;
-                            const activityHabits = getHabitActivityForDate(date);
-                            return (
-                                <TouchableOpacity
-                                    key={dateKey}
-                                    onPress={() => openDateCard(date, mode === 'tasks' ? 'tasks' : 'habits')}
-                                    style={[tw`mx-4 mt-3 border rounded-2xl p-4 flex-row items-center`, { backgroundColor: panelBg, borderColor: panelBorder }]}
-                                    activeOpacity={0.7}
-                                >
-                                    <View style={[tw`mr-3 w-[44px] rounded-xl border py-2 items-center`, { backgroundColor: panelSoftBg, borderColor: panelBorder }]}>
-                                        <Text style={[tw`text-[9px] font-black uppercase`, { color: theme.primary }]} numberOfLines={1}>{dayName}</Text>
-                                        <Text style={[tw`text-xl font-black leading-tight`, { color: textPrimary }]}>{dayNum}</Text>
-                                        <Text style={[tw`text-[9px] font-black uppercase`, { color: textMuted }]} numberOfLines={1}>{monthName}</Text>
-                                    </View>
-                                    <View style={[tw`flex-1 border-l pl-4 py-1 min-h-[40px] justify-center`, { borderColor: divider }]}>
-                                        {mode === 'habits' ? (
-                                            <View style={tw`flex-row flex-wrap gap-1.5`}>
-                                                {activityHabits.length === 0
-                                                    ? <Text style={[tw`text-xs font-bold italic`, { color: isDark ? '#6b7280' : '#d1d5db' }]}>{t('monthlyView.noActivity')}</Text>
-                                                    : activityHabits.map(h => {
-                                                        const done = checkCompleted(h.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
-                                                        return (
-                                                            <View key={h.id} style={[tw`w-3 h-3 rounded-full`, { backgroundColor: done ? h.color : panelSoftBg, borderWidth: done ? 0 : 1.5, borderColor: panelBorder }]} />
-                                                        );
-                                                    })
-                                                }
-                                            </View>
-                                        ) : (
-                                            <View style={tw`flex-row items-center justify-between`}>
-                                                <Text style={[tw`text-sm font-bold flex-1 mr-2`, { color: isDark ? '#d1d5db' : '#4b5563' }]} numberOfLines={1}>
-                                                    {tasks[0]?.text || 'Task'}
-                                                </Text>
-                                                <Text style={[tw`text-[11px] font-black uppercase`, { color: textMuted }]}>
-                                                    {completedTasks}/{tasks.length}
-                                                </Text>
-                                            </View>
-                                        )}
-                                    </View>
-                                    <View style={tw`ml-2`}>
-                                        <ChevronRight size={18} color={isDark ? '#6b7280' : '#e5e7eb'} strokeWidth={3} />
-                                    </View>
-                                </TouchableOpacity>
-                            );
-                        })}
-                        {visibleDays.length === 0 && (
-                            <View style={tw`px-6 pt-8`}>
-                                <Text style={[tw`text-center text-sm font-bold`, { color: textMuted }]}>{t('monthlyView.noLogs')}</Text>
-                            </View>
-                        )}
-                    </>
-                )}
-            </ScrollView>
+                initialNumToRender={10}
+                maxToRenderPerBatch={10}
+                windowSize={7}
+                onEndReachedThreshold={0.4}
+                onEndReached={handleEndReached}
+                ListEmptyComponent={emptyState}
+                ListFooterComponent={listFooter}
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="on-drag"
+            />
 
-            {/* Popup Modal */}
+            {/* Day detail */}
             <Modal
                 visible={!!selectedDate}
                 transparent={true}
@@ -285,7 +477,7 @@ export const MonthlyView = ({
                 onRequestClose={() => setSelectedDate(null)}
             >
                 <View style={tw`flex-1 justify-end bg-black/50`}>
-                    <View style={[tw`rounded-t-3xl h-[90%] overflow-hidden`, { backgroundColor: isDark ? '#000000' : '#f5f5f4' }]}>
+                    <View style={[tw`rounded-t-3xl h-[90%] overflow-hidden`, { backgroundColor: pageBg }]}>
                         {/* Modal Header */}
                         <View style={[tw`p-5 border-b flex-row items-center justify-between`, { backgroundColor: panelBg, borderColor: panelBorder }]}>
                             <Text style={[tw`text-xl font-black uppercase tracking-widest`, { color: textPrimary }]}>{t('monthlyView.dayDetails')}</Text>
@@ -320,8 +512,8 @@ export const MonthlyView = ({
                                             setSelectedDate(next);
                                         }}
                                         onDateSelect={(d) => setSelectedDate(d)}
-                                        dayData={notes?.[`${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`] || {}}
-                                        dateKey={`${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`}
+                                        dayData={notes?.[toDateKey(selectedDate)] || {}}
+                                        dateKey={toDateKey(selectedDate)}
                                         updateNote={updateNote}
                                         cardStyle={cardStyle}
                                         initialView={selectedFocusView}
@@ -332,6 +524,8 @@ export const MonthlyView = ({
                     </View>
                 </View>
             </Modal>
-        </View>
+                </>
+            )}
+        </ScreenScaffold>
     );
 };

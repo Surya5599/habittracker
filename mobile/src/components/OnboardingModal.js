@@ -15,6 +15,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ChevronLeft, ChevronRight, Globe, Palette, Calendar, Sparkles, X, CheckSquare, ListTodo, Check, Save } from 'lucide-react-native';
 import tw from 'twrnc';
 import { THEMES, MOODS } from '../constants';
+import { LANGUAGES } from '../constants/languages';
 
 const THEME_NAME_KEYS = {
   'Sage & Rose': 'sageRose',
@@ -31,18 +32,6 @@ const THEME_NAME_KEYS = {
   'Plum & Sage': 'plumSage',
   Monochrome: 'monochrome'
 };
-
-const LANGUAGES = [
-  { code: 'en', label: 'English' },
-  { code: 'es', label: 'Español' },
-  { code: 'fr', label: 'Français' },
-  { code: 'de', label: 'Deutsch' },
-  { code: 'it', label: 'Italiano' },
-  { code: 'pt', label: 'Português' },
-  { code: 'ja', label: '日本語' },
-  { code: 'ko', label: '한국어' },
-  { code: 'zh', label: '中文' }
-];
 
 const STEP_CONFIG = [
   {

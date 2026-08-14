@@ -14,6 +14,12 @@ export const THEMES = [
     { name: 'Monochrome', primary: '#2d2d2d', secondary: '#6b6b6b' },
 ];
 
+// Habit names show up in single-line rows all over the app — the day card list, the
+// Review page, the Analytics best/worst tiles — where anything longer just truncates.
+// Capping at entry is kinder than letting someone type a sentence and silently cutting
+// it everywhere it appears.
+export const HABIT_NAME_MAX_LENGTH = 40;
+
 export const INITIAL_HABITS = [];
 
 export const LOCAL_HABITS_KEY = 'habit_tracker_habits';
@@ -27,7 +33,7 @@ export const MOODS = [
     { value: 2, icon: Frown, label: 'Bad', color: '#f97316' },
     { value: 3, icon: Meh, label: 'Okay', color: '#eab308' },
     { value: 4, icon: Smile, label: 'Good', color: '#84cc16' },
-    { value: 5, icon: Laugh, label: 'Great', color: '#22c55e' },
+    { value: 5, icon: Laugh, label: 'Very Good', color: '#22c55e' },
 ];
 
 export const MONTHS = [

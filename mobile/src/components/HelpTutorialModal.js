@@ -18,7 +18,7 @@ const isStepCompleted = ({ stepKey, currentView, habitsCount, baselineHabitsCoun
   }
   if (stepKey === 'complete-or-skip-habit') return false;
   if (stepKey === 'analytics') return currentView === 'dashboard';
-  if (stepKey === 'logs') return currentView === 'monthly';
+  if (stepKey === 'logs') return currentView === 'journal';
   return false;
 };
 

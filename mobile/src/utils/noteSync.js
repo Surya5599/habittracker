@@ -13,6 +13,13 @@ export const normalizeNote = (note) => {
     mood: input.mood,
     journal: normalizeJournal(input.journal),
     inactiveHabits: Array.isArray(input.inactiveHabits) ? input.inactiveHabits : [],
+    // Gratitude and energy no longer have any UI. They stay in the shape only so that
+    // normalize doesn't silently strip them from notes written while the feature
+    // existed — this function rebuilds the object from scratch, so dropping the keys
+    // here would destroy that data on the next merge. Cheap insurance; remove once
+    // you're certain nothing in the wild carries them.
+    gratitude: Array.isArray(input.gratitude) ? input.gratitude : [],
+    energy: input.energy,
     _updatedAt: Number(input._updatedAt) || Date.now()
   };
 };
@@ -52,6 +59,8 @@ export const isNoteEmpty = (note) => {
     value.tasks.length === 0 &&
     !value.mood &&
     !value.journal.some(e => (e.text || '').trim()) &&
-    value.inactiveHabits.length === 0
+    value.inactiveHabits.length === 0 &&
+    value.gratitude.every(item => !String(item || '').trim()) &&
+    !value.energy
   );
 };

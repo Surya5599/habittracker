@@ -1,3 +1,5 @@
+import { parseDateStringLocal } from './dateKeys';
+
 export const getHabitMonthStats = (
     habitId,
     completions,
@@ -10,9 +12,9 @@ export const getHabitMonthStats = (
     const dInM = new Date(year, monthIdx + 1, 0).getDate();
     const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
-    // Normalize createdAt to start of day for comparison
-    const createdDate = createdAt ? new Date(createdAt) : null;
-    if (createdDate) createdDate.setHours(0, 0, 0, 0);
+    // Local-midnight, so a plain 'YYYY-MM-DD' createdAt doesn't land on the previous
+    // day for users west of UTC.
+    const createdDate = parseDateStringLocal(createdAt);
 
     const isPastDate = (y, m, d) => {
         const target = new Date(y, m, d);

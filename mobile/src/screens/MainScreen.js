@@ -1,22 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, TouchableOpacity, Modal, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WeeklyScreen } from './WeeklyView';
-import { MonthlyView } from './MonthlyView';
+import { JournalScreen } from './JournalScreen';
 import { DashboardView } from './DashboardView';
-import { TodoScreen } from './TodoScreen';
-import { BottomNav } from '../components/BottomNav';
-import { Settings, X, Check, Plus, MessageSquare, Sun, Moon, Shield, Sparkles, Trash2, Mail, Lock, Bell, BellOff, BookOpen, ClipboardList } from 'lucide-react-native';
+import { AiCoachScreen } from './AiCoachScreen';
+import { BottomNav, BOTTOM_NAV_HEIGHT } from '../components/BottomNav';
+import { Settings, X, Check, Plus, MessageSquare, Sun, Moon, Shield, Sparkles, Trash2, Mail, Lock, Bell, BellOff, Bot } from 'lucide-react-native';
 import tw from 'twrnc';
 import { THEMES } from '../constants';
+import { LANGUAGES } from '../constants/languages';
 import { HabitManager } from '../components/HabitManager';
 import { supabase } from '../lib/supabase';
 import { FeedbackModal } from '../components/FeedbackModal';
 import { PrivacyPolicyModal } from '../components/PrivacyPolicyModal';
 import { HelpTutorialModal } from '../components/HelpTutorialModal';
+import { CardTipsModal } from '../components/CardTipsModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { isBenignAuthError } from '../utils/authErrors';
+import { parseDateStringLocal } from '../utils/dateKeys';
 import { reportError } from '../lib/errorReporting';
 
 export const MainScreen = ({
@@ -33,6 +36,7 @@ export const MainScreen = ({
     resetWeekOffset,
     notes,
     updateNote,
+    notesWindow,
     addHabit,
     updateHabit,
     removeHabit,
@@ -54,8 +58,10 @@ export const MainScreen = ({
     userEmail,
     reminderEnabled = false,
     onToggleReminder,
+    coach,
 }) => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [isTipsOpen, setIsTipsOpen] = useState(false);
     const [isHabitManagerOpen, setIsHabitManagerOpen] = useState(false);
     const [expandedSection, setExpandedSection] = useState(null); // 'theme' | 'language' | null
     const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
@@ -66,21 +72,31 @@ export const MainScreen = ({
     const [selectedDate, setSelectedDate] = useState(null);
     const [cardInitialView, setCardInitialView] = useState('habits');
     const [weeklyViewKey, setWeeklyViewKey] = useState(0);
+    // The nav is absolutely positioned, so screens that pin content to the bottom
+    // need its real height to stay clear of it.
+    const [navHeight, setNavHeight] = useState(BOTTOM_NAV_HEIGHT);
     const { t } = useTranslation();
     const isDark = colorMode === 'dark';
     const outlineColor = isDark ? '#ffffff' : '#000000';
 
-    const LANGUAGES = [
-        { code: 'en', label: 'English' },
-        { code: 'es', label: 'Español' },
-        { code: 'fr', label: 'Français' },
-        { code: 'de', label: 'Deutsch' },
-        { code: 'it', label: 'Italiano' },
-        { code: 'pt', label: 'Português' },
-        { code: 'ja', label: '日本語' },
-        { code: 'ko', label: '한국어' },
-        { code: 'zh', label: '中文' }
-    ];
+    // Notes are paged, so scrolling the weekly view back past the loaded window
+    // would otherwise render old days as empty. Pull the visible week's months in.
+    const ensureNotesForDate = notesWindow?.ensureDate;
+    useEffect(() => {
+        if (!ensureNotesForDate) return;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const day = today.getDay();
+        const diff = weekStart === 'SUN'
+            ? today.getDate() - day + (weekOffset * 7)
+            : today.getDate() - (day === 0 ? 6 : day - 1) + (weekOffset * 7);
+        const weekStartDate = new Date(today.getFullYear(), today.getMonth(), diff);
+        const weekEndDate = new Date(weekStartDate);
+        weekEndDate.setDate(weekStartDate.getDate() + 6);
+        const asKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        ensureNotesForDate(asKey(weekStartDate));
+        ensureNotesForDate(asKey(weekEndDate));
+    }, [ensureNotesForDate, weekOffset, weekStart]);
 
     const handleSelectDayFromLog = (date) => {
         // Logic to navigate to weekly view at this specific date
@@ -234,16 +250,10 @@ export const MainScreen = ({
         targetDate.setHours(0, 0, 0, 0);
 
         let autoInactive = false;
-        if (habit.createdAt) {
-            const start = new Date(habit.createdAt);
-            start.setHours(0, 0, 0, 0);
-            if (targetDate < start) autoInactive = true;
-        }
-        if (habit.archivedAt) {
-            const archived = new Date(habit.archivedAt);
-            archived.setHours(0, 0, 0, 0);
-            if (targetDate > archived) autoInactive = true;
-        }
+        const start = parseDateStringLocal(habit.createdAt);
+        if (start && targetDate < start) autoInactive = true;
+        const archived = parseDateStringLocal(habit.archivedAt);
+        if (archived && targetDate > archived) autoInactive = true;
 
         const manualInactive = getInactiveHabitsForDate(dateKey).includes(habitId);
         return autoInactive || manualInactive;
@@ -295,52 +305,31 @@ export const MainScreen = ({
                                 <Text style={tw`text-white text-xs font-black uppercase tracking-wider`}>Sign In</Text>
                             </TouchableOpacity>
                         )}
+                        <TouchableOpacity
+                            onPress={() => setIsTipsOpen(true)}
+                            accessibilityRole="button"
+                            accessibilityLabel={t('cardTips.title', { defaultValue: 'Tips' })}
+                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                            style={[
+                                tw`w-6 h-6 rounded-full items-center justify-center`,
+                                { borderWidth: 1.5, borderColor: isDark ? '#e5e7eb' : '#57534e' },
+                            ]}
+                        >
+                            <Text style={[tw`text-[11px] font-black`, { color: isDark ? '#e5e7eb' : '#57534e' }]}>?</Text>
+                        </TouchableOpacity>
                         <TouchableOpacity onPress={() => setIsSettingsOpen(true)}>
                             <Settings size={24} color={isDark ? '#e5e7eb' : '#57534e'} strokeWidth={2.5} />
                         </TouchableOpacity>
                     </View>
                 </View>
 
-                {/* Journal / Tasks quick-access buttons */}
-                <View style={[tw`flex-row items-center px-4 pb-2 gap-2`, { backgroundColor: isDark ? '#000000' : '#f5f5f4' }]}>
-                    <TouchableOpacity
-                        onPress={() => {
-                            setCardInitialView('journal');
-                            setWeeklyViewKey(k => k + 1);
-                            resetWeekOffset();
-                            setView('weekly');
-                        }}
-                        style={[
-                            tw`flex-row items-center gap-1.5 px-3 py-1.5 rounded-xl`,
-                            { backgroundColor: (view === 'weekly' && cardInitialView === 'journal') ? theme.primary : (isDark ? '#1a1a1a' : '#e7e5e4') }
-                        ]}
-                        activeOpacity={0.75}
-                    >
-                        <BookOpen size={13} color={(view === 'weekly' && cardInitialView === 'journal') ? '#ffffff' : (isDark ? '#9ca3af' : '#78716c')} strokeWidth={2.5} />
-                        <Text style={[tw`text-[11px] font-black uppercase tracking-wider`, { color: (view === 'weekly' && cardInitialView === 'journal') ? '#ffffff' : (isDark ? '#9ca3af' : '#78716c') }]}>
-                            {t('dailyCard.journal')}
-                        </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        onPress={() => {
-                            setCardInitialView('tasks');
-                            setWeeklyViewKey(k => k + 1);
-                            resetWeekOffset();
-                            setView('weekly');
-                        }}
-                        style={[
-                            tw`flex-row items-center gap-1.5 px-3 py-1.5 rounded-xl`,
-                            { backgroundColor: (view === 'weekly' && cardInitialView === 'tasks') ? theme.primary : (isDark ? '#1a1a1a' : '#e7e5e4') }
-                        ]}
-                        activeOpacity={0.75}
-                    >
-                        <ClipboardList size={13} color={(view === 'weekly' && cardInitialView === 'tasks') ? '#ffffff' : (isDark ? '#9ca3af' : '#78716c')} strokeWidth={2} />
-                        <Text style={[tw`text-[11px] font-black uppercase tracking-wider`, { color: (view === 'weekly' && cardInitialView === 'tasks') ? '#ffffff' : (isDark ? '#9ca3af' : '#78716c') }]}>
-                            {t('dailyCard.tasks')}
-                        </Text>
-                    </TouchableOpacity>
-                </View>
+                <CardTipsModal
+                    visible={isTipsOpen}
+                    onClose={() => setIsTipsOpen(false)}
+                    view={view}
+                    theme={theme}
+                    colorMode={colorMode}
+                />
 
                 {/* ... Modals ... */}
                 <Modal
@@ -510,6 +499,42 @@ export const MainScreen = ({
                                             </View>
                                         </View>
 
+                                        {/* AI Coach: enable/disable + jump straight into the chat */}
+                                        <View style={[tw`flex-row items-center justify-between p-4 border-b-[3px]`, { borderBottomColor: outlineColor }]}>
+                                            <TouchableOpacity
+                                                style={tw`flex-row items-center gap-2 flex-1`}
+                                                disabled={!coach?.enabled}
+                                                onPress={() => {
+                                                    if (!coach?.enabled) return;
+                                                    setIsSettingsOpen(false);
+                                                    setView('coach');
+                                                }}
+                                            >
+                                                <Bot size={16} color={coach?.enabled ? theme.primary : (isDark ? '#9ca3af' : '#9ca3af')} />
+                                                <Text style={[tw`text-sm font-black uppercase tracking-tight`, { color: isDark ? '#e5e7eb' : '#161616' }]}>
+                                                    {t('settings.aiCoach.title', { defaultValue: 'AI Coach' })}
+                                                </Text>
+                                                {coach?.enabled && (
+                                                    <Text style={[tw`text-[10px] font-black uppercase`, { color: isDark ? '#9ca3af' : '#6b7280' }]}>
+                                                        {t('settings.aiCoach.open', { defaultValue: 'Open' })}
+                                                    </Text>
+                                                )}
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
+                                                onPress={() => coach?.setEnabled && coach.setEnabled(!coach.enabled)}
+                                                style={[
+                                                    tw`w-12 h-6 rounded-full justify-center`,
+                                                    { backgroundColor: coach?.enabled ? theme.primary : (isDark ? '#374151' : '#d1d5db') }
+                                                ]}
+                                                activeOpacity={0.8}
+                                            >
+                                                <View style={[
+                                                    tw`w-5 h-5 rounded-full bg-white shadow`,
+                                                    { transform: [{ translateX: coach?.enabled ? 26 : 2 }] }
+                                                ]} />
+                                            </TouchableOpacity>
+                                        </View>
+
                                         <TouchableOpacity
                                             style={[tw`flex-row items-center justify-between p-4 border-b-[3px] border-black`, { borderBottomColor: outlineColor }]}
                                             onPress={() => {
@@ -676,22 +701,26 @@ export const MainScreen = ({
                         colorMode={colorMode}
                         cardStyle={cardStyle}
                         initialCardView={cardInitialView}
+                        bottomNavHeight={navHeight}
                     />
                 )}
-                {view === 'monthly' && (
-                    <MonthlyView
+                {view === 'journal' && (
+                    <JournalScreen
                         habits={habits}
                         completions={completions}
                         notes={notes}
                         theme={theme}
+                        colorMode={colorMode}
                         toggleCompletion={handleToggleCompletion}
                         toggleHabitInactive={toggleHabitInactive}
                         isHabitInactive={isHabitInactive}
                         updateNote={updateNote}
-                        colorMode={colorMode}
                         cardStyle={cardStyle}
+                        notesWindow={notesWindow}
+                        bottomNavHeight={navHeight}
                     />
                 )}
+
                 {view === 'dashboard' && (
                     <DashboardView
                         habits={habits}
@@ -709,17 +738,21 @@ export const MainScreen = ({
                         updateNote={updateNote}
                         colorMode={colorMode}
                         cardStyle={cardStyle}
+                        bottomNavHeight={navHeight}
                     />
                 )}
 
-                {view === 'todo' && (
-                    <TodoScreen
-                        notes={notes}
-                        updateNote={updateNote}
+                {view === 'coach' && coach && (
+                    <AiCoachScreen
+                        coach={coach}
                         theme={theme}
                         colorMode={colorMode}
+                        isGuest={isGuest}
+                        onOpenSignIn={onOpenSignIn}
+                        bottomNavHeight={navHeight}
                     />
                 )}
+
 
                 <HelpTutorialModal
                     visible={isHelpTutorialOpen}
@@ -737,6 +770,11 @@ export const MainScreen = ({
             </SafeAreaView>
             <BottomNav
                 view={view}
+                showAiCoach={!!coach?.enabled}
+                onLayout={(e) => {
+                    const h = Math.round(e.nativeEvent.layout.height);
+                    if (h > 0) setNavHeight((prev) => (prev === h ? prev : h));
+                }}
                 setView={(v) => {
                     if (v === 'weekly') {
                         setCardInitialView('habits');

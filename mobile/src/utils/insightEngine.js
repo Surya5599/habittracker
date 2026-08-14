@@ -1,3 +1,5 @@
+import { parseDateStringLocal } from './dateKeys';
+
 const DAY_NAMES_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const DAY_NAMES_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -11,21 +13,14 @@ export const formatDateKey = (date) => {
 const isHabitDueOnDate = (habit, date, dateKey, notes) => {
     if (habit.weeklyTarget) return false;
 
-    if (habit.createdAt) {
-        const created = new Date(habit.createdAt);
-        created.setHours(0, 0, 0, 0);
-        const target = new Date(date);
-        target.setHours(0, 0, 0, 0);
-        if (target < created) return false;
-    }
+    const target = new Date(date);
+    target.setHours(0, 0, 0, 0);
 
-    if (habit.archivedAt) {
-        const archived = new Date(habit.archivedAt);
-        archived.setHours(0, 0, 0, 0);
-        const target = new Date(date);
-        target.setHours(0, 0, 0, 0);
-        if (target > archived) return false;
-    }
+    const created = parseDateStringLocal(habit.createdAt);
+    if (created && target < created) return false;
+
+    const archived = parseDateStringLocal(habit.archivedAt);
+    if (archived && target > archived) return false;
 
     const dayData = notes?.[dateKey];
     if (dayData && Array.isArray(dayData.inactiveHabits) && dayData.inactiveHabits.includes(habit.id)) {

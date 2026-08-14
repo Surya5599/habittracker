@@ -2,29 +2,36 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
-import { View, Text, TouchableOpacity, ScrollView, Animated, TextInput, Easing, useWindowDimensions, Platform, Keyboard, PanResponder, Alert } from 'react-native';
-import { Check, ChevronLeft, ChevronRight, BookOpen, Save, Plus, X, Meh, Frown, Smile, Laugh, Angry, Minus, ClipboardList, ArrowUpDown, Pencil } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, ScrollView, Animated, TextInput, Easing, useWindowDimensions, Platform, Keyboard, Alert, Modal } from 'react-native';
+import { Check, ChevronLeft, ChevronRight, BookOpen, Save, X, Meh, Frown, Smile, Laugh, Angry, Minus, ClipboardList, ArrowUpDown, Pencil, Trash2 } from 'lucide-react-native';
 import tw from 'twrnc';
 import { isCompleted as checkCompleted } from '../utils/stats';
 import { DAYS_OF_WEEK } from '../constants';
+import { getPalette, readableOn } from '../constants/theme';
+import { averageMood, dayMood, moodSampleCount } from '../utils/mood';
+import { parseDateStringLocal } from '../utils/dateKeys';
 import Svg, { Circle } from 'react-native-svg';
 import { NeoButton } from './NeoComponents';
 import { DatePickerModal } from './DatePickerModal';
+import { SwipeableCard } from './SwipeableCard';
 
-// Custom Hard Shadow Component defined outside to prevent re-renders
-const HardShadowCard = ({ children, style, isDark = false }) => (
-    <View style={style}>
-        {/* Shadow Block */}
-        <View style={[
-            tw`absolute bg-black rounded-3xl`,
-            { top: 8, left: 8, right: -8, bottom: -8, zIndex: -1 }
-        ]} />
-        {/* Main Content */}
-        <View style={[tw`border-[3px] border-black rounded-3xl overflow-hidden h-full`, { backgroundColor: isDark ? '#0b0b0b' : '#ffffff', borderColor: isDark ? '#ffffff' : '#000000' }]}>
-            {children}
-        </View>
-    </View>
-);
+// Lead-ins for the composer. Each drops a stem into the entry and leaves the caret
+// after it — finishing a sentence is far easier than starting one, which is the whole
+// reason a journal goes unfilled.
+const JOURNAL_PROMPTS = [
+    { key: 'wentWell', chip: 'Went well', stem: 'What went well: ' },
+    { key: 'struggled', chip: 'Struggled', stem: 'What was hard: ' },
+    { key: 'learned', chip: 'Learned', stem: 'What I learned: ' },
+    { key: 'tomorrow', chip: 'Tomorrow', stem: 'Tomorrow: ' },
+];
+
+// Mirrors dailyCard.moods in the locales; the middle key is 'okay', not 'neutral'.
+const MOOD_KEY_BY_VALUE = { 1: 'veryBad', 2: 'bad', 3: 'okay', 4: 'good', 5: 'veryGood' };
+
+// A HardShadowCard used to live here — the card surface plus a solid black rectangle
+// offset behind it. Nothing ever rendered it; the day card below draws its own flat
+// bordered surface inline. Removed along with the matching shadow on Analytics, which
+// was the only place in the app one actually showed.
 
 export const DailyCard = ({
     date,
@@ -44,7 +51,10 @@ export const DailyCard = ({
     notes = {},
     colorMode = 'light',
     cardStyle = 'large',
-    initialView = 'habits'
+    initialView = 'habits',
+    // Explicit height wins over the screen-relative guess: the caller usually knows
+    // exactly how much room is left once siblings and the nav are accounted for.
+    cardHeight: cardHeightProp = null
 }) => {
     const startsFlipped = initialView === 'journal' || initialView === 'tasks';
     const [isFlipped, setIsFlipped] = useState(startsFlipped);
@@ -60,9 +70,10 @@ export const DailyCard = ({
     const flipAnim = useRef(new Animated.Value(startsFlipped ? 1 : 0)).current;
     const backSwitchAnim = useRef(new Animated.Value(0)).current;
     const journalScrollRef = useRef(null);
-    const swipeLockRef = useRef(false);
-    const onPrevRef = useRef(onPrev);
-    const onNextRef = useRef(onNext);
+    const journalViewportRef = useRef(0);
+    const newEntryInputRef = useRef(null);
+    const editEntryInputRef = useRef(null);
+    const activeJournalInputRef = useRef(null);
     const { t, i18n } = useTranslation();
     const isDark = colorMode === 'dark';
     const isLargeLayout = cardStyle === 'large';
@@ -73,17 +84,11 @@ export const DailyCard = ({
 
     const finalDayData = dayData || { tasks: [], mood: undefined, journal: [] };
 
-    const [isAddingEntry, setIsAddingEntry] = useState(false);
     const [newEntryText, setNewEntryText] = useState('');
     const [newEntryMood, setNewEntryMood] = useState(undefined);
     const [editingEntryId, setEditingEntryId] = useState(null);
     const [editingEntryText, setEditingEntryText] = useState('');
     const [editingEntryMood, setEditingEntryMood] = useState(undefined);
-
-    useEffect(() => {
-        onPrevRef.current = onPrev;
-        onNextRef.current = onNext;
-    }, [onPrev, onNext]);
 
     useEffect(() => {
         AsyncStorage.getItem('habit_sort_mode').then((saved) => {
@@ -118,24 +123,79 @@ export const DailyCard = ({
         };
     }, []);
 
+    // Scroll the focused journal input into view rather than scrolling to the end of
+    // the content: the composer has a mood row and an action bar below it, and an
+    // entry being edited can sit anywhere in the list, so "the end" is the wrong
+    // target in both cases. Bottom-aligning the input keeps the caret visible as a
+    // multiline entry grows.
+    const scrollInputIntoView = useCallback((nodeRef, { fallbackToEnd = false } = {}) => {
+        const scroll = journalScrollRef.current;
+        const node = nodeRef?.current;
+        if (!scroll) return;
+        const toEnd = () => { if (fallbackToEnd) scroll.scrollToEnd({ animated: true }); };
+        if (!node || typeof node.measureLayout !== 'function') return toEnd();
+        // Fabric's measureLayout takes a component ref; the legacy renderer takes a node
+        // handle. getInnerViewRef covers the first, getInnerViewNode the second.
+        const inner = scroll.getInnerViewRef?.() ?? scroll.getInnerViewNode?.();
+        if (!inner) return toEnd();
+        node.measureLayout(
+            inner,
+            (_x, y, _w, h) => {
+                // On iOS the keyboard overlays the scroll view, so the visible slice is
+                // shorter than the frame. On Android the window already resized.
+                const visible = journalViewportRef.current - (Platform.OS === 'ios' ? keyboardInset : 0);
+                if (visible <= 0) return toEnd();
+                scroll.scrollTo({ y: Math.max(0, y + h + 16 - visible), animated: true });
+            },
+            toEnd,
+        );
+    }, [keyboardInset]);
+
+    // Focus and the keyboard animation race, so re-run once the inset is known.
+    useEffect(() => {
+        if (keyboardInset <= 0 || !activeJournalInputRef.current) return;
+        const timer = setTimeout(() => {
+            const active = activeJournalInputRef.current;
+            if (active) scrollInputIntoView(active, { fallbackToEnd: active === newEntryInputRef });
+        }, 60);
+        return () => clearTimeout(timer);
+    }, [keyboardInset, scrollInputIntoView]);
+
+    // Journal and mood are written together, always. Deleting an entry used to update
+    // only `journal`, which left the day wearing the mood of an entry that no longer
+    // existed. Going through one function makes that impossible to forget again.
+    const persistJournal = (entries) => {
+        updateNote && updateNote(dateKey, { journal: entries, mood: averageMood(entries) });
+    };
+
+    // A mood on its own is a complete entry — plenty of days don't need words.
+    const hasDraft = !!newEntryText.trim() || !!newEntryMood;
+
+    const applyPrompt = (prompt) => {
+        const stem = t(`journal.prompts.${prompt.key}.stem`, { defaultValue: prompt.stem });
+        setNewEntryText((current) => {
+            const trimmed = current.replace(/\s+$/, '');
+            return trimmed ? `${trimmed}\n${stem}` : stem;
+        });
+        // Keep the keyboard up and the caret where the sentence continues.
+        newEntryInputRef.current?.focus();
+    };
+
     const handleAddEntry = () => {
         if (!newEntryText.trim() && !newEntryMood) return;
         const entry = { id: Date.now().toString(), text: newEntryText.trim(), mood: newEntryMood, createdAt: Date.now() };
         const current = Array.isArray(finalDayData.journal) ? finalDayData.journal : [];
-        const updated = [...current, entry];
-        const latestMood = [...updated].reverse().find(e => e.mood)?.mood;
-        updateNote && updateNote(dateKey, { journal: updated, mood: latestMood });
+        persistJournal([...current, entry]);
         setNewEntryText('');
         setNewEntryMood(undefined);
-        setIsAddingEntry(false);
     };
 
     const handleUpdateEntry = (id) => {
         if (!editingEntryText.trim()) return;
         const current = Array.isArray(finalDayData.journal) ? finalDayData.journal : [];
-        const updated = current.map(e => e.id === id ? { ...e, text: editingEntryText.trim(), mood: editingEntryMood } : e);
-        const latestMood = [...updated].reverse().find(e => e.mood)?.mood;
-        updateNote && updateNote(dateKey, { journal: updated, mood: latestMood });
+        persistJournal(current.map(e => (
+            e.id === id ? { ...e, text: editingEntryText.trim(), mood: editingEntryMood } : e
+        )));
         setEditingEntryId(null);
         setEditingEntryText('');
         setEditingEntryMood(undefined);
@@ -143,7 +203,30 @@ export const DailyCard = ({
 
     const handleDeleteEntry = (id) => {
         const current = Array.isArray(finalDayData.journal) ? finalDayData.journal : [];
-        updateNote && updateNote(dateKey, { journal: current.filter(e => e.id !== id) });
+        persistJournal(current.filter(e => e.id !== id));
+        if (editingEntryId === id) {
+            setEditingEntryId(null);
+            setEditingEntryText('');
+            setEditingEntryMood(undefined);
+        }
+    };
+
+    // Journal entries aren't recoverable, so deleting one asks first.
+    const confirmDeleteEntry = (id) => {
+        Alert.alert(
+            t('journal.deleteConfirmTitle', { defaultValue: 'Delete this entry?' }),
+            t('journal.deleteConfirmBody', { defaultValue: "This can't be undone." }),
+            [
+                { text: t('common.cancel'), style: 'cancel' },
+                { text: t('common.delete'), style: 'destructive', onPress: () => handleDeleteEntry(id) },
+            ],
+        );
+    };
+
+    const beginEditEntry = (entry) => {
+        setEditingEntryId(entry.id);
+        setEditingEntryText(entry.text);
+        setEditingEntryMood(entry.mood);
     };
 
     const formatEntryTime = (timestamp) => {
@@ -194,11 +277,13 @@ export const DailyCard = ({
     };
 
     const MOODS = [
-        { value: 1, icon: Angry, label: t('mood.veryBad'), color: '#ef4444' },
-        { value: 2, icon: Frown, label: t('mood.bad'), color: '#f97316' },
-        { value: 3, icon: Meh, label: t('mood.okay'), color: '#eab308' },
-        { value: 4, icon: Smile, label: t('mood.good'), color: '#84cc16' },
-        { value: 5, icon: Laugh, label: t('mood.great'), color: '#22c55e' },
+        // dailyCard.moods, not mood.* — the latter has no entry in any locale file,
+        // so these labels used to render as the raw key.
+        { value: 1, icon: Angry, label: t('dailyCard.moods.veryBad'), color: '#ef4444' },
+        { value: 2, icon: Frown, label: t('dailyCard.moods.bad'), color: '#f97316' },
+        { value: 3, icon: Meh, label: t('dailyCard.moods.okay'), color: '#eab308' },
+        { value: 4, icon: Smile, label: t('dailyCard.moods.good'), color: '#84cc16' },
+        { value: 5, icon: Laugh, label: t('dailyCard.moods.veryGood'), color: '#22c55e' },
     ];
 
     const animateViewChange = (applyStateChange) => {
@@ -314,10 +399,8 @@ export const DailyCard = ({
         const viewDate = getStartOfDay(date);
 
         // Check Start Date (createdAt)
-        if (habit.createdAt) {
-            const startDate = getStartOfDay(new Date(habit.createdAt));
-            if (viewDate < startDate) return false;
-        }
+        const startDate = parseDateStringLocal(habit.createdAt);
+        if (startDate && viewDate < startDate) return false;
 
         // Check End Date (archivedAt)
         // If archived today (e.g. at 2pm), it should still be visible today.
@@ -330,10 +413,8 @@ export const DailyCard = ({
         // Tomorrow: viewDate > startArchived. True. Hidden.
         // This works for "remove from future dates".
 
-        if (habit.archivedAt) {
-            const archiveDate = getStartOfDay(new Date(habit.archivedAt));
-            if (viewDate > archiveDate) return false;
-        }
+        const archiveDate = parseDateStringLocal(habit.archivedAt);
+        if (archiveDate && viewDate > archiveDate) return false;
 
         return true;
     };
@@ -376,16 +457,18 @@ export const DailyCard = ({
     const completedTasksCount = (finalDayData.tasks || []).filter(task => task.completed).length;
     const journalEntries = Array.isArray(finalDayData.journal) ? finalDayData.journal : [];
     const hasJournalEntry = journalEntries.some(e => (e.text || '').trim());
-    const displayMood = [...journalEntries].reverse().find(e => e.mood)?.mood ?? finalDayData.mood;
+    const displayMood = dayMood(journalEntries, finalDayData.mood);
     const selectedMood = MOODS.find(m => m.value === displayMood);
     const MoodStatusIcon = selectedMood?.icon || Meh;
-    const panelBg = isDark ? '#0b0b0b' : '#ffffff';
-    const panelSoftBg = isDark ? '#161616' : '#f9fafb';
-    const textPrimary = isDark ? '#e5e7eb' : '#161616';
-    const textSecondary = isDark ? '#9ca3af' : '#6b7280';
-    const textMuted = isDark ? '#6b7280' : '#d6d3d1';
+    // `textMuted` used to be #d6d3d1 in light mode and did double duty as both a text
+    // colour and a decorative hairline. At ~1.3:1 on white it made the journal and task
+    // placeholders very nearly invisible. Text now comes from the shared token (4.5:1+);
+    // the light hairline it was also standing in for is `borderSubtle`.
+    const {
+        panelBg, panelSoftBg, outline: outlineColor,
+        textPrimary, textSecondary, textMuted, borderSubtle, danger,
+    } = getPalette(colorMode);
     const borderSoft = isDark ? '#262626' : '#f3f4f6';
-    const outlineColor = isDark ? '#ffffff' : '#000000';
     const dateHeaderBg = isDark ? '#000000' : theme.secondary;
     const headerCircleSize = 60;
     const headerCircleRadius = 27;
@@ -416,44 +499,49 @@ export const DailyCard = ({
                 />
             ) : null}
 
+            {/* Icon-only tabs. The labels are gone, so each tab carries its name as an
+                accessibilityLabel — a screen reader would otherwise announce three
+                unlabelled buttons. The count keeps its place as the visible value. */}
             <TouchableOpacity
                 onPress={flipToFront}
-                style={[tw`flex-1 py-3 border-r items-center justify-center`, { borderRightColor: outlineColor }]}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: activeTab === 'habits' }}
+                accessibilityLabel={t('common.myHabits')}
+                accessibilityValue={{ text: `${completedHabitsCount}/${totalHabitsCount}` }}
+                style={[tw`flex-1 py-3 border-r items-center justify-center gap-1`, { borderRightColor: outlineColor }]}
             >
-                <Check size={15} color={activeTab === 'habits' ? theme.primary : textSecondary} strokeWidth={2.5} />
-                <Text style={[tw`text-[8px] font-black uppercase tracking-wider mt-1`, { color: activeTab === 'habits' ? theme.primary : textSecondary }]}>
-                    {t('common.myHabits')}
-                </Text>
-                <Text style={[tw`text-[11px] font-black mt-0.5`, { color: textPrimary }]}>
+                <Check size={19} color={activeTab === 'habits' ? theme.primary : textSecondary} strokeWidth={2.5} />
+                <Text style={[tw`text-[11px] font-black`, { color: textPrimary }]}>
                     {completedHabitsCount}/{totalHabitsCount}
                 </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
                 onPress={openTasksView}
-                style={[tw`flex-1 py-3 border-r items-center justify-center`, { borderRightColor: outlineColor }]}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: activeTab === 'tasks' }}
+                accessibilityLabel={t('dailyCard.tasks')}
+                accessibilityValue={{ text: totalTasksCount > 0 ? `${completedTasksCount}/${totalTasksCount}` : '' }}
+                style={[tw`flex-1 py-3 border-r items-center justify-center gap-1`, { borderRightColor: outlineColor }]}
             >
-                <ClipboardList size={15} color={activeTab === 'tasks' ? theme.primary : textSecondary} strokeWidth={2} />
-                <Text style={[tw`text-[8px] font-black uppercase tracking-wider mt-1`, { color: activeTab === 'tasks' ? theme.primary : textSecondary }]}>
-                    {t('dailyCard.tasks')}
-                </Text>
-                <Text style={[tw`text-[11px] font-black mt-0.5`, { color: textPrimary }]}>
+                <ClipboardList size={19} color={activeTab === 'tasks' ? theme.primary : textSecondary} strokeWidth={2} />
+                <Text style={[tw`text-[11px] font-black`, { color: textPrimary }]}>
                     {totalTasksCount > 0 ? `${completedTasksCount}/${totalTasksCount}` : '—'}
                 </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
                 onPress={openJournalView}
-                style={tw`flex-1 py-3 items-center justify-center`}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: activeTab === 'journal' }}
+                accessibilityLabel={t('dailyCard.journal')}
+                style={tw`flex-1 py-3 items-center justify-center gap-1`}
             >
                 {selectedMood
-                    ? <MoodStatusIcon size={15} color={selectedMood.color} strokeWidth={2.5} />
-                    : <BookOpen size={15} color={activeTab === 'journal' ? theme.primary : textSecondary} strokeWidth={2} />
+                    ? <MoodStatusIcon size={19} color={selectedMood.color} strokeWidth={2.5} />
+                    : <BookOpen size={19} color={activeTab === 'journal' ? theme.primary : textSecondary} strokeWidth={2} />
                 }
-                <Text style={[tw`text-[8px] font-black uppercase tracking-wider mt-1`, { color: activeTab === 'journal' ? theme.primary : textSecondary }]}>
-                    {t('dailyCard.journal')}
-                </Text>
-                <Text style={[tw`text-[11px] font-black mt-0.5`, { color: textPrimary }]}>
+                <Text style={[tw`text-[11px] font-black`, { color: textPrimary }]}>
                     {hasJournalEntry ? '✓' : '—'}
                 </Text>
             </TouchableOpacity>
@@ -516,108 +604,7 @@ export const DailyCard = ({
 
     const { height: screenHeight } = useWindowDimensions();
     const { width: screenWidth } = useWindowDimensions();
-    const cardHeight = screenHeight - 220; // Corrected height to stay above bottom nav
-    const swipeX = useRef(new Animated.Value(0)).current;
-
-    useEffect(() => {
-        swipeX.setValue(0);
-    }, [dateKey, swipeX]);
-
-    const runDaySwipe = (direction) => {
-        const isNext = direction === 'next';
-        const exitTo = isNext ? -screenWidth * 1.05 : screenWidth * 1.05;
-        const enterFrom = isNext ? screenWidth * 0.65 : -screenWidth * 0.65;
-
-        Animated.timing(swipeX, {
-            toValue: exitTo,
-            duration: 180,
-            easing: Easing.in(Easing.cubic),
-            useNativeDriver: true
-        }).start(() => {
-            if (isNext) {
-                onNextRef.current && onNextRef.current();
-            } else {
-                onPrevRef.current && onPrevRef.current();
-            }
-
-            swipeX.setValue(enterFrom);
-            Animated.spring(swipeX, {
-                toValue: 0,
-                useNativeDriver: true,
-                damping: 16,
-                stiffness: 180,
-                mass: 0.9
-            }).start(() => {
-                swipeLockRef.current = false;
-            });
-        });
-    };
-
-    const snapBackSwipe = () => {
-        Animated.spring(swipeX, {
-            toValue: 0,
-            useNativeDriver: true,
-            damping: 14,
-            stiffness: 220,
-            mass: 0.8
-        }).start();
-    };
-
-    const swipeResponder = useRef(
-        PanResponder.create({
-            onMoveShouldSetPanResponder: (_, gestureState) => {
-                const absDx = Math.abs(gestureState.dx);
-                const absDy = Math.abs(gestureState.dy);
-                return !swipeLockRef.current && absDx > 14 && absDx > absDy * 1.3;
-            },
-            onPanResponderMove: (_, gestureState) => {
-                if (swipeLockRef.current) return;
-                swipeX.setValue(gestureState.dx);
-            },
-            onPanResponderRelease: (_, gestureState) => {
-                if (swipeLockRef.current) return;
-                const dx = gestureState.dx;
-                const vx = gestureState.vx;
-                const isStrongSwipe = Math.abs(dx) > 48 || Math.abs(vx) > 0.55;
-                if (!isStrongSwipe) {
-                    snapBackSwipe();
-                    return;
-                }
-
-                swipeLockRef.current = true;
-                if (dx < 0) {
-                    runDaySwipe('next');
-                } else {
-                    runDaySwipe('prev');
-                }
-            },
-            onPanResponderTerminate: () => {
-                snapBackSwipe();
-            }
-        })
-    ).current;
-
-    const swipeCardStyle = {
-        transform: [
-            { translateX: swipeX },
-            {
-                rotateZ: swipeX.interpolate({
-                    inputRange: [-screenWidth, 0, screenWidth],
-                    outputRange: ['-8deg', '0deg', '8deg']
-                })
-            },
-            {
-                scale: swipeX.interpolate({
-                    inputRange: [-screenWidth, 0, screenWidth],
-                    outputRange: [0.96, 1, 0.96]
-                })
-            }
-        ],
-        opacity: swipeX.interpolate({
-            inputRange: [-screenWidth, 0, screenWidth],
-            outputRange: [0.86, 1, 0.86]
-        })
-    };
+    const cardHeight = cardHeightProp ?? (screenHeight - 220);
     const viewSwitchStyle = {
         transform: [
             {
@@ -691,7 +678,12 @@ export const DailyCard = ({
     };
 
     return (
-        <Animated.View style={[tw`pb-0 pr-0`, { height: cardHeight }, swipeCardStyle]} {...swipeResponder.panHandlers}>
+        <SwipeableCard
+            style={[tw`pb-0 pr-0`, { height: cardHeight }]}
+            resetKey={dateKey}
+            onPrev={onPrev}
+            onNext={onNext}
+        >
             <DatePickerModal
                 isVisible={showDatePicker}
                 onClose={() => setShowDatePicker(false)}
@@ -767,12 +759,15 @@ export const DailyCard = ({
                                         const next = sortMode === 'default' ? 'name' : sortMode === 'name' ? 'color' : sortMode === 'color' ? 'completion' : 'default';
                                         handleSortModeChange(next);
                                     }}
+                                    accessibilityRole="button"
                                     style={[tw`flex-row items-center gap-1 px-2 py-0.5 rounded-full`, { backgroundColor: sortMode !== 'default' ? theme.primary + '22' : borderSoft }]}
                                     activeOpacity={0.7}
                                 >
                                     <ArrowUpDown size={10} color={sortMode !== 'default' ? theme.primary : textSecondary} strokeWidth={2.5} />
                                     <Text style={[tw`text-[9px] font-black uppercase tracking-wider`, { color: sortMode !== 'default' ? theme.primary : textSecondary }]}>
-                                        {sortMode === 'name' ? 'A–Z' : sortMode === 'color' ? 'Color' : sortMode === 'completion' ? 'To Do' : 'Sort'}
+                                        {t(`cardTips.sortModes.${sortMode}`, {
+                                            defaultValue: { default: 'Sort', name: 'A–Z', color: 'Color', completion: 'To do' }[sortMode],
+                                        })}
                                     </Text>
                                 </TouchableOpacity>
                             </View>
@@ -846,16 +841,26 @@ export const DailyCard = ({
                                                     ) : null}
                                                 </View>
 
+                                                {/* The box carries the habit's own colour, so a row reads as
+                                                    one thing from its accent bar through to its checkbox.
+                                                    The tick picks black or white against that fill — the
+                                                    old hardcoded white vanished on the paler colours, and
+                                                    the old '#000000' fill was invisible in dark mode. */}
                                                 <View style={[
                                                     tw`border-[2.5px] items-center justify-center rounded-sm`,
                                                     { width: checkBoxSize, height: checkBoxSize },
                                                     habit.inactive
                                                         ? { backgroundColor: '#fcd34d', borderColor: '#b45309' }
-                                                        : { backgroundColor: habit.done ? '#000000' : panelBg, borderColor: outlineColor }
+                                                        : {
+                                                            backgroundColor: habit.done ? (habit.color || theme.primary) : panelBg,
+                                                            borderColor: habit.color || theme.primary,
+                                                        }
                                                 ]}>
                                                     {habit.inactive
                                                         ? <Minus size={16} color="#78350f" strokeWidth={4} />
-                                                        : (habit.done && <Check size={16} color="white" strokeWidth={4} />)}
+                                                        : (habit.done && (
+                                                            <Check size={16} color={readableOn(habit.color || theme.primary)} strokeWidth={4} />
+                                                        ))}
                                                 </View>
                                             </TouchableOpacity>
                                         ))
@@ -865,23 +870,10 @@ export const DailyCard = ({
                         </ScrollView>
                     </View>
 
-                    {/* Habit state legend */}
-                    {visibleHabitsForDate.length > 0 && (
-                        <View style={[tw`flex-row items-center justify-center gap-4 pb-2 pt-1`, { borderTopWidth: 1, borderColor: borderSoft }]}>
-                            {[
-                                { label: 'To do', bg: panelBg, borderColor: outlineColor, icon: null },
-                                { label: 'Done', bg: '#000000', borderColor: outlineColor, icon: <Check size={10} color="white" strokeWidth={4} /> },
-                                { label: 'Rest', bg: '#fcd34d', borderColor: '#b45309', icon: <Minus size={10} color="#78350f" strokeWidth={4} /> },
-                            ].map(({ label, bg, borderColor, icon }) => (
-                                <View key={label} style={tw`flex-row items-center gap-1.5`}>
-                                    <View style={[tw`border-[2px] rounded-sm items-center justify-center`, { width: 14, height: 14, backgroundColor: bg, borderColor }]}>
-                                        {icon}
-                                    </View>
-                                    <Text style={[tw`text-[9px] font-black uppercase tracking-widest`, { color: textMuted }]}>{label}</Text>
-                                </View>
-                            ))}
-                        </View>
-                    )}
+                    {/* The three-swatch legend that used to sit here took a permanent strip
+                        of the card to explain something you learn in one tap. It's in the
+                        tips sheet behind the ? now, along with the gestures the legend
+                        never mentioned. */}
 
                     <StatusRow />
                     </View>
@@ -916,10 +908,15 @@ export const DailyCard = ({
                     </View>
 
                     {backView === 'tasks' ? (
-                        <ScrollView style={tw`flex-1 p-6`} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                        <ScrollView
+                            style={tw`flex-1 p-6`}
+                            contentContainerStyle={{ paddingBottom: Platform.OS === 'ios' ? keyboardInset : 0 }}
+                            showsVerticalScrollIndicator={false}
+                            keyboardShouldPersistTaps="handled"
+                        >
                             {/* Inline task input */}
                             <View style={[tw`flex-row items-center gap-3 mb-3 pb-3 border-b-[2px]`, { borderColor: borderSoft }]}>
-                                <View style={[tw`w-6 h-6 border-[2px] rounded-sm items-center justify-center`, { borderColor: textMuted, borderStyle: 'dashed' }]} />
+                                <View style={[tw`w-6 h-6 border-[2px] rounded-sm items-center justify-center`, { borderColor: borderSubtle, borderStyle: 'dashed' }]} />
                                 <TextInput
                                     style={[tw`flex-1 font-bold text-base`, { color: textPrimary, lineHeight: 22, paddingVertical: 0, minHeight: 24, includeFontPadding: false, textAlignVertical: 'center' }]}
                                     value={newTaskText}
@@ -979,7 +976,12 @@ export const DailyCard = ({
                         <ScrollView
                             ref={journalScrollRef}
                             style={tw`flex-1 p-4`}
-                            contentContainerStyle={{ paddingBottom: 32 + keyboardInset }}
+                            // iOS keeps the frame under the keyboard, so the content needs
+                            // room to scroll clear of it. On Android the window resizes and
+                            // adding the inset here double-counts it, which is what pushed
+                            // the input off-screen.
+                            contentContainerStyle={{ paddingBottom: 32 + (Platform.OS === 'ios' ? keyboardInset : 0) }}
+                            onLayout={(e) => { journalViewportRef.current = e.nativeEvent.layout.height; }}
                             keyboardShouldPersistTaps="handled"
                             keyboardDismissMode="interactive"
                             showsVerticalScrollIndicator={false}
@@ -996,12 +998,23 @@ export const DailyCard = ({
                                         {editingEntryId === entry.id ? (
                                             <View>
                                                 <TextInput
+                                                    ref={editEntryInputRef}
                                                     style={[tw`p-3 text-sm font-medium`, { color: textPrimary, minHeight: 80, textAlignVertical: 'top' }]}
                                                     value={editingEntryText}
                                                     onChangeText={setEditingEntryText}
                                                     multiline
                                                     autoFocus
-                                                    onFocus={() => setTimeout(() => journalScrollRef.current?.scrollToEnd({ animated: true }), 80)}
+                                                    onFocus={() => {
+                                                        activeJournalInputRef.current = editEntryInputRef;
+                                                        scrollInputIntoView(editEntryInputRef);
+                                                    }}
+                                                    onBlur={() => { activeJournalInputRef.current = null; }}
+                                                    // Keep the caret in view as the entry grows past one line.
+                                                    onContentSizeChange={() => {
+                                                        if (activeJournalInputRef.current === editEntryInputRef) {
+                                                            scrollInputIntoView(editEntryInputRef);
+                                                        }
+                                                    }}
                                                 />
                                                 {/* Mood row below text, above action bar */}
                                                 <View style={[tw`flex-row justify-between px-3 py-2 border-t-2`, { borderColor: borderSoft }]}>
@@ -1022,21 +1035,52 @@ export const DailyCard = ({
                                                         );
                                                     })}
                                                 </View>
-                                                <View style={[tw`flex-row justify-between items-center px-3 py-2 border-t-2`, { borderColor: borderSoft }]}>
-                                                    <TouchableOpacity onPress={() => { setEditingEntryId(null); setEditingEntryText(''); setEditingEntryMood(undefined); }}>
-                                                        <Text style={[tw`text-[10px] font-black uppercase tracking-widest`, { color: textMuted }]}>{t('common.cancel')}</Text>
-                                                    </TouchableOpacity>
+                                                {/* Every target here is 44pt tall. Delete sits on the far side
+                                                    from Save so the destructive action isn't adjacent to the
+                                                    one you reach for by reflex. */}
+                                                <View style={[tw`flex-row justify-between items-center px-2 border-t-2`, { borderColor: borderSoft }]}>
                                                     <TouchableOpacity
-                                                        onPress={() => handleUpdateEntry(entry.id)}
-                                                        style={[tw`flex-row items-center gap-1.5 px-3 py-1.5 rounded-lg`, { backgroundColor: outlineColor }]}
+                                                        onPress={() => confirmDeleteEntry(entry.id)}
+                                                        accessibilityRole="button"
+                                                        accessibilityLabel={t('journal.deleteEntry', { defaultValue: 'Delete entry' })}
+                                                        style={tw`flex-row items-center gap-1.5 px-2 h-11 justify-center`}
                                                     >
-                                                        <Save size={11} color={isDark ? '#000' : '#fff'} />
-                                                        <Text style={[tw`text-[10px] font-black uppercase tracking-widest`, { color: isDark ? '#000' : '#fff' }]}>{t('journal.save')}</Text>
+                                                        <Trash2 size={13} color={danger} />
+                                                        <Text style={[tw`text-[10px] font-black uppercase tracking-widest`, { color: danger }]}>
+                                                            {t('common.delete')}
+                                                        </Text>
                                                     </TouchableOpacity>
+                                                    <View style={tw`flex-row items-center`}>
+                                                        <TouchableOpacity
+                                                            onPress={() => { setEditingEntryId(null); setEditingEntryText(''); setEditingEntryMood(undefined); }}
+                                                            accessibilityRole="button"
+                                                            style={tw`px-3 h-11 justify-center`}
+                                                        >
+                                                            <Text style={[tw`text-[10px] font-black uppercase tracking-widest`, { color: textMuted }]}>{t('common.cancel')}</Text>
+                                                        </TouchableOpacity>
+                                                        <TouchableOpacity
+                                                            onPress={() => handleUpdateEntry(entry.id)}
+                                                            accessibilityRole="button"
+                                                            style={[tw`flex-row items-center gap-1.5 px-3 h-9 rounded-lg justify-center`, { backgroundColor: outlineColor }]}
+                                                        >
+                                                            <Save size={11} color={isDark ? '#000' : '#fff'} />
+                                                            <Text style={[tw`text-[10px] font-black uppercase tracking-widest`, { color: isDark ? '#000' : '#fff' }]}>{t('journal.save')}</Text>
+                                                        </TouchableOpacity>
+                                                    </View>
                                                 </View>
                                             </View>
                                         ) : (
-                                            <View>
+                                            // The whole entry is the edit affordance now. The old 13px pencil and
+                                            // X were ~13pt targets sitting 16px apart, well under the 44pt
+                                            // minimum, and the X deleted an entry outright with no confirmation
+                                            // — one mis-tap lost a journal entry. Delete now lives inside edit
+                                            // mode, so it takes deliberate intent plus a confirmation.
+                                            <TouchableOpacity
+                                                onPress={() => beginEditEntry(entry)}
+                                                activeOpacity={0.7}
+                                                accessibilityRole="button"
+                                                accessibilityLabel={t('journal.editEntry', { defaultValue: 'Edit entry' })}
+                                            >
                                                 {EntryMoodIcon && (
                                                     <View style={[tw`px-3 py-2 border-b-2`, { borderColor: borderSoft }]}>
                                                         <EntryMoodIcon size={16} color={entryMoodObj.color} strokeWidth={2.5} />
@@ -1047,84 +1091,126 @@ export const DailyCard = ({
                                                     <Text style={[tw`text-[9px] font-black uppercase tracking-widest`, { color: textMuted }]}>
                                                         {formatEntryTime(entry.createdAt)}
                                                     </Text>
-                                                    <View style={tw`flex-row gap-4`}>
-                                                        <TouchableOpacity onPress={() => { setEditingEntryId(entry.id); setEditingEntryText(entry.text); setEditingEntryMood(entry.mood); }}>
-                                                            <Pencil size={13} color={textSecondary} />
-                                                        </TouchableOpacity>
-                                                        <TouchableOpacity onPress={() => handleDeleteEntry(entry.id)}>
-                                                            <X size={13} color={textMuted} />
-                                                        </TouchableOpacity>
+                                                    {/* A hint, not a control — the card itself is the target. */}
+                                                    <View style={tw`flex-row items-center gap-1.5`}>
+                                                        <Pencil size={11} color={textMuted} />
+                                                        <Text style={[tw`text-[9px] font-black uppercase tracking-widest`, { color: textMuted }]}>
+                                                            {t('journal.tapToEdit', { defaultValue: 'Tap to edit' })}
+                                                        </Text>
                                                     </View>
                                                 </View>
-                                            </View>
+                                            </TouchableOpacity>
                                         )}
                                     </View>
                                 );
                             })}
 
                             {/* Empty state */}
-                            {journalEntries.length === 0 && !isAddingEntry && (
-                                <Text style={[tw`text-[10px] font-black uppercase tracking-widest text-center py-3 mb-3`, { color: textMuted }]}>
-                                    {t('journal.empty')}
-                                </Text>
-                            )}
-
-                            {/* New entry input or add button */}
-                            {isAddingEntry ? (
-                                <View style={[tw`rounded-xl border-2 overflow-hidden`, { borderColor: outlineColor, backgroundColor: panelSoftBg }]}>
-                                    <TextInput
-                                        style={[tw`p-3 text-sm font-medium`, { color: textPrimary, minHeight: 100, textAlignVertical: 'top' }]}
-                                        value={newEntryText}
-                                        onChangeText={setNewEntryText}
-                                        placeholder={t('journal.placeholder')}
-                                        placeholderTextColor={textMuted}
-                                        multiline
-                                        autoFocus
-                                        onFocus={() => setTimeout(() => journalScrollRef.current?.scrollToEnd({ animated: true }), 80)}
-                                    />
-                                    {/* Mood row below text, above action bar */}
-                                    <View style={[tw`flex-row justify-between px-3 py-2 border-t-2`, { borderColor: borderSoft }]}>
-                                        {MOODS.map((m) => {
-                                            const Icon = m.icon;
-                                            const isSel = newEntryMood === m.value;
-                                            return (
-                                                <TouchableOpacity
-                                                    key={m.value}
-                                                    onPress={() => setNewEntryMood(isSel ? undefined : m.value)}
-                                                    style={[
-                                                        tw`flex-1 items-center py-1.5 rounded-lg border-2 mx-0.5`,
-                                                        isSel ? { borderColor: m.color, backgroundColor: m.color + '20' } : tw`border-transparent`
-                                                    ]}
-                                                >
-                                                    <Icon size={20} color={isSel ? m.color : textMuted} strokeWidth={isSel ? 2.5 : 2} />
-                                                </TouchableOpacity>
-                                            );
-                                        })}
-                                    </View>
-                                    <View style={[tw`flex-row justify-between items-center px-3 py-2 border-t-2`, { borderColor: borderSoft }]}>
-                                        <TouchableOpacity onPress={() => { setIsAddingEntry(false); setNewEntryText(''); setNewEntryMood(undefined); }}>
-                                            <Text style={[tw`text-[10px] font-black uppercase tracking-widest`, { color: textMuted }]}>{t('common.cancel')}</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity
-                                            onPress={handleAddEntry}
-                                            style={[tw`flex-row items-center gap-1.5 px-3 py-1.5 rounded-lg`, { backgroundColor: outlineColor }]}
-                                        >
-                                            <Save size={11} color={isDark ? '#000' : '#fff'} />
-                                            <Text style={[tw`text-[10px] font-black uppercase tracking-widest`, { color: isDark ? '#000' : '#fff' }]}>{t('journal.save')}</Text>
-                                        </TouchableOpacity>
-                                    </View>
+                            {/* The composer is always open. The old `+ Add Entry` gate cost a
+                                tap and, worse, made writing feel like something you had to
+                                opt into. Mood sits above the text because it's the fast part:
+                                on a day you don't feel like writing, one tap and Save is a
+                                complete entry. */}
+                            <View style={[tw`rounded-xl border-2 overflow-hidden`, { borderColor: outlineColor, backgroundColor: panelSoftBg }]}>
+                                <View style={[tw`flex-row justify-between px-3 pt-2.5 pb-2`]}>
+                                    {MOODS.map((m) => {
+                                        const Icon = m.icon;
+                                        const isSel = newEntryMood === m.value;
+                                        return (
+                                            <TouchableOpacity
+                                                key={m.value}
+                                                onPress={() => setNewEntryMood(isSel ? undefined : m.value)}
+                                                accessibilityRole="button"
+                                                accessibilityState={{ selected: isSel }}
+                                                accessibilityLabel={t(`dailyCard.moods.${MOOD_KEY_BY_VALUE[m.value]}`, { defaultValue: m.label })}
+                                                style={[
+                                                    tw`flex-1 items-center py-2 rounded-lg border-2 mx-0.5`,
+                                                    isSel ? { borderColor: m.color, backgroundColor: m.color + '20' } : tw`border-transparent`
+                                                ]}
+                                            >
+                                                <Icon size={22} color={isSel ? m.color : textMuted} strokeWidth={isSel ? 2.5 : 2} />
+                                            </TouchableOpacity>
+                                        );
+                                    })}
                                 </View>
-                            ) : (
-                                <TouchableOpacity
-                                    onPress={() => setIsAddingEntry(true)}
-                                    style={[tw`flex-row items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed`, { borderColor: theme.primary + '80' }]}
-                                >
-                                    <Plus size={14} color={theme.primary} />
-                                    <Text style={[tw`text-[10px] font-black uppercase tracking-widest`, { color: theme.primary }]}>
-                                        {t('journal.addEntry')}
-                                    </Text>
-                                </TouchableOpacity>
-                            )}
+
+                                <TextInput
+                                    ref={newEntryInputRef}
+                                    style={[tw`px-3 pb-2 text-sm font-medium`, { color: textPrimary, minHeight: 84, textAlignVertical: 'top' }]}
+                                    value={newEntryText}
+                                    onChangeText={setNewEntryText}
+                                    placeholder={t('journal.placeholder')}
+                                    placeholderTextColor={textMuted}
+                                    multiline
+                                    onFocus={() => {
+                                        activeJournalInputRef.current = newEntryInputRef;
+                                        scrollInputIntoView(newEntryInputRef, { fallbackToEnd: true });
+                                    }}
+                                    onBlur={() => { activeJournalInputRef.current = null; }}
+                                    // Keep the caret in view as the entry grows past one line.
+                                    onContentSizeChange={() => {
+                                        if (activeJournalInputRef.current === newEntryInputRef) {
+                                            scrollInputIntoView(newEntryInputRef, { fallbackToEnd: true });
+                                        }
+                                    }}
+                                />
+
+                                {/* The friction in journalling is the blank page, not typing
+                                    speed. A chip drops in a lead-in and leaves the caret after
+                                    it, so there's always something to finish rather than
+                                    something to start. */}
+                                <View style={tw`flex-row flex-wrap gap-1.5 px-3 pb-2`}>
+                                    {JOURNAL_PROMPTS.map((prompt) => (
+                                        <TouchableOpacity
+                                            key={prompt.key}
+                                            onPress={() => applyPrompt(prompt)}
+                                            accessibilityRole="button"
+                                            style={[
+                                                tw`px-2.5 h-8 rounded-lg items-center justify-center border`,
+                                                { borderColor: borderSoft, backgroundColor: panelBg },
+                                            ]}
+                                        >
+                                            <Text style={[tw`text-[10px] font-black uppercase tracking-wider`, { color: textSecondary }]}>
+                                                {t(`journal.prompts.${prompt.key}.chip`, { defaultValue: prompt.chip })}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+
+                                <View style={[tw`flex-row justify-end items-center px-2 py-1.5 border-t-2`, { borderColor: borderSoft }]}>
+                                    {hasDraft && (
+                                        <TouchableOpacity
+                                            onPress={() => { setNewEntryText(''); setNewEntryMood(undefined); }}
+                                            accessibilityRole="button"
+                                            style={tw`px-3 h-10 justify-center`}
+                                        >
+                                            <Text style={[tw`text-[10px] font-black uppercase tracking-widest`, { color: textMuted }]}>
+                                                {t('common.cancel')}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    )}
+                                    <TouchableOpacity
+                                        onPress={handleAddEntry}
+                                        disabled={!hasDraft}
+                                        accessibilityRole="button"
+                                        accessibilityState={{ disabled: !hasDraft }}
+                                        style={[
+                                            tw`flex-row items-center gap-1.5 px-3 h-10 rounded-lg justify-center`,
+                                            { backgroundColor: hasDraft ? outlineColor : 'transparent' },
+                                        ]}
+                                    >
+                                        <Save size={11} color={hasDraft ? (isDark ? '#000' : '#fff') : textMuted} />
+                                        <Text style={[
+                                            tw`text-[10px] font-black uppercase tracking-widest`,
+                                            { color: hasDraft ? (isDark ? '#000' : '#fff') : textMuted },
+                                        ]}>
+                                            {journalEntries.length > 0
+                                                ? t('journal.saveAnother', { defaultValue: 'Save entry' })
+                                                : t('journal.save')}
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
                         </ScrollView>
                     )}
                     <StatusRow />
@@ -1132,6 +1218,6 @@ export const DailyCard = ({
                     </Animated.View>
                 </Animated.View>
             </View>
-        </Animated.View>
+        </SwipeableCard>
     );
 };

@@ -47,7 +47,7 @@ module.exports = {
       backgroundColor: '#ffffff',
     },
     ios: {
-      supportsTablet: true,
+      supportsTablet: false,
       bundleIdentifier: selectedVariant.iosBundleIdentifier,
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,

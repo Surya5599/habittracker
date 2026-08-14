@@ -3,7 +3,14 @@ import { useTranslation } from 'react-i18next';
 import { View, Text, ScrollView, Dimensions, Animated, Easing, FlatList, TouchableOpacity } from 'react-native';
 import tw from 'twrnc';
 import Svg, { Path, Circle } from 'react-native-svg';
+import { ChevronLeft, ChevronRight, Target, CalendarRange, ListChecks, Sparkles } from 'lucide-react-native';
 import { MOODS } from '../constants';
+import { getPalette } from '../constants/theme';
+
+// The four questions this screen answers. Previously these were nine stacked
+// shadow cards in one scroll, which reported completion % three times, done/total
+// and the best habit twice each, and drew two separate calendars of the same date
+// range. One card, four panels, tap to switch — the DailyCard idiom.
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -36,27 +43,29 @@ const AnimatedRetrospectiveBar = ({ percentage, color }) => {
     );
 };
 
-export const HardShadowCardLocal = ({ children, style, bgColor, colorMode = 'light' }) => (
-    (() => {
-        const isDark = colorMode === 'dark';
-        const resolvedBg = bgColor || (isDark ? '#0b0b0b' : 'white');
-        const resolvedBorder = isDark ? '#ffffff' : '#000000';
-        return (
-    <View style={style}>
-        <View style={[
-            tw`absolute bg-black rounded-3xl`,
-            { top: 6, left: 6, right: -6, bottom: -6, zIndex: -1 }
-        ]} />
-        <View style={[
-            tw`border-[3px] border-black rounded-3xl overflow-hidden flex-1`,
-            { backgroundColor: resolvedBg, borderColor: resolvedBorder }
-        ]}>
-            {children}
+// The analytics card. Flat, like the day card on Today and the page on Review — all three
+// are a 3px outline on a panel and nothing else.
+//
+// This one used to carry a hard drop shadow: a solid black rounded rectangle offset 6px
+// down and right, sitting behind the card. Neither of the other two had one (Today defined
+// a HardShadowCard and then never used it), so Analytics was the only screen in the app
+// with a shadow, and it read as a stray dark band behind the card rather than as depth.
+export const AnalyticsCardSurface = ({ children, style, bgColor, colorMode = 'light' }) => {
+    const isDark = colorMode === 'dark';
+    return (
+        <View style={style}>
+            <View style={[
+                tw`border-[3px] rounded-3xl overflow-hidden flex-1`,
+                {
+                    backgroundColor: bgColor || (isDark ? '#0b0b0b' : '#ffffff'),
+                    borderColor: isDark ? '#ffffff' : '#000000',
+                },
+            ]}>
+                {children}
+            </View>
         </View>
-    </View>
-        );
-    })()
-);
+    );
+};
 
 // A simple component to render text with [[highlights]]
 const FormattedText = ({ text, highlightColor, colorMode = 'light' }) => {
@@ -101,8 +110,24 @@ export const AnalyticsDashboard = ({
     weakDayInsight = null,
     fragilityInsight = null,
     weeklyBreakdown = null,
+    // Period navigation, previously two stacked rows above the cards in DashboardView.
+    // It folds into this card's header band, the way DailyCard's date header works.
+    analyticsView = null,
+    onChangeAnalyticsView,
+    onPrevPeriod,
+    onNextPeriod,
+    onPressPeriodLabel,
+    cardHeight,
+    // Controlled from DashboardView. Each period renders its own instance of this
+    // component, so internal panel state would reset to 'score' every time you
+    // switched WEEK/MONTH/YEAR. Falls back to local state when uncontrolled.
+    activePanel = null,
+    onChangePanel = null,
 }) => {
     const { t } = useTranslation();
+    const [internalPanel, setInternalPanel] = useState('score');
+    const panel = activePanel || internalPanel;
+    const setPanel = onChangePanel || setInternalPanel;
     const normalizedPeriod = periodType || ({
         Week: 'WEEK',
         Month: 'MONTH',
@@ -118,7 +143,13 @@ export const AnalyticsDashboard = ({
     const surfaceSoft = isDark ? '#111111' : '#f9fafb';
     const borderSoft = isDark ? '#ffffff' : '#e5e7eb';
     const screenWidth = Dimensions.get('window').width;
-    const chartWidth = screenWidth - 64;
+    // The chart used to be `screenWidth - 64`, which assumed the old layout: a card at
+    // px-3 with p-5 inside it. Inside a panel the chart now sits one level deeper
+    // (card border + panel padding + the sub-block's border and padding), so that
+    // constant overflowed by ~40px. Measure the slot instead of tracking the nesting;
+    // the fallback only applies for the first frame before onLayout fires.
+    const [chartSlotWidth, setChartSlotWidth] = useState(0);
+    const chartWidth = chartSlotWidth > 0 ? chartSlotWidth : Math.max(120, screenWidth - 106);
     const chartHeight = 100;
     const comparisonChartHeight = 84;
 
@@ -438,21 +469,29 @@ export const AnalyticsDashboard = ({
         1
     );
 
+    // A 3px stroke with round caps hangs half its width past the first and last
+    // points, so the series spans an inset box rather than the full canvas.
+    const STROKE_INSET = 3;
     const buildPath = (series, width, height, maxValue) => {
         if (!Array.isArray(series) || series.length === 0) return '';
+        const span = Math.max(1, width - STROKE_INSET * 2);
+        const usable = Math.max(1, height - STROKE_INSET * 2);
+        const yAt = (value) => STROKE_INSET + (usable - ((value || 0) / Math.max(maxValue, 1)) * usable);
+        const xAt = (i, len) => STROKE_INSET + (len === 1 ? span : (i / (len - 1)) * span);
+
         if (series.length === 1) {
-            const y = height - ((series[0]?.value || 0) / Math.max(maxValue, 1)) * height;
-            return `M 0,${y} L ${width},${y}`;
+            const y = yAt(series[0]?.value);
+            return `M ${STROKE_INSET},${y} L ${STROKE_INSET + span},${y}`;
         }
         let path = '';
         series.forEach((d, i) => {
-            const x = (i / (series.length - 1)) * width;
-            const y = height - ((d?.value || 0) / Math.max(maxValue, 1)) * height;
+            const x = xAt(i, series.length);
+            const y = yAt(d?.value);
             if (i === 0) {
                 path = `M ${x},${y}`;
             } else {
-                const prevX = ((i - 1) / (series.length - 1)) * width;
-                const prevY = height - (((series[i - 1]?.value || 0) / Math.max(maxValue, 1)) * height);
+                const prevX = xAt(i - 1, series.length);
+                const prevY = yAt(series[i - 1]?.value);
                 const controlX = (prevX + x) / 2;
                 path += ` C ${controlX},${prevY} ${controlX},${y} ${x},${y}`;
             }
@@ -484,374 +523,439 @@ export const AnalyticsDashboard = ({
             ? momDelta
             : null;
 
-    return (
-        <View style={tw`flex-1`}>
+    /* ---------------- Tab strip ---------------- */
 
-            {/* 1. Retrospective Grid */}
-            <View style={tw`mb-6`}>
-                <HardShadowCardLocal colorMode={colorMode}>
-                    <View style={tw`p-5`}>
-                        <View style={tw`flex-row justify-between items-center mb-6`}>
-                            <Text style={[tw`text-xs font-black uppercase tracking-widest leading-none`, { color: textMuted }]}>{t('analytics.retrospectiveGrid')}</Text>
-                            <Text style={[tw`text-xs font-black uppercase tracking-widest leading-none`, { color: theme.primary }]}>{Math.round(completionStats.percentage)}% {t('analytics.done')}</Text>
-                        </View>
-                        {renderRetrospectiveGrid()}
-                    </View>
-                </HardShadowCardLocal>
-            </View>
+    const palette = getPalette(colorMode);
+    const moodCounts = Array.isArray(moodData)
+        ? moodData.filter(d => d?.mood).length
+        : 0;
 
-            {/* 2. KPI Summary */}
-            <View style={tw`mb-6`}>
-                <HardShadowCardLocal colorMode={colorMode}>
-                    <View style={tw`p-4`}>
-                        <Text style={[tw`text-[10px] font-black uppercase tracking-widest mb-3 leading-none`, { color: textMuted }]}>
-                            {t('analytics.atAGlance')}
+    // Icon-only, matching the DailyCard strip. Each tab shows its group's headline
+    // value, so all four numbers are visible at once without switching panels.
+    const TABS = [
+        {
+            id: 'score',
+            icon: Target,
+            label: t('analytics.tabScore', { defaultValue: 'Score' }),
+            value: `${Math.round(completionStats.percentage)}%`,
+        },
+        {
+            id: 'timing',
+            icon: CalendarRange,
+            label: t('analytics.tabTiming', { defaultValue: 'Timing' }),
+            value: weakDayInsight?.dayShort
+                || (comparisonDelta === null ? '—' : `${comparisonDelta >= 0 ? '+' : ''}${comparisonDelta}%`),
+        },
+        {
+            id: 'habits',
+            icon: ListChecks,
+            label: t('analytics.tabHabits', { defaultValue: 'Habits' }),
+            value: `${completionStats.completed}/${completionStats.total}`,
+        },
+        {
+            id: 'story',
+            icon: Sparkles,
+            label: t('analytics.tabStory', { defaultValue: 'Story' }),
+            value: moodCounts > 0 ? String(moodCounts) : '—',
+        },
+    ];
+
+    const TabStrip = () => (
+        <View
+            accessibilityRole="tablist"
+            style={[tw`flex-row border-t-[3px]`, { backgroundColor: palette.panelSoftBg, borderTopColor: palette.outline }]}
+        >
+            {TABS.map((tab, i) => {
+                const isActive = panel === tab.id;
+                const TabIcon = tab.icon;
+                return (
+                    <TouchableOpacity
+                        key={tab.id}
+                        onPress={() => setPanel(tab.id)}
+                        accessibilityRole="tab"
+                        accessibilityState={{ selected: isActive }}
+                        accessibilityLabel={tab.label}
+                        accessibilityValue={{ text: tab.value }}
+                        style={[
+                            tw`flex-1 py-3 items-center justify-center gap-1`,
+                            i < TABS.length - 1 && { borderRightWidth: 1, borderRightColor: palette.outline },
+                            isActive && { backgroundColor: palette.panelBg },
+                        ]}
+                    >
+                        {/* Active tab also gets a bar overlaying the top border, the same
+                            affordance DailyCard uses now that the labels are gone. */}
+                        {isActive && (
+                            <View style={{ position: 'absolute', top: -3, left: 0, right: 0, height: 3, backgroundColor: theme.primary }} />
+                        )}
+                        <TabIcon size={19} color={isActive ? theme.primary : textMuted} strokeWidth={isActive ? 2.5 : 2} />
+                        <Text style={[tw`text-[11px] font-black`, { color: isActive ? textPrimary : textMuted }]} numberOfLines={1}>
+                            {tab.value}
                         </Text>
-                        <View style={tw`flex-row flex-wrap`}>
-                            <View style={tw`w-1/2 pr-3 mb-3`}>
-                                <Text style={[tw`text-[9px] font-black uppercase tracking-wider`, { color: textMuted }]}>{t('analytics.completion')}</Text>
-                                <Text style={[tw`text-2xl font-black mt-1`, { color: theme.primary }]}>{Math.round(completionStats.percentage)}%</Text>
-                            </View>
-                            <View style={tw`w-1/2 pl-3 mb-3`}>
-                                <Text style={[tw`text-[9px] font-black uppercase tracking-wider`, { color: textMuted }]}>{t('analytics.doneTotal')}</Text>
-                                <Text style={[tw`text-2xl font-black mt-1`, { color: textPrimary }]}>{completionStats.completed}/{completionStats.total}</Text>
-                            </View>
-                            <View style={tw`w-1/2 pr-3`}>
-                                <Text style={[tw`text-[9px] font-black uppercase tracking-wider`, { color: textMuted }]}>{t('analytics.vsPrevious')}</Text>
-                                <Text style={[tw`text-lg font-black mt-1`, { color: comparisonDelta === null ? textFaint : (comparisonDelta >= 0 ? theme.primary : '#ef4444') }]}>
-                                    {comparisonDelta === null ? '--' : `${comparisonDelta >= 0 ? '+' : ''}${comparisonDelta}%`}
-                                </Text>
-                            </View>
-                            <View style={tw`w-1/2 pl-3`}>
-                                <Text style={[tw`text-[9px] font-black uppercase tracking-wider`, { color: textMuted }]}>{t('analytics.topHabit')}</Text>
-                                <Text style={[tw`text-sm font-black mt-1`, { color: textPrimary }]} numberOfLines={1}>
-                                    {stats.best?.name || t('analytics.noData')}
-                                </Text>
-                            </View>
-                        </View>
-                    </View>
-                </HardShadowCardLocal>
+                    </TouchableOpacity>
+                );
+            })}
+        </View>
+    );
+
+    const PeriodHeader = () => (
+        <View style={{ backgroundColor: theme.primary }}>
+            <View style={tw`flex-row items-center justify-between px-2 py-2`}>
+                <TouchableOpacity
+                    onPress={onPrevPeriod}
+                    disabled={!onPrevPeriod}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('analytics.previousPeriod', { defaultValue: 'Previous period' })}
+                    style={tw`w-11 h-11 items-center justify-center`}
+                >
+                    <ChevronLeft size={22} color="#ffffff" strokeWidth={3} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                    onPress={onPressPeriodLabel}
+                    disabled={!onPressPeriodLabel}
+                    accessibilityRole="button"
+                    style={tw`flex-1 items-center justify-center h-11`}
+                >
+                    <Text style={tw`text-sm font-black text-white uppercase tracking-widest text-center`} numberOfLines={1}>
+                        {periodLabelSecondary || periodLabel}
+                    </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    onPress={onNextPeriod}
+                    disabled={!onNextPeriod}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('analytics.nextPeriod', { defaultValue: 'Next period' })}
+                    style={tw`w-11 h-11 items-center justify-center`}
+                >
+                    <ChevronRight size={22} color="#ffffff" strokeWidth={3} />
+                </TouchableOpacity>
             </View>
 
-            {/* 3. Weekly breakdown (MONTH only) */}
+            {analyticsView && onChangeAnalyticsView && (
+                <View style={tw`flex-row px-2 pb-2 gap-1`}>
+                    {['WEEK', 'MONTH', 'YEAR'].map((name) => {
+                        const isActive = analyticsView === name;
+                        return (
+                            <TouchableOpacity
+                                key={name}
+                                onPress={() => onChangeAnalyticsView(name)}
+                                accessibilityRole="tab"
+                                accessibilityState={{ selected: isActive }}
+                                style={[
+                                    tw`flex-1 py-2 rounded-lg items-center justify-center`,
+                                    isActive ? { backgroundColor: '#ffffff' } : { backgroundColor: 'rgba(255,255,255,0.18)' },
+                                ]}
+                            >
+                                <Text
+                                    style={[
+                                        tw`text-[10px] font-black uppercase tracking-widest`,
+                                        { color: isActive ? theme.primary : '#ffffff' },
+                                    ]}
+                                >
+                                    {t(`dashboard.${name.toLowerCase()}Tab`)}
+                                </Text>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </View>
+            )}
+        </View>
+    );
+
+    // Both comparison charts (week-over-week, month-over-month) drew identical markup
+    // in the old layout; one helper now serves both.
+    const renderComparisonChart = (currentPath, previousPath, currentLabel, previousLabel, currentPct, previousPct) => (
+        <>
+            {/* This wrapper is what reports the real available width back up. */}
+            <View
+                style={tw`mb-4`}
+                onLayout={(e) => {
+                    const w = Math.round(e.nativeEvent.layout.width);
+                    if (w > 0 && w !== chartSlotWidth) setChartSlotWidth(w);
+                }}
+            >
+                <Svg width={chartWidth} height={comparisonChartHeight}>
+                    <Path d={previousPath} fill="none" stroke={isDark ? '#a1a1aa' : '#9ca3af'} strokeWidth={2} strokeDasharray="4 4" strokeLinecap="round" />
+                    <Path d={currentPath} fill="none" stroke={theme.primary} strokeWidth={3} strokeLinecap="round" />
+                </Svg>
+            </View>
+            <View style={tw`flex-row items-center justify-between mb-3`}>
+                <View style={tw`flex-row items-center`}>
+                    <View style={[tw`w-3 h-0.5 mr-2`, { backgroundColor: theme.primary }]} />
+                    <Text style={[tw`text-[10px] font-black uppercase`, { color: textPrimary }]}>{currentLabel}</Text>
+                </View>
+                <Text style={[tw`text-[10px] font-black uppercase`, { color: theme.primary }]}>{Math.round(currentPct)}%</Text>
+            </View>
+            <View style={tw`flex-row items-center justify-between`}>
+                <View style={tw`flex-row items-center`}>
+                    <View style={[tw`w-3 h-0.5 mr-2`, { backgroundColor: isDark ? '#a1a1aa' : '#9ca3af' }]} />
+                    <Text style={[tw`text-[10px] font-black uppercase`, { color: textPrimary }]}>{previousLabel}</Text>
+                </View>
+                <Text style={[tw`text-[10px] font-black uppercase`, { color: isDark ? '#a1a1aa' : '#6b7280' }]}>{Math.round(previousPct)}%</Text>
+            </View>
+        </>
+    );
+
+    const SectionLabel = ({ children, right }) => (
+        <View style={tw`flex-row justify-between items-center mb-4`}>
+            <Text style={[tw`text-xs font-black uppercase tracking-widest leading-none`, { color: textMuted }]}>{children}</Text>
+            {right}
+        </View>
+    );
+
+    /* ---------------- Panels ---------------- */
+
+    const scorePanel = (
+        <View style={tw`p-5`}>
+            <View style={tw`flex-row items-center justify-between mb-6`}>
+                <View>
+                    <Text style={[tw`text-[10px] font-black uppercase tracking-widest mb-2 leading-none`, { color: textMuted }]}>{masteryLabel}</Text>
+                    <View style={tw`flex-row items-baseline`}>
+                        <Text style={[tw`text-4xl font-black`, { color: textPrimary }]}>{completionStats.completed}</Text>
+                        <Text style={[tw`text-2xl font-black ml-1`, { color: textFaint }]}>/ {completionStats.total}</Text>
+                    </View>
+                </View>
+                <View style={tw`items-center justify-center`}>
+                    <Svg width={70} height={70}>
+                        <Circle cx={35} cy={35} r={radius} stroke={isDark ? '#262626' : '#f5f5f4'} strokeWidth={8} fill="none" />
+                        <AnimatedCircle
+                            cx={35}
+                            cy={35}
+                            r={radius}
+                            stroke={theme.primary}
+                            strokeWidth={8}
+                            fill="none"
+                            strokeDasharray={circumference}
+                            strokeDashoffset={circleAnim.interpolate({ inputRange: [0, 100], outputRange: [circumference, 0] })}
+                            strokeLinecap="round"
+                            transform="rotate(-90 35 35)"
+                        />
+                    </Svg>
+                    <View style={tw`absolute`}>
+                        <Text style={[tw`text-sm font-black`, { color: theme.primary }]}>{Math.round(completionStats.percentage)}%</Text>
+                    </View>
+                </View>
+            </View>
+
+            <View style={[tw`rounded-2xl border-2 p-4`, { borderColor: borderSoft, backgroundColor: surfaceSoft }]}>
+                <SectionLabel>{t('analytics.atAGlance')}</SectionLabel>
+                <View style={tw`flex-row flex-wrap`}>
+                    <View style={tw`w-1/2 pr-3 mb-3`}>
+                        <Text style={[tw`text-[9px] font-black uppercase tracking-wider`, { color: textMuted }]}>{t('analytics.completion')}</Text>
+                        <Text style={[tw`text-2xl font-black mt-1`, { color: theme.primary }]}>{Math.round(completionStats.percentage)}%</Text>
+                    </View>
+                    <View style={tw`w-1/2 pl-3 mb-3`}>
+                        <Text style={[tw`text-[9px] font-black uppercase tracking-wider`, { color: textMuted }]}>{t('analytics.vsPrevious')}</Text>
+                        <Text style={[tw`text-2xl font-black mt-1`, { color: comparisonDelta === null ? textFaint : (comparisonDelta >= 0 ? theme.primary : palette.danger) }]}>
+                            {comparisonDelta === null ? '--' : `${comparisonDelta >= 0 ? '+' : ''}${comparisonDelta}%`}
+                        </Text>
+                    </View>
+                    <View style={tw`w-full`}>
+                        <Text style={[tw`text-[9px] font-black uppercase tracking-wider`, { color: textMuted }]}>{t('analytics.topHabit')}</Text>
+                        <Text style={[tw`text-sm font-black mt-1`, { color: textPrimary }]} numberOfLines={1}>
+                            {stats.best?.name || t('analytics.noData')}
+                        </Text>
+                    </View>
+                </View>
+            </View>
+        </View>
+    );
+
+    const timingPanel = (
+        <View style={tw`p-5`}>
+            <SectionLabel right={
+                <Text style={[tw`text-xs font-black uppercase tracking-widest leading-none`, { color: theme.primary }]}>
+                    {Math.round(completionStats.percentage)}% {t('analytics.done')}
+                </Text>
+            }>
+                {t('analytics.retrospectiveGrid')}
+            </SectionLabel>
+            {renderRetrospectiveGrid()}
+
+            {normalizedPeriod === 'WEEK' && weakDayInsight && (
+                <View style={[tw`mt-5 rounded-2xl border-2 overflow-hidden`, { borderColor: borderSoft }]}>
+                    <View style={[tw`px-3 py-1.5`, { backgroundColor: theme.primary }]}>
+                        <Text style={tw`text-white text-[9px] font-black tracking-widest uppercase`}>{t('dashboard.weakSpot')}</Text>
+                    </View>
+                    <View style={[tw`p-3`, { backgroundColor: surfaceSoft }]}>
+                        <Text style={[tw`font-medium leading-relaxed text-sm`, { color: isDark ? '#cfcfcf' : '#4b5563' }]}>
+                            {t('dashboard.weakSpotDesc1') + ' '}
+                            <Text style={[tw`font-black uppercase`, { color: theme.secondary }]}>
+                                {weakDayInsight.completionRatePct}% {t('dashboard.weakSpotDesc2')}
+                            </Text>
+                            {weakDayInsight.worstHabit
+                                ? '. ' + t('dashboard.weakSpotDesc3', { habit: weakDayInsight.worstHabit.name, day: weakDayInsight.dayShort })
+                                : ''}
+                        </Text>
+                    </View>
+                </View>
+            )}
+
             {normalizedPeriod === 'MONTH' && weeklyBreakdown && weeklyBreakdown.length > 0 && (() => {
                 const maxPct = Math.max(...weeklyBreakdown.map(w => w.percentage), 1);
                 const MAX_BAR_H = 72;
                 return (
-                    <View style={tw`mb-6`}>
-                        <HardShadowCardLocal colorMode={colorMode}>
-                            <View style={tw`p-5`}>
-                                <View style={tw`flex-row justify-between items-center mb-5`}>
-                                    <Text style={[tw`text-xs font-black uppercase tracking-widest leading-none`, { color: textMuted }]}>{t('analytics.weeksThisMonth')}</Text>
-                                    <Text style={[tw`text-[10px] font-black uppercase tracking-widest leading-none`, { color: theme.primary }]}>
-                                        {t('analytics.completion')}
-                                    </Text>
-                                </View>
-                                <View style={[tw`flex-row items-end justify-between`, { height: MAX_BAR_H + 40 }]}>
-                                    {weeklyBreakdown.map((week, i) => {
-                                        const isBest = week.percentage === maxPct && week.possible > 0;
-                                        const barH = week.possible === 0 ? 4 : Math.max(4, Math.round((week.percentage / maxPct) * MAX_BAR_H));
-                                        return (
-                                            <View key={i} style={tw`flex-1 items-center mx-1`}>
-                                                <Text style={[tw`text-[10px] font-black mb-1`, { color: isBest ? theme.primary : textMuted }]}>
-                                                    {week.possible === 0 ? '—' : `${week.percentage}%`}
-                                                </Text>
-                                                <View style={{
-                                                    height: barH,
-                                                    width: '100%',
-                                                    borderRadius: 6,
-                                                    backgroundColor: isBest ? theme.primary : (isDark ? '#2a2a2a' : '#e5e7eb'),
-                                                    borderWidth: 2,
-                                                    borderColor: isBest ? theme.primary : (isDark ? '#3a3a3a' : '#d1d5db'),
-                                                }} />
-                                                <Text style={[tw`text-[10px] font-black mt-2 uppercase`, { color: isBest ? theme.primary : textPrimary }]}>{week.label}</Text>
-                                                <Text style={[tw`text-[8px] font-bold mt-0.5`, { color: textMuted }]}>{week.startDay}–{week.endDay}</Text>
-                                            </View>
-                                        );
-                                    })}
-                                </View>
-                            </View>
-                        </HardShadowCardLocal>
+                    <View style={[tw`mt-5 rounded-2xl border-2 p-4`, { borderColor: borderSoft, backgroundColor: surfaceSoft }]}>
+                        <SectionLabel>{t('analytics.weeksThisMonth')}</SectionLabel>
+                        <View style={[tw`flex-row items-end justify-between`, { height: MAX_BAR_H + 40 }]}>
+                            {weeklyBreakdown.map((week, i) => {
+                                const isBest = week.percentage === maxPct && week.possible > 0;
+                                const barH = week.possible === 0 ? 4 : Math.max(4, Math.round((week.percentage / maxPct) * MAX_BAR_H));
+                                return (
+                                    <View key={i} style={tw`flex-1 items-center mx-1`}>
+                                        <Text style={[tw`text-[10px] font-black mb-1`, { color: isBest ? theme.primary : textMuted }]}>
+                                            {week.possible === 0 ? '—' : `${week.percentage}%`}
+                                        </Text>
+                                        <View style={{
+                                            height: barH,
+                                            width: '100%',
+                                            borderRadius: 6,
+                                            backgroundColor: isBest ? theme.primary : (isDark ? '#2a2a2a' : '#e5e7eb'),
+                                            borderWidth: 2,
+                                            borderColor: isBest ? theme.primary : (isDark ? '#3a3a3a' : '#d1d5db'),
+                                        }} />
+                                        <Text style={[tw`text-[10px] font-black mt-2 uppercase`, { color: isBest ? theme.primary : textPrimary }]}>{week.label}</Text>
+                                        <Text style={[tw`text-[8px] font-bold mt-0.5`, { color: textMuted }]}>{week.startDay}–{week.endDay}</Text>
+                                    </View>
+                                );
+                            })}
+                        </View>
                     </View>
                 );
             })()}
 
-            {/* 4. Best / Worst habits */}
-            <View style={tw`gap-3 mb-6`}>
-                <HardShadowCardLocal colorMode={colorMode}>
-                    <View style={tw`p-4 flex-row items-center justify-between`}>
-                        <View style={tw`flex-1 pr-4`}>
-                            <Text style={[tw`text-[10px] font-black uppercase tracking-widest mb-1 leading-none`, { color: textMuted }]}>{t('analytics.bestHabit', { period: periodLabel })}</Text>
-                            <Text style={[tw`text-lg font-black`, { color: textPrimary }]} numberOfLines={1}>{stats.best?.name || t('analytics.noData')}</Text>
-                        </View>
-                        <View style={tw`items-end`}>
-                            <Text style={[tw`text-xl font-black`, { color: textPrimary }]}>{stats.best?.value || "-"}</Text>
-                            <View style={[tw`mt-1 w-8 h-1.5 rounded-full`, { backgroundColor: theme.primary }]} />
-                        </View>
-                    </View>
-                </HardShadowCardLocal>
-
-                <HardShadowCardLocal colorMode={colorMode}>
-                    <View style={tw`p-4 flex-row items-center justify-between`}>
-                        <View style={tw`flex-1 pr-4`}>
-                            <Text style={tw`text-[10px] font-black uppercase text-red-300 tracking-widest mb-1 leading-none`}>{t('analytics.needsFocus', { period: periodLabel })}</Text>
-                            <Text style={[tw`text-lg font-black`, { color: textPrimary }]} numberOfLines={1}>{stats.worst?.name || t('analytics.onTrack')}</Text>
-                        </View>
-                        <View style={tw`items-end`}>
-                            <Text style={[tw`text-xl font-black`, { color: textPrimary }]}>{stats.worst?.value || "-"}</Text>
-                            <View style={[tw`mt-1 w-8 h-1.5 rounded-full`, { backgroundColor: '#fca5a5' }]} />
-                        </View>
-                    </View>
-                </HardShadowCardLocal>
-            </View>
-
-            {/* 4–6. Insights (WEEK only) */}
-            {normalizedPeriod === 'WEEK' && anchorInsight && (
-                <View style={tw`mb-6`}>
-                    <HardShadowCardLocal colorMode={colorMode}>
-                        <View style={tw`p-4`}>
-                            <View style={tw`flex-row items-center mb-2`}>
-                                <View style={[tw`px-2 py-0.5 rounded-full`, { backgroundColor: theme.primary }]}>
-                                    <Text style={tw`text-white text-[9px] font-black tracking-widest`}>{t('dashboard.anchorHabit')}</Text>
-                                </View>
-                            </View>
-                            <Text style={[tw`text-xl font-black leading-tight mb-1.5`, { color: isDark ? '#f5f5f5' : '#171717' }]}>
-                                {anchorInsight.habit.name}
-                            </Text>
-                            <Text style={[tw`text-sm leading-relaxed`, { color: isDark ? '#a8a29e' : '#57534e' }]}>
-                                {t('dashboard.anchorDesc1') + ' '}
-                                <Text style={{ color: theme.primary, fontWeight: '900' }}>
-                                    {anchorInsight.liftPct}% {t('dashboard.anchorDesc2')}
-                                </Text>
-                                {' ' + t('dashboard.anchorDesc3', { done: anchorInsight.doneRatePct, missed: anchorInsight.missedRatePct })}
-                            </Text>
-                        </View>
-                    </HardShadowCardLocal>
-                </View>
-            )}
-
-            {normalizedPeriod === 'WEEK' && weakDayInsight && (
-                <View style={tw`mb-6`}>
-                    <HardShadowCardLocal colorMode={colorMode}>
-                        <View style={tw`p-4`}>
-                            <View style={tw`flex-row items-center mb-2`}>
-                                <View style={[tw`px-2 py-0.5 rounded-full`, { backgroundColor: '#f97316' }]}>
-                                    <Text style={tw`text-white text-[9px] font-black tracking-widest`}>{t('dashboard.weakSpot')}</Text>
-                                </View>
-                            </View>
-                            <Text style={[tw`text-xl font-black leading-tight mb-1.5`, { color: isDark ? '#f5f5f5' : '#171717' }]}>
-                                {weakDayInsight.dayName}
-                            </Text>
-                            <Text style={[tw`text-sm leading-relaxed mb-3`, { color: isDark ? '#a8a29e' : '#57534e' }]}>
-                                {t('dashboard.weakSpotDesc1') + ' '}
-                                <Text style={{ color: '#f97316', fontWeight: '900' }}>
-                                    {weakDayInsight.completionRatePct}% {t('dashboard.weakSpotDesc2')}
-                                </Text>
-                                {weakDayInsight.worstHabit
-                                    ? '. ' + t('dashboard.weakSpotDesc3', { habit: weakDayInsight.worstHabit.name, day: weakDayInsight.dayShort })
-                                    : '.'}
-                            </Text>
-                            {weakDayInsight.dayRates.some(d => d.rate !== null) && (
-                                <View style={[tw`flex-row items-end`, { gap: 4 }]}>
-                                    {weakDayInsight.dayRates.map(({ day, rate }) => {
-                                        const isWeakest = day === weakDayInsight.dayShort;
-                                        const barHeight = rate !== null ? Math.max(4, Math.round(rate * 0.44)) : 4;
-                                        return (
-                                            <View key={day} style={tw`flex-1 items-center`}>
-                                                <View style={{
-                                                    width: '100%',
-                                                    height: barHeight,
-                                                    borderRadius: 2,
-                                                    backgroundColor: rate === null
-                                                        ? (isDark ? '#2a2a2a' : '#e5e7eb')
-                                                        : isWeakest
-                                                            ? '#f97316'
-                                                            : (isDark ? '#444' : '#d1d5db')
-                                                }} />
-                                                <Text style={{
-                                                    fontSize: 9,
-                                                    fontWeight: '900',
-                                                    marginTop: 3,
-                                                    color: isWeakest ? '#f97316' : (isDark ? '#555' : '#9ca3af')
-                                                }}>{day[0]}</Text>
-                                            </View>
-                                        );
-                                    })}
-                                </View>
-                            )}
-                        </View>
-                    </HardShadowCardLocal>
-                </View>
-            )}
-
-            {normalizedPeriod === 'WEEK' && fragilityInsight && (
-                <View style={tw`mb-6`}>
-                    <HardShadowCardLocal colorMode={colorMode}>
-                        <View style={tw`p-4`}>
-                            <View style={tw`flex-row items-center mb-2`}>
-                                <View style={[tw`px-2 py-0.5 rounded-full`, { backgroundColor: '#8b5cf6' }]}>
-                                    <Text style={tw`text-white text-[9px] font-black tracking-widest`}>{t('dashboard.streakPattern')}</Text>
-                                </View>
-                            </View>
-                            <Text style={[tw`text-xl font-black leading-tight mb-1.5`, { color: isDark ? '#f5f5f5' : '#171717' }]}>
-                                {fragilityInsight.habit.name}
-                            </Text>
-                            <Text style={[tw`text-sm leading-relaxed`, { color: isDark ? '#a8a29e' : '#57534e' }]}>
-                                {t('dashboard.streakDesc1') + ' '}
-                                <Text style={{ color: '#8b5cf6', fontWeight: '900' }}>
-                                    {fragilityInsight.breakAtLength} {fragilityInsight.breakAtLength === 1 ? t('dashboard.streakDescDay') : t('dashboard.streakDescDays')}
-                                </Text>
-                                {' ' + t('dashboard.streakDesc2', { count: fragilityInsight.breakCount, day: fragilityInsight.breakAtLength + 1 })}
-                            </Text>
-                        </View>
-                    </HardShadowCardLocal>
-                </View>
-            )}
-
-            {/* 7. Period comparison */}
             {normalizedPeriod === 'WEEK' && wowMax > 1 && wowCurrent.length > 0 && wowPrevious.length > 0 && (
-                <View style={tw`mb-6`}>
-                    <HardShadowCardLocal colorMode={colorMode}>
-                        <View style={tw`p-5`}>
-                            <View style={tw`flex-row justify-between items-center mb-2`}>
-                                <Text style={[tw`text-xs font-black uppercase tracking-widest leading-none`, { color: textMuted }]}>{t('analytics.weekOverWeek')}</Text>
-                                <View style={[tw`px-2 py-1 rounded-lg`, { backgroundColor: wowDelta >= 0 ? `${theme.primary}22` : '#ef444422' }]}>
-                                    <Text style={[tw`text-[10px] font-black uppercase`, { color: wowDelta >= 0 ? theme.primary : '#ef4444' }]}>
-                                        {wowDelta >= 0 ? `+${wowDelta}%` : `${wowDelta}%`} {t('analytics.vsLastWeek')}
-                                    </Text>
-                                </View>
-                            </View>
-                            <Svg width={chartWidth} height={comparisonChartHeight} style={tw`mb-4`}>
-                                <Path d={wowPreviousPath} fill="none" stroke={isDark ? '#a1a1aa' : '#9ca3af'} strokeWidth={2} strokeDasharray="4 4" strokeLinecap="round" />
-                                <Path d={wowCurrentPath} fill="none" stroke={theme.primary} strokeWidth={3} strokeLinecap="round" />
-                            </Svg>
-                            <View style={tw`flex-row items-center justify-between mb-3`}>
-                                <View style={tw`flex-row items-center`}>
-                                    <View style={[tw`w-3 h-0.5 mr-2`, { backgroundColor: theme.primary }]} />
-                                    <Text style={[tw`text-[10px] font-black uppercase`, { color: textPrimary }]}>{t('analytics.thisWeek')}</Text>
-                                </View>
-                                <Text style={[tw`text-[10px] font-black uppercase`, { color: theme.primary }]}>{Math.round(wowCurrentPct)}%</Text>
-                            </View>
-                            <View style={tw`flex-row items-center justify-between`}>
-                                <View style={tw`flex-row items-center`}>
-                                    <View style={[tw`w-3 h-0.5 mr-2`, { backgroundColor: isDark ? '#a1a1aa' : '#9ca3af' }]} />
-                                    <Text style={[tw`text-[10px] font-black uppercase`, { color: textPrimary }]}>{t('analytics.lastWeek')}</Text>
-                                </View>
-                                <Text style={[tw`text-[10px] font-black uppercase`, { color: isDark ? '#a1a1aa' : '#6b7280' }]}>{Math.round(wowPreviousPct)}%</Text>
-                            </View>
-                        </View>
-                    </HardShadowCardLocal>
+                <View style={[tw`mt-5 rounded-2xl border-2 p-4`, { borderColor: borderSoft, backgroundColor: surfaceSoft }]}>
+                    <SectionLabel right={
+                        <Text style={[tw`text-[10px] font-black uppercase tracking-widest leading-none`, { color: wowDelta >= 0 ? theme.primary : palette.danger }]}>
+                            {wowDelta >= 0 ? `+${wowDelta}%` : `${wowDelta}%`} {t('analytics.vsLastWeek')}
+                        </Text>
+                    }>
+                        {t('analytics.weekOverWeek')}
+                    </SectionLabel>
+                    {renderComparisonChart(wowCurrentPath, wowPreviousPath, t('analytics.thisWeek'), t('analytics.lastWeek'), wowCurrentPct, wowPreviousPct)}
                 </View>
             )}
 
             {normalizedPeriod === 'MONTH' && momMax > 1 && momCurrent.length > 0 && momPrevious.length > 0 && (
-                <View style={tw`mb-6`}>
-                    <HardShadowCardLocal colorMode={colorMode}>
-                        <View style={tw`p-5`}>
-                            <View style={tw`flex-row justify-between items-center mb-4`}>
-                                <Text style={[tw`text-xs font-black uppercase tracking-widest leading-none`, { color: textMuted }]}>{t('analytics.monthOverMonth')}</Text>
-                                <View style={[tw`px-2 py-1 rounded-lg`, { backgroundColor: momDelta >= 0 ? `${theme.primary}22` : '#ef444422' }]}>
-                                    <Text style={[tw`text-[10px] font-black uppercase`, { color: momDelta >= 0 ? theme.primary : '#ef4444' }]}>
-                                        {momDelta >= 0 ? `+${momDelta}%` : `${momDelta}%`} {t('analytics.vsLastMonth')}
-                                    </Text>
-                                </View>
-                            </View>
-                            <Svg width={chartWidth} height={comparisonChartHeight} style={tw`mb-4`}>
-                                <Path d={momPreviousPath} fill="none" stroke={isDark ? '#a1a1aa' : '#9ca3af'} strokeWidth={2} strokeDasharray="4 4" strokeLinecap="round" />
-                                <Path d={momCurrentPath} fill="none" stroke={theme.primary} strokeWidth={3} strokeLinecap="round" />
-                            </Svg>
-                            <View style={tw`flex-row items-center justify-between mb-3`}>
-                                <View style={tw`flex-row items-center`}>
-                                    <View style={[tw`w-3 h-0.5 mr-2`, { backgroundColor: theme.primary }]} />
-                                    <Text style={[tw`text-[10px] font-black uppercase`, { color: textPrimary }]}>{t('analytics.thisMonth')}</Text>
-                                </View>
-                                <Text style={[tw`text-[10px] font-black uppercase`, { color: theme.primary }]}>{Math.round(momCurrentPct)}%</Text>
-                            </View>
-                            <View style={tw`flex-row items-center justify-between`}>
-                                <View style={tw`flex-row items-center`}>
-                                    <View style={[tw`w-3 h-0.5 mr-2`, { backgroundColor: isDark ? '#a1a1aa' : '#9ca3af' }]} />
-                                    <Text style={[tw`text-[10px] font-black uppercase`, { color: textPrimary }]}>{monthComparison?.previousLabel || t('analytics.lastMonth')}</Text>
-                                </View>
-                                <Text style={[tw`text-[10px] font-black uppercase`, { color: isDark ? '#a1a1aa' : '#6b7280' }]}>{Math.round(momPreviousPct)}%</Text>
-                            </View>
-                        </View>
-                    </HardShadowCardLocal>
+                <View style={[tw`mt-5 rounded-2xl border-2 p-4`, { borderColor: borderSoft, backgroundColor: surfaceSoft }]}>
+                    <SectionLabel right={
+                        <Text style={[tw`text-[10px] font-black uppercase tracking-widest leading-none`, { color: momDelta >= 0 ? theme.primary : palette.danger }]}>
+                            {momDelta >= 0 ? `+${momDelta}%` : `${momDelta}%`} {t('analytics.vsLastMonth')}
+                        </Text>
+                    }>
+                        {t('analytics.monthOverMonth')}
+                    </SectionLabel>
+                    {renderComparisonChart(momCurrentPath, momPreviousPath, t('analytics.thisMonth'), monthComparison?.previousLabel || t('analytics.lastMonth'), momCurrentPct, momPreviousPct)}
+                </View>
+            )}
+        </View>
+    );
+
+    const habitsPanel = (
+        <View style={tw`p-5`}>
+            <View style={[tw`rounded-2xl border-2 p-4 flex-row items-center justify-between`, { borderColor: borderSoft, backgroundColor: surfaceSoft }]}>
+                <View style={tw`flex-1 mr-3`}>
+                    <Text style={[tw`text-[10px] font-black uppercase tracking-widest mb-1 leading-none`, { color: textMuted }]}>{t('analytics.bestHabit', { period: periodLabel })}</Text>
+                    <Text style={[tw`text-lg font-black`, { color: textPrimary }]} numberOfLines={1}>{stats.best?.name || t('analytics.noData')}</Text>
+                </View>
+                <Text style={[tw`text-2xl font-black`, { color: theme.primary }]}>{stats.best?.value ?? '—'}</Text>
+            </View>
+
+            <View style={[tw`mt-3 rounded-2xl border-2 p-4 flex-row items-center justify-between`, { borderColor: borderSoft, backgroundColor: surfaceSoft }]}>
+                <View style={tw`flex-1 mr-3`}>
+                    <Text style={[tw`text-[10px] font-black uppercase tracking-widest mb-1 leading-none`, { color: palette.danger }]}>{t('analytics.needsFocus', { period: periodLabel })}</Text>
+                    <Text style={[tw`text-lg font-black`, { color: textPrimary }]} numberOfLines={1}>{stats.worst?.name || t('analytics.onTrack')}</Text>
+                </View>
+                <Text style={[tw`text-2xl font-black`, { color: palette.danger }]}>{stats.worst?.value ?? '—'}</Text>
+            </View>
+
+            {normalizedPeriod === 'WEEK' && anchorInsight && (
+                <View style={[tw`mt-3 rounded-2xl border-2 overflow-hidden`, { borderColor: borderSoft }]}>
+                    <View style={[tw`px-3 py-1.5`, { backgroundColor: theme.primary }]}>
+                        <Text style={tw`text-white text-[9px] font-black tracking-widest uppercase`}>{t('dashboard.anchorHabit')}</Text>
+                    </View>
+                    <View style={[tw`p-3`, { backgroundColor: surfaceSoft }]}>
+                        <Text style={[tw`font-medium leading-relaxed text-sm`, { color: isDark ? '#cfcfcf' : '#4b5563' }]}>
+                            {t('dashboard.anchorDesc1') + ' '}
+                            <Text style={[tw`font-black uppercase`, { color: theme.secondary }]}>
+                                {anchorInsight.liftPct}% {t('dashboard.anchorDesc2')}
+                            </Text>
+                            {' ' + t('dashboard.anchorDesc3', { done: anchorInsight.doneRatePct, missed: anchorInsight.missedRatePct })}
+                        </Text>
+                    </View>
                 </View>
             )}
 
-            {/* 8. Mood */}
-            <View style={tw`mb-6`}>
-                <HardShadowCardLocal colorMode={colorMode}>
-                    <View style={tw`p-5`}>
-                        <View style={tw`flex-row justify-between items-center mb-6`}>
-                            <Text style={[tw`text-xs font-black uppercase tracking-widest leading-none`, { color: textMuted }]}>{t('analytics.moodAnalysis')}</Text>
-                            <Text style={[tw`text-[10px] font-black uppercase tracking-widest leading-none`, { color: theme.primary }]}>{t('analytics.vibe', { period: periodLabel })}</Text>
-                        </View>
-                        {renderMoodAnalysis()}
+            {normalizedPeriod === 'WEEK' && fragilityInsight && (
+                <View style={[tw`mt-3 rounded-2xl border-2 overflow-hidden`, { borderColor: borderSoft }]}>
+                    <View style={[tw`px-3 py-1.5`, { backgroundColor: theme.primary }]}>
+                        <Text style={tw`text-white text-[9px] font-black tracking-widest uppercase`}>{t('dashboard.streakPattern')}</Text>
                     </View>
-                </HardShadowCardLocal>
-            </View>
-
-            {/* 9. Narrative Story */}
-            <View style={tw`mb-6`}>
-                <HardShadowCardLocal style={{ height: 360 }} colorMode={colorMode}>
-                    <View style={[tw`py-1.5 px-4 items-center`, { backgroundColor: theme.primary }]}>
-                        <Text style={tw`text-[10px] font-black uppercase text-white tracking-widest leading-none`}>
-                            {t('analytics.success', { period: periodLabel })}
+                    <View style={[tw`p-3`, { backgroundColor: surfaceSoft }]}>
+                        <Text style={[tw`font-medium leading-relaxed text-sm`, { color: isDark ? '#cfcfcf' : '#4b5563' }]}>
+                            {t('dashboard.streakDesc1') + ' '}
+                            <Text style={[tw`font-black uppercase`, { color: theme.secondary }]}>
+                                {fragilityInsight.breakAtLength} {fragilityInsight.breakAtLength === 1 ? t('dashboard.streakDescDay') : t('dashboard.streakDescDays')}
+                            </Text>
+                            {' ' + t('dashboard.streakDesc2', { count: fragilityInsight.breakCount, day: fragilityInsight.breakAtLength + 1 })}
                         </Text>
                     </View>
-                    <View style={tw`p-5 flex-1`}>
-                        <View style={tw`flex-row items-center justify-between mb-6`}>
-                            <View>
-                                <Text style={[tw`text-[10px] font-black uppercase tracking-widest mb-2 leading-none`, { color: textMuted }]}>{masteryLabel}</Text>
-                                <View style={tw`flex-row items-baseline`}>
-                                    <Text style={[tw`text-4xl font-black`, { color: textPrimary }]}>{completionStats.completed}</Text>
-                                    <Text style={[tw`text-2xl font-black ml-1`, { color: textFaint }]}>/ {completionStats.total}</Text>
-                                </View>
-                            </View>
-                            <View style={tw`items-center justify-center`}>
-                                <Svg width={70} height={70}>
-                                    <Circle cx={35} cy={35} r={radius} stroke={isDark ? '#262626' : '#f5f5f4'} strokeWidth={8} fill="none" />
-                                    <AnimatedCircle
-                                        cx={35}
-                                        cy={35}
-                                        r={radius}
-                                        stroke={theme.primary}
-                                        strokeWidth={8}
-                                        fill="none"
-                                        strokeDasharray={circumference}
-                                        strokeDashoffset={circleAnim.interpolate({
-                                            inputRange: [0, 100],
-                                            outputRange: [circumference, 0]
-                                        })}
-                                        strokeLinecap="round"
-                                        transform="rotate(-90 35 35)"
-                                    />
-                                </Svg>
-                                <View style={tw`absolute`}>
-                                    <Text style={[tw`text-sm font-black`, { color: theme.primary }]}>{Math.round(completionStats.percentage)}%</Text>
-                                </View>
-                            </View>
-                        </View>
-                        <ScrollView showsVerticalScrollIndicator={false} style={tw`flex-1`} contentContainerStyle={tw`pb-6`}>
-                            <View style={tw`gap-4 pb-4`}>
-                                {story.sections.map((section, idx) => (
-                                    <View key={idx}>
-                                        <Text style={[tw`text-[10px] font-black uppercase mb-1 leading-none`, section.type === 'neglected' ? tw`text-rose-400` : { color: textMuted }]}>
-                                            {section.type}
-                                        </Text>
-                                        <FormattedText text={section.text} highlightColor={theme.secondary} colorMode={colorMode} />
-                                    </View>
-                                ))}
-                                {story.sections.length === 0 && (
-                                    <Text style={[tw`italic font-bold text-center py-4`, { color: textMuted }]}>{t('analytics.notEnoughData')}</Text>
-                                )}
-                            </View>
-                        </ScrollView>
-                    </View>
-                </HardShadowCardLocal>
-            </View>
-
+                </View>
+            )}
         </View>
     );
+
+    const storyPanel = (
+        <View style={tw`p-5`}>
+            <SectionLabel right={
+                <Text style={[tw`text-[10px] font-black uppercase tracking-widest leading-none`, { color: theme.primary }]}>
+                    {t('analytics.vibe', { period: periodLabel })}
+                </Text>
+            }>
+                {t('analytics.moodAnalysis')}
+            </SectionLabel>
+            {renderMoodAnalysis()}
+
+            <View style={tw`mt-6`}>
+                <SectionLabel>{t('analytics.success', { period: periodLabel })}</SectionLabel>
+                <View style={tw`gap-4`}>
+                    {story.sections.map((section, idx) => (
+                        <View key={idx}>
+                            <Text style={[tw`text-[10px] font-black uppercase mb-1 leading-none`, section.type === 'neglected' ? tw`text-rose-400` : { color: textMuted }]}>
+                                {section.type}
+                            </Text>
+                            <FormattedText text={section.text} highlightColor={theme.secondary} colorMode={colorMode} />
+                        </View>
+                    ))}
+                    {story.sections.length === 0 && (
+                        <Text style={[tw`italic font-bold text-center py-4`, { color: textMuted }]}>{t('analytics.notEnoughData')}</Text>
+                    )}
+                </View>
+            </View>
+        </View>
+    );
+
+    const panelContent = {
+        score: scorePanel,
+        timing: timingPanel,
+        habits: habitsPanel,
+        story: storyPanel,
+    }[panel];
+
+    return (
+        <AnalyticsCardSurface colorMode={colorMode} style={cardHeight ? { height: cardHeight } : undefined}>
+            <PeriodHeader />
+            {/* Each panel scrolls on its own, so no panel is constrained by the tallest
+                one and none of them needs a nested scroll view. */}
+            <ScrollView
+                style={tw`flex-1`}
+                contentContainerStyle={tw`pb-2`}
+                showsVerticalScrollIndicator={false}
+            >
+                {panelContent}
+            </ScrollView>
+            <TabStrip />
+        </AnalyticsCardSurface>
+    );
 };
+

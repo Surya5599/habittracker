@@ -18,7 +18,7 @@ Use this checklist for publishing the Expo/EAS mobile app to the Apple App Store
 - [x] Confirm app icon exists at `assets/icon.png`
 - [x] Confirm splash image exists at `assets/splash-icon.png`
 - [x] Confirm adaptive icon exists at `assets/adaptive-icon.png`
-- [ ] Decide whether `supportsTablet: true` should stay enabled
+- [x] Decide whether `supportsTablet: true` should stay enabled (disabled — iPhone only)
 
 ## Apple Developer Setup
 
@@ -79,40 +79,78 @@ Use this checklist for publishing the Expo/EAS mobile app to the Apple App Store
 
 ## Privacy And Legal
 
-- [ ] Publish a public privacy policy URL
-- [ ] Cover account data in the privacy policy
-- [ ] Cover email or login data in the privacy policy
-- [ ] Cover habit data in the privacy policy
-- [ ] Cover journal or notes data in the privacy policy
-- [ ] Cover analytics data if collected
-- [ ] Cover crash or error reporting if collected
-- [ ] Mention Supabase or other service providers
+- [x] Publish a public privacy policy URL (habicard.com/privacy — redeploy web app to pick up latest edits)
+- [x] Cover account data in the privacy policy
+- [x] Cover email or login data in the privacy policy
+- [x] Cover habit data in the privacy policy
+- [x] Cover journal or notes data in the privacy policy
+- [x] Cover AI Coach chat data in the privacy policy (added — was previously missing/inaccurate)
+- [x] Cover analytics data if collected (none collected; policy states this)
+- [x] Cover crash or error reporting if collected (none collected)
+- [x] Mention Supabase or other service providers
 - [ ] Explain data export
 - [ ] Explain data deletion
 - [ ] Add the privacy policy URL in App Store Connect
 - [ ] Add a support URL in App Store Connect
 - [ ] Add a user privacy choices URL if you have one
-- [ ] Complete App Privacy details in App Store Connect
-- [ ] Complete export compliance in App Store Connect
+- [ ] Complete App Privacy details in App Store Connect (Email, User Content, User ID → App Functionality only, no tracking; User Content also shared with Google Gemini for App Functionality)
+- [x] Complete export compliance in App Store Connect (ITSAppUsesNonExemptEncryption: false already set in app.config.js — standard HTTPS only)
 - [ ] Complete content rights declaration
 - [ ] Complete the age rating questionnaire
 
 ## App Store Listing
 
-- [ ] Write app subtitle, maximum 30 characters
-- [ ] Write promotional text
-- [ ] Write full app description
-- [ ] Write keywords
-- [ ] Add support URL
-- [ ] Add privacy policy URL
-- [ ] Add copyright text
-- [ ] Choose pricing
-- [ ] Choose release mode: manual, automatic, or scheduled
+- [x] Write app subtitle, maximum 30 characters — `Track Habits. Build Streaks.`
+- [x] Write promotional text — "New: an AI Coach that reads your real streak data and calls out what you're missing. Build habits that actually stick — one card at a time."
+- [x] Write full app description — see below
+- [x] Write keywords — `habit tracker,streak,journal,daily planner,goal tracker,routine,mood tracker,productivity,todo`
+- [x] Add support URL — `mailto:support@habicard.com`
+- [ ] Add privacy policy URL — `https://habicard.com/privacy` (after redeploy with the AI Coach fix)
+- [x] Add copyright text — `© 2026 HabiCard`
+- [x] Choose pricing — Free
+- [x] Choose release mode: manual, automatic, or scheduled — Manual (control launch timing after Apple approval)
 - [ ] Add reviewer contact information
-- [ ] Add reviewer notes
-- [ ] Create a demo account if login is required for review
-- [ ] Put demo account credentials in reviewer notes
-- [ ] Explain any features that need setup in reviewer notes
+- [x] Add reviewer notes — see below
+- [x] Create a demo account if login is required for review — demo@habicard.com, seeded with ~1.5 years of realistic habit data (Jan 2025–present)
+- [x] Put demo account credentials in reviewer notes — demo@habicard.com / HabiCardDemo2026!
+- [x] Explain any features that need setup in reviewer notes — AI Coach note included below
+
+### Reviewer notes (paste into App Review Information)
+
+```
+Sign in with the demo account below to see a fully populated app (habits, streaks,
+journal entries, and an AI Coach insight already generated):
+
+Email: demo@habicard.com
+Password: HabiCardDemo2026!
+
+Notes:
+- The AI Coach tab (bottom of the daily card) uses Google's Gemini API via our own
+  server-side proxy to generate a personalized insight from the demo account's habit
+  history — no API key or extra setup is needed on your end.
+- "Guest Mode" is also available from the sign-in screen and requires no account;
+  all guest data stays local to the device.
+```
+
+### Description text (paste into App Store Connect)
+
+```
+Stop breaking your streaks.
+
+HabiCard turns your daily goals into visual, satisfying cards you actually want to complete. No clutter, no guilt — just clear progress.
+
+• LIGHTNING FAST — Log a habit in one tap. No menus, no friction.
+• VISUAL PROGRESS — Watch streaks grow with charts and cards built to feel good.
+• FLEXIBLE GOALS — Daily, weekday-only, or "N times a week" — habits that adapt to your life.
+• JOURNAL & TASKS — Keep daily notes, mood, and to-dos right next to your habits.
+• AI COACH — Get a personalized daily insight built from your actual streak data, in a coaching style you pick — direct, hype, calm, tough, or roast.
+• WEEKLY, MONTHLY & YEARLY VIEWS — Zoom out and see the whole pattern, not just today.
+• THEMES — Pick a look that's actually yours.
+
+Your data is private and synced securely to your account — no ads, no trackers, no selling your data.
+
+Build the habit. Keep the streak. Make it stick.
+```
 
 ## Screenshots And Media
 
@@ -125,7 +163,6 @@ Use this checklist for publishing the Expo/EAS mobile app to the Apple App Store
 - [ ] Capture journal or notes screenshot
 - [ ] Capture sharing or export screenshot
 - [ ] Prepare required iPhone screenshots
-- [ ] Prepare required iPad screenshots if tablet support stays enabled
 - [ ] Add 1 to 10 screenshots per required device size
 - [ ] Create an app preview video if desired
 - [ ] Check screenshots have no private user data

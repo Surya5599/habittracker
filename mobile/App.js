@@ -11,9 +11,11 @@ import { MainScreen } from './src/screens/MainScreen';
 import { useHabits } from './src/hooks/useHabits';
 import { useHabitStats } from './src/hooks/useHabitStats';
 import { useDailyNotes } from './src/hooks/useDailyNotes';
+import { useAiCoach } from './src/hooks/useAiCoach';
 import { THEMES } from './src/constants';
 import i18n from './src/i18n';
 import { OnboardingModal } from './src/components/OnboardingModal';
+import { OnboardingFlow } from './src/components/OnboardingFlow';
 import { AppErrorBoundary } from './src/components/AppErrorBoundary';
 import { initializeErrorReporting, reportError } from './src/lib/errorReporting';
 import { isBenignAuthError } from './src/utils/authErrors';
@@ -35,7 +37,7 @@ export default function App() {
   const [session, setSession] = useState(null);
   const [guestMode, setGuestMode] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState('weekly'); // 'weekly', 'monthly', 'dashboard'
+  const [view, setView] = useState('weekly'); // 'weekly' | 'journal' | 'dashboard' | 'coach'
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [currentMonthIndex, setCurrentMonthIndex] = useState(new Date().getMonth());
   const [weekOffset, setWeekOffset] = useState(0);
@@ -48,6 +50,7 @@ export default function App() {
   // Theme support
   const [theme, setTheme] = useState(THEMES[1]); // default ocean
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showTour, setShowTour] = useState(false);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
 
   // Notifications
@@ -93,14 +96,28 @@ export default function App() {
   useEffect(() => {
     const handleDeepLink = async ({ url }) => {
       if (!url) return;
-      const fragment = url.split('#')[1];
-      if (!fragment) return;
-      const params = Object.fromEntries(new URLSearchParams(fragment));
-      if (params.access_token && params.refresh_token) {
-        await supabase.auth.setSession({
-          access_token: params.access_token,
-          refresh_token: params.refresh_token,
+      const parsedUrl = Linking.parse(url);
+      const fragment = url.includes('#') ? url.split('#')[1] : '';
+      const fragmentParams = fragment ? Object.fromEntries(new URLSearchParams(fragment)) : {};
+      const queryParams = parsedUrl?.queryParams || {};
+      const code = queryParams.code || parsedUrl?.queryParams?.code;
+
+      if (typeof code === 'string' && code.length > 0) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error) {
+          console.error('Failed to exchange auth code for session:', error);
+        }
+        return;
+      }
+
+      if (fragmentParams.access_token && fragmentParams.refresh_token) {
+        const { error } = await supabase.auth.setSession({
+          access_token: fragmentParams.access_token,
+          refresh_token: fragmentParams.refresh_token,
         });
+        if (error) {
+          console.error('Failed to restore auth session from deep link:', error);
+        }
       }
     };
 
@@ -217,8 +234,16 @@ export default function App() {
 
   const {
     notes,
-    updateNote
+    updateNote,
+    notesWindow
   } = useDailyNotes(session, guestMode);
+
+  const coach = useAiCoach({ session, guestMode, habits, completions, language });
+
+  // If the coach gets switched off while its tab is open, fall back to Today.
+  useEffect(() => {
+    if (view === 'coach' && coach.prefsLoaded && !coach.enabled) setView('weekly');
+  }, [view, coach.prefsLoaded, coach.enabled]);
 
   const daysInMonth = new Date(currentYear, currentMonthIndex + 1, 0).getDate();
   const monthDates = Array.from({ length: daysInMonth }, (_, i) => i + 1);
@@ -324,13 +349,26 @@ export default function App() {
     setShowOnboarding(false);
   };
 
-  const handleOnboardingClose = () => {
-    setShowOnboarding(false);
+
+  // Two different jobs, so two different surfaces. First run is OnboardingFlow, which
+  // creates real habits and ends on a real completion. Replaying from Settings keeps
+  // the older feature tour: someone who already has habits wants reminding how the app
+  // works, not to be walked through picking habits again.
+  const handleOpenOnboardingTutorial = () => {
+    setShowTour(true);
   };
 
-  const handleOpenOnboardingTutorial = () => {
-    setOnboardingChecked(true);
-    setShowOnboarding(true);
+  const handleOnboardingCreateHabit = async (pick) => {
+    const id = await addHabit(
+      theme.primary,
+      pick.name,
+      pick.frequency,
+      pick.weeklyTarget,
+      '',
+      pick.color,
+    );
+    if (!id) return null;
+    return { id, name: pick.name, color: pick.color };
   };
 
   const resetWeekOffset = () => setWeekOffset(0);
@@ -358,6 +396,7 @@ export default function App() {
                       resetWeekOffset={resetWeekOffset}
                       notes={notes}
                       updateNote={updateNote}
+                      notesWindow={notesWindow}
                       addHabit={addHabit}
                       updateHabit={updateHabit}
                       removeHabit={removeHabit}
@@ -379,9 +418,22 @@ export default function App() {
                       userEmail={session?.user?.email}
                       reminderEnabled={reminderEnabled}
                       onToggleReminder={handleToggleReminder}
+                      coach={coach}
+                    />
+                    <OnboardingFlow
+                      visible={onboardingChecked && showOnboarding}
+                      theme={theme}
+                      colorMode={colorMode}
+                      language={language}
+                      onLanguageChange={handleLanguageChange}
+                      onCreateHabit={handleOnboardingCreateHabit}
+                      onToggleCompletion={toggleCompletion}
+                      onEnableReminder={() => handleToggleReminder(true)}
+                      onComplete={handleOnboardingComplete}
+                      onSkip={handleOnboardingComplete}
                     />
                     <OnboardingModal
-                      visible={onboardingChecked && showOnboarding}
+                      visible={showTour}
                       isDark={colorMode === 'dark'}
                       theme={theme}
                       initialLanguage={language}
@@ -391,8 +443,8 @@ export default function App() {
                       onThemeChange={handleThemeChange}
                       onCardStyleChange={handleCardStyleChange}
                       onWeekStartChange={handleWeekStartChange}
-                      onComplete={handleOnboardingComplete}
-                      onClose={handleOnboardingClose}
+                      onComplete={() => setShowTour(false)}
+                      onClose={() => setShowTour(false)}
                     />
                   </>
                 )}

@@ -1,18 +1,21 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, ScrollView, TouchableOpacity, Dimensions, Modal, PanResponder } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Dimensions, Modal } from 'react-native';
 import tw from 'twrnc';
-import { ChevronLeft, ChevronRight, Settings, Check, Zap, Trophy, Target, X } from 'lucide-react-native';
+import { X } from 'lucide-react-native';
 import Svg, { Path, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
 import { buildWeeklyStory, buildMonthlyStory, buildAnnualStory } from '../utils/storyGenerator';
-import { AnalyticsDashboard, HardShadowCardLocal } from '../components/AnalyticsDashboard';
+import { AnalyticsDashboard } from '../components/AnalyticsDashboard';
+import { SwipeableCard } from '../components/SwipeableCard';
 import { computeAnchorHabit, computeWeakestDay, computeStreakFragility } from '../utils/insightEngine';
 
 import { getHabitMonthStats } from '../utils/stats';
+import { getPalette } from '../constants/theme';
+import { BOTTOM_NAV_HEIGHT } from '../components/BottomNav';
 import { safePercentage } from '../utils/progressMath';
+import { parseDateStringLocal } from '../utils/dateKeys';
 import { DatePickerModal } from '../components/DatePickerModal';
 import { MonthYearPickerModal } from '../components/MonthYearPickerModal';
-import { WeeklyCard } from '../components/WeeklyCard';
 import { DailyCard } from '../components/DailyCard';
 
 
@@ -31,13 +34,17 @@ export const DashboardView = ({
     updateNote,
     weekStart = 'MON',
     colorMode = 'light',
-    cardStyle = 'compact'
+    cardStyle = 'compact',
+    bottomNavHeight = BOTTOM_NAV_HEIGHT,
 }) => {
     const { t, i18n } = useTranslation();
     const [analyticsView, setAnalyticsView] = React.useState('WEEK'); // WEEK, MONTH, YEAR
     const [monthOffset, setMonthOffset] = React.useState(0);
     const [yearOffset, setYearOffset] = React.useState(0);
-    const analyticsScrollRef = React.useRef(null);
+    const [slotHeight, setSlotHeight] = React.useState(0);
+    // Held here, not in the card: switching period swaps card instances, and panel
+    // state living inside one would be lost on every switch.
+    const [analyticsPanel, setAnalyticsPanel] = React.useState('score');
     const [showMonthYearPicker, setShowMonthYearPicker] = React.useState(false);
     const [pickerMode, setPickerMode] = React.useState('both'); // 'both' or 'year'
 
@@ -46,17 +53,11 @@ export const DashboardView = ({
         const target = new Date(date);
         target.setHours(0, 0, 0, 0);
 
-        if (habit?.createdAt) {
-            const createdDate = new Date(habit.createdAt);
-            createdDate.setHours(0, 0, 0, 0);
-            if (target < createdDate) return false;
-        }
+        const createdDate = parseDateStringLocal(habit?.createdAt);
+        if (createdDate && target < createdDate) return false;
 
-        if (habit?.archivedAt) {
-            const archivedDate = new Date(habit.archivedAt);
-            archivedDate.setHours(0, 0, 0, 0);
-            if (target > archivedDate) return false;
-        }
+        const archivedDate = parseDateStringLocal(habit?.archivedAt);
+        if (archivedDate && target > archivedDate) return false;
 
         const dateKey = `${target.getFullYear()}-${String(target.getMonth() + 1).padStart(2, '0')}-${String(target.getDate()).padStart(2, '0')}`;
         const dayData = notes?.[dateKey];
@@ -144,40 +145,6 @@ export const DashboardView = ({
             };
         });
     }, [notes, yearOffset, i18n.language]);
-
-    // Annual Data Calculation
-    const annualData = React.useMemo(() => {
-        const currentYear = new Date().getFullYear();
-        const months = Array.from({ length: 12 }, (_, i) => {
-            const d = new Date(currentYear, i, 1);
-            return d.toLocaleString(i18n.language, { month: 'long' }).toUpperCase();
-        });
-        let totalPossible = 0;
-        let totalCompleted = 0;
-
-        const monthlyStats = months.map((monthName, index) => {
-            let mTotal = 0;
-            let mCompleted = 0;
-
-            habits.forEach(habit => {
-                const stats = getHabitMonthStats(habit.id, completions, index, currentYear, habit.frequency, habit.createdAt);
-                mTotal += stats.totalDays;
-                mCompleted += stats.completed;
-            });
-
-            totalPossible += mTotal;
-            totalCompleted += mCompleted;
-
-            return {
-                name: monthName,
-                percentage: mTotal > 0 ? Math.round((mCompleted / mTotal) * 100) : 0,
-            };
-        });
-
-        const annualPercentage = totalPossible > 0 ? Math.round((totalCompleted / totalPossible) * 100) : 0;
-
-        return { monthlyStats, annualPercentage, currentYear };
-    }, [habits, completions, i18n.language]);
 
     // Monthly Data Calculation
     const monthlyData = React.useMemo(() => {
@@ -433,7 +400,6 @@ export const DashboardView = ({
     }, [habits, completions, yearOffset, i18n.language, t]);
     const [showDatePicker, setShowDatePicker] = React.useState(false);
     const [detailDate, setDetailDate] = React.useState(null);
-    const swipeLockRef = React.useRef(false);
 
     const onDateSelect = (selectedDate) => {
         // Calculate offset from today
@@ -587,28 +553,6 @@ export const DashboardView = ({
         }
     }, [analyticsView, setWeekOffset]);
 
-    const analyticsSwipeResponder = React.useMemo(() => PanResponder.create({
-        onStartShouldSetPanResponder: () => false,
-        onMoveShouldSetPanResponder: (_, gestureState) => {
-            const absDx = Math.abs(gestureState.dx);
-            const absDy = Math.abs(gestureState.dy);
-            return !swipeLockRef.current && absDx > 18 && absDx > absDy * 1.3;
-        },
-        onPanResponderRelease: (_, gestureState) => {
-            if (swipeLockRef.current) return;
-            const absDx = Math.abs(gestureState.dx);
-            if (absDx < 42) return;
-            swipeLockRef.current = true;
-            handleAnalyticsSwipe(gestureState.dx);
-            setTimeout(() => {
-                swipeLockRef.current = false;
-            }, 220);
-        },
-        onPanResponderTerminate: () => {
-            swipeLockRef.current = false;
-        }
-    }), [handleAnalyticsSwipe]);
-
 
     // Calculate days elapsed in the current view's week
     // If weekOffset is 0 (current week), it's today's day index (1-7, Mon-Sun)
@@ -688,14 +632,23 @@ export const DashboardView = ({
     const secondaryColor = theme.secondary;
 
     const isDark = colorMode === 'dark';
+    const palette = getPalette(colorMode);
+    const handleChangeAnalyticsView = (viewName) => setAnalyticsView(viewName);
+
+    // The card fills its slot minus the floating nav it sits under, and a little
+    // breathing room: pt-2 above the card (8) and the same again below, which matches the
+    // px-3 pt-2 pb-2 the Review page sits in.
+    const CARD_GUTTER = 16;
+    const cardHeight = slotHeight > 0
+        ? Math.max(320, slotHeight - bottomNavHeight - CARD_GUTTER)
+        : undefined;
     const detailDateKey = detailDate
         ? `${detailDate.getFullYear()}-${String(detailDate.getMonth() + 1).padStart(2, '0')}-${String(detailDate.getDate()).padStart(2, '0')}`
         : null;
 
     return (
         <View
-            style={[tw`flex-1`, { backgroundColor: isDark ? '#000000' : '#f3f4f6' }]}
-            {...analyticsSwipeResponder.panHandlers}
+            style={[tw`flex-1`, { backgroundColor: palette.pageBg }]}
         >
             <DatePickerModal
                 isVisible={showDatePicker}
@@ -717,101 +670,24 @@ export const DashboardView = ({
                 colorMode={colorMode}
             />
 
-            <ScrollView
-                ref={analyticsScrollRef}
+            {/* No page scroll: the card is sized to the space it's given and each of its
+                panels scrolls internally. `slotHeight` is measured rather than derived
+                from a magic offset, so it stays correct across devices and rotation —
+                this container is already inside the SafeAreaView and below the app
+                header, and the only thing overlapping it is the floating bottom nav. */}
+            <SwipeableCard
                 style={tw`flex-1`}
-                contentContainerStyle={tw`pb-32 pt-1`}
-                stickyHeaderIndices={[1]}
-                showsVerticalScrollIndicator={false}
+                onLayout={(e) => {
+                    const h = Math.round(e.nativeEvent.layout.height);
+                    if (h > 0 && h !== slotHeight) setSlotHeight(h);
+                }}
+                resetKey={`${analyticsView}-${weekOffset}-${monthOffset}-${yearOffset}`}
+                onPrev={() => handleAnalyticsSwipe(1)}
+                onNext={() => handleAnalyticsSwipe(-1)}
             >
-                {/* Non-sticky View Toggle */}
-                <View style={tw`px-3 mb-4 pt-2`}>
-                    <View style={[tw`flex-row p-1 rounded-2xl`, { backgroundColor: isDark ? '#111111' : '#e5e7eb', borderWidth: 1, borderColor: isDark ? '#ffffff' : 'transparent' }]}>
-                        {['WEEK', 'MONTH', 'YEAR'].map((viewName) => {
-                            const isActive = analyticsView === viewName;
-                            return (
-                                <TouchableOpacity
-                                    key={viewName}
-                                    onPress={() => {
-                                        setAnalyticsView(viewName);
-                                        analyticsScrollRef.current?.scrollTo({ y: 0, animated: false });
-                                    }}
-                                    style={[
-                                        tw`flex-1 py-2 items-center rounded-xl`,
-                                        isActive ? { backgroundColor: theme.primary } : {}
-                                    ]}
-                                >
-                                    <Text style={[
-                                        tw`text-xs font-black tracking-widest`,
-                                        isActive ? tw`text-white` : (isDark ? tw`text-gray-300` : tw`text-gray-500`)
-                                    ]}>
-                                        {t(`dashboard.${viewName.toLowerCase()}Tab`)}
-                                    </Text>
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </View>
-                </View>
-
-                {/* STICKY PERIOD NAVIGATION - Only this row sticks */}
-                <View style={[tw`pb-3 px-3 pt-1`, { backgroundColor: isDark ? '#000000' : '#f3f4f6' }]}>
-                    {analyticsView === 'WEEK' && (
-                        <View>
-                            <HardShadowCardLocal bgColor={theme.primary}>
-                                <View style={tw`flex-row items-center justify-between px-4 py-2`}>
-                                    <TouchableOpacity onPress={() => setWeekOffset(weekOffset - 1)} style={tw`p-1`}>
-                                        <ChevronLeft size={20} color="white" strokeWidth={3} />
-                                    </TouchableOpacity>
-                                    <TouchableOpacity onPress={() => setShowDatePicker(true)}>
-                                        <Text style={tw`text-sm font-black text-white uppercase tracking-widest leading-none`}>{fullDateString}</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity onPress={() => setWeekOffset(weekOffset + 1)} style={tw`p-1`}>
-                                        <ChevronRight size={20} color="white" strokeWidth={3} />
-                                    </TouchableOpacity>
-                                </View>
-                            </HardShadowCardLocal>
-                        </View>
-                    )}
-
-                    {analyticsView === 'MONTH' && (
-                        <View>
-                            <HardShadowCardLocal bgColor={theme.primary}>
-                                <View style={tw`flex-row items-center justify-between px-4 py-2`}>
-                                    <TouchableOpacity onPress={() => setMonthOffset(monthOffset - 1)} style={tw`p-1`}>
-                                        <ChevronLeft size={20} color="white" strokeWidth={3} />
-                                    </TouchableOpacity>
-                                    <TouchableOpacity onPress={() => { setPickerMode('both'); setShowMonthYearPicker(true); }}>
-                                        <Text style={tw`text-sm font-black text-white uppercase tracking-widest leading-none`}>{monthlyData.monthName} {monthlyData.year}</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity onPress={() => setMonthOffset(monthOffset + 1)} style={tw`p-1`}>
-                                        <ChevronRight size={20} color="white" strokeWidth={3} />
-                                    </TouchableOpacity>
-                                </View>
-                            </HardShadowCardLocal>
-                        </View>
-                    )}
-
-                    {analyticsView === 'YEAR' && (
-                        <View>
-                            <HardShadowCardLocal bgColor={theme.primary}>
-                                <View style={tw`flex-row items-center justify-between px-4 py-2`}>
-                                    <TouchableOpacity onPress={() => setYearOffset(yearOffset - 1)} style={tw`p-1`}>
-                                        <ChevronLeft size={20} color="white" strokeWidth={3} />
-                                    </TouchableOpacity>
-                                    <TouchableOpacity onPress={() => { setPickerMode('year'); setShowMonthYearPicker(true); }}>
-                                        <Text style={tw`text-sm font-black text-white uppercase tracking-widest leading-none`}>{annualDashboardData.yearLabel}</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity onPress={() => setYearOffset(yearOffset + 1)} style={tw`p-1`}>
-                                        <ChevronRight size={20} color="white" strokeWidth={3} />
-                                    </TouchableOpacity>
-                                </View>
-                            </HardShadowCardLocal>
-                        </View>
-                    )}
-                </View>
 
                 {analyticsView === 'MONTH' && (
-                    <View style={tw`px-3`}>
+                    <View style={tw`px-3 pt-2`}>
                         <AnalyticsDashboard
                             periodLabel={t('dashboard.month')}
                             periodType="MONTH"
@@ -839,12 +715,20 @@ export const DashboardView = ({
                             weekStart={weekStart}
                             colorMode={colorMode}
                             onRetrospectiveDayPress={handleRetrospectiveDayPress}
+                            analyticsView={analyticsView}
+                            onChangeAnalyticsView={handleChangeAnalyticsView}
+                            onPrevPeriod={() => setMonthOffset(monthOffset - 1)}
+                            onNextPeriod={() => setMonthOffset(monthOffset + 1)}
+                            onPressPeriodLabel={() => { setPickerMode('both'); setShowMonthYearPicker(true); }}
+                            cardHeight={cardHeight}
+                            activePanel={analyticsPanel}
+                            onChangePanel={setAnalyticsPanel}
                         />
                     </View>
                 )}
 
                 {analyticsView === 'YEAR' && (
-                    <View style={tw`px-3`}>
+                    <View style={tw`px-3 pt-2`}>
                         <AnalyticsDashboard
                             periodLabel={t('dashboard.year')}
                             periodType="YEAR"
@@ -862,22 +746,23 @@ export const DashboardView = ({
                             moodData={annualMoodData}
                             weekStart={weekStart}
                             colorMode={colorMode}
+                            analyticsView={analyticsView}
+                            onChangeAnalyticsView={handleChangeAnalyticsView}
+                            onPrevPeriod={() => setYearOffset(yearOffset - 1)}
+                            onNextPeriod={() => setYearOffset(yearOffset + 1)}
+                            onPressPeriodLabel={() => { setPickerMode('year'); setShowMonthYearPicker(true); }}
+                            cardHeight={cardHeight}
+                            activePanel={analyticsPanel}
+                            onChangePanel={setAnalyticsPanel}
                         />
                     </View>
                 )}
 
+                {/* WeeklyCard used to sit above the analytics card here, but the Today tab
+                    already renders it below the DailyCard — same component, same props.
+                    Dropping the duplicate is also what lets the card own the full slot. */}
                 {analyticsView === 'WEEK' && (
-                    <View style={tw`px-3`}>
-                        <WeeklyCard
-                            habits={habits}
-                            completions={completions}
-                            theme={theme}
-                            colorMode={colorMode}
-                            toggleCompletion={toggleCompletion}
-                            date={today}
-                            weekOffset={weekOffset}
-                            weekStart={weekStart}
-                        />
+                    <View style={tw`px-3 pt-2`}>
                         <AnalyticsDashboard
                             periodLabel={t('dashboard.week')}
                             periodType="WEEK"
@@ -908,11 +793,19 @@ export const DashboardView = ({
                             anchorInsight={anchorInsight}
                             weakDayInsight={weakDayInsight}
                             fragilityInsight={fragilityInsight}
+                            analyticsView={analyticsView}
+                            onChangeAnalyticsView={handleChangeAnalyticsView}
+                            onPrevPeriod={() => setWeekOffset(weekOffset - 1)}
+                            onNextPeriod={() => setWeekOffset(weekOffset + 1)}
+                            onPressPeriodLabel={() => setShowDatePicker(true)}
+                            cardHeight={cardHeight}
+                            activePanel={analyticsPanel}
+                            onChangePanel={setAnalyticsPanel}
                         />
                     </View>
                 )}
 
-            </ScrollView>
+            </SwipeableCard>
 
             <Modal
                 visible={!!detailDate}
@@ -921,7 +814,7 @@ export const DashboardView = ({
                 onRequestClose={() => setDetailDate(null)}
             >
                 <View style={tw`flex-1 justify-end bg-black/50`}>
-                    <View style={[tw`rounded-t-3xl h-[90%] overflow-hidden`, { backgroundColor: isDark ? '#000000' : '#f5f5f4' }]}>
+                    <View style={[tw`rounded-t-3xl h-[90%] overflow-hidden`, { backgroundColor: palette.pageBg }]}>
                         <View style={[tw`p-5 border-b flex-row items-center justify-between`, { backgroundColor: isDark ? '#0b0b0b' : '#ffffff', borderColor: isDark ? '#2a2a2a' : '#e5e7eb' }]}>
                             <Text style={[tw`text-xl font-black uppercase tracking-widest`, { color: isDark ? '#e5e7eb' : '#2a2a2a' }]}>Day Details</Text>
                             <TouchableOpacity

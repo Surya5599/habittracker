@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { MONTHS } from '../constants';
 import { isCompleted, getHabitMonthStats } from '../utils/stats';
+import { parseDateStringLocal } from '../utils/dateKeys';
 
 export const useHabitStats = (
     habits,
@@ -14,8 +15,8 @@ export const useHabitStats = (
 ) => {
     const isHabitStartedByDate = (habit, date) => {
         if (!habit?.createdAt) return true;
-        const createdDate = new Date(habit.createdAt);
-        createdDate.setHours(0, 0, 0, 0);
+        const createdDate = parseDateStringLocal(habit.createdAt);
+        if (!createdDate) return true;
         const target = new Date(date);
         target.setHours(0, 0, 0, 0);
         return target >= createdDate;
@@ -67,8 +68,7 @@ export const useHabitStats = (
             const dayIdx = d.getDay();
 
             habits.forEach(h => {
-                const createdDate = h.createdAt ? new Date(h.createdAt) : null;
-                if (createdDate) createdDate.setHours(0, 0, 0, 0);
+                const createdDate = parseDateStringLocal(h.createdAt);
 
                 if (!h.weeklyTarget) {
                     if (createdDate && d < createdDate) return;
@@ -142,8 +142,7 @@ export const useHabitStats = (
         let completed = 0;
         habits.forEach(habit => {
             let hTotalDone = 0;
-            const createdDate = habit.createdAt ? new Date(habit.createdAt) : null;
-            if (createdDate) createdDate.setHours(0, 0, 0, 0);
+            const createdDate = parseDateStringLocal(habit.createdAt);
 
             monthDates.forEach(day => {
                 const date = new Date(currentYear, currentMonthIndex, day);

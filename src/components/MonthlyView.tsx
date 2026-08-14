@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, Minus, Laugh, Smile, Meh, Frown, Angry, BookOpen } from 'lucide-react';
 import { Habit, HabitCompletion, Theme, DailyNote, DayData } from '../types';
 import { DAYS_OF_WEEK_SHORT, MOOD_SCALE } from '../constants';
@@ -50,6 +50,22 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
     const visibleHabits = habits.filter(h =>
         monthDates.some(day => isHabitActiveOnDate(h, new Date(currentYear, currentMonthIndex, day)))
     );
+
+    // Column half of the hover crosshair (the row half and the shared tokens live
+    // in app.css under .month-grid). Highlighting a column needs a selector per
+    // column index, which CSS can't express in one rule and can't loop over, so
+    // the rules are generated here where the month's length is known. Column 1 is
+    // the sticky habit-name cell, so day N is nth-child(N + 1).
+    const columnHoverCss = useMemo(() => {
+        let css = '';
+        for (let i = 0; i < monthDates.length; i++) {
+            const col = i + 2;
+            const hovered = `.month-grid:has(tbody td:nth-child(${col}):hover)`;
+            css += `${hovered} tbody td:nth-child(${col}){box-shadow:var(--xh-col)}`;
+            css += `${hovered} thead th:nth-child(${col}){box-shadow:var(--xh-col-head)}`;
+        }
+        return css;
+    }, [monthDates.length]);
     const today = new Date();
     const isCurrentMonth = currentYear === today.getFullYear() && currentMonthIndex === today.getMonth();
     const moodTrackableDays = isCurrentMonth
@@ -104,7 +120,8 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
             <div className={`p-2 ${statsOpen ? 'pr-4' : ''} min-h-full flex flex-col`}>
             <div className={`border-3 border-edge-strong shadow-neo bg-surface flex flex-col overflow-hidden relative w-full flex-1 rounded-2xl transition-opacity duration-300 ${isModalOpen ? 'opacity-30 pointer-events-none grayscale-[0.5]' : 'opacity-100'}`}>
                 <div ref={scrollContainerRef} className="overflow-x-auto w-full flex-1">
-                    <table className="w-full border-separate border-spacing-0">
+                    <style>{columnHoverCss}</style>
+                    <table className="month-grid w-full border-separate border-spacing-0">
                         <thead>
                             <tr className="text-[10px] font-black uppercase text-ink" style={{ backgroundColor: 'var(--theme-secondary-strong)' }}>
                                 <th className="p-2 border-r border-edge text-left sticky left-0 z-40 font-black" style={{ backgroundColor: 'var(--card-bg-soft, #f0efed)', width: 250, minWidth: 250 }}>
@@ -134,8 +151,8 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                         </thead>
                         <tbody className="divide-y divide-edge-subtle">
                             {/* Daily Mood Row */}
-                            <tr className="group hover:bg-surface-muted transition-colors" style={{ height: '32px' }}>
-                                <td className="p-0 pl-3 sticky left-0 z-10 border-r border-[#e5e5e5] group-hover:bg-surface-strong transition-colors h-[32px]" style={{ backgroundColor: 'var(--card-bg-soft, #fafaf9)' }}>
+                            <tr className="group transition-colors" style={{ height: '32px' }}>
+                                <td className="p-0 pl-3 sticky left-0 z-10 border-r border-[#e5e5e5] transition-colors h-[32px]" style={{ backgroundColor: 'var(--card-bg-soft, #fafaf9)' }}>
                                     <div className="flex items-center h-full">
                                         <span className="text-xs font-bold text-ink-strong truncate pl-2">Mood</span>
                                     </div>
@@ -164,7 +181,7 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                         <td
                                             key={day}
                                             onClick={() => setSelectedDateForCard(new Date(currentYear, currentMonthIndex, day), true)}
-                                            className="p-0 border-r border-edge-subtle bg-surface hover:bg-surface-muted transition-colors cursor-pointer group/cell relative"
+                                            className="p-0 border-r border-edge-subtle bg-surface transition-colors cursor-pointer group/cell relative"
                                             style={{ height: '32px' }}
                                         >
                                             <div className="w-full h-full flex items-center justify-center">
@@ -202,8 +219,8 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                 );
                                 const perc = (habitStats.completed / habitStats.totalDays) * 100;
                                 return (
-                                    <tr key={habit.id} className="hover:bg-surface-muted transition-colors group" style={{ height: 32 }}>
-                                        <td className="p-0 border-r border-edge text-sm font-bold text-ink sticky left-0 z-30 group-hover:bg-surface-strong transition-colors border-l-4" style={{ borderLeftColor: habit.color || theme.secondary, backgroundColor: 'var(--card-bg-soft, #fafaf9)', width: 250, minWidth: 250, maxWidth: 250, height: 32 }}>
+                                    <tr key={habit.id} className="transition-colors group" style={{ height: 32 }}>
+                                        <td className="p-0 border-r border-edge text-sm font-bold text-ink sticky left-0 z-30 transition-colors border-l-4" style={{ borderLeftColor: habit.color || theme.secondary, backgroundColor: 'var(--card-bg-soft, #fafaf9)', width: 250, minWidth: 250, maxWidth: 250, height: 32 }}>
                                             <div className="flex items-center gap-2 px-2 h-full">
                                                 <span className="break-words flex-1 leading-tight">{habit.name || 'Untitled Habit'}</span>
                                             </div>

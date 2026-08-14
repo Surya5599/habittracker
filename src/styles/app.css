@@ -51,6 +51,54 @@
     }
 }
 
+/* ── Month grid hover crosshair ──────────────────────────────────────────────
+   Reading a 31-column habit grid means answering "which day is this, and which
+   habit?" — so hovering a cell lights its whole row and column.
+
+   Done in CSS rather than React state on purpose: the grid is ~900 cells, and
+   re-rendering all of them on every column change is visible lag when sweeping
+   the mouse across a month.
+
+   The two axes deliberately use different properties so they compose instead of
+   overwriting each other, and so neither fights the inline background-color the
+   grid already sets for today / fully-completed days:
+     row    -> background-image layers (paint above background-color)
+     column -> inset box-shadow (painted above the background, below content, so
+               checkmarks and mood icons stay legible)
+   Where they cross, both apply: the tint doubles and all four rails meet, which
+   makes the hovered cell the strongest thing on screen without extra rules.
+   The per-column rules need one selector per index and are generated in
+   MonthlyView, where the column count is known. */
+.month-grid {
+    --xh-rail: var(--theme-primary);
+    --xh-tint: color-mix(in srgb, var(--theme-primary) 13%, transparent);
+    --xh-tint-strong: color-mix(in srgb, var(--theme-primary) 32%, transparent);
+
+    /* rails first: earlier shadows paint on top of later ones */
+    --xh-col: inset 2px 0 0 0 var(--xh-rail), inset -2px 0 0 0 var(--xh-rail),
+        inset 0 0 0 999px var(--xh-tint);
+    --xh-col-head: inset 2px 0 0 0 var(--xh-rail), inset -2px 0 0 0 var(--xh-rail),
+        inset 0 0 0 999px var(--xh-tint-strong);
+}
+
+/* Row axis. Three background layers: a top rail, a bottom rail, and the tint. */
+.month-grid tbody tr:hover>* {
+    background-image:
+        linear-gradient(var(--xh-rail), var(--xh-rail)),
+        linear-gradient(var(--xh-rail), var(--xh-rail)),
+        linear-gradient(var(--xh-tint), var(--xh-tint));
+    background-size: 100% 2px, 100% 2px, 100% 100%;
+    background-position: left top, left bottom, left top;
+    background-repeat: no-repeat;
+}
+
+/* The cell itself. outline is the one box-drawing property the two axes leave
+   free, so it can ring the exact cell without disturbing either. */
+.month-grid tbody td:hover {
+    outline: 2px solid var(--xh-rail);
+    outline-offset: -2px;
+}
+
 /* ── Reduced motion ─────────────────────────────────────────────────────────
    Nothing in the app honoured prefers-reduced-motion before this. Movement is
    removed while state changes stay instant and legible: a pressed control still

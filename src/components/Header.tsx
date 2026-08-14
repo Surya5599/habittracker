@@ -95,8 +95,8 @@ interface HeaderProps {
     tasksCount?: number;
     onOpenLists: () => void;
     listsCount?: number;
-    rightPanel?: 'stats' | 'ai' | 'insights' | null;
-    onSetRightPanel?: (panel: 'stats' | 'ai' | 'insights') => void;
+    rightPanel?: 'stats' | 'ai' | null;
+    onSetRightPanel?: (panel: 'stats' | 'ai') => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -494,22 +494,6 @@ export const Header: React.FC<HeaderProps> = ({
                         </span>
                     </button>
                 )}
-
-                {/* Insights button */}
-                <button
-                    onClick={() => onSetRightPanel?.('insights')}
-                    className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 border-2 border-edge-strong text-[10px] font-black uppercase tracking-wide transition-all duration-100 ml-1 ${
-                        rightPanel === 'insights'
-                            ? 'bg-theme-primary text-white translate-x-[2px] translate-y-[2px]'
-                            : 'bg-surface text-ink-strong shadow-neo-sm hover:shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px]'
-                    }`}
-                >
-                    <Sparkles size={12} strokeWidth={2.5} />
-                    <span className="hidden sm:inline">Insights</span>
-                    <span className={`text-[8px] font-black px-1 py-px leading-none ${rightPanel === 'insights' ? 'bg-surface text-ink-strong' : 'bg-surface-inverse text-ink-inverse'}`}>
-                        {rightPanel === 'insights' ? 'ON' : 'OFF'}
-                    </span>
-                </button>
 
                 {/* Stats toggle */}
                 <button

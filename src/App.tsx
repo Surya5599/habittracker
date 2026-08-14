@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useMemo, useRef, useLayoutEffect } from 'react';
+import { motion, useAnimate, useReducedMotion } from 'framer-motion';
 import { Toaster, toast } from 'react-hot-toast';
 import { createPortal } from 'react-dom';
 import { MOOD_SCALE, MOOD_TINTS } from './constants';
 import i18n from './i18n';
-import { X, Search, Key, ChevronLeft, ChevronRight, Sparkles, BarChart2, Activity, ArrowUp, ArrowDown, Minus, Angry, Frown, Meh, Smile, Laugh, Lock, LogIn } from 'lucide-react';
+import { X, Search, Key, ChevronLeft, ChevronRight, Sparkles, BarChart2, Activity, ArrowUp, ArrowDown, Minus, Angry, Frown, Meh, Smile, Laugh, Lock, LogIn, Target, CalendarRange, ListChecks } from 'lucide-react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from './supabase';
 import './i18n';
@@ -43,6 +43,7 @@ import { AiDisclaimerModal } from './components/AiDisclaimerModal';
 import { JournalPdfPreviewModal } from './components/JournalPdfPreviewModal';
 import { InsightsPanel } from './components/InsightsPanel';
 import { generateInsights } from './utils/habitInsights';
+import type { Insight } from './utils/habitInsights';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
 import { LandingPage } from './pages/LandingPage';
 import { isBenignAuthError } from './utils/authErrors';
@@ -98,17 +99,59 @@ const DEMO_ANNUAL_STATS = {
   }))
 };
 
-// Staggers stats-panel cards in one at a time on mount (re-plays each time the panel opens).
-const StatCard: React.FC<{ index: number; className?: string; children: React.ReactNode }> = ({ index, className, children }) => (
-  <motion.div
-    className={className}
-    initial={{ opacity: 0, y: 14, scale: 0.98 }}
-    animate={{ opacity: 1, y: 0, scale: 1 }}
-    transition={{ duration: 0.32, delay: index * 0.07, ease: 'easeOut' }}
-  >
-    {children}
-  </motion.div>
-);
+// Deals stats-panel cards out of a deck at the top of the panel, one after the
+// next (re-plays each time the panel opens).
+//
+// The card is laid out normally first and *then* thrown back to the deck, so the
+// whole deal is a transform on final geometry — nothing reflows mid-animation and
+// the panel never jumps. Measuring happens in a layout effect, before paint, so
+// the card is never visible at its resting place.
+const StatCard: React.FC<{ className?: string; children: React.ReactNode }> = ({ className, children }) => {
+  const [scope, animate] = useAnimate<HTMLDivElement>();
+  const reduceMotion = useReducedMotion();
+
+  useLayoutEffect(() => {
+    const card = scope.current;
+    if (!card) return;
+
+    // A card flying in across the panel is exactly the motion someone with
+    // vestibular sensitivity asked not to see. Land it in place instead.
+    if (reduceMotion) {
+      card.style.opacity = '1';
+      return;
+    }
+
+    // Found by traversal rather than a context provider: the deck is always an
+    // ancestor, and asking the DOM keeps this component self-contained.
+    const deck = card.closest('[data-stat-deck]');
+    const throwFrom = deck
+      ? deck.getBoundingClientRect().top - card.getBoundingClientRect().top - 6
+      : -28;
+
+    // Clamped rather than literal. A card ten slots down sits ~900px from the
+    // deck, and covering that in one beat reads as a streak rather than a deal —
+    // so every card travels a comparable, legible distance in the same direction.
+    const y = Math.max(-120, Math.min(-16, throwFrom));
+
+    // Deal order is this card's position among the siblings actually rendered, not
+    // a number passed in. Which cards appear depends on both the open tab and the
+    // current view, so a hand-assigned index would leave the first visible card
+    // waiting out delays for cards that aren't on screen.
+    const siblings = card.parentElement ? Array.from(card.parentElement.children) : [card];
+    const order = Math.max(0, siblings.indexOf(card));
+    const tilt = order % 2 === 0 ? -5 : 4; // alternating flick, so the deck reads as a hand
+
+    animate(
+      card,
+      { opacity: [0, 1], y: [y, 0], rotate: [tilt, 0], scale: [0.94, 1] },
+      { duration: 0.42, delay: order * 0.05, ease: [0.16, 1, 0.3, 1] }
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reduceMotion]);
+
+  // Starts hidden so the measure-then-throw pass can't flash at the resting spot.
+  return <div ref={scope} className={className} style={{ opacity: 0 }}>{children}</div>;
+};
 
 // Shown in place of the AI Coach / Insights panels for guest-mode users, who have no
 // account for the underlying data (AI proxy calls, saved insights history) to attach to.
@@ -208,7 +251,7 @@ const AppContent: React.FC = () => {
   const [hasUnseenWhatsNew, setHasUnseenWhatsNew] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isJournalExportOpen, setIsJournalExportOpen] = useState(false);
-  const [rightPanel, setRightPanel] = useState<'stats' | 'ai' | 'insights' | null>(() => localStorage.getItem('header_stats_open') !== 'false' ? 'stats' : null);
+  const [rightPanel, setRightPanel] = useState<'stats' | 'ai' | null>(() => localStorage.getItem('header_stats_open') !== 'false' ? 'stats' : null);
   const aiTodayKey = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })();
   const AI_CACHE_KEY = `aiCoach_${aiTodayKey}`;
   const AI_PERSONALITY_PICKED_KEY = `habit_ai_personality_picked_${aiTodayKey}`;
@@ -335,6 +378,7 @@ const AppContent: React.FC = () => {
     });
   };
   const statsOpen = rightPanel === 'stats';
+  const [statsTab, setStatsTab] = useState<'score' | 'timing' | 'habits' | 'story'>('score');
   const [chartType, setChartType] = useState<'area' | 'bar'>(() => (localStorage.getItem('habit_chart_type') as 'area' | 'bar') || 'area');
   const [sortMode, setSortMode] = useState<'default' | 'name' | 'color' | 'completion'>(() => (localStorage.getItem('habit_sort_mode') as 'default' | 'name' | 'color' | 'completion') || 'default');
   useEffect(() => { localStorage.setItem('header_stats_open', String(rightPanel === 'stats')); }, [rightPanel]);
@@ -1616,6 +1660,58 @@ const AppContent: React.FC = () => {
     return { pct: annualCompletionRate, completed: Math.round(annualStats.totalCompletions), total: Math.round(annualStats.totalPossible), delta: annualDelta, label: 'vs last year' };
   }, [view, weekProgress, weekDelta, monthProgress, monthDelta, annualCompletionRate, annualStats, annualDelta]);
 
+  // ── Stats panel tabs ──────────────────────────────────────────────────────
+  // The panel used to be ten cards stacked in one scroll. Mobile's
+  // AnalyticsDashboard already solved this shape — its header note records that
+  // the same stack "reported completion % three times" before it became one card
+  // with four panels — so the web panel now follows the same four groups.
+  const statsTabsAll = [
+    { id: 'score' as const, icon: Target, label: 'Score', value: `${Math.round(statsKpi.pct)}%` },
+    { id: 'timing' as const, icon: CalendarRange, label: 'Timing', value: `${trendDelta >= 0 ? '+' : ''}${Math.round(trendDelta)}%` },
+    { id: 'habits' as const, icon: ListChecks, label: 'Habits', value: `${statsKpi.completed}/${statsKpi.total}` },
+    // No value: the web story panel carries a narrative, not mobile's mood count.
+    { id: 'story' as const, icon: Sparkles, label: 'Story', value: '—' },
+  ];
+  // The story card is monthly/weekly only, so the year view would open an empty
+  // tab. Drop it there rather than showing a tab that leads nowhere.
+  const statsTabs = statsTabsAll.filter(t => t.id !== 'story' || view !== 'dashboard');
+  // Derived rather than corrected in an effect: switching to the year view while
+  // Story is open would otherwise need a setState during render.
+  const activeStatsTab = statsTabs.some(t => t.id === statsTab) ? statsTab : 'score';
+
+  // Which insight categories belong to which tab. The six categories the engine
+  // emits split cleanly across the four groups, so each insight sits beside the
+  // numbers it explains — an at-risk habit next to the leaderboard, a weekday slip
+  // next to the heatmap — instead of in a separate panel that repeated none of
+  // that context.
+  const STATS_TAB_INSIGHTS: Record<string, Insight['category'][]> = (() => {
+    const base: Record<string, Insight['category'][]> = {
+      score: ['consistency'],
+      timing: ['weekday', 'timing'],
+      habits: ['atRisk', 'correlation'],
+      story: ['resilience'],
+    };
+    // A category assigned to a hidden tab would be silently unreachable —
+    // 'resilience' lives on Story, which the year view drops. Rather than hardcode
+    // that one case, anything whose tab isn't showing falls through to Habits, so
+    // the split stays complete however the tab list changes.
+    const visible = new Set(statsTabs.map(t => t.id as string));
+    const out: Record<string, Insight['category'][]> = {};
+    const orphaned: Insight['category'][] = [];
+    for (const [tab, categories] of Object.entries(base)) {
+      if (visible.has(tab)) out[tab] = categories;
+      else orphaned.push(...categories);
+    }
+    if (orphaned.length > 0) out.habits = [...(out.habits ?? []), ...orphaned];
+    return out;
+  })();
+
+  const statsPeriodLabel = view === 'monthly'
+    ? new Date(currentYear, currentMonthIndex, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+    : view === 'dashboard'
+      ? String(currentYear)
+      : weekOffset === 0 ? 'This week' : weekOffset === -1 ? 'Last week' : `${Math.abs(weekOffset)} weeks ${weekOffset < 0 ? 'ago' : 'ahead'}`;
+
   if (passwordRecoveryMode) {
     return (
       <>
@@ -2053,29 +2149,46 @@ const AppContent: React.FC = () => {
             <div className="flex flex-col gap-4 p-4 bg-surface/90 border-t-3 border-edge-strong lg:border-t-0 lg:border-l-3 lg:absolute lg:right-0 lg:top-0 lg:bottom-0 lg:w-1/2 lg:z-20 lg:overflow-y-auto" style={{ backdropFilter: 'blur(8px)' }}>
 
               {/* ── Stats panel ── */}
-              {rightPanel === 'stats' && <>
+              {/* One card, four panels, tab to switch — the same consolidation mobile's
+                  AnalyticsDashboard made. The period header is label-only on purpose:
+                  the app header already owns the Week/Month/Year switcher and the
+                  prev/next arrows, so repeating them here would be a second set of
+                  controls for the same state. */}
+              {rightPanel === 'stats' && (
+              <div className="neo-border shadow-neo rounded-3xl bg-surface overflow-hidden flex flex-col flex-1 min-h-0 max-h-[80vh] lg:max-h-none">
+
+                <div className="shrink-0 flex items-center justify-between px-3 py-2 border-b-3 border-edge-strong" style={{ backgroundColor: theme.primary }}>
+                  <span className="text-[11px] font-black uppercase tracking-[0.2em]" style={{ color: 'var(--theme-primary-ink)' }}>{statsPeriodLabel}</span>
+                  <span className="text-[9px] font-black uppercase tracking-[0.18em]" style={{ color: 'var(--theme-primary-ink)' }}>
+                    {statsTabs.find(t => t.id === activeStatsTab)?.label}
+                  </span>
+                </div>
+
+                {/* Each panel scrolls on its own, so a tall panel never stretches the
+                    others and the tab strip stays pinned. */}
+                <div data-stat-deck className="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col gap-3">
 
               {/* ── At a Glance KPI ── */}
-              {view !== 'dashboard' && <StatCard index={0} className="neo-border rounded-2xl overflow-hidden bg-surface shrink-0">
+              {activeStatsTab === 'score' && view !== 'dashboard' && <StatCard className="border-2 border-edge rounded-2xl overflow-hidden bg-surface shrink-0">
                 <div className="h-[3px] rounded-t-2xl" style={{ backgroundColor: theme.primary }} />
                 <div className="p-3">
-                  <p className="text-[9px] font-black uppercase tracking-[0.22em] text-ink-subtle mb-3">At a Glance</p>
+                  <p className="text-[9px] font-black uppercase tracking-[0.22em] text-ink-muted mb-3">At a Glance</p>
                   <div className="grid grid-cols-2 gap-2">
                     {/* Completion % — fills from bottom */}
                     <div className="rounded-xl border-2 border-edge-strong overflow-hidden relative flex flex-col justify-end p-3 min-h-[80px]">
                       <div className="absolute bottom-0 left-0 right-0 transition-all duration-700 ease-out rounded-b-xl" style={{ height: `${Math.min(100, Math.round(statsKpi.pct))}%`, backgroundColor: theme.primary, opacity: 0.15 }} />
                       <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: theme.primary, opacity: Math.min(100, Math.round(statsKpi.pct)) > 0 ? 1 : 0 }} />
-                      <span className="relative text-[9px] font-black uppercase tracking-wider text-ink-subtle">Completion</span>
-                      <span className="relative text-4xl font-black leading-none mt-0.5" style={{ color: theme.primary }}>{Math.round(statsKpi.pct)}%</span>
+                      <span className="relative text-[9px] font-black uppercase tracking-wider text-ink-muted">Completion</span>
+                      <span className="relative text-4xl font-black leading-none mt-0.5" style={{ color: 'var(--theme-primary-ink-on-surface)' }}>{Math.round(statsKpi.pct)}%</span>
                     </div>
                     {/* Done / Total — fills from bottom based on completion ratio */}
                     <div className="rounded-xl border-2 border-edge-strong overflow-hidden relative flex flex-col justify-end p-3 min-h-[80px]">
                       <div className="absolute bottom-0 left-0 right-0 transition-all duration-700 ease-out rounded-b-xl" style={{ height: `${statsKpi.total > 0 ? Math.min(100, (statsKpi.completed / statsKpi.total) * 100) : 0}%`, backgroundColor: theme.secondary, opacity: 0.18 }} />
                       <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: theme.secondary, opacity: statsKpi.completed > 0 ? 1 : 0 }} />
-                      <span className="relative text-[9px] font-black uppercase tracking-wider text-ink-subtle">Done / Total</span>
+                      <span className="relative text-[9px] font-black uppercase tracking-wider text-ink-muted">Done / Total</span>
                       <div className="relative flex items-baseline gap-1 mt-0.5">
                         <span className="text-4xl font-black leading-none">{statsKpi.completed}</span>
-                        <span className="text-xl font-black text-ink-dim">/ {statsKpi.total}</span>
+                        <span className="text-xl font-black text-ink-muted">/ {statsKpi.total}</span>
                       </div>
                     </div>
                     {/* vs Previous — fills based on abs delta */}
@@ -2087,8 +2200,8 @@ const AppContent: React.FC = () => {
                         <div className="rounded-xl border-2 border-edge-strong overflow-hidden relative flex flex-col justify-end p-3 min-h-[80px]">
                           <div className="absolute bottom-0 left-0 right-0 transition-all duration-700 ease-out rounded-b-xl" style={{ height: `${fillPct}%`, backgroundColor: fillColor, opacity: 0.18 }} />
                           <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: fillColor, opacity: fillPct > 0 ? 1 : 0 }} />
-                          <span className="relative text-[9px] font-black uppercase tracking-wider text-ink-subtle">{statsKpi.label}</span>
-                          <span className={`relative text-3xl font-black leading-none mt-0.5 ${d > 0 ? 'text-emerald-500' : d < 0 ? 'text-rose-500' : 'text-ink-subtle'}`}>
+                          <span className="relative text-[9px] font-black uppercase tracking-wider text-ink-muted">{statsKpi.label}</span>
+                          <span className={`relative text-3xl font-black leading-none mt-0.5 ${d > 0 ? 'text-emerald-500' : d < 0 ? 'text-rose-500' : 'text-ink-muted'}`}>
                             {d > 0 ? '+' : ''}{d}%
                           </span>
                         </div>
@@ -2096,7 +2209,7 @@ const AppContent: React.FC = () => {
                     })()}
                     {/* Top Habit */}
                     <div className="rounded-xl border-2 border-edge-strong p-3 flex flex-col justify-end min-h-[80px] min-w-0">
-                      <span className="text-[9px] font-black uppercase tracking-wider text-ink-subtle">Top Habit</span>
+                      <span className="text-[9px] font-black uppercase tracking-wider text-ink-muted">Top Habit</span>
                       <span className="text-base font-black leading-tight break-words mt-0.5">{statsBestHabit?.name || '—'}</span>
                     </div>
                   </div>
@@ -2104,17 +2217,17 @@ const AppContent: React.FC = () => {
               </StatCard>}
 
               {/* ── Month Pacing by Week (monthly only) ── */}
-              {view === 'monthly' && (() => {
+              {activeStatsTab === 'timing' && view === 'monthly' && (() => {
                 return (
-                  <StatCard index={1} className="neo-border rounded-2xl overflow-hidden bg-surface shrink-0">
+                  <StatCard className="border-2 border-edge rounded-2xl overflow-hidden bg-surface shrink-0">
                     <div className="h-[3px] rounded-t-2xl" style={{ backgroundColor: theme.secondary }} />
                     <div className="p-3">
                       <div className="flex items-end justify-between mb-3">
                         <div>
-                          <p className="text-[8px] font-black uppercase tracking-[0.22em] text-ink-subtle mb-0.5">Weekly Snapshot</p>
+                          <p className="text-[9px] font-black uppercase tracking-[0.22em] text-ink-muted mb-0.5">Weekly Snapshot</p>
                           <p className="text-sm font-black uppercase tracking-wide text-ink-strong">Month Pacing by Week</p>
                         </div>
-                        <span className="text-[9px] font-black text-ink-dim mb-0.5">{weeks.length} checkpoints</span>
+                        <span className="text-[9px] font-black text-ink-muted mb-0.5">{weeks.length} checkpoints</span>
                       </div>
                       <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${weeks.length}, minmax(0, 1fr))` }}>
                         {weeks.map((week, wIndex) => {
@@ -2167,7 +2280,7 @@ const AppContent: React.FC = () => {
                               {/* Top: week label + date + circle */}
                               <div className="flex items-start justify-between gap-1">
                                 <div className="min-w-0">
-                                  <p className="text-[7px] font-black uppercase tracking-wider text-ink-subtle leading-none">Week {wIndex + 1}</p>
+                                  <p className="text-[8px] font-black uppercase tracking-wider text-ink-muted leading-none">Week {wIndex + 1}</p>
                                   <p className="text-[8px] font-black uppercase text-ink mt-1 leading-tight">
                                     {monthShort} {String(startDate.getDate()).padStart(2, '0')} – {String(endDate.getDate()).padStart(2, '0')}
                                   </p>
@@ -2178,9 +2291,9 @@ const AppContent: React.FC = () => {
                               <div className="border-t border-edge-subtle" />
                               {/* Bottom: completed + day dots */}
                               <div>
-                                <p className="text-[7px] font-black uppercase tracking-wider text-ink-subtle leading-none mb-1">Completed</p>
+                                <p className="text-[8px] font-black uppercase tracking-wider text-ink-muted leading-none mb-1">Completed</p>
                                 <div className="flex items-end justify-between gap-1">
-                                  <p className="text-base font-black leading-none text-ink-strong">{Math.round(weekTotal)}<span className="text-[9px] font-black text-ink-dim ml-0.5">/{Math.round(weekMax)}</span></p>
+                                  <p className="text-base font-black leading-none text-ink-strong">{Math.round(weekTotal)}<span className="text-[9px] font-black text-ink-muted ml-0.5">/{Math.round(weekMax)}</span></p>
                                   {/* Per-day dot bars */}
                                   <div className="flex items-end gap-[2px]" style={{ height: 14 }}>
                                     {dayBars.map((pct, di) => (
@@ -2206,7 +2319,7 @@ const AppContent: React.FC = () => {
               })()}
 
               {/* Trend chart */}
-              {view !== 'dashboard' && <StatCard index={2} className={`neo-border rounded-2xl overflow-hidden flex flex-col min-h-[220px] ${isDarkMode ? 'bg-[#151515]' : 'bg-surface-soft'}`}>
+              {activeStatsTab === 'score' && view !== 'dashboard' && <StatCard className={`border-2 border-edge rounded-2xl overflow-hidden flex flex-col min-h-[220px] ${isDarkMode ? 'bg-[#151515]' : 'bg-surface-soft'}`}>
                 <div className="h-[3px] shrink-0 rounded-t-2xl" style={{ backgroundColor: theme.primary }} />
                 <div className="flex flex-col flex-1 p-4">
                   <div className="flex justify-between items-center mb-3">
@@ -2219,7 +2332,7 @@ const AppContent: React.FC = () => {
                       </div>
                       <button
                         onClick={() => setChartType(prev => prev === 'area' ? 'bar' : 'area')}
-                        className="p-1 hover:bg-edge rounded transition-colors text-ink-subtle hover:text-ink"
+                        className="p-1 hover:bg-edge rounded transition-colors text-ink-muted hover:text-ink"
                       >
                         {chartType === 'area' ? <BarChart2 size={12} /> : <Activity size={12} />}
                       </button>
@@ -2254,7 +2367,7 @@ const AppContent: React.FC = () => {
                 </div>
               </StatCard>}
               {/* Story panel */}
-              {view !== 'dashboard' && <StatCard index={3} className="neo-border rounded-2xl flex flex-col overflow-hidden bg-surface flex-1 min-h-0">
+              {activeStatsTab === 'story' && view !== 'dashboard' && <StatCard className="border-2 border-edge rounded-2xl flex flex-col overflow-hidden bg-surface flex-1 min-h-0">
                 <div className="text-ink-inverse text-[10px] font-black uppercase py-2 text-center tracking-widest border-b-3 border-edge-strong shrink-0" style={{ backgroundColor: theme.primary }}>
                   {view === 'monthly' ? 'Monthly Success' : view === 'weekly' ? 'Weekly Success' : 'Annual Performance'}
                 </div>
@@ -2263,10 +2376,10 @@ const AppContent: React.FC = () => {
                     <>
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-[10px] font-black uppercase text-ink-subtle tracking-widest leading-none mb-1">Month Story</p>
+                          <p className="text-[10px] font-black uppercase text-ink-muted tracking-widest leading-none mb-1">Month Story</p>
                           <div className="flex items-baseline gap-1">
                             <span className="text-3xl font-black leading-none">{monthProgress.completed}</span>
-                            <span className="text-lg font-black text-ink-dim">/ {monthProgress.total}</span>
+                            <span className="text-lg font-black text-ink-muted">/ {monthProgress.total}</span>
                           </div>
                         </div>
                         <div className="w-14 h-14 relative">
@@ -2276,7 +2389,7 @@ const AppContent: React.FC = () => {
                             </Pie>
                           </PieChart>
                           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <span className="text-[10px] font-black" style={{ color: theme.primary }}>{monthProgress.percentage.toFixed(0)}%</span>
+                            <span className="text-[10px] font-black" style={{ color: 'var(--theme-primary-ink-on-surface)' }}>{monthProgress.percentage.toFixed(0)}%</span>
                           </div>
                         </div>
                       </div>
@@ -2302,10 +2415,10 @@ const AppContent: React.FC = () => {
                     <>
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-[10px] font-black uppercase text-ink-subtle tracking-widest leading-none mb-1">Week progress</p>
+                          <p className="text-[10px] font-black uppercase text-ink-muted tracking-widest leading-none mb-1">Week progress</p>
                           <div className="flex items-baseline gap-1">
                             <span className="text-3xl font-black leading-none">{weekProgress.completed}</span>
-                            <span className="text-lg font-black text-ink-dim">/ {weekProgress.total}</span>
+                            <span className="text-lg font-black text-ink-muted">/ {weekProgress.total}</span>
                           </div>
                         </div>
                         <div className="w-14 h-14 relative">
@@ -2315,7 +2428,7 @@ const AppContent: React.FC = () => {
                             </Pie>
                           </PieChart>
                           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <span className="text-[10px] font-black" style={{ color: theme.primary }}>{weekProgress.percentage.toFixed(0)}%</span>
+                            <span className="text-[10px] font-black" style={{ color: 'var(--theme-primary-ink-on-surface)' }}>{weekProgress.percentage.toFixed(0)}%</span>
                           </div>
                         </div>
                       </div>
@@ -2359,7 +2472,7 @@ const AppContent: React.FC = () => {
                             </Pie>
                           </PieChart>
                           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <span className="text-[10px] font-black" style={{ color: theme.primary }}>{annualCompletionRate.toFixed(0)}%</span>
+                            <span className="text-[10px] font-black" style={{ color: 'var(--theme-primary-ink-on-surface)' }}>{annualCompletionRate.toFixed(0)}%</span>
                           </div>
                         </div>
                       </div>
@@ -2369,12 +2482,12 @@ const AppContent: React.FC = () => {
               </StatCard>}
 
               {/* ── Dashboard: Year Trend ── */}
-              {view === 'dashboard' && (
-                <StatCard index={3} className="neo-border rounded-2xl overflow-hidden flex flex-col min-h-[200px] bg-surface-soft shrink-0">
+              {activeStatsTab === 'score' && view === 'dashboard' && (
+                <StatCard className="border-2 border-edge rounded-2xl overflow-hidden flex flex-col min-h-[200px] bg-surface-soft shrink-0">
                   <div className="h-[3px] shrink-0 rounded-t-2xl" style={{ backgroundColor: theme.primary }} />
                   <div className="flex flex-col flex-1 p-3">
                     <div className="flex justify-between items-center mb-2">
-                      <p className="text-[9px] font-black uppercase tracking-[0.22em] text-ink-subtle">Year Trend</p>
+                      <p className="text-[9px] font-black uppercase tracking-[0.22em] text-ink-muted">Year Trend</p>
                       <div className={`text-[9px] font-black px-2 py-1 border border-edge-strong ${trendDelta >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                         {trendDelta >= 0 ? '+' : ''}{Math.abs(trendDelta).toFixed(0)}% vs LY
                       </div>
@@ -2399,7 +2512,7 @@ const AppContent: React.FC = () => {
               )}
 
               {/* ── Dashboard: 52-Week Heatmap ── */}
-              {view === 'dashboard' && (() => {
+              {activeStatsTab === 'timing' && view === 'dashboard' && (() => {
                 const jan1DayOfWeek = new Date(currentYear, 0, 1).getDay();
                 const emptyCells = jan1DayOfWeek;
 
@@ -2436,10 +2549,10 @@ const AppContent: React.FC = () => {
                 };
 
                 return (
-                  <StatCard index={4} className="neo-border rounded-2xl overflow-hidden bg-surface shrink-0">
+                  <StatCard className="border-2 border-edge rounded-2xl overflow-hidden bg-surface shrink-0">
                     <div className="h-[3px] rounded-t-2xl" style={{ backgroundColor: theme.secondary }} />
                     <div className="p-3">
-                      <p className="text-[9px] font-black uppercase tracking-[0.22em] text-ink-subtle mb-3">52-Week Map</p>
+                      <p className="text-[9px] font-black uppercase tracking-[0.22em] text-ink-muted mb-3">52-Week Map</p>
                       <div className="overflow-x-auto">
                         <div className="flex gap-[3px]" style={{ minWidth: 'max-content' }}>
                           {weekColumns.map((week, wi) => (
@@ -2465,7 +2578,7 @@ const AppContent: React.FC = () => {
                               const daysInMonth = new Date(currentYear, m + 1, 0).getDate();
                               labels.push(
                                 <div key={m} style={{ width: Math.ceil(daysInMonth / 7) * 13, minWidth: 0 }}>
-                                  <span className="text-[7px] font-black text-ink-dim uppercase">{monthAbbr[m]}</span>
+                                  <span className="text-[8px] font-black text-ink-muted uppercase">{monthAbbr[m]}</span>
                                 </div>
                               );
                               cellIdx += daysInMonth;
@@ -2480,7 +2593,7 @@ const AppContent: React.FC = () => {
               })()}
 
               {/* ── Dashboard: Seasonal Breakdown ── */}
-              {view === 'dashboard' && (() => {
+              {activeStatsTab === 'timing' && view === 'dashboard' && (() => {
                 const seasons = [
                   { name: 'Winter', label: 'Dec–Feb', months: [11, 0, 1] },
                   { name: 'Spring', label: 'Mar–May', months: [2, 3, 4] },
@@ -2494,10 +2607,10 @@ const AppContent: React.FC = () => {
                 const maxAvg = Math.max(...seasons.map(s => s.avg ?? 0));
 
                 return (
-                  <StatCard index={5} className="neo-border rounded-2xl overflow-hidden bg-surface shrink-0">
+                  <StatCard className="border-2 border-edge rounded-2xl overflow-hidden bg-surface shrink-0">
                     <div className="h-[3px] rounded-t-2xl" style={{ backgroundColor: theme.secondary }} />
                     <div className="p-3">
-                      <p className="text-[9px] font-black uppercase tracking-[0.22em] text-ink-subtle mb-3">Seasonal Patterns</p>
+                      <p className="text-[9px] font-black uppercase tracking-[0.22em] text-ink-muted mb-3">Seasonal Patterns</p>
                       <div className="grid grid-cols-4 gap-2">
                         {seasons.map(s => {
                           const isBest = s.avg !== null && s.avg === maxAvg && maxAvg > 0;
@@ -2508,8 +2621,8 @@ const AppContent: React.FC = () => {
                               )}
                               <p className="relative text-[8px] font-black uppercase tracking-wide text-ink-muted">{s.name}</p>
                               <p className="relative text-base font-black leading-tight mt-0.5 text-ink-strong">{s.avg !== null ? `${s.avg}%` : '—'}</p>
-                              <p className="relative text-[7px] font-bold text-ink-subtle">{s.label}</p>
-                              {isBest && <p className="relative text-[7px] font-black" style={{ color: theme.primary }}>PEAK</p>}
+                              <p className="relative text-[8px] font-bold text-ink-muted">{s.label}</p>
+                              {isBest && <p className="relative text-[8px] font-black" style={{ color: 'var(--theme-primary-ink-on-surface)' }}>PEAK</p>}
                             </div>
                           );
                         })}
@@ -2520,11 +2633,11 @@ const AppContent: React.FC = () => {
               })()}
 
               {/* ── Dashboard: Weekday Pattern ── */}
-              {view === 'dashboard' && (
-                <StatCard index={6} className="neo-border rounded-2xl overflow-hidden bg-surface shrink-0">
+              {activeStatsTab === 'timing' && view === 'dashboard' && (
+                <StatCard className="border-2 border-edge rounded-2xl overflow-hidden bg-surface shrink-0">
                   <div className="h-[3px] rounded-t-2xl" style={{ backgroundColor: theme.secondary }} />
                   <div className="p-3">
-                    <p className="text-[9px] font-black uppercase tracking-[0.22em] text-ink-subtle mb-2">Weekday Pattern</p>
+                    <p className="text-[9px] font-black uppercase tracking-[0.22em] text-ink-muted mb-2">Weekday Pattern</p>
                     <div className="grid grid-cols-2 gap-2">
                       {[
                         { label: 'Weekdays', rate: Math.round(annualStats.weekdayRate ?? 0) },
@@ -2536,7 +2649,7 @@ const AppContent: React.FC = () => {
                         return (
                           <div key={label} className={`rounded-xl border relative overflow-hidden p-2 ${isBetter ? 'border-edge-strong border-2' : 'border-edge'}`}>
                             <div className="absolute bottom-0 left-0 right-0" style={{ height: `${rate}%`, backgroundColor: isBetter ? theme.primary : theme.secondary, opacity: 0.15 }} />
-                            <p className="relative text-[8px] font-black uppercase text-ink-muted">{label}</p>
+                            <p className="relative text-[9px] font-black uppercase text-ink-muted">{label}</p>
                             <p className="relative text-xl font-black leading-none mt-0.5" style={{ color: isBetter ? theme.primary : undefined }}>{rate}%</p>
                           </div>
                         );
@@ -2547,11 +2660,12 @@ const AppContent: React.FC = () => {
               )}
 
               {/* ── Best / Needs Focus ── */}
-              <StatCard index={7} className="grid grid-cols-2 gap-3 shrink-0">
-                <div className="neo-border rounded-2xl overflow-hidden bg-surface">
+              {activeStatsTab === 'habits' && (
+              <StatCard className="grid grid-cols-2 gap-3 shrink-0">
+                <div className="border-2 border-edge rounded-2xl overflow-hidden bg-surface">
                   <div className="h-[3px] rounded-t-2xl bg-emerald-400" />
                   <div className="p-3 flex flex-col gap-1">
-                    <span className="text-[9px] font-black uppercase tracking-wider text-ink-subtle">
+                    <span className="text-[9px] font-black uppercase tracking-wider text-ink-muted">
                       {view === 'weekly' ? 'Best This Week' : view === 'monthly' ? 'Best This Month' : 'Best This Year'}
                     </span>
                     {statsBestHabit ? (
@@ -2564,10 +2678,10 @@ const AppContent: React.FC = () => {
                           <span className="text-[10px] font-black text-emerald-600">{Math.round(statsBestHabit.rate)}%</span>
                         </div>
                       </>
-                    ) : <span className="text-xs text-ink-dim font-bold">No data yet</span>}
+                    ) : <span className="text-xs text-ink-muted font-bold">No data yet</span>}
                   </div>
                 </div>
-                <div className="neo-border rounded-2xl overflow-hidden bg-surface">
+                <div className="border-2 border-edge rounded-2xl overflow-hidden bg-surface">
                   <div className="h-[3px] rounded-t-2xl bg-rose-300" />
                   <div className="p-3 flex flex-col gap-1">
                     <span className="text-[9px] font-black uppercase tracking-wider text-rose-300">
@@ -2583,22 +2697,23 @@ const AppContent: React.FC = () => {
                           <span className="text-[10px] font-black text-rose-400">{Math.round(statsWorstHabit.rate)}%</span>
                         </div>
                       </>
-                    ) : <span className="text-xs text-ink-dim font-bold">On track</span>}
+                    ) : <span className="text-xs text-ink-muted font-bold">On track</span>}
                   </div>
                 </div>
               </StatCard>
+              )}
 
               {/* ── Habit Leaderboard ── */}
-              {(() => {
+              {activeStatsTab === 'habits' && (() => {
                 const list = view === 'weekly' ? weekHabitPerformance :
                   view === 'monthly' ? topHabitsThisMonth.map((h: any) => ({ ...h, rate: h.percentage })) :
                   annualStats.topHabits;
                 if (!list || list.length === 0) return null;
                 return (
-                  <StatCard index={8} className="neo-border rounded-2xl overflow-hidden bg-surface shrink-0">
+                  <StatCard className="border-2 border-edge rounded-2xl overflow-hidden bg-surface shrink-0">
                     <div className="h-[3px] rounded-t-2xl" style={{ backgroundColor: theme.primary }} />
                     <div className="p-3">
-                      <p className="text-[9px] font-black uppercase tracking-[0.22em] text-ink-subtle mb-3">
+                      <p className="text-[9px] font-black uppercase tracking-[0.22em] text-ink-muted mb-3">
                         {view === 'weekly' ? 'Weekly Leaderboard' : view === 'monthly' ? 'Monthly Leaderboard' : 'Top Habits'}
                       </p>
                       <div className="flex flex-col gap-1.5">
@@ -2607,14 +2722,14 @@ const AppContent: React.FC = () => {
                           const hasCount = h.completed != null && h.total != null && Math.round(h.total) > 0;
                           return (
                             <div key={h.id ?? i} className="flex items-center gap-2">
-                              <span className="text-[9px] font-black text-ink-dim w-3 text-right shrink-0">{i + 1}</span>
+                              <span className="text-[9px] font-black text-ink-muted w-3 text-right shrink-0">{i + 1}</span>
                               <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: h.color || theme.primary }} />
                               <span className="text-[11px] font-bold text-ink flex-1 min-w-0 truncate">{h.name}</span>
-                              {hasCount && <span className="text-[9px] font-black text-ink-dim shrink-0">{Math.round(h.completed)}/{Math.round(h.total)}</span>}
+                              {hasCount && <span className="text-[9px] font-black text-ink-muted shrink-0">{Math.round(h.completed)}/{Math.round(h.total)}</span>}
                               <div className="w-14 h-1.5 rounded-full bg-surface-strong overflow-hidden shrink-0">
                                 <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: theme.primary }} />
                               </div>
-                              <span className="text-[10px] font-black w-7 text-right shrink-0" style={{ color: theme.primary }}>{pct}%</span>
+                              <span className="text-[10px] font-black w-7 text-right shrink-0" style={{ color: 'var(--theme-primary-ink-on-surface)' }}>{pct}%</span>
                             </div>
                           );
                         })}
@@ -2625,10 +2740,10 @@ const AppContent: React.FC = () => {
               })()}
 
               {/* ── Analytics heatmap ── */}
-              {view !== 'dashboard' && <StatCard index={9} className="neo-border rounded-2xl overflow-hidden bg-surface shrink-0">
+              {activeStatsTab === 'timing' && view !== 'dashboard' && <StatCard className="border-2 border-edge rounded-2xl overflow-hidden bg-surface shrink-0">
                 <div className="h-[3px] rounded-t-2xl" style={{ backgroundColor: theme.secondary }} />
                 <div className="p-3">
-                  <p className="text-[9px] font-black uppercase tracking-[0.22em] text-ink-subtle mb-3">
+                  <p className="text-[9px] font-black uppercase tracking-[0.22em] text-ink-muted mb-3">
                     {view === 'weekly' ? 'Day Breakdown' : view === 'monthly' ? 'Month Heatmap' : 'Year Overview'}
                   </p>
 
@@ -2667,7 +2782,7 @@ const AppContent: React.FC = () => {
                         <div className="flex gap-2">
                           {days.map((d, i) => (
                             <div key={i} className="flex-1 text-center">
-                              <span className={`text-[10px] font-black uppercase ${d.isToday ? 'text-ink-strong' : 'text-ink-subtle'}`}>{d.label}</span>
+                              <span className={`text-[10px] font-black uppercase ${d.isToday ? 'text-ink-strong' : 'text-ink-muted'}`}>{d.label}</span>
                             </div>
                           ))}
                         </div>
@@ -2676,7 +2791,7 @@ const AppContent: React.FC = () => {
                           {days.map((d, i) => (
                             <div key={i} className={`relative flex-1 aspect-square rounded-xl overflow-hidden flex items-end justify-center pb-1.5 ${d.isToday ? 'border-2 border-edge-strong' : 'border border-edge'} ${d.pct === 0 ? 'bg-surface-muted' : ''}`}>
                               {d.pct > 0 && <div className="absolute bottom-0 left-0 right-0 transition-all duration-500 ease-out" style={{ height: `${d.pct}%`, backgroundColor: d.pct >= 100 ? theme.primary : theme.secondary, opacity: d.pct >= 100 ? 1 : 0.8 }} />}
-                              <span className={`relative text-xs font-black leading-none ${d.pct >= 50 ? 'text-ink-inverse' : d.pct === 0 ? 'text-ink-dim' : 'text-ink'}`}>{d.pct}%</span>
+                              <span className={`relative text-xs font-black leading-none ${d.pct >= 50 ? 'text-ink-inverse' : d.pct === 0 ? 'text-ink-muted' : 'text-ink'}`}>{d.pct}%</span>
                             </div>
                           ))}
                         </div>
@@ -2688,7 +2803,7 @@ const AppContent: React.FC = () => {
                               <div key={i} className={`relative flex-1 aspect-square rounded-xl overflow-hidden flex items-center justify-center ${d.isToday ? 'border-2 border-edge-strong' : 'border border-edge'}`} style={{ backgroundColor: d.moodMeta?.bg || '#f9fafb' }}>
                                 {MoodIcon
                                   ? <MoodIcon size={20} color={d.moodMeta!.color} strokeWidth={2.5} />
-                                  : <span className="text-[10px] font-black text-ink-dim">—</span>}
+                                  : <span className="text-[10px] font-black text-ink-muted">—</span>}
                               </div>
                             );
                           })}
@@ -2705,7 +2820,7 @@ const AppContent: React.FC = () => {
                       <div>
                         <div className="grid grid-cols-7 gap-1 mb-1.5">
                           {dayLabels.map((l, i) => (
-                            <div key={i} className="text-center text-[8px] font-black text-ink-dim">{l}</div>
+                            <div key={i} className="text-center text-[9px] font-black text-ink-muted">{l}</div>
                           ))}
                         </div>
                         <div className="grid grid-cols-7 gap-1">
@@ -2740,7 +2855,7 @@ const AppContent: React.FC = () => {
                                 )}
                                 {/* % — bottom center */}
                                 <div className="absolute bottom-1 left-0 right-0 flex justify-center z-10">
-                                  <span className={`text-[10px] font-black leading-none ${pct >= 40 ? 'text-ink-inverse' : pct >= 0 ? 'text-ink' : 'text-ink-dim'}`}>
+                                  <span className={`text-[10px] font-black leading-none ${pct >= 40 ? 'text-ink-inverse' : pct >= 0 ? 'text-ink' : 'text-ink-muted'}`}>
                                     {pct >= 0 ? `${pct}%` : '—'}
                                   </span>
                                 </div>
@@ -2771,7 +2886,57 @@ const AppContent: React.FC = () => {
                   )}
                 </div>
               </StatCard>}
-              </>}
+
+              {/* ── Insights for this tab ──────────────────────────────────────
+                  Last in the panel on purpose: the cards above answer "what
+                  happened", so the reading of it belongs underneath them rather
+                  than ahead of them. Renders nothing at all when the open tab has
+                  no insights, so no tab shows an empty box. */}
+              {!guestMode && (() => {
+                const categories = STATS_TAB_INSIGHTS[activeStatsTab] ?? [];
+                const items = insights.filter(i => categories.includes(i.category));
+                if (items.length === 0) return null;
+                return (
+                  <StatCard className="border-2 border-edge rounded-2xl overflow-hidden bg-surface shrink-0">
+                    <div className="h-[3px] rounded-t-2xl" style={{ backgroundColor: theme.secondary }} />
+                    <div className="p-3">
+                      <div className="flex items-center gap-1.5 mb-3">
+                        <Sparkles size={12} strokeWidth={2.5} className="text-ink-muted" />
+                        <p className="text-[9px] font-black uppercase tracking-[0.22em] text-ink-muted">What this means</p>
+                        <span className="ml-auto text-[9px] font-black px-1.5 py-0.5 bg-surface-inverse text-ink-inverse rounded">{items.length}</span>
+                      </div>
+                      <InsightsPanel insights={insights} theme={theme} only={categories} embedded />
+                    </div>
+                  </StatCard>
+                );
+              })()}
+                </div>
+
+                <div role="tablist" aria-label="Stats panels" className="shrink-0 flex border-t-3 border-edge-strong bg-surface-soft">
+                  {statsTabs.map((tab, i) => {
+                    const isActive = tab.id === activeStatsTab;
+                    const TabIcon = tab.icon;
+                    return (
+                      <button
+                        key={tab.id}
+                        role="tab"
+                        aria-selected={isActive}
+                        aria-label={tab.label}
+                        onClick={() => setStatsTab(tab.id)}
+                        className={`relative flex-1 py-2.5 flex flex-col items-center justify-center gap-1 transition-colors ${i < statsTabs.length - 1 ? 'border-r border-edge' : ''} ${isActive ? 'bg-surface' : 'hover:bg-surface-muted'}`}
+                      >
+                        {/* Bar overlays the top border on the active tab, the affordance
+                            the mobile strip uses. */}
+                        {isActive && <span className="absolute -top-[3px] left-0 right-0 h-[3px]" style={{ backgroundColor: theme.primary }} />}
+                        <TabIcon size={17} strokeWidth={isActive ? 2.5 : 2} className={isActive ? '' : 'text-ink-muted'} style={isActive ? { color: 'var(--theme-primary-ink-on-surface)' } : undefined} />
+                        <span className={`text-[11px] font-black leading-none ${isActive ? 'text-ink-strong' : 'text-ink-muted'}`}>{tab.value}</span>
+                        <span className={`text-[9px] font-black uppercase tracking-wider leading-none ${isActive ? 'text-ink-strong' : 'text-ink-muted'}`}>{tab.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              )}
 
               {/* ── AI Coach panel ── */}
               {rightPanel === 'ai' && guestMode && (
@@ -2941,13 +3106,6 @@ const AppContent: React.FC = () => {
                 );
               })()}
 
-              {/* ── Insights panel ── */}
-              {rightPanel === 'insights' && guestMode && (
-                <LockedPanel title="Insights" description="Create an account or sign in to unlock pattern insights about your habits." />
-              )}
-              {rightPanel === 'insights' && !guestMode && (
-                <InsightsPanel insights={insights} theme={theme} />
-              )}
             </div>
           )}
         </div>

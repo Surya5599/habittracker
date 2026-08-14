@@ -50,6 +50,15 @@
   --theme-secondary-soft: color-mix(in srgb, var(--theme-secondary) 12%, transparent);
   --theme-secondary-strong: color-mix(in srgb, var(--theme-secondary) 25%, transparent);
 
+  /* Theme colour for FOREGROUNDS on a light surface — icons, text, small marks.
+     The faint/soft/strong trio above are alpha tints meant for backgrounds; using
+     the raw --theme-primary as a foreground instead is what made 8 of the 13
+     presets illegible (Mint & Blush is 1.62:1 on white, against the 3:1 an icon
+     needs). Every preset is a pastel mid-tone, so it has to be darkened.
+     55% toward black is the deepest single value that still clears 4.5:1 for all
+     13 — the binding preset is Mint & Blush, which caps out at 58%. */
+  --theme-primary-ink-on-surface: color-mix(in srgb, var(--theme-primary) 55%, black);
+
   /* Readable foreground for a theme-filled surface, chosen at runtime by
      useTheme from each preset's measured contrast. Used where the label must
      adapt; selected/active surfaces instead pair the theme colour with white by
@@ -189,6 +198,12 @@
    Values are the existing --dark-* ramp (dark-theme.css:1-13) plus the three
    greys that previously bypassed it (#181818/#202020/#303030, lines 219/223/366). */
 [data-color-mode='dark'] {
+  /* Same job as the light value, opposite direction: on #1a1a1a the pastels are
+     already legible, and it is the two DARK primaries that vanish — Monochrome
+     (#2d2d2d) sits at 1.26:1 raw. Lightening 45% toward white clears 4.5:1 for
+     all 13; Monochrome is the binding preset, capping at 59%. */
+  --theme-primary-ink-on-surface: color-mix(in srgb, var(--theme-primary) 55%, white);
+
   --canvas: #0d0d0d;         /* --dark-bg */
   --surface: #1a1a1a;        /* --dark-surface */
   --surface-soft: #1a1a1a;   /* --card-bg-soft (dark) */

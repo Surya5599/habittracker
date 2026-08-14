@@ -15,7 +15,8 @@
       "title": "语言"
     },
     "theme": {
-      "title": "主题"
+      "title": "主题",
+      "select": "选择主题"
     },
     "reminders": {
       "title": "每日提醒"
@@ -70,6 +71,10 @@
     "errors": {
       "title": "错误",
       "unableSignOut": "无法退出登录"
+    },
+    "aiCoach": {
+      "title": "AI 教练",
+      "open": "打开"
     }
   },
   "header": {
@@ -184,7 +189,10 @@
       "fri": "五",
       "sat": "六",
       "sun": "日"
-    }
+    },
+    "delete": "删除",
+    "reorder": "重新排序",
+    "week": "周"
   },
   "dailyCard": {
     "dailyHabits": "每日习惯",
@@ -206,7 +214,7 @@
     "moods": {
       "veryBad": "很差",
       "bad": "差",
-      "neutral": "一般",
+      "okay": "一般",
       "good": "好",
       "veryGood": "很好"
     },
@@ -223,7 +231,33 @@
     "title": "日记",
     "prompt": "反思你的一天",
     "placeholder": "写下今天...",
-    "save": "保存条目"
+    "save": "保存条目",
+    "empty": "还没有记录",
+    "addEntry": "添加记录",
+    "tapToEdit": "点按编辑",
+    "editEntry": "编辑记录",
+    "deleteEntry": "删除记录",
+    "deleteConfirmTitle": "删除这条记录？",
+    "deleteConfirmBody": "此操作无法撤销。",
+    "saveAnother": "保存记录",
+    "prompts": {
+      "wentWell": {
+        "chip": "顺利",
+        "stem": "顺利的事： "
+      },
+      "struggled": {
+        "chip": "吃力",
+        "stem": "吃力的事： "
+      },
+      "learned": {
+        "chip": "学到",
+        "stem": "学到的： "
+      },
+      "tomorrow": {
+        "chip": "明天",
+        "stem": "明天： "
+      }
+    }
   },
   "habitManager": {
     "title": "我的习惯",
@@ -240,11 +274,29 @@
     "restore": "恢复",
     "everyDay": "每天",
     "alreadyExists": "已存在",
-    "alreadyExistsMsg": "名为\"{{name}}\"的习惯已存在。"
-  },
-  "weeklyCard": {
-    "title": "每周目标",
-    "target": "目标：本周 {{count}}次"
+    "alreadyExistsMsg": "名为\"{{name}}\"的习惯已存在。",
+    "daily": "每日",
+    "weekly": "每周",
+    "dailyGoal": "每日目标",
+    "weeklyGoal": "每周目标",
+    "goal": "目标",
+    "days": "天",
+    "deleteTitle": "删除这个习惯？",
+    "showActive": "进行中",
+    "showArchived": "已归档",
+    "addPlaceholder": "添加习惯…",
+    "name": "名称",
+    "color": "颜色",
+    "schedule": "频率",
+    "save": "保存",
+    "backToList": "习惯",
+    "archivedCount": "已归档（{{count}}）",
+    "archiveHabit": "归档习惯",
+    "restoreHabit": "恢复习惯",
+    "deleteHabit": "删除习惯",
+    "emptyList": "还没有习惯 — 在上方添加",
+    "perWeek": "每周 {{count}} 次",
+    "archivedTag": "已归档"
   },
   "monthlyView": {
     "journals": "日记",
@@ -254,7 +306,15 @@
     "dayDetails": "每日详情",
     "tasks": "任务",
     "searchPlaceholder": "搜索记录...",
-    "noLogs": "此栏目未找到记录。"
+    "noLogs": "此栏目未找到记录。",
+    "title": "记录",
+    "emptyTitle": "还没有写过什么",
+    "emptyBody": "你在每日卡片上写的记录会按时间从新到旧汇集在这里。",
+    "noEntry": "无记录",
+    "noResultsTitle": "没有匹配",
+    "noResultsBody": "搜索涵盖日记、任务，以及“8月3日”这样的日期。",
+    "loadOlder": "加载更早的记录",
+    "allLoaded": "已加载至 {{date}} 的历史"
   },
   "dashboard": {
     "week": "周",
@@ -304,14 +364,22 @@
     "vsLastMonth": "比上月",
     "thisMonth": "本月",
     "lastMonth": "上月",
-    "weeksThisMonth": "本月各周"
+    "weeksThisMonth": "本月各周",
+    "tabScore": "成绩",
+    "tabTiming": "时段",
+    "tabHabits": "习惯",
+    "tabStory": "叙述",
+    "previousPeriod": "上一个周期",
+    "nextPeriod": "下一个周期"
   },
   "bottomNav": {
     "today": "今天",
     "analytics": "分析",
     "logs": "日志",
     "todo": "待办",
-    "analysis": "AI分析"
+    "analysis": "AI分析",
+    "review": "回顾",
+    "coach": "教练"
   },
   "auth": {
     "enterEmail": "请输入您的邮箱",
@@ -330,7 +398,12 @@
     "password": "密码",
     "signIn": "登录",
     "createAccount": "创建账户",
-    "or": "或"
+    "or": "或",
+    "genericError": "出了点问题，请重试。",
+    "sessionExpired": "登录已过期，请重新登录。",
+    "incorrectPassword": "密码不正确，请重试。",
+    "accountExists": "该邮箱已注册，请直接登录。",
+    "resetFailed": "无法发送重置邮件，请重试。"
   },
   "dashboardScreen": {
     "title": "仪表板",
@@ -479,6 +552,159 @@
         "title": "打开记录",
         "description": "使用底部导航切换到记录页面查看历史。"
       }
+    }
+  },
+  "todo": {
+    "title": "待办",
+    "all": "全部",
+    "overdue": "已逾期",
+    "backlog": "待安排",
+    "yesterday": "昨天",
+    "daysAgo": "{{count}} 天前",
+    "emptyBacklog": "待安排列表是空的 — 在下面添加",
+    "emptyBacklogTitle": "列表为空",
+    "emptyBacklogBody": "在下面添加，它会一直等到你为它定下日期。",
+    "clearTitle": "已经全部跟上",
+    "clearBody": "过去几天未完成的任务会自动出现在这里。",
+    "clearHint": "过去几天未完成的任务会自动出现在这里。你在下面添加的内容会等到你为它定下日期。",
+    "completeTask": "标记为完成",
+    "scheduleTask": "移到某个日期",
+    "deleteTask": "删除任务",
+    "addPlaceholder": "添加到待安排...",
+    "loadOlder": "加载更早的任务",
+    "allLoaded": "自 {{date}} 起的全部未完成任务"
+  },
+  "journalBook": {
+    "title": "回顾",
+    "today": "今天",
+    "index": "目录",
+    "inbox": "收件箱",
+    "dayNumber": "第 {{n}} 天",
+    "backToPage": "返回页面",
+    "todaysJournal": "今天的日记",
+    "viewDay": "查看这一天",
+    "habitsCompleted": "已完成 {{total}} 个习惯中的 {{done}} 个",
+    "noHabitsDue": "今天没有安排习惯",
+    "noEntry": "没有记录",
+    "verdict": {
+      "great": "很棒的一天！",
+      "good": "不错的一天",
+      "steady": "平稳的一天",
+      "slow": "慢节奏的一天",
+      "rest": "休息日",
+      "blank": "没有记录"
+    },
+    "oneEntry": "1 条",
+    "entryCount": "{{count}} 条",
+    "tasksCompleted": "已完成 {{total}} 项任务中的 {{done}} 项"
+  },
+  "onboardingFlow": {
+    "skip": "跳过",
+    "continueWith": "选好 {{count}} 个，继续",
+    "pickAtLeastOne": "至少选一个",
+    "looksRight": "就这样",
+    "done": "开始吧",
+    "enableReminder": "开启提醒",
+    "notNow": "暂不",
+    "customPlaceholder": "其他…",
+    "firstDone": "这就是第一天。",
+    "pick": {
+      "title": "你想养成什么？",
+      "sub": "先选几个开始。之后可以随时添加、改名或移除。"
+    },
+    "cadence": {
+      "title": "多久一次？",
+      "sub": "没有安排的日子永远不会算作没做到。"
+    },
+    "first": {
+      "title": "勾掉第一个",
+      "sub": "其实整个应用就是这件事。勾一个试试。"
+    },
+    "reminder": {
+      "title": "每天提醒一次？",
+      "sub": "傍晚提醒，只在还有事没做完时发送。",
+      "body": "只有还有未勾选的内容时才会发送，你可以随时在设置里关闭。"
+    },
+    "cadences": {
+      "daily": "每天",
+      "weekdays": "工作日",
+      "threeTimes": "每周 3 次"
+    },
+    "starters": {
+      "move": "动一动身体",
+      "read": "阅读",
+      "meditate": "冥想",
+      "water": "喝水",
+      "sleep": "11 点前睡",
+      "journal": "写点东西",
+      "outside": "出去走走",
+      "noPhone": "床上不玩手机",
+      "deepWork": "深度工作时段",
+      "tidy": "整理 10 分钟"
+    }
+  },
+  "aiCoach": {
+    "title": "AI 教练",
+    "chat": "对话",
+    "remaining": "还剩 {{count}} 次",
+    "thinking": "正在读取你的记录…",
+    "placeholder": "问问你的教练...",
+    "limitReached": "今天的次数已用完，明天再来！",
+    "footerNote": "AI 可能会出错。每天 {{limit}} 条。",
+    "retry": "再试一次",
+    "guestLocked": "注册或登录后即可与 AI 教练对话，并获得专属洞察卡片。",
+    "disclaimerTitle": "与 AI 教练对话前",
+    "disclaimerWarning": "AI 教练偶尔会出错、变慢或暂时不可用 —— 它是善意的提醒，不是专业建议。",
+    "disclaimerPrivacy": "你的习惯名称、完成记录和对话内容会发送给第三方 AI 服务以生成回复。请不要输入敏感信息。",
+    "disclaimerAccept": "我明白了，继续",
+    "pickCoach": "选择今天的教练",
+    "pickCoachHint": "数据相同、洞察相同 —— 只是语气不同。"
+  },
+  "cardTips": {
+    "title": "提示",
+    "tapOnce": "点一下表示完成",
+    "tapTwice": "点两下标记为休息日",
+    "tapAgain": "再点一下清除",
+    "sorting": "点「排序」切换顺序：自定义、A–Z、按颜色、未完成优先",
+    "swipeDays": "左右滑动卡片可切换日期",
+    "sortModes": {
+      "default": "排序",
+      "name": "A–Z",
+      "color": "颜色",
+      "completion": "未完成"
+    },
+    "sectionHabits": "你的习惯",
+    "sectionAround": "界面导航",
+    "addHabit": "点顶部的「添加」新建习惯",
+    "switchFaces": "底部图标可在习惯、任务和日记之间切换",
+    "tapDate": "点日期可跳到任意一天",
+    "analytics": {
+      "sectionPeriod": "选择周期",
+      "periodTabs": "顶部的周、月、年决定回看的范围",
+      "stepPeriod": "箭头可逐个周期前后切换",
+      "tapPeriod": "点中间的日期可直接跳到某个周期",
+      "swipePeriod": "左右滑动卡片同样可以切换周期",
+      "sectionPanels": "四个面板",
+      "panelTabs": "底部图标可在成绩、时段、习惯和叙述之间切换",
+      "panelNumbers": "每个图标都显示该面板的关键数字，四个可以一起看",
+      "tapDay": "在时段中，点网格里的某一天即可打开"
+    },
+    "review": {
+      "sectionPages": "翻页",
+      "swipePages": "左右滑动即可翻看过去的日子",
+      "tapDate": "点页面顶部的日期可跳到任意一天",
+      "readOnly": "页面是记录，这里不会改动任何内容",
+      "viewDay": "「查看这一天」会打开卡片，那里才是写入的地方",
+      "sectionFinding": "查找",
+      "contents": "目录可搜索记录、任务和日期",
+      "inbox": "收件箱存放还没有日期的任务"
+    },
+    "coach": {
+      "section": "与教练对话",
+      "pickCoach": "每天挑一位教练 —— 数据与洞察相同，只是语气不同",
+      "suggested": "点一个推荐问题就能直接开始，无需打字",
+      "limit": "顶部的计数是你今天剩余的消息数",
+      "canBeWrong": "它会读取你的记录来回答，也可能出错 —— 当作一点推动即可"
     }
   }
 }

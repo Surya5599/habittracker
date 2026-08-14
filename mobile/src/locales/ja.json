@@ -15,7 +15,8 @@
       "title": "言語"
     },
     "theme": {
-      "title": "テーマ"
+      "title": "テーマ",
+      "select": "テーマを選ぶ"
     },
     "reminders": {
       "title": "毎日のリマインダー"
@@ -70,6 +71,10 @@
     "errors": {
       "title": "エラー",
       "unableSignOut": "サインアウトできませんでした"
+    },
+    "aiCoach": {
+      "title": "AIコーチ",
+      "open": "開く"
     }
   },
   "header": {
@@ -184,7 +189,10 @@
       "fri": "金",
       "sat": "土",
       "sun": "日"
-    }
+    },
+    "delete": "削除",
+    "reorder": "並べ替え",
+    "week": "週"
   },
   "dailyCard": {
     "dailyHabits": "毎日の習慣",
@@ -206,7 +214,7 @@
     "moods": {
       "veryBad": "非常に悪い",
       "bad": "悪い",
-      "neutral": "普通",
+      "okay": "普通",
       "good": "良い",
       "veryGood": "非常に良い"
     },
@@ -223,7 +231,33 @@
     "title": "日記",
     "prompt": "一日を振り返る",
     "placeholder": "今日について書く...",
-    "save": "エントリを保存"
+    "save": "エントリを保存",
+    "empty": "まだ記録がありません",
+    "addEntry": "記録を追加",
+    "tapToEdit": "タップして編集",
+    "editEntry": "記録を編集",
+    "deleteEntry": "記録を削除",
+    "deleteConfirmTitle": "この記録を削除しますか？",
+    "deleteConfirmBody": "取り消せません。",
+    "saveAnother": "記録を保存",
+    "prompts": {
+      "wentWell": {
+        "chip": "良かった",
+        "stem": "良かったこと： "
+      },
+      "struggled": {
+        "chip": "大変だった",
+        "stem": "大変だったこと： "
+      },
+      "learned": {
+        "chip": "学んだ",
+        "stem": "学んだこと： "
+      },
+      "tomorrow": {
+        "chip": "明日",
+        "stem": "明日は： "
+      }
+    }
   },
   "habitManager": {
     "title": "自分の習慣",
@@ -240,11 +274,29 @@
     "restore": "復元",
     "everyDay": "毎日",
     "alreadyExists": "既に存在します",
-    "alreadyExistsMsg": "「{{name}}」というハビットはすでに存在します。"
-  },
-  "weeklyCard": {
-    "title": "週間目標",
-    "target": "目標: 今週 {{count}}回"
+    "alreadyExistsMsg": "「{{name}}」というハビットはすでに存在します。",
+    "daily": "毎日",
+    "weekly": "毎週",
+    "dailyGoal": "1日の目標",
+    "weeklyGoal": "1週間の目標",
+    "goal": "目標",
+    "days": "日",
+    "deleteTitle": "習慣を削除しますか？",
+    "showActive": "有効",
+    "showArchived": "アーカイブ済み",
+    "addPlaceholder": "習慣を追加…",
+    "name": "名前",
+    "color": "色",
+    "schedule": "頻度",
+    "save": "保存",
+    "backToList": "習慣",
+    "archivedCount": "アーカイブ済み（{{count}}）",
+    "archiveHabit": "習慣をアーカイブ",
+    "restoreHabit": "習慣を戻す",
+    "deleteHabit": "習慣を削除",
+    "emptyList": "まだ習慣がありません — 上から追加できます",
+    "perWeek": "週{{count}}回",
+    "archivedTag": "アーカイブ済み"
   },
   "monthlyView": {
     "journals": "日記",
@@ -254,7 +306,15 @@
     "dayDetails": "詳細",
     "tasks": "タスク",
     "searchPlaceholder": "ログを検索...",
-    "noLogs": "このセクションにはログがありません。"
+    "noLogs": "このセクションにはログがありません。",
+    "title": "ログ",
+    "emptyTitle": "まだ何も書かれていません",
+    "emptyBody": "デイリーカードに書いた記録が、新しい順にここへ集まります。",
+    "noEntry": "記録なし",
+    "noResultsTitle": "一致なし",
+    "noResultsBody": "検索はジャーナル、タスク、「8月3日」のような日付が対象です。",
+    "loadOlder": "以前のログを読み込む",
+    "allLoaded": "{{date}} までの履歴を読み込みました"
   },
   "dashboard": {
     "week": "週",
@@ -304,14 +364,22 @@
     "vsLastMonth": "先月比",
     "thisMonth": "今月",
     "lastMonth": "先月",
-    "weeksThisMonth": "今月の週"
+    "weeksThisMonth": "今月の週",
+    "tabScore": "スコア",
+    "tabTiming": "タイミング",
+    "tabHabits": "習慣",
+    "tabStory": "ストーリー",
+    "previousPeriod": "前の期間",
+    "nextPeriod": "次の期間"
   },
   "bottomNav": {
     "today": "今日",
     "analytics": "分析",
     "logs": "ログ",
     "todo": "ToDo",
-    "analysis": "AI分析"
+    "analysis": "AI分析",
+    "review": "ふりかえり",
+    "coach": "コーチ"
   },
   "auth": {
     "enterEmail": "メールアドレスを入力してください",
@@ -330,7 +398,12 @@
     "password": "パスワード",
     "signIn": "サインイン",
     "createAccount": "アカウント作成",
-    "or": "または"
+    "or": "または",
+    "genericError": "問題が発生しました。もう一度お試しください。",
+    "sessionExpired": "セッションの有効期限が切れました。再度ログインしてください。",
+    "incorrectPassword": "パスワードが違います。もう一度お試しください。",
+    "accountExists": "このメールアドレスのアカウントは既にあります。ログインしてください。",
+    "resetFailed": "再設定メールを送信できませんでした。もう一度お試しください。"
   },
   "dashboardScreen": {
     "title": "ダッシュボード",
@@ -479,6 +552,159 @@
         "title": "ログを開く",
         "description": "下部ナビゲーションからログタブに切り替えて履歴を確認してください。"
       }
+    }
+  },
+  "todo": {
+    "title": "ToDo",
+    "all": "すべて",
+    "overdue": "期限切れ",
+    "backlog": "あとで",
+    "yesterday": "昨日",
+    "daysAgo": "{{count}}日前",
+    "emptyBacklog": "あとでリストは空です — 下から追加できます",
+    "emptyBacklogTitle": "あとでリストは空です",
+    "emptyBacklogBody": "下から追加すると、日付を決めるまでここで待ちます。",
+    "clearTitle": "すべて片付いています",
+    "clearBody": "過去の未完了タスクは自動でここに表示されます。",
+    "clearHint": "過去の未完了タスクは自動でここに表示されます。下で追加したものは日付を決めるまで待機します。",
+    "completeTask": "完了にする",
+    "scheduleTask": "日付を決める",
+    "deleteTask": "タスクを削除",
+    "addPlaceholder": "あとでリストに追加...",
+    "loadOlder": "以前のタスクを読み込む",
+    "allLoaded": "{{date}} 以降の未完了タスクすべて"
+  },
+  "journalBook": {
+    "title": "ふりかえり",
+    "today": "今日",
+    "index": "目次",
+    "inbox": "受信箱",
+    "dayNumber": "{{n}}日目",
+    "backToPage": "ページに戻る",
+    "todaysJournal": "今日のジャーナル",
+    "viewDay": "この日を見る",
+    "habitsCompleted": "{{total}}件中{{done}}件の習慣を達成",
+    "noHabitsDue": "予定の習慣はありません",
+    "noEntry": "記録なし",
+    "verdict": {
+      "great": "最高の一日！",
+      "good": "良い一日",
+      "steady": "着実な一日",
+      "slow": "ゆっくりな一日",
+      "rest": "休息日",
+      "blank": "記録なし"
+    },
+    "oneEntry": "1件",
+    "entryCount": "{{count}}件",
+    "tasksCompleted": "{{total}}件中{{done}}件のタスクを完了"
+  },
+  "onboardingFlow": {
+    "skip": "スキップ",
+    "continueWith": "{{count}}件で続ける",
+    "pickAtLeastOne": "1つ以上選んでください",
+    "looksRight": "これでOK",
+    "done": "はじめる",
+    "enableReminder": "リマインダーをオンにする",
+    "notNow": "今はしない",
+    "customPlaceholder": "ほかのこと…",
+    "firstDone": "これが1日目です。",
+    "pick": {
+      "title": "何を積み上げますか？",
+      "sub": "まずはいくつか選んでください。あとから追加・名前変更・削除ができます。"
+    },
+    "cadence": {
+      "title": "どのくらいの頻度で？",
+      "sub": "予定のない習慣は、できなかった扱いにはなりません。"
+    },
+    "first": {
+      "title": "最初の1つにチェック",
+      "sub": "アプリの本質はこれだけです。1つ試してみてください。"
+    },
+    "reminder": {
+      "title": "1日1回の合図は？",
+      "sub": "夜のリマインダー。残っているときだけ届きます。",
+      "body": "未チェックのものがあるときだけ送ります。設定でいつでもオフにできます。"
+    },
+    "cadences": {
+      "daily": "毎日",
+      "weekdays": "平日",
+      "threeTimes": "週3回"
+    },
+    "starters": {
+      "move": "体を動かす",
+      "read": "読書",
+      "meditate": "瞑想",
+      "water": "水を飲む",
+      "sleep": "23時までに寝る",
+      "journal": "何か書く",
+      "outside": "外に出る",
+      "noPhone": "ベッドでスマホを見ない",
+      "deepWork": "集中作業の時間",
+      "tidy": "10分片づける"
+    }
+  },
+  "aiCoach": {
+    "title": "AIコーチ",
+    "chat": "チャット",
+    "remaining": "残り{{count}}件",
+    "thinking": "履歴を読んでいます…",
+    "placeholder": "コーチに質問...",
+    "limitReached": "1日の上限に達しました。また明日！",
+    "footerNote": "AIは間違えることがあります。1日{{limit}}件まで。",
+    "retry": "もう一度",
+    "guestLocked": "アカウントを作成するかログインすると、AIコーチと話し、パーソナルなカードを受け取れます。",
+    "disclaimerTitle": "AIコーチと話す前に",
+    "disclaimerWarning": "AIコーチは間違えたり、遅かったり、一時的に使えないことがあります。専門的な助言ではなく、軽い後押しです。",
+    "disclaimerPrivacy": "習慣名・達成履歴・チャット内容は、回答生成のため第三者のAIサービスに送信されます。機密情報は入力しないでください。",
+    "disclaimerAccept": "理解しました、続ける",
+    "pickCoach": "今日のコーチを選ぶ",
+    "pickCoachHint": "データも分析も同じ。変わるのは口調だけです。"
+  },
+  "cardTips": {
+    "title": "ヒント",
+    "tapOnce": "1回タップで完了",
+    "tapTwice": "2回タップで休養日",
+    "tapAgain": "もう一度タップで解除",
+    "sorting": "「並べ替え」で順序を切り替え：自分の順、A–Z、色順、未完了が先",
+    "swipeDays": "カードを左右にスワイプで日付を移動",
+    "sortModes": {
+      "default": "並べ替え",
+      "name": "A–Z",
+      "color": "色",
+      "completion": "未完了"
+    },
+    "sectionHabits": "習慣",
+    "sectionAround": "画面の移動",
+    "addHabit": "上の「追加」で新しい習慣を作成",
+    "switchFaces": "下のアイコンで習慣・タスク・ジャーナルを切り替え",
+    "tapDate": "日付をタップすると任意の日へ移動",
+    "analytics": {
+      "sectionPeriod": "期間を選ぶ",
+      "periodTabs": "上の「週・月・年」でさかのぼる範囲が変わります",
+      "stepPeriod": "矢印で期間を1つずつ前後に移動します",
+      "tapPeriod": "中央の日付をタップすると任意の期間へ移動します",
+      "swipePeriod": "カードを横にスワイプしても期間が変わります",
+      "sectionPanels": "4つのパネル",
+      "panelTabs": "下のアイコンでスコア・タイミング・習慣・ストーリーを切り替えます",
+      "panelNumbers": "各アイコンにその主要な数値が出るので、4つ同時に読めます",
+      "tapDay": "タイミングでは、グリッドの日をタップすると開きます"
+    },
+    "review": {
+      "sectionPages": "ページをめくる",
+      "swipePages": "左右にスワイプして日々をめくります",
+      "tapDate": "ページ上部の日付をタップすると任意の日へ移動します",
+      "readOnly": "ページは記録です。ここでは何も変更されません",
+      "viewDay": "「この日を見る」でカードが開き、そこで記入します",
+      "sectionFinding": "探す",
+      "contents": "目次で記録・タスク・日付を検索できます",
+      "inbox": "受信箱には日付のないタスクが入ります"
+    },
+    "coach": {
+      "section": "コーチと話す",
+      "pickCoach": "毎日コーチを選べます。データも分析も同じで、変わるのは口調だけです",
+      "suggested": "候補の質問をタップすれば入力なしで始められます",
+      "limit": "ヘッダーの数字は今日の残りメッセージ数です",
+      "canBeWrong": "履歴を読んで答えますが、間違うこともあります。軽い後押しとして受け取ってください"
     }
   }
 }

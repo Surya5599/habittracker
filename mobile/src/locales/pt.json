@@ -15,7 +15,8 @@
       "title": "Idioma"
     },
     "theme": {
-      "title": "Tema"
+      "title": "Tema",
+      "select": "Escolher tema"
     },
     "reminders": {
       "title": "Lembretes diários"
@@ -70,6 +71,10 @@
     "errors": {
       "title": "Erro",
       "unableSignOut": "Nao foi possivel sair"
+    },
+    "aiCoach": {
+      "title": "Coach IA",
+      "open": "Abrir"
     }
   },
   "header": {
@@ -184,7 +189,10 @@
       "fri": "S",
       "sat": "S",
       "sun": "D"
-    }
+    },
+    "delete": "Excluir",
+    "reorder": "Reordenar",
+    "week": "Semana"
   },
   "dailyCard": {
     "dailyHabits": "Hábitos Diários",
@@ -206,7 +214,7 @@
     "moods": {
       "veryBad": "Muito Ruim",
       "bad": "Ruim",
-      "neutral": "Neutro",
+      "okay": "Normal",
       "good": "Bom",
       "veryGood": "Muito Bom"
     },
@@ -223,7 +231,33 @@
     "title": "Diário",
     "prompt": "Reflita sobre o seu dia",
     "placeholder": "Escreva sobre hoje...",
-    "save": "Salvar Entrada"
+    "save": "Salvar Entrada",
+    "empty": "Nenhuma entrada ainda",
+    "addEntry": "Adicionar entrada",
+    "tapToEdit": "Toque para editar",
+    "editEntry": "Editar entrada",
+    "deleteEntry": "Excluir entrada",
+    "deleteConfirmTitle": "Excluir esta entrada?",
+    "deleteConfirmBody": "Isso não pode ser desfeito.",
+    "saveAnother": "Salvar entrada",
+    "prompts": {
+      "wentWell": {
+        "chip": "Foi bem",
+        "stem": "O que foi bem: "
+      },
+      "struggled": {
+        "chip": "Difícil",
+        "stem": "O que foi difícil: "
+      },
+      "learned": {
+        "chip": "Aprendi",
+        "stem": "O que aprendi: "
+      },
+      "tomorrow": {
+        "chip": "Amanhã",
+        "stem": "Amanhã: "
+      }
+    }
   },
   "habitManager": {
     "title": "Meus Hábitos",
@@ -240,11 +274,29 @@
     "restore": "Restaurar",
     "everyDay": "Todos os dias",
     "alreadyExists": "Já existe",
-    "alreadyExistsMsg": "Já existe um hábito chamado \"{{name}}\"."
-  },
-  "weeklyCard": {
-    "title": "Metas Semanais",
-    "target": "Meta: {{count}}x esta semana"
+    "alreadyExistsMsg": "Já existe um hábito chamado \"{{name}}\".",
+    "daily": "Diário",
+    "weekly": "Semanal",
+    "dailyGoal": "Meta diária",
+    "weeklyGoal": "Meta semanal",
+    "goal": "Meta",
+    "days": "dias",
+    "deleteTitle": "Excluir hábito?",
+    "showActive": "Ativos",
+    "showArchived": "Arquivados",
+    "addPlaceholder": "Adicionar um hábito…",
+    "name": "Nome",
+    "color": "Cor",
+    "schedule": "Frequência",
+    "save": "Salvar",
+    "backToList": "Hábitos",
+    "archivedCount": "Arquivados ({{count}})",
+    "archiveHabit": "Arquivar hábito",
+    "restoreHabit": "Restaurar hábito",
+    "deleteHabit": "Excluir hábito",
+    "emptyList": "Nenhum hábito ainda — adicione um acima",
+    "perWeek": "{{count}}× / semana",
+    "archivedTag": "Arquivado"
   },
   "monthlyView": {
     "journals": "Diários",
@@ -254,7 +306,15 @@
     "dayDetails": "Detalhes do Dia",
     "tasks": "Tarefas",
     "searchPlaceholder": "Pesquisar registros...",
-    "noLogs": "Nenhum registro encontrado para esta seção."
+    "noLogs": "Nenhum registro encontrado para esta seção.",
+    "title": "Registros",
+    "emptyTitle": "Nada escrito ainda",
+    "emptyBody": "As entradas que você escreve no cartão do dia se juntam aqui, das mais recentes às mais antigas.",
+    "noEntry": "Sem entrada",
+    "noResultsTitle": "Nenhum resultado",
+    "noResultsBody": "A busca cobre entradas do diário, tarefas e datas como “3 de ago”.",
+    "loadOlder": "Carregar registros anteriores",
+    "allLoaded": "Histórico carregado até {{date}}"
   },
   "dashboard": {
     "week": "Semana",
@@ -304,14 +364,22 @@
     "vsLastMonth": "vs mês passado",
     "thisMonth": "Este mês",
     "lastMonth": "Mês passado",
-    "weeksThisMonth": "Semanas deste mês"
+    "weeksThisMonth": "Semanas deste mês",
+    "tabScore": "Balanço",
+    "tabTiming": "Quando",
+    "tabHabits": "Hábitos",
+    "tabStory": "Relato",
+    "previousPeriod": "Período anterior",
+    "nextPeriod": "Próximo período"
   },
   "bottomNav": {
     "today": "Hoje",
     "analytics": "Analítica",
     "logs": "Registros",
     "todo": "A fazer",
-    "analysis": "Análise"
+    "analysis": "Análise",
+    "review": "Balanço",
+    "coach": "Coach"
   },
   "auth": {
     "enterEmail": "Por favor, digite seu email",
@@ -330,7 +398,12 @@
     "password": "Senha",
     "signIn": "Entrar",
     "createAccount": "Criar conta",
-    "or": "OU"
+    "or": "OU",
+    "genericError": "Algo deu errado. Tente novamente.",
+    "sessionExpired": "Sua sessão expirou. Entre novamente.",
+    "incorrectPassword": "Senha incorreta. Tente novamente.",
+    "accountExists": "Já existe uma conta com este e-mail. Faça login.",
+    "resetFailed": "Não conseguimos enviar o e-mail de redefinição. Tente novamente."
   },
   "dashboardScreen": {
     "title": "Painel",
@@ -479,6 +552,159 @@
         "title": "Abrir Registros",
         "description": "Use a navegação inferior e mude para Registros para ver seu histórico."
       }
+    }
+  },
+  "todo": {
+    "title": "A fazer",
+    "all": "Tudo",
+    "overdue": "Atrasadas",
+    "backlog": "Pendentes",
+    "yesterday": "Ontem",
+    "daysAgo": "há {{count}} dias",
+    "emptyBacklog": "Nada pendente — adicione algo abaixo",
+    "emptyBacklogTitle": "Lista vazia",
+    "emptyBacklogBody": "Adicione algo abaixo e ficará aqui até você dar uma data.",
+    "clearTitle": "Você está em dia",
+    "clearBody": "Tarefas não concluídas de dias anteriores aparecem aqui sozinhas.",
+    "clearHint": "Tarefas não concluídas de dias anteriores aparecem aqui sozinhas. O que você adicionar abaixo espera por uma data.",
+    "completeTask": "Marcar como feita",
+    "scheduleTask": "Mover para uma data",
+    "deleteTask": "Excluir tarefa",
+    "addPlaceholder": "Adicionar aos pendentes...",
+    "loadOlder": "Carregar tarefas anteriores",
+    "allLoaded": "Todas as tarefas abertas desde {{date}}"
+  },
+  "journalBook": {
+    "title": "Balanço",
+    "today": "Hoje",
+    "index": "Índice",
+    "inbox": "Caixa",
+    "dayNumber": "Dia {{n}}",
+    "backToPage": "Voltar à página",
+    "todaysJournal": "Diário de hoje",
+    "viewDay": "Ver o dia",
+    "habitsCompleted": "{{done}} de {{total}} hábitos concluídos",
+    "noHabitsDue": "Nenhum hábito para hoje",
+    "noEntry": "Nada escrito",
+    "verdict": {
+      "great": "Ótimo dia!",
+      "good": "Bom dia",
+      "steady": "Dia constante",
+      "slow": "Dia devagar",
+      "rest": "Dia de descanso",
+      "blank": "Nada registrado"
+    },
+    "oneEntry": "1 entrada",
+    "entryCount": "{{count}} entradas",
+    "tasksCompleted": "{{done}} de {{total}} tarefas concluídas"
+  },
+  "onboardingFlow": {
+    "skip": "Pular",
+    "continueWith": "Continuar com {{count}}",
+    "pickAtLeastOne": "Escolha pelo menos um",
+    "looksRight": "Está certo",
+    "done": "Pronto",
+    "enableReminder": "Ativar lembretes",
+    "notNow": "Agora não",
+    "customPlaceholder": "Outra coisa…",
+    "firstDone": "Esse é o dia um.",
+    "pick": {
+      "title": "O que você quer construir?",
+      "sub": "Escolha alguns para começar. Depois você pode adicionar, renomear ou remover qualquer um."
+    },
+    "cadence": {
+      "title": "Com que frequência?",
+      "sub": "Dias em que um hábito não está previsto nunca contam contra você."
+    },
+    "first": {
+      "title": "Marque o primeiro",
+      "sub": "É basicamente o app inteiro. Marque um e veja."
+    },
+    "reminder": {
+      "title": "Um lembrete por dia?",
+      "sub": "Um lembrete à noite, só se ainda houver algo aberto.",
+      "body": "Só enviamos quando ainda há algo por marcar, e você pode desativar nas Configurações quando quiser."
+    },
+    "cadences": {
+      "daily": "Todo dia",
+      "weekdays": "Dias úteis",
+      "threeTimes": "3× por semana"
+    },
+    "starters": {
+      "move": "Mexer o corpo",
+      "read": "Ler",
+      "meditate": "Meditar",
+      "water": "Beber água",
+      "sleep": "Dormir até as 23h",
+      "journal": "Escrever algo",
+      "outside": "Sair ao ar livre",
+      "noPhone": "Sem celular na cama",
+      "deepWork": "Bloco de trabalho focado",
+      "tidy": "Arrumar por 10 min"
+    }
+  },
+  "aiCoach": {
+    "title": "Coach IA",
+    "chat": "Conversa",
+    "remaining": "{{count}} restantes",
+    "thinking": "Lendo seu histórico…",
+    "placeholder": "Pergunte ao seu coach...",
+    "limitReached": "Limite diário atingido. Volte amanhã!",
+    "footerNote": "A IA pode errar. {{limit}} mensagens por dia.",
+    "retry": "Tentar de novo",
+    "guestLocked": "Crie uma conta ou entre para conversar com seu Coach IA e receber cartões personalizados.",
+    "disclaimerTitle": "Antes de conversar com o Coach IA",
+    "disclaimerWarning": "O Coach IA pode errar, ficar lento ou indisponível — é um empurrãozinho, não orientação profissional.",
+    "disclaimerPrivacy": "Os nomes dos seus hábitos, seu histórico e suas mensagens são enviados a um serviço de IA de terceiros para gerar respostas. Não compartilhe nada sensível.",
+    "disclaimerAccept": "Entendi, continuar",
+    "pickCoach": "Escolha o coach de hoje",
+    "pickCoachHint": "Mesmos dados, mesma análise — só o tom muda."
+  },
+  "cardTips": {
+    "title": "Dicas",
+    "tapOnce": "Toque uma vez para concluir",
+    "tapTwice": "Toque duas vezes para marcar dia de descanso",
+    "tapAgain": "Toque de novo para limpar",
+    "sorting": "Toque em Ordenar para alternar: a sua, A–Z, por cor e pendentes primeiro",
+    "swipeDays": "Deslize o cartão para os lados para mudar de dia",
+    "sortModes": {
+      "default": "Ordenar",
+      "name": "A–Z",
+      "color": "Cor",
+      "completion": "Pendentes"
+    },
+    "sectionHabits": "Seus hábitos",
+    "sectionAround": "Navegação",
+    "addHabit": "Toque em Adicionar no topo para criar um hábito",
+    "switchFaces": "Os ícones na parte de baixo alternam entre hábitos, tarefas e diário",
+    "tapDate": "Toque na data para ir a qualquer dia",
+    "analytics": {
+      "sectionPeriod": "Escolher um período",
+      "periodTabs": "Semana, Mês e Ano no topo mudam o quanto você olha para trás",
+      "stepPeriod": "As setas avançam e voltam um período de cada vez",
+      "tapPeriod": "Toque na data do meio para ir direto a um",
+      "swipePeriod": "Deslizar o cartão de lado também muda de período",
+      "sectionPanels": "Os quatro painéis",
+      "panelTabs": "Os ícones de baixo alternam entre Balanço, Quando, Hábitos e Relato",
+      "panelNumbers": "Cada ícone mostra o número principal do painel, dá para ler os quatro de uma vez",
+      "tapDay": "Em Quando, toque num dia da grade para abri-lo"
+    },
+    "review": {
+      "sectionPages": "Virar páginas",
+      "swipePages": "Deslize para os lados para folhear seus dias",
+      "tapDate": "Toque na data no topo da página para ir a qualquer dia",
+      "readOnly": "As páginas são um registro: nada aqui altera nada",
+      "viewDay": "Ver o dia abre o cartão, que é onde o dia é escrito",
+      "sectionFinding": "Encontrar",
+      "contents": "Índice busca nas entradas, tarefas e datas",
+      "inbox": "A caixa guarda tarefas ainda sem data"
+    },
+    "coach": {
+      "section": "Falar com seu coach",
+      "pickCoach": "Escolha um coach por dia — mesmos dados e mesma análise, só o tom muda",
+      "suggested": "Toque numa pergunta sugerida para começar sem digitar",
+      "limit": "O contador no topo é quantas mensagens você ainda tem hoje",
+      "canBeWrong": "Ele lê seu histórico para responder e pode errar — trate como um empurrão"
     }
   }
 }

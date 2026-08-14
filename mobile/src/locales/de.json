@@ -15,7 +15,8 @@
       "title": "Sprache"
     },
     "theme": {
-      "title": "Thema"
+      "title": "Thema",
+      "select": "Thema wählen"
     },
     "reminders": {
       "title": "Tägliche Erinnerungen"
@@ -70,6 +71,10 @@
     "errors": {
       "title": "Fehler",
       "unableSignOut": "Abmelden nicht moglich"
+    },
+    "aiCoach": {
+      "title": "KI-Coach",
+      "open": "Öffnen"
     }
   },
   "header": {
@@ -184,7 +189,10 @@
       "fri": "Fr",
       "sat": "Sa",
       "sun": "So"
-    }
+    },
+    "delete": "Löschen",
+    "reorder": "Neu ordnen",
+    "week": "Woche"
   },
   "dailyCard": {
     "dailyHabits": "Tägliche Gewohnheiten",
@@ -206,10 +214,11 @@
     "moods": {
       "veryBad": "Sehr schlecht",
       "bad": "Schlecht",
-      "neutral": "Neutral",
+      "okay": "Okay",
       "good": "Gut",
       "veryGood": "Sehr gut"
-    }
+    },
+    "goal": "Ziel"
   },
   "habitManager": {
     "title": "Meine Gewohnheiten",
@@ -226,7 +235,29 @@
     "restore": "Wiederherstellen",
     "everyDay": "Jeden Tag",
     "alreadyExists": "Bereits vorhanden",
-    "alreadyExistsMsg": "Eine Gewohnheit namens \"{{name}}\" existiert bereits."
+    "alreadyExistsMsg": "Eine Gewohnheit namens \"{{name}}\" existiert bereits.",
+    "daily": "Täglich",
+    "weekly": "Wöchentlich",
+    "dailyGoal": "Tagesziel",
+    "weeklyGoal": "Wochenziel",
+    "goal": "Ziel",
+    "days": "Tage",
+    "deleteTitle": "Gewohnheit löschen?",
+    "showActive": "Aktiv",
+    "showArchived": "Archiviert",
+    "addPlaceholder": "Gewohnheit hinzufügen…",
+    "name": "Name",
+    "color": "Farbe",
+    "schedule": "Rhythmus",
+    "save": "Speichern",
+    "backToList": "Gewohnheiten",
+    "archivedCount": "Archiviert ({{count}})",
+    "archiveHabit": "Gewohnheit archivieren",
+    "restoreHabit": "Gewohnheit wiederherstellen",
+    "deleteHabit": "Gewohnheit löschen",
+    "emptyList": "Noch keine Gewohnheiten — oben eine hinzufügen",
+    "perWeek": "{{count}}× / Woche",
+    "archivedTag": "Archiviert"
   },
   "tasks": {
     "enterTask": "Aufgabe eingeben",
@@ -239,11 +270,33 @@
     "title": "Tagebuch",
     "prompt": "Reflexion des Tages",
     "placeholder": "Schreibe über heute...",
-    "save": "Eintrag speichern"
-  },
-  "weeklyCard": {
-    "title": "Wochenziele",
-    "target": "Ziel: {{count}}x diese Woche"
+    "save": "Eintrag speichern",
+    "empty": "Noch keine Einträge",
+    "addEntry": "Eintrag hinzufügen",
+    "tapToEdit": "Zum Bearbeiten tippen",
+    "editEntry": "Eintrag bearbeiten",
+    "deleteEntry": "Eintrag löschen",
+    "deleteConfirmTitle": "Diesen Eintrag löschen?",
+    "deleteConfirmBody": "Das lässt sich nicht rückgängig machen.",
+    "saveAnother": "Eintrag speichern",
+    "prompts": {
+      "wentWell": {
+        "chip": "Lief gut",
+        "stem": "Was gut lief: "
+      },
+      "struggled": {
+        "chip": "Schwer",
+        "stem": "Was schwer war: "
+      },
+      "learned": {
+        "chip": "Gelernt",
+        "stem": "Was ich gelernt habe: "
+      },
+      "tomorrow": {
+        "chip": "Morgen",
+        "stem": "Morgen: "
+      }
+    }
   },
   "monthlyView": {
     "journals": "Tagebücher",
@@ -253,7 +306,15 @@
     "dayDetails": "Tagesdetails",
     "tasks": "Aufgaben",
     "searchPlaceholder": "Protokolle suchen...",
-    "noLogs": "Keine Einträge für diesen Bereich gefunden."
+    "noLogs": "Keine Einträge für diesen Bereich gefunden.",
+    "title": "Aufzeichnungen",
+    "emptyTitle": "Noch nichts geschrieben",
+    "emptyBody": "Einträge, die du auf der Tageskarte schreibst, sammeln sich hier — die neuesten zuerst.",
+    "noEntry": "Kein Eintrag",
+    "noResultsTitle": "Keine Treffer",
+    "noResultsBody": "Die Suche umfasst Journaleinträge, Aufgaben und Daten wie „3. Aug“.",
+    "loadOlder": "Ältere Aufzeichnungen laden",
+    "allLoaded": "Verlauf geladen bis {{date}}"
   },
   "dashboard": {
     "week": "Woche",
@@ -303,14 +364,22 @@
     "vsLastMonth": "vs letzten Monat",
     "thisMonth": "Diesen Monat",
     "lastMonth": "Letzter Monat",
-    "weeksThisMonth": "Wochen dieses Monats"
+    "weeksThisMonth": "Wochen dieses Monats",
+    "tabScore": "Bilanz",
+    "tabTiming": "Wann",
+    "tabHabits": "Gewohnheiten",
+    "tabStory": "Verlauf",
+    "previousPeriod": "Vorheriger Zeitraum",
+    "nextPeriod": "Nächster Zeitraum"
   },
   "bottomNav": {
     "today": "Heute",
     "analytics": "Analytik",
     "logs": "Protokolle",
     "todo": "Aufgaben",
-    "analysis": "Analyse"
+    "analysis": "Analyse",
+    "review": "Rückblick",
+    "coach": "Coach"
   },
   "auth": {
     "enterEmail": "Bitte E-Mail eingeben",
@@ -329,7 +398,12 @@
     "password": "Passwort",
     "signIn": "Anmelden",
     "createAccount": "Konto erstellen",
-    "or": "ODER"
+    "or": "ODER",
+    "genericError": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
+    "sessionExpired": "Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.",
+    "incorrectPassword": "Falsches Passwort. Bitte erneut versuchen.",
+    "accountExists": "Mit dieser E-Mail existiert bereits ein Konto. Bitte anmelden.",
+    "resetFailed": "Die E-Mail zum Zurücksetzen konnte nicht gesendet werden. Bitte erneut versuchen."
   },
   "dashboardScreen": {
     "title": "Dashboard",
@@ -478,6 +552,159 @@
         "title": "Protokolle öffnen",
         "description": "Nutze die untere Navigation und wechsle zu Protokolle, um deinen Verlauf zu sehen."
       }
+    }
+  },
+  "todo": {
+    "title": "To-do",
+    "all": "Alle",
+    "overdue": "Überfällig",
+    "backlog": "Backlog",
+    "yesterday": "Gestern",
+    "daysAgo": "vor {{count}} Tagen",
+    "emptyBacklog": "Nichts im Backlog — füge unten etwas hinzu",
+    "emptyBacklogTitle": "Backlog ist leer",
+    "emptyBacklogBody": "Füge unten etwas hinzu; es wartet hier, bis du ihm ein Datum gibst.",
+    "clearTitle": "Alles aufgeholt",
+    "clearBody": "Unerledigte Aufgaben aus vergangenen Tagen erscheinen hier von selbst.",
+    "clearHint": "Unerledigte Aufgaben aus vergangenen Tagen erscheinen hier von selbst. Was du unten hinzufügst, wartet bis zu einem Datum.",
+    "completeTask": "Als erledigt markieren",
+    "scheduleTask": "Auf ein Datum verschieben",
+    "deleteTask": "Aufgabe löschen",
+    "addPlaceholder": "Zum Backlog hinzufügen...",
+    "loadOlder": "Ältere Aufgaben laden",
+    "allLoaded": "Alle offenen Aufgaben seit {{date}}"
+  },
+  "journalBook": {
+    "title": "Rückblick",
+    "today": "Heute",
+    "index": "Inhalt",
+    "inbox": "Eingang",
+    "dayNumber": "Tag {{n}}",
+    "backToPage": "Zurück zur Seite",
+    "todaysJournal": "Journal von heute",
+    "viewDay": "Tag ansehen",
+    "habitsCompleted": "{{done}} von {{total}} Gewohnheiten erledigt",
+    "noHabitsDue": "Keine Gewohnheiten fällig",
+    "noEntry": "Nichts geschrieben",
+    "verdict": {
+      "great": "Großartiger Tag!",
+      "good": "Guter Tag",
+      "steady": "Solider Tag",
+      "slow": "Ruhiger Tag",
+      "rest": "Ruhetag",
+      "blank": "Nichts erfasst"
+    },
+    "oneEntry": "1 Eintrag",
+    "entryCount": "{{count}} Einträge",
+    "tasksCompleted": "{{done}} von {{total}} Aufgaben erledigt"
+  },
+  "onboardingFlow": {
+    "skip": "Überspringen",
+    "continueWith": "Weiter mit {{count}}",
+    "pickAtLeastOne": "Wähle mindestens eine",
+    "looksRight": "Passt so",
+    "done": "Fertig",
+    "enableReminder": "Erinnerungen aktivieren",
+    "notNow": "Jetzt nicht",
+    "customPlaceholder": "Etwas anderes…",
+    "firstDone": "Das ist Tag eins.",
+    "pick": {
+      "title": "Was willst du aufbauen?",
+      "sub": "Wähle ein paar für den Anfang. Du kannst später jederzeit welche ergänzen, umbenennen oder entfernen."
+    },
+    "cadence": {
+      "title": "Wie oft?",
+      "sub": "Tage, an denen eine Gewohnheit nicht fällig ist, zählen nie gegen dich."
+    },
+    "first": {
+      "title": "Hak die erste ab",
+      "sub": "Das ist im Grunde die ganze App. Hak eine ab und sieh es."
+    },
+    "reminder": {
+      "title": "Ein Hinweis am Tag?",
+      "sub": "Eine Erinnerung am Abend, nur wenn noch etwas offen ist.",
+      "body": "Wir senden sie nur, wenn noch etwas offen ist, und du kannst sie jederzeit in den Einstellungen abschalten."
+    },
+    "cadences": {
+      "daily": "Jeden Tag",
+      "weekdays": "Wochentags",
+      "threeTimes": "3× pro Woche"
+    },
+    "starters": {
+      "move": "Mich bewegen",
+      "read": "Lesen",
+      "meditate": "Meditieren",
+      "water": "Wasser trinken",
+      "sleep": "Vor 23 Uhr schlafen",
+      "journal": "Etwas schreiben",
+      "outside": "Raus gehen",
+      "noPhone": "Kein Handy im Bett",
+      "deepWork": "Deep-Work-Block",
+      "tidy": "10 Min aufräumen"
+    }
+  },
+  "aiCoach": {
+    "title": "KI-Coach",
+    "chat": "Chat",
+    "remaining": "noch {{count}}",
+    "thinking": "Lese deinen Verlauf…",
+    "placeholder": "Frag deinen Coach...",
+    "limitReached": "Tageslimit erreicht. Bis morgen!",
+    "footerNote": "KI kann sich irren. {{limit}} Nachrichten pro Tag.",
+    "retry": "Erneut versuchen",
+    "guestLocked": "Erstelle ein Konto oder melde dich an, um mit deinem KI-Coach zu chatten und persönliche Karten zu erhalten.",
+    "disclaimerTitle": "Bevor du mit dem KI-Coach chattest",
+    "disclaimerWarning": "Der KI-Coach kann sich irren, langsam oder zeitweise nicht verfügbar sein — er ist ein netter Anstoß, keine professionelle Beratung.",
+    "disclaimerPrivacy": "Deine Gewohnheitsnamen, dein Verlauf und deine Nachrichten werden an einen externen KI-Dienst gesendet, um Antworten zu erzeugen. Teile nichts Sensibles.",
+    "disclaimerAccept": "Verstanden, weiter",
+    "pickCoach": "Wähle den Coach für heute",
+    "pickCoachHint": "Gleiche Daten, gleiche Analyse — nur der Ton ändert sich."
+  },
+  "cardTips": {
+    "title": "Tipps",
+    "tapOnce": "Einmal tippen zum Abhaken",
+    "tapTwice": "Zweimal tippen für einen Ruhetag",
+    "tapAgain": "Nochmal tippen zum Zurücksetzen",
+    "sorting": "Auf Sortieren tippen, um die Reihenfolge zu wechseln: eigene, A–Z, nach Farbe, offene zuerst",
+    "swipeDays": "Die Karte seitlich wischen, um den Tag zu wechseln",
+    "sortModes": {
+      "default": "Sortieren",
+      "name": "A–Z",
+      "color": "Farbe",
+      "completion": "Offen"
+    },
+    "sectionHabits": "Deine Gewohnheiten",
+    "sectionAround": "Navigation",
+    "addHabit": "Oben auf Hinzufügen tippen, um eine Gewohnheit anzulegen",
+    "switchFaces": "Die Symbole unten wechseln zwischen Gewohnheiten, Aufgaben und Journal",
+    "tapDate": "Auf das Datum tippen, um zu einem beliebigen Tag zu springen",
+    "analytics": {
+      "sectionPeriod": "Zeitraum wählen",
+      "periodTabs": "Woche, Monat und Jahr oben ändern, wie weit zurück du schaust",
+      "stepPeriod": "Die Pfeile gehen einen Zeitraum vor und zurück",
+      "tapPeriod": "Auf das Datum in der Mitte tippen, um direkt dorthin zu springen",
+      "swipePeriod": "Seitliches Wischen wechselt ebenfalls den Zeitraum",
+      "sectionPanels": "Die vier Bereiche",
+      "panelTabs": "Die Symbole unten wechseln zwischen Bilanz, Wann, Gewohnheiten und Verlauf",
+      "panelNumbers": "Jedes Symbol zeigt die Kennzahl seines Bereichs — alle vier auf einen Blick",
+      "tapDay": "In Wann auf einen Tag im Raster tippen, um ihn zu öffnen"
+    },
+    "review": {
+      "sectionPages": "Blättern",
+      "swipePages": "Nach links oder rechts wischen, um durch die Tage zu blättern",
+      "tapDate": "Auf das Datum oben tippen, um zu einem beliebigen Tag zu springen",
+      "readOnly": "Seiten sind eine Aufzeichnung — hier wird nichts geändert",
+      "viewDay": "Tag ansehen öffnet die Karte, auf der ein Tag geschrieben wird",
+      "sectionFinding": "Finden",
+      "contents": "Inhalt durchsucht Einträge, Aufgaben und Daten",
+      "inbox": "Im Eingang liegen Aufgaben ohne Datum"
+    },
+    "coach": {
+      "section": "Mit dem Coach sprechen",
+      "pickCoach": "Wähle täglich einen Coach — gleiche Daten, gleiche Analyse, nur der Ton ändert sich",
+      "suggested": "Tippe auf eine vorgeschlagene Frage, um ohne Tippen zu starten",
+      "limit": "Der Zähler oben zeigt, wie viele Nachrichten du heute noch hast",
+      "canBeWrong": "Er liest deinen Verlauf und kann sich irren — nimm ihn als Anstoß"
     }
   }
 }

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Check, Minus, Laugh, Smile, Meh, Frown, Angry, BookOpen } from 'lucide-react';
 import { Habit, HabitCompletion, Theme, DailyNote, DayData } from '../types';
-import { DAYS_OF_WEEK_SHORT } from '../constants';
+import { DAYS_OF_WEEK_SHORT, MOOD_SCALE } from '../constants';
 import { getHabitMonthStats, isCompleted as checkCompleted } from '../utils/stats';
 import { DailyCard } from './DailyCard';
 import { isHabitActiveOnDate, isHabitManuallyInactive } from '../utils/habitActivity';
@@ -102,13 +102,13 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
     return (
         <>
             <div className={`p-2 ${statsOpen ? 'pr-4' : ''} min-h-full flex flex-col`}>
-            <div className={`border-[3px] border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] bg-white flex flex-col overflow-hidden relative w-full flex-1 rounded-2xl transition-opacity duration-300 ${isModalOpen ? 'opacity-30 pointer-events-none grayscale-[0.5]' : 'opacity-100'}`}>
+            <div className={`border-3 border-edge-strong shadow-neo bg-surface flex flex-col overflow-hidden relative w-full flex-1 rounded-2xl transition-opacity duration-300 ${isModalOpen ? 'opacity-30 pointer-events-none grayscale-[0.5]' : 'opacity-100'}`}>
                 <div ref={scrollContainerRef} className="overflow-x-auto w-full flex-1">
                     <table className="w-full border-separate border-spacing-0">
                         <thead>
-                            <tr className="text-[10px] font-black uppercase text-stone-700" style={{ backgroundColor: theme.secondary + '40' }}>
-                                <th className="p-2 border-r border-stone-200 text-left sticky left-0 z-40 font-black" style={{ backgroundColor: 'var(--card-bg-soft, #f0efed)', width: 250, minWidth: 250 }}>
-                                    <span className="text-xs font-black uppercase tracking-widest text-stone-700">Habits</span>
+                            <tr className="text-[10px] font-black uppercase text-ink" style={{ backgroundColor: 'var(--theme-secondary-strong)' }}>
+                                <th className="p-2 border-r border-edge text-left sticky left-0 z-40 font-black" style={{ backgroundColor: 'var(--card-bg-soft, #f0efed)', width: 250, minWidth: 250 }}>
+                                    <span className="text-xs font-black uppercase tracking-widest text-ink">Habits</span>
                                 </th>
                                 {monthDates.map(day => {
                                     const isToday = day === new Date().getDate() && currentMonthIndex === new Date().getMonth() && currentYear === new Date().getFullYear();
@@ -116,28 +116,28 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                     return (
                                         <th key={day}
                                             ref={isToday ? todayRef : null}
-                                            className={`p-1 border-r border-stone-100 min-w-[28px] text-center transition-colors duration-300 ${isToday ? 'z-10 font-black border-[3px] border-black' : ''}`}
+                                            className={`p-1 border-r border-edge-subtle min-w-[28px] text-center transition-colors duration-300 ${isToday ? 'z-10 font-black border-3 border-edge-strong' : ''}`}
                                             style={{
-                                                backgroundColor: isToday ? theme.primary : (isFull ? theme.primary + '30' : undefined),
+                                                backgroundColor: isToday ? theme.primary : (isFull ? 'var(--theme-primary-strong)' : undefined),
                                                 color: isToday ? 'white' : undefined
                                             }}
                                         >
                                             <div className="flex flex-col">
                                                 <span className="font-black text-[10px]">{DAYS_OF_WEEK_SHORT[new Date(currentYear, currentMonthIndex, day).getDay()][0]}</span>
-                                                <span className={`font-black text-sm ${isToday ? '' : 'text-stone-600'}`}>{day}</span>
+                                                <span className={`font-black text-sm ${isToday ? '' : 'text-ink'}`}>{day}</span>
                                             </div>
                                         </th>
                                     );
                                 })}
-                                {!statsOpen && <th className="p-1 border-l border-stone-100 bg-stone-100 min-w-[100px] text-center text-stone-700 font-black">Done / Miss</th>}
+                                {!statsOpen && <th className="p-1 border-l border-edge-subtle bg-surface-strong min-w-[100px] text-center text-ink font-black">Done / Miss</th>}
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-stone-100">
+                        <tbody className="divide-y divide-edge-subtle">
                             {/* Daily Mood Row */}
-                            <tr className="group hover:bg-stone-50 transition-colors" style={{ height: '32px' }}>
-                                <td className="p-0 pl-3 sticky left-0 z-10 border-r border-[#e5e5e5] group-hover:bg-stone-100 transition-colors h-[32px]" style={{ backgroundColor: 'var(--card-bg-soft, #fafaf9)' }}>
+                            <tr className="group hover:bg-surface-muted transition-colors" style={{ height: '32px' }}>
+                                <td className="p-0 pl-3 sticky left-0 z-10 border-r border-[#e5e5e5] group-hover:bg-surface-strong transition-colors h-[32px]" style={{ backgroundColor: 'var(--card-bg-soft, #fafaf9)' }}>
                                     <div className="flex items-center h-full">
-                                        <span className="text-xs font-bold text-stone-900 truncate pl-2">Mood</span>
+                                        <span className="text-xs font-bold text-ink-strong truncate pl-2">Mood</span>
                                     </div>
                                 </td>
                                 {monthDates.map(day => {
@@ -149,11 +149,11 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                     const hasJournal = journalStr.trim().length > 0;
 
                                     const MOOD_CONFIG = {
-                                        1: { icon: Angry, color: '#ef4444' },
-                                        2: { icon: Frown, color: '#f97316' },
-                                        3: { icon: Meh, color: '#eab308' },
-                                        4: { icon: Smile, color: '#84cc16' },
-                                        5: { icon: Laugh, color: '#10b981' },
+                                        1: { icon: Angry, color: MOOD_SCALE[0] },
+                                        2: { icon: Frown, color: MOOD_SCALE[1] },
+                                        3: { icon: Meh, color: MOOD_SCALE[2] },
+                                        4: { icon: Smile, color: MOOD_SCALE[3] },
+                                        5: { icon: Laugh, color: MOOD_SCALE[4] },
                                     };
 
                                     // @ts-ignore
@@ -164,7 +164,7 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                         <td
                                             key={day}
                                             onClick={() => setSelectedDateForCard(new Date(currentYear, currentMonthIndex, day), true)}
-                                            className="p-0 border-r border-stone-100 bg-white hover:bg-stone-50 transition-colors cursor-pointer group/cell relative"
+                                            className="p-0 border-r border-edge-subtle bg-surface hover:bg-surface-muted transition-colors cursor-pointer group/cell relative"
                                             style={{ height: '32px' }}
                                         >
                                             <div className="w-full h-full flex items-center justify-center">
@@ -173,11 +173,11 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                                         <Icon size={14} style={{ fill: activeConfig.color, color: '#44403c', strokeWidth: 2 }} />
                                                     </div>
                                                 ) : hasJournal ? (
-                                                    <div className="text-black transition-colors" title="Read Journal">
+                                                    <div className="text-ink-strong transition-colors" title="Read Journal">
                                                         <BookOpen size={12} />
                                                     </div>
                                                 ) : (
-                                                    <div className="text-stone-300 hover:text-stone-400 transition-colors" title="Log Mood/Journal">
+                                                    <div className="text-ink-dim hover:text-ink-subtle transition-colors" title="Log Mood/Journal">
                                                         <BookOpen size={12} />
                                                     </div>
                                                 )}
@@ -185,7 +185,7 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                         </td>
                                     );
                                 })}
-                                {!statsOpen && <td className="p-0 border-l border-stone-100 bg-[#fcfcfc]" />}
+                                {!statsOpen && <td className="p-0 border-l border-edge-subtle bg-surface-soft" />}
                             </tr>
                             {visibleHabits.map((habit) => {
                                 const habitStats = getHabitMonthStats(
@@ -202,8 +202,8 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                 );
                                 const perc = (habitStats.completed / habitStats.totalDays) * 100;
                                 return (
-                                    <tr key={habit.id} className="hover:bg-stone-50 transition-colors group" style={{ height: 32 }}>
-                                        <td className="p-0 border-r border-stone-200 text-sm font-bold text-stone-700 sticky left-0 z-30 group-hover:bg-stone-100 transition-colors border-l-4" style={{ borderLeftColor: habit.color || theme.secondary, backgroundColor: 'var(--card-bg-soft, #fafaf9)', width: 250, minWidth: 250, maxWidth: 250, height: 32 }}>
+                                    <tr key={habit.id} className="hover:bg-surface-muted transition-colors group" style={{ height: 32 }}>
+                                        <td className="p-0 border-r border-edge text-sm font-bold text-ink sticky left-0 z-30 group-hover:bg-surface-strong transition-colors border-l-4" style={{ borderLeftColor: habit.color || theme.secondary, backgroundColor: 'var(--card-bg-soft, #fafaf9)', width: 250, minWidth: 250, maxWidth: 250, height: 32 }}>
                                             <div className="flex items-center gap-2 px-2 h-full">
                                                 <span className="break-words flex-1 leading-tight">{habit.name || 'Untitled Habit'}</span>
                                             </div>
@@ -221,16 +221,16 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
 
                                             if (!isDue) {
                                                 return (
-                                                    <td key={day} className="p-0.5 border-r border-stone-50 bg-[#e5e5e5]/30" style={{ height: 32 }}>
-                                                        <div className="w-5 h-5 mx-auto flex items-center justify-center border-2 border-stone-200 bg-stone-100 text-stone-300 text-[10px] font-black select-none">/</div>
+                                                    <td key={day} className="p-1 border-r border-edge-subtle bg-[#e5e5e5]/30" style={{ height: 32 }}>
+                                                        <div className="w-5 h-5 mx-auto flex items-center justify-center border-2 border-edge bg-surface-strong text-ink-dim text-[10px] font-black select-none">/</div>
                                                     </td>
                                                 );
                                             }
 
                                             return (
                                                 <td key={day}
-                                                    className={`p-0.5 border-r border-stone-50 transition-colors duration-300`}
-                                                    style={{ height: 32, backgroundColor: isToday ? theme.primary + '15' : (isFull ? theme.primary + '20' : undefined) }}
+                                                    className={`p-1 border-r border-edge-subtle transition-colors duration-300`}
+                                                    style={{ height: 32, backgroundColor: isToday ? 'var(--theme-primary-faint)' : (isFull ? 'var(--status-complete-tint)' : undefined) }}
                                                 >
                                                     <button
                                                         onClick={() => {
@@ -276,8 +276,8 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                                             longPressTimerRef.current = null;
                                                             toggleHabitInactive(habit.id, dateKey);
                                                         }}
-                                                        className={`w-5 h-5 mx-auto flex items-center justify-center border-2 transition-all duration-200 ${inactive ? 'text-amber-900 bg-amber-300 border-amber-700' : (done ? 'text-white border-black' : 'bg-white border-black hover:bg-stone-100')}`}
-                                                        style={{ backgroundColor: inactive ? undefined : (done ? theme.secondary : undefined) }}
+                                                        className={`w-5 h-5 mx-auto flex items-center justify-center border-2 transition-all duration-200 ${inactive ? 'text-amber-900 bg-amber-300 border-amber-700' : (done ? 'text-ink-inverse border-edge-strong' : 'bg-surface border-edge-strong hover:bg-surface-strong')}`}
+                                                        style={{ backgroundColor: inactive ? undefined : (done ? 'var(--status-done)' : undefined) }}
                                                     >
                                                         {inactive ? <Minus size={10} strokeWidth={4} /> : (done && <Check size={10} strokeWidth={4} />)}
                                                     </button>
@@ -286,14 +286,14 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                         })}
 
                                         {!statsOpen && (
-                                            <td className="p-0 border-l border-stone-100 bg-[#fcfcfc]" style={{ height: 32 }}>
+                                            <td className="p-0 border-l border-edge-subtle bg-surface-soft" style={{ height: 32 }}>
                                                 <div className="grid grid-cols-2 text-center text-[11px] font-black uppercase tracking-tight h-full">
-                                                    <div className="p-1 px-2 border-r border-stone-200" style={{ backgroundColor: theme.secondary + '20' }}>
-                                                        <span className="text-stone-500 block">Done</span>
+                                                    <div className="p-1 px-2 border-r border-edge" style={{ backgroundColor: 'var(--theme-secondary-soft)' }}>
+                                                        <span className="text-ink-muted block">Done</span>
                                                         <span className="text-sm font-black leading-none">{habitStats.completed}</span>
                                                     </div>
                                                     <div className="p-1 px-2" style={{ backgroundColor: 'var(--card-bg-soft, #f0f0f0)' }}>
-                                                        <span className="text-stone-500 block">Miss</span>
+                                                        <span className="text-ink-muted block">Miss</span>
                                                         <span className="text-sm font-black leading-none text-rose-400">{habitStats.missed}</span>
                                                     </div>
                                                 </div>

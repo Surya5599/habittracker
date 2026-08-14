@@ -32,12 +32,16 @@ export const getHabitMonthStats = (
             }
         }
 
-        totalDueDays++;
-
         const dateKey = `${year}-${String(monthIdx + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        // An inactive day leaves the denominator entirely. It used to be counted as due and
+        // then skipped, so it could never be completed — every rest day permanently lowered
+        // the habit's month percentage.
         if (isInactive?.(dateKey)) {
             continue;
         }
+
+        totalDueDays++;
+
         const isDone = completions[habitId]?.[dateKey] || false;
 
         if (isDone) {

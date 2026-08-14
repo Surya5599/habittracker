@@ -253,22 +253,22 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
     const isMoreFreqMode = formFreqMode === 'custom' || formFreqMode === 'flexible';
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-        <div className="border-[3px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] w-full max-w-6xl overflow-hidden flex flex-col min-h-0 max-h-[calc(100svh-1.5rem)] animate-in zoom-in-95 duration-200 bg-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-scrim backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="border-3 border-edge-strong shadow-neo-lg rounded-modal w-full max-w-6xl overflow-hidden flex flex-col min-h-0 max-h-[calc(100svh-1.5rem)] animate-in zoom-in-95 duration-200 bg-surface">
             {/* Header */}
-            <div className="flex items-center gap-2 px-4 py-3 border-b-[3px] border-black bg-white shrink-0">
-                <h2 className="flex-1 text-base font-black uppercase tracking-tight text-black">Habits</h2>
-                <span className="px-2 py-0.5 text-[10px] font-black bg-black text-white">{activeHabitsCount}</span>
-                <div className="hidden sm:flex items-center gap-1.5 px-2 py-1.5 border-2 border-stone-200 focus-within:border-black bg-stone-50 transition-colors">
-                    <Search size={12} className="text-stone-400 shrink-0" />
+            <div className="flex items-center gap-2 px-4 py-3 border-b-3 border-edge-strong bg-surface shrink-0">
+                <h2 className="flex-1 text-base font-black uppercase tracking-tight text-ink-strong">Habits</h2>
+                <span className="px-2 py-1 text-[10px] font-black bg-surface-inverse text-ink-inverse">{activeHabitsCount}</span>
+                <div className="hidden sm:flex items-center gap-1.5 px-2 py-1.5 border-2 border-edge focus-within:border-edge-strong bg-surface-muted transition-colors">
+                    <Search size={12} className="text-ink-subtle shrink-0" />
                     <input
                         ref={searchInputRef}
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                         placeholder="Search…"
-                        className="text-[11px] font-medium text-stone-700 placeholder:text-stone-300 outline-none bg-transparent w-24"
+                        className="text-[11px] font-medium text-ink placeholder:text-ink-dim outline-none bg-transparent w-24"
                     />
-                    {searchQuery && <button onClick={() => setSearchQuery('')} className="text-stone-300 hover:text-stone-600"><X size={10} /></button>}
+                    {searchQuery && <button onClick={() => setSearchQuery('')} className="text-ink-dim hover:text-ink"><X size={10} /></button>}
                 </div>
                 <button
                     onClick={() => {
@@ -278,49 +278,49 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                             return !prev;
                         });
                     }}
-                    className={`sm:hidden p-1.5 border-2 transition-all ${searchQuery || searchOpen ? 'bg-black text-white border-black' : 'border-stone-200 text-stone-400 hover:border-black hover:text-black'}`}
+                    className={`sm:hidden p-1.5 border-2 transition-all ${searchQuery || searchOpen ? 'bg-theme-primary text-theme-ink border-edge-strong' : 'border-edge text-ink-subtle hover:border-edge-strong hover:text-ink-strong'}`}
                 >
                     <Search size={12} />
                 </button>
                 <button
                     onClick={() => setIsReorderMode(prev => !prev)}
-                    className={`px-2 py-1 text-[10px] font-black uppercase tracking-wide border-2 border-black transition-all ${isReorderMode ? 'bg-black text-white' : 'bg-white text-black hover:bg-stone-100'}`}
+                    className={`px-2 py-1 text-[10px] font-black uppercase tracking-wide border-2 border-edge-strong transition-all ${isReorderMode ? 'bg-theme-primary text-theme-ink' : 'bg-surface text-ink-strong hover:bg-surface-strong'}`}
                 >
                     {isReorderMode ? 'Done' : 'Reorder'}
                 </button>
-                <button onClick={handleCloseModal} className="p-1.5 text-stone-400 hover:text-black hover:bg-stone-100 rounded transition-colors">
+                <button onClick={handleCloseModal} className="p-1.5 text-ink-subtle hover:text-ink-strong hover:bg-surface-strong rounded transition-colors">
                     <X size={16} />
                 </button>
             </div>
 
             {searchOpen && (
-                <div className="sm:hidden px-4 py-2 border-b-2 border-black bg-stone-50 shrink-0">
+                <div className="sm:hidden px-4 py-2 border-b-2 border-edge-strong bg-surface-muted shrink-0">
                     <div className="flex items-center gap-2">
-                        <Search size={12} className="text-stone-400 shrink-0" />
+                        <Search size={12} className="text-ink-subtle shrink-0" />
                         <input
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                             placeholder="Search habits..."
-                            className="flex-1 text-sm font-medium text-stone-800 placeholder:text-stone-400 bg-transparent outline-none"
+                            className="flex-1 text-sm font-medium text-ink-strong placeholder:text-ink-subtle bg-transparent outline-none"
                         />
-                        {searchQuery && <button onClick={() => setSearchQuery('')} className="text-stone-400 hover:text-black"><X size={12} /></button>}
+                        {searchQuery && <button onClick={() => setSearchQuery('')} className="text-ink-subtle hover:text-ink-strong"><X size={12} /></button>}
                     </div>
                 </div>
             )}
 
             <div className="flex-1 min-h-0 flex overflow-hidden">
                 {/* Left sidebar: habit list */}
-                <div className={`${mobileView === 'detail' ? 'hidden' : 'flex'} lg:flex flex-col w-full lg:w-[300px] shrink-0 border-r-[3px] border-black bg-stone-50 min-h-0`}>
-                    <div className="px-3 py-2 border-b-2 border-black grid grid-cols-2 gap-2 bg-stone-100 shrink-0">
+                <div className={`${mobileView === 'detail' ? 'hidden' : 'flex'} lg:flex flex-col w-full lg:w-[300px] shrink-0 border-r-3 border-edge-strong bg-surface-muted min-h-0`}>
+                    <div className="px-3 py-2 border-b-2 border-edge-strong grid grid-cols-2 gap-2 bg-surface-strong shrink-0">
                         <button
                             onClick={() => setShowArchived(false)}
-                            className={`w-full min-w-0 h-8 px-2 text-[9px] leading-tight text-center font-black uppercase tracking-normal border-2 transition-all ${!showArchived ? 'bg-black text-white border-black' : 'bg-white text-stone-400 border-stone-200 hover:border-black hover:text-black'}`}
+                            className={`w-full min-w-0 h-8 px-2 text-[9px] leading-tight text-center font-black uppercase tracking-normal border-2 transition-all ${!showArchived ? 'bg-theme-primary text-theme-ink border-edge-strong' : 'bg-surface text-ink-subtle border-edge hover:border-edge-strong hover:text-ink-strong'}`}
                         >
                             Active Habits ({activeHabitsCount})
                         </button>
                         <button
                             onClick={() => setShowArchived(true)}
-                            className={`w-full min-w-0 h-8 px-2 text-[9px] leading-tight text-center font-black uppercase tracking-normal border-2 transition-all ${showArchived ? 'bg-black text-white border-black' : 'bg-white text-stone-400 border-stone-200 hover:border-black hover:text-black'}`}
+                            className={`w-full min-w-0 h-8 px-2 text-[9px] leading-tight text-center font-black uppercase tracking-normal border-2 transition-all ${showArchived ? 'bg-theme-primary text-theme-ink border-edge-strong' : 'bg-surface text-ink-subtle border-edge hover:border-edge-strong hover:text-ink-strong'}`}
                         >
                             Archived ({archivedHabitsCount})
                         </button>
@@ -328,8 +328,8 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
 
                     <div className="flex-1 min-h-0 overflow-y-auto p-3 touch-pan-y" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}>
                         {visibleHabits.length === 0 ? (
-                            <div className="rounded-2xl border-2 border-dashed border-stone-300 bg-white px-4 py-8 text-center">
-                                <p className="text-sm font-black uppercase tracking-widest text-stone-700">
+                            <div className="rounded-2xl border-2 border-dashed border-edge-muted bg-surface px-4 py-8 text-center">
+                                <p className="text-sm font-black uppercase tracking-widest text-ink">
                                     {showArchived ? 'No archived habits yet' : 'Start with one habit'}
                                 </p>
                             </div>
@@ -338,7 +338,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                                 axis="y"
                                 values={visibleHabits}
                                 onReorder={reorderHabits}
-                                className="flex flex-col border-2 border-black bg-white"
+                                className="flex flex-col border-2 border-edge-strong bg-surface"
                                 style={{ touchAction: 'pan-y' }}
                             >
                                 {visibleHabits.map(habit => (
@@ -362,10 +362,10 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                         )}
                     </div>
 
-                    <div className="border-t-[3px] border-black shrink-0 p-3 bg-white">
+                    <div className="border-t-3 border-edge-strong shrink-0 p-3 bg-surface">
                         <button
                             onClick={startAdding}
-                            className="w-full py-2.5 bg-black text-white text-[11px] font-black uppercase tracking-widest border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)] active:translate-y-[4px] active:translate-x-[4px] active:shadow-none transition-all flex items-center justify-center gap-2"
+                            className="w-full py-2.5 bg-surface-inverse text-ink-inverse text-[11px] font-black uppercase tracking-widest border-2 border-edge-strong shadow-neo hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-neo-sm active:translate-y-[4px] active:translate-x-[4px] active:shadow-none transition-all flex items-center justify-center gap-2"
                         >
                             <Plus size={16} strokeWidth={3} />
                             {t('habitManager.addHabit')}
@@ -377,24 +377,24 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                 <div className={`${mobileView === 'list' ? 'hidden' : 'flex'} lg:flex flex-1 min-h-0 overflow-y-auto`}>
                     {!isAdding && !selectedHabit ? (
                         <div className="flex-1 flex items-center justify-center p-8">
-                            <p className="text-sm font-medium text-stone-400">Select a habit on the left, or add a new one.</p>
+                            <p className="text-sm font-medium text-ink-subtle">Select a habit on the left, or add a new one.</p>
                         </div>
                     ) : (
                         <div className="flex-1 p-4 sm:p-6 flex flex-col gap-3 max-w-3xl">
                             <button
                                 onClick={() => setMobileView('list')}
-                                className="lg:hidden flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-stone-500 hover:text-black"
+                                className="lg:hidden flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-ink-muted hover:text-ink-strong"
                             >
                                 <ChevronLeft size={14} strokeWidth={3} /> Back to habits
                             </button>
 
-                            <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-black">
+                            <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-ink-strong">
                                 {isAdding ? 'New habit' : <>Editing: <span>{selectedHabit?.name || 'Untitled'}</span></>}
                             </h2>
 
                             {/* ── Details ── */}
-                            <div className="flex flex-col gap-3 rounded-lg bg-stone-50 p-3">
-                                <span className="text-[9px] font-black uppercase tracking-widest text-stone-400">Details</span>
+                            <div className="flex flex-col gap-3 rounded-lg bg-surface-muted p-3">
+                                <span className="text-[9px] font-black uppercase tracking-widest text-ink-subtle">Details</span>
                                 <input
                                     ref={nameInputRef}
                                     type="text"
@@ -402,14 +402,14 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                                     onChange={e => setFormName(e.target.value.slice(0, 40))}
                                     maxLength={40}
                                     placeholder={t('habitManager.habitNamePlaceholder')}
-                                    className="w-full border-2 border-black px-3 py-2 text-sm font-bold text-black outline-none focus:bg-white placeholder:text-stone-300"
+                                    className="w-full border-2 border-edge-strong px-3 py-2 text-sm font-bold text-ink-strong outline-none focus:bg-surface placeholder:text-ink-dim"
                                 />
                                 <textarea
                                     value={formDescription}
                                     onChange={e => setFormDescription(e.target.value.slice(0, 200))}
                                     rows={2}
                                     maxLength={200}
-                                    className="w-full border-2 border-black px-3 py-2 text-sm text-black outline-none focus:bg-white placeholder:text-stone-300 resize-none"
+                                    className="w-full border-2 border-edge-strong px-3 py-2 text-sm text-ink-strong outline-none focus:bg-surface placeholder:text-ink-dim resize-none"
                                     placeholder="Description (optional)"
                                 />
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -419,31 +419,31 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                                         onChange={e => setFormTarget(e.target.value.slice(0, 60))}
                                         maxLength={60}
                                         placeholder="Target (optional): e.g., 20 mins"
-                                        className="w-full border-2 border-black px-3 py-2 text-sm text-black outline-none focus:bg-white placeholder:text-stone-300"
+                                        className="w-full border-2 border-edge-strong px-3 py-2 text-sm text-ink-strong outline-none focus:bg-surface placeholder:text-ink-dim"
                                     />
                                     <input
                                         type="date"
                                         value={formStartDate}
                                         max={toDateKey(new Date())}
                                         onChange={e => setFormStartDate(e.target.value)}
-                                        className="w-full border-2 border-black px-3 py-2 text-sm font-bold text-black outline-none focus:bg-white"
+                                        className="w-full border-2 border-edge-strong px-3 py-2 text-sm font-bold text-ink-strong outline-none focus:bg-surface"
                                     />
                                 </div>
                             </div>
 
                             {/* ── Schedule ── */}
-                            <div className="flex flex-col gap-1.5 rounded-lg bg-stone-50 p-3">
-                                <span className="text-[9px] font-black uppercase tracking-widest text-stone-400">Schedule</span>
+                            <div className="flex flex-col gap-1.5 rounded-lg bg-surface-muted p-3">
+                                <span className="text-[9px] font-black uppercase tracking-widest text-ink-subtle">Schedule</span>
                                 <div className="flex flex-wrap gap-1.5">
                                     {primaryFreqButtons.map(({ key, label }) => (
                                         <button key={key} type="button" onClick={() => setFormFreqMode(key)}
-                                            className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wide border-2 transition-all ${formFreqMode === key ? 'bg-black text-white border-black' : 'bg-white text-stone-600 border-stone-300 hover:border-stone-600'}`}
+                                            className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wide border-2 transition-all ${formFreqMode === key ? 'bg-theme-primary text-theme-ink border-edge-strong' : 'bg-surface text-ink border-edge-muted hover:border-edge-hover'}`}
                                         >{label}</button>
                                     ))}
                                     <select
                                         value={isMoreFreqMode ? formFreqMode : ''}
                                         onChange={e => setFormFreqMode(e.target.value as FreqMode)}
-                                        className={`px-2 py-1.5 text-[10px] font-black uppercase tracking-wide border-2 transition-all outline-none ${isMoreFreqMode ? 'bg-black text-white border-black' : 'bg-white text-stone-600 border-stone-300 hover:border-stone-600'}`}
+                                        className={`px-2 py-1.5 text-[10px] font-black uppercase tracking-wide border-2 transition-all outline-none ${isMoreFreqMode ? 'bg-theme-primary text-theme-ink border-edge-strong' : 'bg-surface text-ink border-edge-muted hover:border-edge-hover'}`}
                                     >
                                         <option value="" disabled hidden>More…</option>
                                         <option value="custom">Custom</option>
@@ -457,7 +457,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                                             return (
                                                 <button key={i} type="button"
                                                     onClick={() => setFormCustomDays(prev => sel ? prev.filter(d => d !== i) : [...prev, i])}
-                                                    className={`w-7 h-7 text-[10px] font-black border-2 transition-all ${sel ? 'bg-black text-white border-black' : 'bg-white text-stone-300 border-stone-200 hover:border-stone-400'}`}
+                                                    className={`w-7 h-7 text-[10px] font-black border-2 transition-all ${sel ? 'bg-theme-primary text-theme-ink border-edge-strong' : 'bg-surface text-ink-dim border-edge hover:border-edge-muted'}`}
                                                 >{day}</button>
                                             );
                                         })}
@@ -467,9 +467,9 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                                     <div className="flex items-center gap-2 mt-1">
                                         <input type="range" min="1" max="7" value={formWeeklyTarget}
                                             onChange={e => setFormWeeklyTarget(parseInt(e.target.value))}
-                                            className="flex-1 accent-black h-1 bg-stone-200 rounded-lg appearance-none cursor-pointer"
+                                            className="flex-1 accent-black h-1 bg-edge rounded-lg appearance-none cursor-pointer"
                                         />
-                                        <span className="text-xs font-black border-2 border-black bg-white px-1.5 py-0.5 min-w-[2.5rem] text-center">
+                                        <span className="text-xs font-black border-2 border-edge-strong bg-surface px-1.5 py-1 min-w-[2.5rem] text-center">
                                             {formWeeklyTarget}×
                                         </span>
                                     </div>
@@ -477,9 +477,9 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                             </div>
 
                             {/* ── Appearance ── */}
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8 rounded-lg bg-stone-50 p-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8 rounded-lg bg-surface-muted p-3">
                                 <div className="flex flex-col gap-1.5">
-                                    <span className="text-[9px] font-black uppercase tracking-widest text-stone-400">Appearance</span>
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-ink-subtle">Appearance</span>
                                     <div className="flex gap-1 flex-wrap">
                                         {HABIT_COLOR_OPTIONS.map(c => {
                                             const selected = formColor === c;
@@ -488,7 +488,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                                                     className="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
                                                     style={{ backgroundColor: c }}
                                                 >
-                                                    {selected && <Check size={12} strokeWidth={3} className={isLightColor(c) ? 'text-black' : 'text-white'} />}
+                                                    {selected && <Check size={12} strokeWidth={3} className={isLightColor(c) ? 'text-ink-strong' : 'text-ink-inverse'} />}
                                                 </button>
                                             );
                                         })}
@@ -497,20 +497,20 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
 
                                 {!isAdding && (
                                     <div className="flex flex-col gap-1.5">
-                                        <span className="text-[9px] font-black uppercase tracking-widest text-stone-400">Status</span>
+                                        <span className="text-[9px] font-black uppercase tracking-widest text-ink-subtle">Status</span>
                                         <div className="flex items-center gap-2">
                                             <button
                                                 type="button"
                                                 onClick={() => setFormArchived(prev => !prev)}
-                                                className={`relative w-11 h-6 border-2 border-black transition-colors ${formArchived ? 'bg-white' : 'bg-black'}`}
+                                                className={`relative w-11 h-6 border-2 border-edge-strong transition-colors ${formArchived ? 'bg-surface' : 'bg-surface-inverse'}`}
                                                 aria-label="Toggle habit active/archived"
                                             >
                                                 <span
-                                                    className={`absolute top-0.5 left-0.5 h-4 w-4 border-2 border-black bg-white transition-transform ${formArchived ? 'translate-x-5 bg-stone-200' : 'translate-x-0 bg-white'}`}
+                                                    className={`absolute top-0.5 left-0.5 h-4 w-4 border-2 border-edge-strong bg-surface transition-transform ${formArchived ? 'translate-x-5 bg-edge' : 'translate-x-0 bg-surface'}`}
                                                 />
                                             </button>
-                                            <span className={`text-[10px] font-black uppercase tracking-wide ${!formArchived ? 'text-black' : 'text-stone-400'}`}>Active</span>
-                                            <span className={`text-[10px] font-black uppercase tracking-wide ${formArchived ? 'text-black' : 'text-stone-400'}`}>Archived</span>
+                                            <span className={`text-[10px] font-black uppercase tracking-wide ${!formArchived ? 'text-ink-strong' : 'text-ink-subtle'}`}>Active</span>
+                                            <span className={`text-[10px] font-black uppercase tracking-wide ${formArchived ? 'text-ink-strong' : 'text-ink-subtle'}`}>Archived</span>
                                         </div>
                                     </div>
                                 )}
@@ -518,11 +518,11 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
 
                             <div className="flex gap-2 mt-5">
                                 <button onClick={handleSave}
-                                    className="flex-1 py-2.5 bg-black text-white text-[11px] font-black uppercase tracking-widest border-2 border-black hover:bg-stone-800 transition-colors"
+                                    className="flex-1 py-2.5 bg-surface-inverse text-ink-inverse text-[11px] font-black uppercase tracking-widest border-2 border-edge-strong hover:bg-surface-inverse-hover transition-colors"
                                     style={{ boxShadow: '2px 2px 0px 0px rgba(0,0,0,1)' }}
                                 >Save</button>
                                 <button onClick={handleCancel}
-                                    className="px-6 py-2.5 text-[11px] font-black uppercase tracking-wide border-2 border-stone-300 text-stone-600 hover:border-stone-600 transition-colors"
+                                    className="px-6 py-2.5 text-[11px] font-black uppercase tracking-wide border-2 border-edge-muted text-ink hover:border-edge-hover transition-colors"
                                 >Cancel</button>
                             </div>
                         </div>
@@ -579,19 +579,19 @@ const HabitRow: React.FC<HabitRowProps> = ({
                 zIndex: 50
             }}
             transition={{ type: "spring", stiffness: 500, damping: 30 }}
-            className={`group relative border-b border-stone-200 last:border-b-0 transition-colors ${isSelected ? 'bg-stone-100' : 'bg-white hover:bg-stone-50'}`}
+            className={`group relative border-b border-edge last:border-b-0 transition-colors ${isSelected ? 'bg-surface-strong' : 'bg-surface hover:bg-surface-muted'}`}
         >
             {isReorderMode ? (
                 <div className="flex items-center gap-3 px-3 py-2.5">
                     <button
                         onPointerDown={(e) => controls.start(e)}
-                        className="cursor-grab active:cursor-grabbing rounded p-1 text-stone-400 transition-colors hover:bg-stone-50 hover:text-black"
+                        className="cursor-grab active:cursor-grabbing rounded p-1 text-ink-subtle transition-colors hover:bg-surface-muted hover:text-ink-strong"
                         title="Drag to reorder"
                     >
                         <GripVertical size={16} strokeWidth={2.5} />
                     </button>
-                    <div className="h-3.5 w-3.5 shrink-0 rounded-full border-2 border-black" style={{ backgroundColor: habit.color || themePrimary }}></div>
-                    <span className="truncate text-sm font-black uppercase tracking-wide text-black">
+                    <div className="h-3.5 w-3.5 shrink-0 rounded-full border-2 border-edge-strong" style={{ backgroundColor: habit.color || themePrimary }}></div>
+                    <span className="truncate text-sm font-black uppercase tracking-wide text-ink-strong">
                         {habit.name || t('habitManager.untitled')}
                     </span>
                 </div>
@@ -599,17 +599,17 @@ const HabitRow: React.FC<HabitRowProps> = ({
                 <button onClick={onSelect} className="w-full flex items-center gap-2 px-3 py-2.5 text-left">
                     <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                            <div className="h-3 w-3 shrink-0 rounded-full border-2 border-black" style={{ backgroundColor: habit.color || themePrimary }} />
+                            <div className="h-3 w-3 shrink-0 rounded-full border-2 border-edge-strong" style={{ backgroundColor: habit.color || themePrimary }} />
                             <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-1.5 min-w-0">
-                                    <span className="truncate text-sm font-black text-black">
+                                    <span className="truncate text-sm font-black text-ink-strong">
                                         {habit.name || t('habitManager.untitled')}
                                     </span>
                                     {isArchived && (
-                                        <span className="h-1.5 w-1.5 rounded-full bg-stone-400 shrink-0" title="Archived" />
+                                        <span className="h-1.5 w-1.5 rounded-full bg-edge-muted shrink-0" title="Archived" />
                                     )}
                                 </div>
-                                <span className="block text-[10px] font-bold uppercase tracking-wide text-stone-400">
+                                <span className="block text-[10px] font-bold uppercase tracking-wide text-ink-subtle">
                                     {getHabitFrequencyLabel(habit)}
                                 </span>
                             </div>
@@ -619,16 +619,16 @@ const HabitRow: React.FC<HabitRowProps> = ({
                         <span
                             role="button"
                             onClick={() => { setConfirmDeleteId(null); setOpenMenuId(isMenuOpen ? null : habit.id); }}
-                            className="inline-flex items-center justify-center rounded-full border-2 border-black bg-white p-1.5 text-black transition-colors hover:bg-stone-100"
+                            className="inline-flex items-center justify-center rounded-full border-2 border-edge-strong bg-surface p-1.5 text-ink-strong transition-colors hover:bg-surface-strong"
                             title="More actions"
                         >
                             <MoreHorizontal size={15} strokeWidth={2.5} />
                         </span>
                         {isMenuOpen && (
-                            <div className="absolute right-0 top-full z-20 mt-2 min-w-[150px] rounded-xl border-2 border-black bg-white p-1.5 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                            <div className="absolute right-0 top-full z-20 mt-2 min-w-[150px] rounded-xl border-2 border-edge-strong bg-surface p-1.5 shadow-neo">
                                 <button
                                     onClick={() => { toggleArchiveHabit(habit.id, !isArchived); setOpenMenuId(null); }}
-                                    className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[10px] font-black uppercase tracking-wide text-black transition-colors hover:bg-stone-100"
+                                    className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[10px] font-black uppercase tracking-wide text-ink-strong transition-colors hover:bg-surface-strong"
                                 >
                                     {isArchived ? <RotateCcw size={12} strokeWidth={2.5} /> : <Archive size={12} strokeWidth={2.5} />}
                                     {isArchived ? 'Restore' : 'Archive'}
@@ -645,14 +645,14 @@ const HabitRow: React.FC<HabitRowProps> = ({
                 </button>
             )}
             {confirmDeleteId === habit.id && (
-                <div className="border-t-2 border-black bg-stone-50 p-3">
-                    <p className="text-[10px] font-black uppercase tracking-wide text-black mb-2">Delete this habit?</p>
+                <div className="border-t-2 border-edge-strong bg-surface-muted p-3">
+                    <p className="text-[10px] font-black uppercase tracking-wide text-ink-strong mb-2">Delete this habit?</p>
                     <div className="grid grid-cols-2 gap-2">
                         <button onClick={() => handleDelete(habit.id)}
-                            className="border-2 border-black bg-black text-white py-2 text-[10px] font-black uppercase tracking-wide hover:bg-stone-800 transition-colors"
+                            className="border-2 border-edge-strong bg-surface-inverse text-ink-inverse py-2 text-[10px] font-black uppercase tracking-wide hover:bg-surface-inverse-hover transition-colors"
                         >Delete</button>
                         <button onClick={() => setConfirmDeleteId(null)}
-                            className="border-2 border-black bg-white text-black py-2 text-[10px] font-black uppercase tracking-wide hover:bg-stone-100 transition-colors"
+                            className="border-2 border-edge-strong bg-surface text-ink-strong py-2 text-[10px] font-black uppercase tracking-wide hover:bg-surface-strong transition-colors"
                         >Cancel</button>
                     </div>
                 </div>

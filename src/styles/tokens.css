@@ -1,0 +1,232 @@
+/* ============================================================================
+   HabiCard design tokens — CANONICAL SOURCE OF TRUTH
+   ============================================================================
+
+   Every value below is taken from DESIGN_SYSTEM.md. Nothing here is invented:
+   each token records the dominant existing value for its role, with the audit
+   count / file reference in a comment.
+
+   Why CSS custom properties are the source (and not tailwind.config.js):
+     1. The 13 THEMES presets (constants.ts:15-29) are user-selectable at
+        RUNTIME. A static Tailwind color cannot express that; a var set by JS
+        can.
+     2. DESIGN_SYSTEM.md §9 #14 requires dark mode to be a token-level swap
+        instead of the ~45 `!important` utility overrides in dark-theme.css.
+        Redefining vars under [data-color-mode='dark'] is that swap.
+     3. Three clients consume these tokens on three different Tailwind setups
+        (v3 CDN / v4 / twrnc). Vars are the only layer all of them share.
+
+   Consumers:
+     - tailwind.config.js                 → v3 utility names -> var(--…)
+     - src/styles/tailwind-v4-theme.css   → v4 @theme -> var(--…)  (extension)
+     - mobile/                            → CANNOT read CSS vars; see the
+                                            literal exports in tailwind.config.js
+                                            (`tokens`) and MIGRATION_NOTES.md §P3.
+
+   Install (not done in this step — config only):
+     import './styles/tokens.css'  before  './dark-theme.css'  in src/index.tsx
+   ========================================================================= */
+
+:root {
+  /* ── Runtime theme ────────────────────────────────────────────────────────
+     Set by JS from constants.ts THEMES. Default = preset 1 "Sage & Rose".
+     Consumed today as theme.primary (97 uses) / theme.secondary (57 uses) —
+     the most disciplined color usage in the codebase, so it is preserved
+     as-is rather than replaced. */
+  --theme-primary: #8da18d;
+  --theme-secondary: #d1b1b1;
+
+  /* Alpha tints of the theme colors.
+     IMPORTANT for the migration pass: components currently build these by
+     concatenating a HEX alpha suffix (`theme.primary + '20'`), which is NOT
+     20% — 0x20 = 32/255 = 12.5%. Observed suffixes and their true alpha:
+       '12' -> 7%   '15' -> 8%   '18' -> 9%
+       '20' -> 12.5%  '30' -> 19%  '40' -> 25%
+     Collapsed to three steps at the low / mid / high of that observed range. */
+  /* Readable foreground for theme-filled surfaces. Set at runtime by
+     useTheme from each preset's luminance; these are the light-theme
+     defaults so the tokens resolve before the first paint. */
+  --theme-primary-ink: #1c1917;
+  --theme-secondary-ink: #1c1917;
+  --theme-primary-faint: color-mix(in srgb, var(--theme-primary) 8%, transparent);
+  --theme-primary-soft: color-mix(in srgb, var(--theme-primary) 12%, transparent);
+  --theme-primary-strong: color-mix(in srgb, var(--theme-primary) 25%, transparent);
+  --theme-secondary-faint: color-mix(in srgb, var(--theme-secondary) 8%, transparent);
+  --theme-secondary-soft: color-mix(in srgb, var(--theme-secondary) 12%, transparent);
+  --theme-secondary-strong: color-mix(in srgb, var(--theme-secondary) 25%, transparent);
+
+  /* ── Surfaces ───────────────────────────────────────────────────────────── */
+  --canvas: #f4f4f0;         /* app background; also the removed --neo-bg. index.html:39, App.tsx:1671 */
+  --surface: #ffffff;        /* card surface; = --card-bg (dark-theme.css:99) */
+  --surface-soft: #fdfdf8;   /* = --card-bg-soft (dark-theme.css:100). CONSOLIDATES the four
+                                interchangeable off-whites #fcfcfc #f9f9f9 #f0f0f0 #f9f2f2
+                                (DESIGN_SYSTEM.md §1.2, §9 #16) */
+  --surface-muted: #fafaf9;  /* stone-50 — bg-stone-50, 101 uses */
+  --surface-strong: #f5f5f4; /* stone-100 — bg-stone-100, 81 uses; also the hover step */
+  --input-bg: #ffffff;       /* = --input-bg (dark-theme.css:101) */
+  /* Inverted surface — `bg-black` (104 uses: primary buttons, inverted headers,
+     badges). A SURFACE token, deliberately not --ink-strong: that is a text
+     colour and resolves to #eeeeee in dark, which would put near-white text on
+     a near-white background. Values are exactly what renders today, with the
+     dark value taken from dark-theme.css:228 (`.bg-black` -> #111111). */
+  --surface-inverse: #000000;
+  /* Hover step for inverted buttons. `hover:bg-stone-800` appeared 13 times and
+     was ALWAYS paired with `bg-black`, i.e. it is that button's hover state.
+     Light = stone-800 (#292524) exactly as today; dark steps up the existing
+     ramp (--dark-surface-2) since #111111 must lighten, not darken, on hover. */
+  --surface-inverse-hover: #292524;
+  /* Sunken fill — `bg-stone-300` (progress-dot track, PDF preview backdrop).
+     Dark value is the bespoke one dark-theme.css:219 already used for it. */
+  --surface-sunken: #d6d3d1;
+
+  /* ── Borders ────────────────────────────────────────────────────────────── */
+  --border-strong: #000000;  /* the neo border. 854 `border` + 154 `border-2` on black */
+  --border: #e7e5e4;         /* stone-200 — border-stone-200, 92 uses */
+  --border-subtle: #f5f5f4;  /* stone-100 — border-stone-100, 25 uses */
+  --border-muted: #a8a29e;   /* stone-400 — border-stone-400, 18 uses (muted outline buttons) */
+  /* Hover/focus step for muted outlines. `hover:border-stone-500` (5) and
+     `focus:border-stone-600` (4) were always the hover of border-stone-400,
+     so the two collapse into one step. Light = stone-500; dark steps up to
+     --dark-border-strong. */
+  --border-hover: #78716c;
+  --ring: #000000;           /* ring-black */
+
+  /* ── Text ─────────────────────────────────────────────────────────────────
+     Named --ink-* rather than --text-*: `--text-*` is Tailwind v4's font-size
+     theme namespace, and colliding with it would make these read as type
+     sizes in the extension build. */
+  --ink: #444444;            /* body color, dark-theme.css:105 */
+  --ink-strong: #1c1917;     /* stone-900 — text-stone-900 (24) + text-black */
+  --ink-muted: #78716c;      /* stone-500 — text-stone-500, 135 uses */
+  --ink-subtle: #a8a29e;     /* stone-400 — text-stone-400, 216 uses (the workhorse) */
+  --ink-dim: #d6d3d1;        /* stone-300 — text-stone-300, 67 uses */
+  --ink-inverse: #ffffff;
+
+  /* ── Status ─────────────────────────────────────────────────────────────── */
+  /* "done" resolved to theme.secondary. See DESIGN_SYSTEM.md §1.6 and
+     MIGRATION_NOTES.md §R1 for why, and for the 4 encodings it replaces. */
+  --status-done: var(--theme-secondary);
+  --status-done-tint: var(--theme-secondary-soft);
+  --status-complete: var(--theme-primary);       /* aggregate 100% (day/week/month) */
+  --status-complete-tint: var(--theme-primary-soft);
+
+  --status-missed: #ef4444;                      /* red-500; = mood 1 */
+  --status-missed-tint: #fee2e2;                 /* red-100, YearView.tsx:505 */
+
+  --status-warning: #f59e0b;                     /* amber-500, bg-amber-500 x4 */
+  --status-warning-tint: #fef3c7;                /* amber-100, bg-amber-100 x8 */
+  --status-warning-faint: #fffbeb;               /* amber-50, bg-amber-50 x11 */
+
+  --status-inactive: #fcd34d;                    /* amber-300, DailyCard.tsx:771 */
+  --status-inactive-text: #78350f;               /* amber-900, text-amber-900 x5 */
+
+  --status-streak: #f97316;                      /* orange-500; identical to mood 2 by design */
+
+  /* ── Mood scale (1-5) ───────────────────────────────────────────────────── */
+  /* Was hand-typed identically in 7 files (DESIGN_SYSTEM.md §1.6, §9 #9).
+     Canonical definition: MonthlyView.tsx:152-156 */
+  --mood-1: #ef4444;  /* angry */
+  --mood-2: #f97316;  /* frown */
+  --mood-3: #eab308;  /* meh   */
+  --mood-4: #84cc16;  /* smile */
+  --mood-5: #10b981;  /* laugh */
+
+  /* ── Scrim ──────────────────────────────────────────────────────────────── */
+  /* 6 opacities were in use (20/30/40/45/50/55/60%). 50% is the most common
+     (4 modals). DESIGN_SYSTEM.md §5.3, §9 #10 */
+  --scrim: rgba(0, 0, 0, 0.5);
+
+  /* ── Hard-offset shadows ────────────────────────────────────────────────── */
+  /* 7 arbitrary tiers (1/2/3/4/6/8/12px) collapsed to 3.
+     `--shadow-neo` = 4px RESOLVES the .neo-shadow conflict in favour of the
+     majority definition: index.html:55 (4px) + chrome-extension/src/index.css:64
+     (4px) + .landing-neo-shadow-sm (4px) outvote dark-theme.css:59 (6px).
+     DESIGN_SYSTEM.md §3.4, §9 #4
+
+     Named --neo-shadow-* rather than --shadow-*: `--shadow-*` is Tailwind v4's
+     box-shadow theme namespace, so `--shadow-neo: var(--shadow-neo)` in the
+     extension's @theme block would be a circular reference. */
+  --neo-shadow-sm: 2px 2px 0 0 rgba(0, 0, 0, 1);   /* 25 uses at 2px */
+  --neo-shadow: 4px 4px 0 0 rgba(0, 0, 0, 1);      /* absorbs the 3px (20) and 6px (7) clusters */
+  --neo-shadow-lg: 8px 8px 0 0 rgba(0, 0, 0, 1);   /* 12 uses; modal + app-frame tier */
+  --neo-shadow-accent: 3px 3px 0 0 rgba(251, 191, 36, 1); /* FeatureAnnouncementModal.tsx:127 */
+  --neo-shadow-frame: none;                        /* light mode has no ambient frame shadow */
+
+/* ── CORRECTION: the neo accent palette is LIVE, not dead ───────────────────
+   DESIGN_SYSTEM.md §1.4 and §9 #17 originally recorded these as "not
+   referenced by any component". That was WRONG — it checked the `--neo-*`
+   names but never the `--landing-neo-*` aliases, which LandingPage.tsx
+   references 36 times via `var(--landing-neo-green)` and friends
+   (`text-[var(--landing-neo-green)]`, `bg-[var(--landing-neo-pink)]`, and
+   inline style values).
+
+   They are defined here because dark-theme.css is slated for deletion
+   (MIGRATION_NOTES.md §M1) and taking its :root block with it would silently
+   blank ~36 landing-page colours. Values are verbatim from dark-theme.css:22-35.
+   The aliases are kept rather than renamed: this is a token-only migration,
+   and renaming them would mean editing LandingPage.tsx markup. */
+  --neo-yellow: #ffd800;
+  --neo-pink: #ff90e8;
+  --neo-green: #23a094;
+  --neo-blue: #90a8ed;
+  --neo-orange: #ff7a00;
+
+  --landing-neo-yellow: var(--neo-yellow);
+  --landing-neo-pink: var(--neo-pink);
+  --landing-neo-green: var(--neo-green);
+  --landing-neo-blue: var(--neo-blue);
+  --landing-neo-orange: var(--neo-orange);
+  --landing-neo-bg: var(--canvas); /* was --neo-bg #F4F4F0, i.e. --canvas */
+}
+
+/* ── Dark mode: token swap, not utility overrides ───────────────────────────
+   Replaces the ~45 `!important` selector rules in dark-theme.css and the
+   blanket `[class*='shadow-[']` rule that collapsed all 7 shadow tiers into
+   one (DESIGN_SYSTEM.md §3.3, §9 #2, §9 #14). Because the offsets are now
+   tokens, the three tiers survive in dark mode.
+   Values are the existing --dark-* ramp (dark-theme.css:1-13) plus the three
+   greys that previously bypassed it (#181818/#202020/#303030, lines 219/223/366). */
+[data-color-mode='dark'] {
+  --canvas: #0d0d0d;         /* --dark-bg */
+  --surface: #1a1a1a;        /* --dark-surface */
+  --surface-soft: #1a1a1a;   /* --card-bg-soft (dark) */
+  --surface-muted: #222222;  /* --dark-surface-2 */
+  --surface-strong: #2a2a2a; /* --dark-surface-3 */
+  --input-bg: #222222;
+  --surface-inverse: #111111; /* dark-theme.css:228 — kept distinguishable from --canvas */
+  --surface-inverse-hover: #222222; /* --dark-surface-2: inverse buttons lighten on hover */
+  --surface-sunken: #181818;        /* dark-theme.css:219 value for .bg-stone-300 */
+
+  --border-strong: rgba(255, 255, 255, 0.15); /* --dark-border-mid */
+  --border: rgba(255, 255, 255, 0.10);        /* --dark-border */
+  --border-subtle: rgba(255, 255, 255, 0.10);
+  --border-muted: rgba(255, 255, 255, 0.15);
+  --border-hover: rgba(255, 255, 255, 0.22);  /* --dark-border-strong */
+  --ring: rgba(255, 255, 255, 0.22);          /* --dark-border-strong */
+
+  --ink: #eeeeee;            /* --dark-text */
+  --ink-strong: #eeeeee;
+  --ink-muted: #9a9a9a;      /* --dark-muted */
+  --ink-subtle: #9a9a9a;
+  --ink-dim: #636363;        /* --dark-dim */
+
+  --scrim: rgba(0, 0, 0, 0.75);               /* dark-theme.css:381 */
+
+  /* Offsets scaled 2/3/4 around the existing dark value (3px + the same
+     ambient blur), so depth hierarchy is preserved instead of flattened. */
+  --neo-shadow-sm: 2px 2px 0 0 rgba(255, 255, 255, 0.08), 0 4px 16px rgba(0, 0, 0, 0.5);
+  --neo-shadow: 3px 3px 0 0 rgba(255, 255, 255, 0.08), 0 8px 28px rgba(0, 0, 0, 0.55);
+  --neo-shadow-lg: 4px 4px 0 0 rgba(255, 255, 255, 0.08), 0 12px 36px rgba(0, 0, 0, 0.6);
+  --neo-shadow-accent: 3px 3px 0 0 rgba(251, 191, 36, 0.35), 0 4px 16px rgba(0, 0, 0, 0.5);
+  --neo-shadow-frame: 0 8px 40px rgba(0, 0, 0, 0.7); /* .app-main-frame, dark-theme.css:314 */
+}
+
+
+/* ── GENUINELY REMOVED (verified 0 references) ──────────────────────────────
+   --neo-bg #F4F4F0  ->  folded into --canvas; --landing-neo-bg now aliases it.
+   .landing-neo-shadow / .landing-neo-shadow-sm  ->  0 class uses left after
+       the shadow batch; superseded by `shadow-neo`.
+   COLORS {} in constants.ts (sage/clay/slate/dustyRose/background/card/
+       text/gridEmpty)  ->  dead, contradicts THEMES, shares no value with the
+       app canvas. Deleted; not carried over.
+   ------------------------------------------------------------------------- */

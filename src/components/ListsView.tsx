@@ -48,23 +48,23 @@ const ListForm: React.FC<{
     };
 
     return (
-        <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-4">
-            <h3 className="text-sm font-black uppercase tracking-wider text-black">{title}</h3>
+        <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4">
+            <h3 className="text-sm font-black uppercase tracking-wider text-ink-strong">{title}</h3>
 
             <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-stone-400">Name</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-ink-subtle">Name</label>
                 <input
                     ref={inputRef}
                     value={name}
                     onChange={e => setName(e.target.value)}
                     placeholder="e.g. Books I've read"
-                    className="px-3 py-2 border-2 border-black text-sm font-medium text-stone-800 placeholder:text-stone-300 outline-none focus:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                    className="px-3 py-2 border-2 border-edge-strong text-sm font-medium text-ink-strong placeholder:text-ink-dim outline-none focus:shadow-neo-sm"
                     maxLength={60}
                 />
             </div>
 
             <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-stone-400">Color</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-ink-subtle">Color</label>
                 <div className="flex flex-wrap gap-2">
                     {PRESET_COLORS.map(c => (
                         <button
@@ -83,7 +83,7 @@ const ListForm: React.FC<{
             </div>
 
             <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-stone-400">Emoji (optional)</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-ink-subtle">Emoji (optional)</label>
                 <div className="flex flex-wrap gap-1.5 items-center">
                     {PRESET_EMOJIS.map(e => (
                         <button
@@ -103,7 +103,7 @@ const ListForm: React.FC<{
                 <button
                     type="submit"
                     disabled={!name.trim()}
-                    className="flex-1 py-2 text-xs font-black uppercase tracking-wider bg-black text-white border-2 border-black transition-all hover:bg-stone-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="flex-1 py-2 text-xs font-black uppercase tracking-wider bg-surface-inverse text-ink-inverse border-2 border-edge-strong transition-all hover:bg-surface-inverse-hover disabled:opacity-40 disabled:cursor-not-allowed"
                     style={{ boxShadow: name.trim() ? '2px 2px 0px 0px rgba(0,0,0,1)' : 'none' }}
                 >
                     Save
@@ -111,7 +111,7 @@ const ListForm: React.FC<{
                 <button
                     type="button"
                     onClick={onCancel}
-                    className="px-4 py-2 text-xs font-black uppercase tracking-wider border-2 border-stone-300 text-stone-600 hover:border-stone-500 transition-colors"
+                    className="px-4 py-2 text-xs font-black uppercase tracking-wider border-2 border-edge-muted text-ink hover:border-edge-hover transition-colors"
                 >
                     Cancel
                 </button>
@@ -128,7 +128,7 @@ const ItemRow: React.FC<{
     onEdit: () => void;
 }> = ({ item, theme, onToggle, onDelete, onEdit }) => {
     return (
-        <div className={`group flex items-start gap-3 py-3 border-b border-stone-100 transition-opacity ${item.completed ? 'opacity-50' : ''}`}>
+        <div className={`group flex items-start gap-3 py-3 border-b border-edge-subtle transition-opacity ${item.completed ? 'opacity-50' : ''}`}>
             <button
                 onClick={onToggle}
                 className="mt-0.5 w-5 h-5 border-2 flex items-center justify-center shrink-0 transition-all"
@@ -142,18 +142,18 @@ const ItemRow: React.FC<{
                 {item.completed && <Check size={10} strokeWidth={3} color="white" />}
             </button>
             <div className="flex-1 min-w-0">
-                <span className={`text-sm font-medium leading-snug block ${item.completed ? 'line-through text-stone-400' : 'text-stone-800'}`}>
+                <span className={`text-sm font-medium leading-snug block ${item.completed ? 'line-through text-ink-subtle' : 'text-ink-strong'}`}>
                     {item.text}
                 </span>
                 {item.notes && (
-                    <span className="text-xs text-stone-400 mt-0.5 block leading-relaxed">{item.notes}</span>
+                    <span className="text-xs text-ink-subtle mt-0.5 block leading-relaxed">{item.notes}</span>
                 )}
             </div>
             <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                <button onClick={onEdit} className="p-1 text-stone-300 hover:text-stone-600 transition-colors" title="Add notes">
+                <button onClick={onEdit} className="p-1 text-ink-dim hover:text-ink transition-colors" title="Add notes">
                     <Pencil size={12} />
                 </button>
-                <button onClick={onDelete} className="p-1 text-stone-300 hover:text-red-500 transition-colors" title="Delete">
+                <button onClick={onDelete} className="p-1 text-ink-dim hover:text-red-500 transition-colors" title="Delete">
                     <Trash2 size={12} />
                 </button>
             </div>
@@ -225,15 +225,15 @@ export const ListsView: React.FC<ListsViewProps> = ({
     const isModalOpen = modal.type !== 'none';
 
     return (
-        <div className="flex flex-col h-full min-h-0 overflow-hidden bg-white">
+        <div className="flex flex-col h-full min-h-0 overflow-hidden bg-surface">
             {/* Header */}
-            <div className="flex items-center gap-2 px-4 py-3 border-b-[3px] border-black bg-white shrink-0">
+            <div className="flex items-center gap-2 px-4 py-3 border-b-3 border-edge-strong bg-surface shrink-0">
                 <List size={15} style={{ color: theme.primary }} />
-                <h2 className="flex-1 text-base font-black uppercase tracking-tight text-black">Lists</h2>
+                <h2 className="flex-1 text-base font-black uppercase tracking-tight text-ink-strong">Lists</h2>
                 {lists.length > 0 && (
-                    <span className="px-2 py-0.5 text-[10px] font-black bg-black text-white">{lists.length}</span>
+                    <span className="px-2 py-1 text-[10px] font-black bg-surface-inverse text-ink-inverse">{lists.length}</span>
                 )}
-                <button onClick={onClose} className="p-1.5 text-stone-400 hover:text-black hover:bg-stone-100 rounded transition-colors">
+                <button onClick={onClose} className="p-1.5 text-ink-subtle hover:text-ink-strong hover:bg-surface-strong rounded transition-colors">
                     <X size={16} />
                 </button>
             </div>
@@ -263,23 +263,23 @@ export const ListsView: React.FC<ListsViewProps> = ({
                         </div>
                     )}
                     {modal.type === 'item-notes' && editingItem && (
-                        <div className="p-5 flex flex-col gap-4">
-                            <h3 className="text-sm font-black uppercase tracking-wider text-black">Edit Item</h3>
+                        <div className="p-6 flex flex-col gap-4">
+                            <h3 className="text-sm font-black uppercase tracking-wider text-ink-strong">Edit Item</h3>
                             <div className="flex flex-col gap-1.5">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-stone-400">Text</label>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-ink-subtle">Text</label>
                                 <input
                                     value={editingItem.text}
                                     onChange={e => setEditingItem(ei => ei ? { ...ei, text: e.target.value } : null)}
-                                    className="px-3 py-2 border-2 border-black text-sm font-medium text-stone-800 outline-none focus:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                                    className="px-3 py-2 border-2 border-edge-strong text-sm font-medium text-ink-strong outline-none focus:shadow-neo-sm"
                                     autoFocus
                                 />
                             </div>
                             <div className="flex flex-col gap-1.5">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-stone-400">Notes (optional)</label>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-ink-subtle">Notes (optional)</label>
                                 <textarea
                                     value={editingItem.notes}
                                     onChange={e => setEditingItem(ei => ei ? { ...ei, notes: e.target.value } : null)}
-                                    className="px-3 py-2 border-2 border-stone-300 text-sm text-stone-700 placeholder:text-stone-300 outline-none focus:border-black resize-none"
+                                    className="px-3 py-2 border-2 border-edge-muted text-sm text-ink placeholder:text-ink-dim outline-none focus:border-edge-strong resize-none"
                                     rows={3}
                                     placeholder="Price, link, author, reason…"
                                 />
@@ -287,14 +287,14 @@ export const ListsView: React.FC<ListsViewProps> = ({
                             <div className="flex gap-2 pt-1">
                                 <button
                                     onClick={handleSaveEditItem}
-                                    className="flex-1 py-2 text-xs font-black uppercase tracking-wider bg-black text-white border-2 border-black hover:bg-stone-800"
+                                    className="flex-1 py-2 text-xs font-black uppercase tracking-wider bg-surface-inverse text-ink-inverse border-2 border-edge-strong hover:bg-surface-inverse-hover"
                                     style={{ boxShadow: '2px 2px 0px 0px rgba(0,0,0,1)' }}
                                 >
                                     Save
                                 </button>
                                 <button
                                     onClick={() => { setModal({ type: 'none' }); setEditingItem(null); }}
-                                    className="px-4 py-2 text-xs font-black uppercase tracking-wider border-2 border-stone-300 text-stone-600 hover:border-stone-500 transition-colors"
+                                    className="px-4 py-2 text-xs font-black uppercase tracking-wider border-2 border-edge-muted text-ink hover:border-edge-hover transition-colors"
                                 >
                                     Cancel
                                 </button>
@@ -306,10 +306,10 @@ export const ListsView: React.FC<ListsViewProps> = ({
                 /* ── Main two-panel layout ── */
                 <div className="flex flex-1 min-h-0 overflow-hidden">
                     {/* Left: list selector */}
-                    <div className="w-[140px] sm:w-[160px] shrink-0 border-r-[3px] border-black flex flex-col">
+                    <div className="w-[140px] sm:w-[160px] shrink-0 border-r-3 border-edge-strong flex flex-col">
                         <div className="flex-1 overflow-y-auto py-1">
                             {lists.length === 0 && (
-                                <div className="px-3 py-6 text-center text-[11px] text-stone-400 font-medium leading-relaxed">
+                                <div className="px-3 py-6 text-center text-[11px] text-ink-subtle font-medium leading-relaxed">
                                     No lists yet.<br />Create one below.
                                 </div>
                             )}
@@ -321,24 +321,24 @@ export const ListsView: React.FC<ListsViewProps> = ({
                                     <button
                                         key={list.id}
                                         onClick={() => setSelectedListId(list.id)}
-                                        className={`w-full text-left px-3 py-2.5 border-b border-stone-100 transition-all ${isActive ? 'bg-stone-100' : 'hover:bg-stone-50'}`}
+                                        className={`w-full text-left px-3 py-2.5 border-b border-edge-subtle transition-all ${isActive ? 'bg-surface-strong' : 'hover:bg-surface-muted'}`}
                                         style={isActive ? { borderLeft: `3px solid ${list.color}` } : { borderLeft: '3px solid transparent' }}
                                     >
                                         <div className="flex items-center gap-1.5 mb-0.5">
                                             {list.emoji && <span className="text-sm leading-none">{list.emoji}</span>}
-                                            <span className="text-xs font-black uppercase tracking-tight text-stone-800 truncate leading-tight">{list.name}</span>
+                                            <span className="text-xs font-black uppercase tracking-tight text-ink-strong truncate leading-tight">{list.name}</span>
                                         </div>
-                                        <div className="text-[10px] text-stone-400 font-medium">
+                                        <div className="text-[10px] text-ink-subtle font-medium">
                                             {listItems.length === 0 ? 'Empty' : `${doneCount}/${listItems.length}`}
                                         </div>
                                     </button>
                                 );
                             })}
                         </div>
-                        <div className="p-2 border-t-[3px] border-black shrink-0">
+                        <div className="p-2 border-t-3 border-edge-strong shrink-0">
                             <button
                                 onClick={() => setModal({ type: 'create-list' })}
-                                className="w-full flex items-center justify-center gap-1.5 py-2 text-[11px] font-black uppercase tracking-wider border-2 border-black text-black hover:bg-black hover:text-white transition-colors"
+                                className="w-full flex items-center justify-center gap-1.5 py-2 text-[11px] font-black uppercase tracking-wider border-2 border-edge-strong text-ink-strong hover:bg-surface-inverse hover:text-ink-inverse transition-colors"
                                 style={{ boxShadow: '2px 2px 0px 0px rgba(0,0,0,1)' }}
                                 onMouseEnter={e => (e.currentTarget.style.boxShadow = '1px 1px 0px 0px rgba(0,0,0,1)')}
                                 onMouseLeave={e => (e.currentTarget.style.boxShadow = '2px 2px 0px 0px rgba(0,0,0,1)')}
@@ -351,32 +351,32 @@ export const ListsView: React.FC<ListsViewProps> = ({
                     {/* Right: items panel */}
                     <div className="flex-1 flex flex-col min-w-0 min-h-0">
                         {!selectedList ? (
-                            <div className="flex-1 flex items-center justify-center text-stone-300 text-sm font-medium">
+                            <div className="flex-1 flex items-center justify-center text-ink-dim text-sm font-medium">
                                 Select or create a list
                             </div>
                         ) : (
                             <>
                                 {/* List header */}
                                 <div
-                                    className="flex items-center gap-2 px-4 py-2.5 border-b-2 border-stone-200 shrink-0"
+                                    className="flex items-center gap-2 px-4 py-2.5 border-b-2 border-edge shrink-0"
                                     style={{ borderBottomColor: selectedList.color + '60' }}
                                 >
                                     <div
                                         className="w-2.5 h-2.5 rounded-full shrink-0"
                                         style={{ backgroundColor: selectedList.color }}
                                     />
-                                    <span className="flex-1 text-sm font-black uppercase tracking-tight text-stone-800 truncate">
+                                    <span className="flex-1 text-sm font-black uppercase tracking-tight text-ink-strong truncate">
                                         {selectedList.emoji && <span className="mr-1">{selectedList.emoji}</span>}
                                         {selectedList.name}
                                     </span>
                                     {activeItems.length > 0 && (
-                                        <span className="text-[10px] font-black text-stone-400 shrink-0">{activeItems.length} left</span>
+                                        <span className="text-[10px] font-black text-ink-subtle shrink-0">{activeItems.length} left</span>
                                     )}
                                     <button
                                         onClick={() => {
                                             setModal({ type: 'edit-list', list: selectedList });
                                         }}
-                                        className="p-1 text-stone-300 hover:text-stone-600 transition-colors shrink-0"
+                                        className="p-1 text-ink-dim hover:text-ink transition-colors shrink-0"
                                         title="Edit list"
                                     >
                                         <Pencil size={12} />
@@ -386,7 +386,7 @@ export const ListsView: React.FC<ListsViewProps> = ({
                                 {/* Items */}
                                 <div className="flex-1 overflow-y-auto px-4">
                                     {items.length === 0 && (
-                                        <div className="py-10 text-center text-stone-300 text-sm font-medium">
+                                        <div className="py-10 text-center text-ink-dim text-sm font-medium">
                                             Nothing here yet — add your first item below.
                                         </div>
                                     )}
@@ -411,7 +411,7 @@ export const ListsView: React.FC<ListsViewProps> = ({
                                         <div className="mt-2">
                                             <button
                                                 onClick={() => setShowCompletedItems(p => !p)}
-                                                className="flex items-center gap-1.5 py-2 text-[10px] font-black uppercase tracking-widest text-stone-400 hover:text-stone-600 transition-colors"
+                                                className="flex items-center gap-1.5 py-2 text-[10px] font-black uppercase tracking-widest text-ink-subtle hover:text-ink transition-colors"
                                             >
                                                 <span>{showCompletedItems ? '▾' : '▸'}</span>
                                                 Done ({completedItems.length})
@@ -435,7 +435,7 @@ export const ListsView: React.FC<ListsViewProps> = ({
                                 </div>
 
                                 {/* Add item form */}
-                                <div className="shrink-0 border-t-[3px] border-black p-3 bg-white">
+                                <div className="shrink-0 border-t-3 border-edge-strong p-3 bg-surface">
                                     <form onSubmit={handleAddItem} className="flex flex-col gap-2">
                                         <div className="flex gap-2">
                                             <input
@@ -443,13 +443,13 @@ export const ListsView: React.FC<ListsViewProps> = ({
                                                 value={newItemText}
                                                 onChange={e => setNewItemText(e.target.value)}
                                                 placeholder="Add item…"
-                                                className="flex-1 px-3 py-2 border-2 border-black text-sm font-medium text-stone-800 placeholder:text-stone-300 outline-none focus:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
+                                                className="flex-1 px-3 py-2 border-2 border-edge-strong text-sm font-medium text-ink-strong placeholder:text-ink-dim outline-none focus:shadow-neo-sm transition-all"
                                                 maxLength={200}
                                             />
                                             <button
                                                 type="button"
                                                 onClick={() => setShowNewItemNotes(p => !p)}
-                                                className={`px-2 border-2 text-[10px] font-black uppercase transition-colors ${showNewItemNotes ? 'border-black bg-black text-white' : 'border-stone-300 text-stone-400 hover:border-stone-500'}`}
+                                                className={`px-2 border-2 text-[10px] font-black uppercase transition-colors ${showNewItemNotes ? 'border-edge-strong bg-surface-inverse text-ink-inverse' : 'border-edge-muted text-ink-subtle hover:border-edge-hover'}`}
                                                 title="Add notes"
                                             >
                                                 +note
@@ -457,7 +457,7 @@ export const ListsView: React.FC<ListsViewProps> = ({
                                             <button
                                                 type="submit"
                                                 disabled={!newItemText.trim()}
-                                                className="px-3 py-2 border-2 border-black bg-black text-white text-xs font-black uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:bg-stone-800"
+                                                className="px-3 py-2 border-2 border-edge-strong bg-surface-inverse text-ink-inverse text-xs font-black uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:bg-surface-inverse-hover"
                                                 style={{ boxShadow: newItemText.trim() ? '2px 2px 0px 0px rgba(0,0,0,1)' : 'none' }}
                                             >
                                                 <Plus size={14} strokeWidth={3} />
@@ -468,7 +468,7 @@ export const ListsView: React.FC<ListsViewProps> = ({
                                                 value={newItemNotes}
                                                 onChange={e => setNewItemNotes(e.target.value)}
                                                 placeholder="Price, link, author, reason…"
-                                                className="w-full px-3 py-1.5 border-2 border-stone-300 text-xs text-stone-700 placeholder:text-stone-300 outline-none focus:border-black transition-colors"
+                                                className="w-full px-3 py-1.5 border-2 border-edge-muted text-xs text-ink placeholder:text-ink-dim outline-none focus:border-edge-strong transition-colors"
                                                 maxLength={300}
                                                 autoFocus
                                             />

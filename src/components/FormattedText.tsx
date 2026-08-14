@@ -11,7 +11,7 @@ export const FormattedText: React.FC<FormattedTextProps> = ({ text, highlightCol
     const parts = text.split(/(\[\[.*?\]\])/g);
 
     return (
-        <span className={`text-black ${className}`}>
+        <span className={`text-ink-strong ${className}`}>
             {parts.map((part, i) => {
                 if (part.startsWith('[[') && part.endsWith(']]')) {
                     const content = part.substring(2, part.length - 2);

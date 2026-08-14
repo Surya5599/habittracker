@@ -21,7 +21,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthForm } from '../components/AuthForm';
 import { useTheme } from '../hooks/useTheme';
-import { THEMES } from '../constants';
+import { THEMES, MOOD_SCALE } from '../constants';
 import { supabase } from '../supabase';
 
 type ActiveDay = {
@@ -117,11 +117,11 @@ const defaultHabits = (): HabitItem[] => ([
 ]);
 
 const LANDING_MOODS = [
-  { value: 1, icon: Angry, color: '#ef4444', label: 'Very Bad' },
-  { value: 2, icon: Frown, color: '#f97316', label: 'Bad' },
-  { value: 3, icon: Meh, color: '#eab308', label: 'Neutral' },
-  { value: 4, icon: Smile, color: '#84cc16', label: 'Good' },
-  { value: 5, icon: Laugh, color: '#10b981', label: 'Very Good' },
+  { value: 1, icon: Angry, color: MOOD_SCALE[0], label: 'Very Bad' },
+  { value: 2, icon: Frown, color: MOOD_SCALE[1], label: 'Bad' },
+  { value: 3, icon: Meh, color: MOOD_SCALE[2], label: 'Okay' },
+  { value: 4, icon: Smile, color: MOOD_SCALE[3], label: 'Good' },
+  { value: 5, icon: Laugh, color: MOOD_SCALE[4], label: 'Very Good' },
 ] as const;
 
 const mixHex = (colorA: string, colorB: string, weight = 0.5) => {
@@ -137,41 +137,41 @@ const mixHex = (colorA: string, colorB: string, weight = 0.5) => {
 
 const StorySection: React.FC = () => {
   return (
-    <section className="overflow-hidden border-t-4 border-black bg-white px-6 py-24">
+    <section className="overflow-hidden border-t-4 border-edge-strong bg-surface px-6 py-24">
       <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 lg:grid-cols-2">
         <div className="relative order-2 mx-auto w-full max-w-lg lg:order-1">
           <div className="absolute left-1/2 top-1/2 h-full w-full -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--landing-neo-green)]/20 blur-3xl" />
-          <div className="landing-neo-shadow relative z-10 flex flex-col gap-6 rounded-2xl border-[3px] border-black bg-white p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+          <div className="shadow-neo relative z-10 flex flex-col gap-6 rounded-2xl border-3 border-edge-strong bg-surface p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-neo-lg">
             <div className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 fill-yellow-500 text-yellow-500" />
-              <h3 className="text-xs font-black uppercase tracking-[0.15em] text-gray-500">Your Story This Month</h3>
+              <h3 className="text-xs font-black uppercase tracking-[0.15em] text-ink-muted">Your Story This Month</h3>
             </div>
-            <p className="text-lg font-bold leading-relaxed text-gray-900">
+            <p className="text-lg font-bold leading-relaxed text-ink-strong">
               You logged <span className="text-[var(--landing-neo-green)]">53</span> completions this month. Narrowing focus could improve carryover next month.
             </p>
-            <p className="text-lg font-bold italic leading-relaxed text-gray-900">
+            <p className="text-lg font-bold italic leading-relaxed text-ink-strong">
               You&apos;re up <span className="text-[var(--landing-neo-green)]">21%</span> versus last month, a clear positive shift in execution.
             </p>
-            <p className="text-lg font-bold italic leading-relaxed text-gray-900">
+            <p className="text-lg font-bold italic leading-relaxed text-ink-strong">
               <span className="text-[var(--landing-neo-green)]">Journaling</span> was your anchor this month with <span className="text-[var(--landing-neo-green)]">7</span> completions.
             </p>
           </div>
         </div>
 
         <div className="order-1 flex flex-col gap-6 lg:order-2">
-          <div className="landing-neo-shadow mb-2 flex h-16 w-16 items-center justify-center rounded-2xl border-[3px] border-black bg-[var(--landing-neo-green)] text-black">
+          <div className="shadow-neo mb-2 flex h-16 w-16 items-center justify-center rounded-2xl border-3 border-edge-strong bg-[var(--landing-neo-green)] text-ink-strong">
             <Sparkles className="h-8 w-8" />
           </div>
           <h2 className="font-serif text-5xl font-black uppercase leading-[0.9] tracking-tight md:text-7xl">
             Get Your <br /><span className="text-[var(--landing-neo-green)]">Weekly & Yearly</span> Story
           </h2>
-          <p className="max-w-lg text-xl font-medium leading-relaxed text-gray-600">
+          <p className="max-w-lg text-xl font-medium leading-relaxed text-ink">
             Don&apos;t just track numbers. Get personalized insights that tell the story of your progress, highlight your anchors, and guide your focus for the next cycle.
           </p>
           <ul className="mt-4 flex flex-col gap-4">
             {['Actionable feedback', 'Identify your anchor habits', 'Course-correct before you slip'].map((item) => (
               <li key={item} className="flex items-center gap-4 text-lg font-bold">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-[3px] border-black bg-white">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-3 border-edge-strong bg-surface">
                   <Check className="h-5 w-5" />
                 </div>
                 {item}
@@ -209,24 +209,24 @@ const MonthCard: React.FC<MonthCardProps> = ({
   const visibleDays = days.slice(0, rowsNeeded * 7);
 
   return (
-    <div className="flex h-full flex-col rounded-[20px] bg-white p-6">
+    <div className="flex h-full flex-col rounded-2xl bg-surface p-6">
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-500">{monthName} {year}</h3>
+          <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-ink-muted">{monthName} {year}</h3>
           <div className="mt-2 flex items-center gap-2">
-            <span className="rounded-full bg-black px-2.5 py-1 text-[10px] font-bold text-white">{percentDone}% DONE</span>
-            <span className="text-xs font-bold text-gray-500">{logs} logs</span>
+            <span className="rounded-full bg-surface-inverse px-2.5 py-1 text-[10px] font-bold text-ink-inverse">{percentDone}% DONE</span>
+            <span className="text-xs font-bold text-ink-muted">{logs} logs</span>
           </div>
-          <p className="mt-1.5 text-xs font-medium text-gray-600">{completedText}</p>
+          <p className="mt-1.5 text-xs font-medium text-ink">{completedText}</p>
         </div>
-        <button className="flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5 text-[10px] font-bold text-gray-700 transition-colors hover:bg-gray-50">
+        <button className="flex items-center gap-1.5 rounded-full border border-edge px-3 py-1.5 text-[10px] font-bold text-ink transition-colors hover:bg-surface-muted">
           OPEN <ExternalLink className="h-3 w-3" />
         </button>
       </div>
 
       <div className="mb-4 grid grid-cols-7 gap-1.5">
         {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
-          <div key={`${d}-${i}`} className="mb-2 text-center text-[10px] font-black text-gray-400">{d}</div>
+          <div key={`${d}-${i}`} className="mb-2 text-center text-[10px] font-black text-ink-subtle">{d}</div>
         ))}
         {visibleDays.map((day, i) => {
           if (!day) {
@@ -250,15 +250,15 @@ const MonthCard: React.FC<MonthCardProps> = ({
           }
 
           return (
-            <div key={i} className="relative flex aspect-square cursor-pointer items-center justify-center rounded-xl border border-gray-100 transition-colors hover:bg-gray-50">
-              <span className="absolute left-1.5 top-1.5 text-[9px] font-bold text-gray-400">{day.dayNum}</span>
-              <div className="mt-2 h-1.5 w-1.5 rounded-full bg-gray-200" />
+            <div key={i} className="relative flex aspect-square cursor-pointer items-center justify-center rounded-xl border border-edge-subtle transition-colors hover:bg-surface-muted">
+              <span className="absolute left-1.5 top-1.5 text-[9px] font-bold text-ink-subtle">{day.dayNum}</span>
+              <div className="mt-2 h-1.5 w-1.5 rounded-full bg-edge" />
             </div>
           );
         })}
       </div>
 
-      <div className="mt-auto flex items-center justify-between border-t border-gray-100 pt-4 text-[11px] font-bold text-gray-500">
+      <div className="mt-auto flex items-center justify-between border-t border-edge-subtle pt-4 text-[11px] font-bold text-ink-muted">
         <span>{logs} done</span>
         <span>{topHabit}</span>
       </div>
@@ -277,16 +277,16 @@ const YearInReview: React.FC = () => {
   }, []);
 
   return (
-    <section className="overflow-hidden border-t-4 border-black bg-[#fafaf9] px-6 py-24">
+    <section className="overflow-hidden border-t-4 border-edge-strong bg-[#fafaf9] px-6 py-24">
       <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 lg:grid-cols-2">
         <div className="flex flex-col gap-6">
-          <div className="landing-neo-shadow mb-2 flex h-16 w-16 items-center justify-center rounded-2xl border-[3px] border-black bg-[var(--landing-neo-pink)] text-white">
-            <Zap className="h-8 w-8 fill-black text-black" />
+          <div className="shadow-neo mb-2 flex h-16 w-16 items-center justify-center rounded-2xl border-3 border-edge-strong bg-[var(--landing-neo-pink)] text-ink-inverse">
+            <Zap className="h-8 w-8 fill-black text-ink-strong" />
           </div>
           <h2 className="font-serif text-5xl font-black uppercase leading-[0.9] tracking-tight md:text-7xl">
             Your Year <br /><span className="text-[var(--landing-neo-blue)]">In Review</span>
           </h2>
-          <p className="max-w-lg text-xl font-medium leading-relaxed text-gray-600">
+          <p className="max-w-lg text-xl font-medium leading-relaxed text-ink">
             Building habits isn&apos;t just about today. It&apos;s about the long game. Watch your consistency grow month over month with beautiful, shareable retro grids.
           </p>
           <ul className="mt-4 flex flex-col gap-4">
@@ -296,7 +296,7 @@ const YearInReview: React.FC = () => {
               { label: 'Share your progress with friends', color: 'var(--landing-neo-pink)' },
             ].map((item) => (
               <li key={item.label} className="flex items-center gap-4 text-lg font-bold">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-[3px] border-black" style={{ backgroundColor: item.color }}>
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-3 border-edge-strong" style={{ backgroundColor: item.color }}>
                   <Check className="h-5 w-5" />
                 </div>
                 {item.label}
@@ -314,7 +314,7 @@ const YearInReview: React.FC = () => {
               animate={{ rotateX: 0, opacity: 1, scale: 1 }}
               exit={{ rotateX: -90, opacity: 0, scale: 0.9 }}
               transition={{ duration: 0.5, ease: 'easeInOut' }}
-              className="landing-neo-shadow absolute inset-0 z-10 rounded-[24px] border-[3px] border-black bg-white"
+              className="shadow-neo absolute inset-0 z-10 rounded-2xl border-3 border-edge-strong bg-surface"
             >
               <MonthCard {...monthsData[currentMonthIdx]} />
             </motion.div>
@@ -418,11 +418,11 @@ const InteractiveCard: React.FC = () => {
   const renderContent = () => {
     if (activeTab === 'habits') {
       return (
-        <div className="landing-scrollbar flex flex-1 flex-col items-center overflow-y-auto p-5">
+        <div className="landing-scrollbar flex flex-1 flex-col items-center overflow-y-auto p-6">
           <div className="relative mb-6 mt-2 h-28 w-28 shrink-0">
             <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36">
               <path
-                className="text-gray-200"
+                className="text-ink-dim"
                 strokeWidth="4"
                 stroke="currentColor"
                 fill="none"
@@ -448,16 +448,16 @@ const InteractiveCard: React.FC = () => {
             {habits.map((habit) => (
               <div key={habit.name} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className={`text-sm font-bold transition-colors duration-300 ${habit.done ? 'text-gray-400 line-through decoration-2' : 'text-gray-700'}`}>
+                  <span className={`text-sm font-bold transition-colors duration-300 ${habit.done ? 'text-ink-subtle line-through decoration-2' : 'text-ink'}`}>
                     {habit.name}
                   </span>
                   {habit.count && (
-                    <span className="rounded border border-gray-200 bg-gray-100 px-1 text-[10px] font-bold text-gray-500">
+                    <span className="rounded border border-edge bg-surface-strong px-1 text-[10px] font-bold text-ink-muted">
                       {habit.count}
                     </span>
                   )}
                 </div>
-                <div className={`flex h-5 w-5 items-center justify-center rounded-[3px] border-2 border-black transition-colors duration-300 ${habit.done ? 'bg-black text-white' : 'bg-white'}`}>
+                <div className={`flex h-5 w-5 items-center justify-center rounded border-2 border-edge-strong transition-colors duration-300 ${habit.done ? 'bg-theme-primary text-theme-ink' : 'bg-surface'}`}>
                   {habit.done && <Check className="h-3 w-3 stroke-[4]" />}
                 </div>
               </div>
@@ -469,38 +469,38 @@ const InteractiveCard: React.FC = () => {
 
     if (activeTab === 'tasks') {
       return (
-        <div className="flex flex-1 flex-col bg-white">
-          <div className="flex shrink-0 items-center justify-between border-b border-gray-100 p-3">
-            <div className="rounded border border-gray-300 px-2 py-1 text-[10px] font-bold text-gray-600">
+        <div className="flex flex-1 flex-col bg-surface">
+          <div className="flex shrink-0 items-center justify-between border-b border-edge-subtle p-3">
+            <div className="rounded border border-edge-muted px-2 py-1 text-[10px] font-bold text-ink">
               {tasks.length} TASKS
             </div>
-            <div className="flex cursor-pointer items-center gap-1 rounded border border-black px-2 py-1 text-[10px] font-bold hover:bg-gray-100">
+            <div className="flex cursor-pointer items-center gap-1 rounded border border-edge-strong px-2 py-1 text-[10px] font-bold hover:bg-surface-strong">
               <Plus className="h-3 w-3" /> ADD
             </div>
           </div>
           <div className="flex flex-1 flex-col gap-3 p-4">
             {isAddingTask && (
               <div className="flex items-center gap-3">
-                <div className="h-5 w-5 shrink-0 rounded-[3px] border-2 border-gray-300" />
-                <div className="flex-1 border-b-2 border-black pb-1">
+                <div className="h-5 w-5 shrink-0 rounded border-2 border-edge-muted" />
+                <div className="flex-1 border-b-2 border-edge-strong pb-1">
                   <span className="text-sm font-bold">{taskInput}</span>
-                  <span className="ml-1 inline-block h-4 w-1.5 animate-pulse align-middle bg-black" />
+                  <span className="ml-1 inline-block h-4 w-1.5 animate-pulse align-middle bg-surface-inverse" />
                 </div>
               </div>
             )}
             {tasks.map((task) => (
               <div key={task.text} className="flex items-center gap-3">
-                <div className={`flex h-5 w-5 items-center justify-center rounded-[3px] border-2 border-black transition-colors duration-300 ${task.done ? 'bg-black text-white' : 'bg-white'}`}>
+                <div className={`flex h-5 w-5 items-center justify-center rounded border-2 border-edge-strong transition-colors duration-300 ${task.done ? 'bg-theme-primary text-theme-ink' : 'bg-surface'}`}>
                   {task.done && <Check className="h-3 w-3 stroke-[4]" />}
                 </div>
-                <span className={`text-sm font-bold transition-colors duration-300 ${task.done ? 'text-gray-400 line-through decoration-2' : 'text-gray-700'}`}>
+                <span className={`text-sm font-bold transition-colors duration-300 ${task.done ? 'text-ink-subtle line-through decoration-2' : 'text-ink'}`}>
                   {task.text}
                 </span>
               </div>
             ))}
             {!isAddingTask && tasks.length === 0 && (
               <div className="flex flex-1 items-center justify-center">
-                <span className="text-sm font-medium italic text-gray-400">No Tasks Today</span>
+                <span className="text-sm font-medium italic text-ink-subtle">No Tasks Today</span>
               </div>
             )}
           </div>
@@ -509,18 +509,18 @@ const InteractiveCard: React.FC = () => {
     }
 
     return (
-      <div className="flex flex-1 flex-col bg-white p-5">
+      <div className="flex flex-1 flex-col bg-surface p-6">
         <div className="mb-6 shrink-0 text-center">
-          <span className="text-[11px] font-black tracking-widest text-gray-700">MOOD</span>
+          <span className="text-[11px] font-black tracking-widest text-ink">MOOD</span>
           <div className="mt-3 flex justify-center gap-4">
             {LANDING_MOODS.map((item, i) => {
               const Icon = item.icon;
               return (
-              <div key={item.value} className={`flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 ${i === mood ? 'scale-110 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'opacity-60'}`} style={i === mood ? { backgroundColor: 'var(--landing-neo-green)' } : {}}>
+              <div key={item.value} className={`flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 ${i === mood ? 'scale-110 border-2 border-edge-strong shadow-neo-sm' : 'opacity-60'}`} style={i === mood ? { backgroundColor: 'var(--landing-neo-green)' } : {}}>
                 <Icon
                   size={20}
                   strokeWidth={i === mood ? 2.8 : 2}
-                  className="text-black"
+                  className="text-ink-strong"
                   fill={i === mood ? item.color : 'none'}
                 />
               </div>
@@ -530,15 +530,15 @@ const InteractiveCard: React.FC = () => {
 
         <div className="flex flex-1 flex-col">
           <div className="mb-2 flex shrink-0 items-center justify-between">
-            <span className="text-[11px] font-black tracking-widest text-gray-700">NOTES</span>
-            <button className="flex items-center gap-1 rounded border border-gray-300 px-2 py-1 text-[10px] font-bold text-gray-600 transition-colors hover:bg-gray-100">
+            <span className="text-[11px] font-black tracking-widest text-ink">NOTES</span>
+            <button className="flex items-center gap-1 rounded border border-edge-muted px-2 py-1 text-[10px] font-bold text-ink transition-colors hover:bg-surface-strong">
               <Save className="h-3 w-3" /> SAVE
             </button>
           </div>
-          <div className="relative flex-1 rounded-xl border border-gray-100 bg-gray-50 p-4 text-sm font-medium leading-relaxed text-gray-800 shadow-inner">
+          <div className="relative flex-1 rounded-xl border border-edge-subtle bg-surface-muted p-4 text-sm font-medium leading-relaxed text-ink-strong shadow-inner">
             {journalText}
             {journalText.length > 0 && journalText.length < 'Had a great day! Got so much done.'.length && (
-              <span className="ml-1 inline-block h-4 w-1.5 animate-pulse align-middle bg-black" />
+              <span className="ml-1 inline-block h-4 w-1.5 animate-pulse align-middle bg-surface-inverse" />
             )}
           </div>
         </div>
@@ -555,28 +555,28 @@ const InteractiveCard: React.FC = () => {
           animate={{ rotateY: 0, opacity: 1 }}
           exit={{ rotateY: -90, opacity: 0 }}
           transition={{ duration: 0.3, ease: 'easeInOut' }}
-          className="landing-neo-shadow flex h-full w-full flex-col overflow-hidden rounded-[22px] border-[4px] border-black bg-white md:rounded-2xl"
+          className="shadow-neo flex h-full w-full flex-col overflow-hidden rounded-2xl border-4 border-edge-strong bg-surface md:rounded-2xl"
         >
-          <div className="shrink-0 border-b-[4px] border-black p-4 text-center text-white md:p-5" style={{ backgroundColor: 'var(--landing-neo-green)' }}>
+          <div className="shrink-0 border-b-4 border-edge-strong p-4 text-center text-ink-inverse md:p-6" style={{ backgroundColor: 'var(--landing-neo-green)' }}>
             <h2 className="text-[1.7rem] font-black uppercase tracking-wide drop-shadow-sm md:text-3xl">Sunday</h2>
             <p className="mt-1 text-xs font-bold opacity-90 md:text-sm">Mar 8, 2026</p>
           </div>
 
           {renderContent()}
 
-          <div className="grid shrink-0 grid-cols-3 border-t-[4px] border-black bg-white">
-            <div className={`flex flex-col items-center justify-center border-r-[4px] border-black p-2.5 transition-colors md:p-3 ${activeTab === 'habits' ? 'bg-gray-100' : ''}`}>
-              <span className="mb-1 text-[9px] font-black tracking-wider text-gray-500 md:text-[10px]">HABITS</span>
-              <span className="text-xs font-bold text-black md:text-sm">{completedHabits}/{totalHabits}</span>
+          <div className="grid shrink-0 grid-cols-3 border-t-4 border-edge-strong bg-surface">
+            <div className={`flex flex-col items-center justify-center border-r-4 border-edge-strong p-2.5 transition-colors md:p-3 ${activeTab === 'habits' ? 'bg-surface-strong' : ''}`}>
+              <span className="mb-1 text-[9px] font-black tracking-wider text-ink-muted md:text-[10px]">HABITS</span>
+              <span className="text-xs font-bold text-ink-strong md:text-sm">{completedHabits}/{totalHabits}</span>
             </div>
-            <div className={`flex flex-col items-center justify-center border-r-[4px] border-black p-2.5 transition-colors md:p-3 ${activeTab === 'tasks' ? 'bg-gray-100' : ''}`}>
-              <span className="mb-1 text-[9px] font-black tracking-wider text-gray-500 md:text-[10px]">TASKS</span>
-              <span className="text-xs font-bold text-black md:text-sm">{tasks.length > 0 ? tasks.length : '+'}</span>
+            <div className={`flex flex-col items-center justify-center border-r-4 border-edge-strong p-2.5 transition-colors md:p-3 ${activeTab === 'tasks' ? 'bg-surface-strong' : ''}`}>
+              <span className="mb-1 text-[9px] font-black tracking-wider text-ink-muted md:text-[10px]">TASKS</span>
+              <span className="text-xs font-bold text-ink-strong md:text-sm">{tasks.length > 0 ? tasks.length : '+'}</span>
             </div>
-            <div className={`flex flex-col items-center justify-center p-2.5 transition-colors md:p-3 ${activeTab === 'journal' ? 'bg-gray-100' : ''}`}>
-              <span className="mb-1 text-[9px] font-black tracking-wider text-gray-500 md:text-[10px]">JOURNAL</span>
+            <div className={`flex flex-col items-center justify-center p-2.5 transition-colors md:p-3 ${activeTab === 'journal' ? 'bg-surface-strong' : ''}`}>
+              <span className="mb-1 text-[9px] font-black tracking-wider text-ink-muted md:text-[10px]">JOURNAL</span>
               <div className="flex items-center justify-center">
-                <selectedMood.icon size={16} strokeWidth={2.8} className="text-black" fill={selectedMood.color} />
+                <selectedMood.icon size={16} strokeWidth={2.8} className="text-ink-strong" fill={selectedMood.color} />
               </div>
             </div>
           </div>
@@ -666,7 +666,7 @@ export const LandingPage: React.FC = () => {
 
   return (
     <div
-      className="min-h-screen overflow-hidden bg-[var(--landing-neo-bg)] font-sans text-black"
+      className="min-h-screen overflow-hidden bg-[var(--landing-neo-bg)] font-sans text-ink-strong"
       style={{
         ['--landing-neo-green' as string]: theme.primary,
         ['--landing-neo-pink' as string]: theme.secondary,
@@ -687,14 +687,14 @@ export const LandingPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setAuthModalMode('signin')}
-            className="inline-flex min-h-10 items-center justify-center rounded-full border-[3px] border-black bg-white px-3 py-2 text-[11px] font-black uppercase tracking-[0.1em] text-black transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+            className="inline-flex min-h-10 items-center justify-center rounded-full border-3 border-edge-strong bg-surface px-3 py-2 text-[11px] font-black uppercase tracking-[0.1em] text-ink-strong transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-neo-sm"
           >
             Log In
           </button>
           <button
             type="button"
             onClick={() => setAuthModalMode('signup')}
-            className="landing-neo-shadow-sm inline-flex min-h-10 items-center justify-center rounded-full border-[3px] border-black bg-[var(--landing-neo-yellow)] px-3 py-2 text-[11px] font-black uppercase tracking-[0.1em] text-black transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+            className="shadow-neo inline-flex min-h-10 items-center justify-center rounded-full border-3 border-edge-strong bg-[var(--landing-neo-yellow)] px-3 py-2 text-[11px] font-black uppercase tracking-[0.1em] text-ink-strong transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-neo-sm"
           >
             Sign Up
           </button>
@@ -710,7 +710,7 @@ export const LandingPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setAuthModalMode('signup')}
-            className="landing-neo-shadow-sm rounded-full border-[3px] border-black bg-[var(--landing-neo-yellow)] px-4 py-2 text-sm font-black uppercase tracking-[0.14em] text-black transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+            className="shadow-neo rounded-full border-3 border-edge-strong bg-[var(--landing-neo-yellow)] px-4 py-2 text-sm font-black uppercase tracking-[0.14em] text-ink-strong transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-neo-sm"
           >
             Sign Up
           </button>
@@ -724,7 +724,7 @@ export const LandingPage: React.FC = () => {
           transition={{ duration: 0.5 }}
           className="z-10 flex flex-col gap-6 md:gap-8"
         >
-          <div className="landing-neo-shadow-sm inline-flex w-fit items-center gap-2 rounded-full border-[3px] border-black bg-[var(--landing-neo-green)] px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] text-white sm:px-4 sm:text-sm">
+          <div className="shadow-neo inline-flex w-fit items-center gap-2 rounded-full border-3 border-edge-strong bg-[var(--landing-neo-green)] px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] text-ink-inverse sm:px-4 sm:text-sm">
             <Flame className="h-4 w-4" />
             <span>The #1 Habit Tracker</span>
           </div>
@@ -739,7 +739,7 @@ export const LandingPage: React.FC = () => {
           </p>
 
           <div className="flex flex-col gap-2">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-stone-400">Multiple themes — pick your own</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-ink-subtle">Multiple themes — pick your own</p>
           <div className="flex flex-wrap gap-1.5">
             {THEMES.map((t) => (
               <button
@@ -747,7 +747,7 @@ export const LandingPage: React.FC = () => {
                 type="button"
                 title={t.name}
                 onClick={() => setTheme(t)}
-                className={`h-5 w-5 rounded-full overflow-hidden shrink-0 transition-transform hover:scale-125 ${theme.name === t.name ? 'ring-2 ring-black ring-offset-1 scale-125' : 'border-2 border-black/20'}`}
+                className={`h-5 w-5 rounded-full overflow-hidden shrink-0 transition-transform hover:scale-125 ${theme.name === t.name ? 'ring-2 ring-ring ring-offset-1 scale-125' : 'border-2 border-edge-strong/20'}`}
                 style={{ background: `linear-gradient(135deg, ${t.primary} 50%, ${t.secondary} 50%)` }}
               />
             ))}
@@ -758,7 +758,7 @@ export const LandingPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setAuthModalMode('signup')}
-              className="landing-neo-shadow inline-flex items-center justify-center gap-3 rounded-xl border-[3px] border-black bg-[var(--landing-neo-yellow)] px-6 py-4 text-lg font-black text-white transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] sm:px-8 sm:text-xl"
+              className="shadow-neo inline-flex items-center justify-center gap-3 rounded-xl border-3 border-edge-strong bg-[var(--landing-neo-yellow)] px-6 py-4 text-lg font-black text-ink-inverse transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-neo-sm sm:px-8 sm:text-xl"
             >
               Start for Free <ArrowRight className="h-6 w-6" />
             </button>
@@ -772,7 +772,7 @@ export const LandingPage: React.FC = () => {
                 'var(--landing-neo-green)',
                 'var(--landing-neo-yellow)',
               ].map((color, i) => (
-                <div key={i} className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-[3px] border-black" style={{ backgroundColor: color }}>
+                <div key={i} className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-3 border-edge-strong" style={{ backgroundColor: color }}>
                   <img
                     src={`https://i.pravatar.cc/100?img=${i + 11}`}
                     alt="User"
@@ -801,7 +801,7 @@ export const LandingPage: React.FC = () => {
         </div>
       </main>
 
-      <section id="features" className="border-y-4 border-black bg-black py-16 text-white sm:py-20">
+      <section id="features" className="border-y-4 border-edge-strong bg-surface-inverse py-16 text-ink-inverse sm:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
             {[
@@ -830,11 +830,11 @@ export const LandingPage: React.FC = () => {
               const Icon = feature.icon;
               return (
                 <div key={feature.title} className="flex flex-col items-center gap-4 text-center">
-                  <div className={`flex h-20 w-20 items-center justify-center rounded-2xl border-[3px] border-black text-black ${feature.rotate}`} style={{ backgroundColor: feature.color }}>
+                  <div className={`flex h-20 w-20 items-center justify-center rounded-2xl border-3 border-edge-strong text-ink-strong ${feature.rotate}`} style={{ backgroundColor: feature.color }}>
                     <Icon className="h-10 w-10" />
                   </div>
                   <h3 className="font-serif text-3xl font-bold">{feature.title}</h3>
-                  <p className="text-lg font-medium text-gray-300">{feature.copy}</p>
+                  <p className="text-lg font-medium text-ink-dim">{feature.copy}</p>
                 </div>
               );
             })}
@@ -851,7 +851,7 @@ export const LandingPage: React.FC = () => {
           <h2 className="font-serif -ml-32 text-[15vw] font-black leading-none whitespace-nowrap">HABICARD HABICARD</h2>
         </div>
 
-        <div className="landing-neo-shadow relative z-10 mx-auto max-w-4xl rounded-3xl border-[3px] border-black bg-white p-8 text-center sm:p-12 md:p-20">
+        <div className="shadow-neo relative z-10 mx-auto max-w-4xl rounded-2xl border-3 border-edge-strong bg-surface p-8 text-center sm:p-12 md:p-20">
           <h2 className="mb-6 font-serif text-4xl font-black sm:text-5xl md:text-7xl">Ready to level up?</h2>
           <p className="mx-auto mb-8 max-w-2xl text-lg font-medium sm:mb-10 sm:text-xl md:text-2xl">
             Join 1000+ users who have transformed their daily routines with HabiCard.
@@ -859,29 +859,29 @@ export const LandingPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setAuthModalMode('signup')}
-            className="inline-flex items-center justify-center gap-3 rounded-xl border-[3px] border-black bg-black px-6 py-4 text-lg font-black text-white transition-all hover:-translate-y-1 hover:bg-[var(--landing-neo-yellow)] hover:text-black hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] sm:px-10 sm:py-5 sm:text-2xl"
+            className="inline-flex items-center justify-center gap-3 rounded-xl border-3 border-edge-strong bg-surface-inverse px-6 py-4 text-lg font-black text-ink-inverse transition-all hover:-translate-y-1 hover:bg-[var(--landing-neo-yellow)] hover:text-ink-strong hover:shadow-neo-lg sm:px-10 sm:py-5 sm:text-2xl"
           >
             Get HabiCard Now <ArrowRight className="h-8 w-8" />
           </button>
         </div>
       </section>
 
-      <footer className="border-t-4 border-black bg-white px-6 py-8 text-center font-bold">
+      <footer className="border-t-4 border-edge-strong bg-surface px-6 py-8 text-center font-bold">
         <div className="flex items-center justify-center gap-6 mb-3">
           <Link
             to="/privacy"
-            className="text-xs font-black uppercase tracking-[0.18em] text-stone-500 hover:text-black transition-colors"
+            className="text-xs font-black uppercase tracking-[0.18em] text-ink-muted hover:text-ink-strong transition-colors"
           >
             Privacy Policy
           </Link>
           <a
             href="mailto:support@habicard.com"
-            className="text-xs font-black uppercase tracking-[0.18em] text-stone-500 hover:text-black transition-colors"
+            className="text-xs font-black uppercase tracking-[0.18em] text-ink-muted hover:text-ink-strong transition-colors"
           >
             Support
           </a>
         </div>
-        <p className="text-xs font-black uppercase tracking-[0.18em] text-stone-500">
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-ink-muted">
           Copyright © 2026 HabiCard. All rights reserved.
         </p>
       </footer>
@@ -892,7 +892,7 @@ export const LandingPage: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-scrim p-4 backdrop-blur-sm"
             onClick={() => setAuthModalMode(null)}
           >
             <motion.div
@@ -906,7 +906,7 @@ export const LandingPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setAuthModalMode(null)}
-                className="absolute right-5 top-5 z-20 flex h-10 w-10 items-center justify-center rounded-full border-[3px] border-black bg-white text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-transform hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                className="absolute right-5 top-5 z-20 flex h-10 w-10 items-center justify-center rounded-full border-3 border-edge-strong bg-surface text-ink-strong shadow-neo transition-transform hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-neo-sm"
                 aria-label="Close authentication popup"
               >
                 <X className="h-4 w-4" />

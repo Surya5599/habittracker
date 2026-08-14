@@ -73,7 +73,7 @@ interface YearViewProps {
 const getMomentumCopy = (t: any, momentum?: string) => {
     if (momentum === 'ascending') return { label: t('annualUi.yearView.buildingMomentum'), icon: TrendingUp, tone: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' };
     if (momentum === 'descending') return { label: t('annualUi.yearView.needsRecovery'), icon: TrendingDown, tone: 'text-rose-700', bg: 'bg-rose-50 border-rose-200' };
-    return { label: t('annualUi.yearView.holdingSteady'), icon: Minus, tone: 'text-stone-700', bg: 'bg-stone-50 border-stone-200' };
+    return { label: t('annualUi.yearView.holdingSteady'), icon: Minus, tone: 'text-ink', bg: 'bg-surface-muted border-edge' };
 };
 
 const formatDelta = (t: any, delta: number) => {
@@ -177,11 +177,11 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
     else if (loggedDays >= 100) achievementMilestones.push({ label: '📅 100 Active Days', value: `${loggedDays}`, sub: 'days logged' });
 
     return (
-        <div className="bg-white neo-border neo-shadow rounded-2xl p-5 flex flex-col relative overflow-hidden">
+        <div className="bg-surface neo-border shadow-neo rounded-2xl p-6 flex flex-col relative overflow-hidden">
             {/* Section 1 — Header */}
-            <div className="relative z-10 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 pb-4 border-b border-stone-100">
+            <div className="relative z-10 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 pb-4 border-b border-edge-subtle">
                 <div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.28em] text-stone-400 block mb-1">{t('annualUi.yearView.label')}</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.28em] text-ink-subtle block mb-1">{t('annualUi.yearView.label')}</span>
                     <h4 className="font-serif font-black uppercase text-xl sm:text-2xl tracking-tight leading-tight">{t('annualUi.yearView.inReview', { year: currentYear })}</h4>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -191,7 +191,7 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
                     </div>
                     <button
                         onClick={() => setIsRetroModalOpen(true)}
-                        className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-stone-600 hover:text-black hover:border-black transition-colors"
+                        className="inline-flex items-center gap-2 rounded-full border border-edge bg-surface px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-ink hover:text-ink-strong hover:border-edge-strong transition-colors"
                     >
                         <Grid3X3 size={12} />
                         {t('annualUi.yearView.openGrids')}
@@ -202,21 +202,21 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
             <div className="relative z-10 mt-4 space-y-5">
 
                 {/* Section 2 — Hero sentence */}
-                <div className="rounded-2xl p-4 border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]" style={{ backgroundColor: theme.secondary + '18' }}>
-                    <p className="text-lg sm:text-xl font-black leading-snug text-stone-900">
+                <div className="rounded-2xl p-4 border-3 border-edge-strong shadow-neo" style={{ backgroundColor: 'var(--theme-secondary-faint)' }}>
+                    <p className="text-lg sm:text-xl font-black leading-snug text-ink-strong">
                         You completed{' '}
                         <span className="text-2xl sm:text-3xl" style={{ color: theme.primary }}>{roundedTotalCompletions.toLocaleString()}</span>
                         {' '}habits across{' '}
                         <span style={{ color: theme.primary }}>{annualStats.loggedDaysCount || 0}</span>
-                        <span className="text-stone-400 font-bold">/{totalDaysInYear}</span>
+                        <span className="text-ink-subtle font-bold">/{totalDaysInYear}</span>
                         {' '}active days.
                     </p>
                     {annualStory.annualSummary?.review ? (
-                        <p className="mt-2 text-sm font-medium text-stone-600 leading-relaxed italic">
+                        <p className="mt-2 text-sm font-medium text-ink leading-relaxed italic">
                             "<FormattedText text={annualStory.annualSummary.review} highlightColor={theme.primary} />"
                         </p>
                     ) : strongestMonth ? (
-                        <p className="mt-2 text-sm font-medium text-stone-500 leading-relaxed">
+                        <p className="mt-2 text-sm font-medium text-ink-muted leading-relaxed">
                             Strongest month: {strongestMonth} at {Math.round(strongestRate)}% · {Math.round(annualStats.consistencyRate)}% overall follow-through
                         </p>
                     ) : null}
@@ -235,8 +235,8 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
                         ].map((tile, i) => (
                             <div
                                 key={i}
-                                className="rounded-2xl border-[3px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] p-3 bg-white text-center min-w-[90px]"
-                                style={i === 0 ? { backgroundColor: theme.secondary + '18' } : undefined}
+                                className="rounded-2xl border-3 border-edge-strong shadow-neo p-3 bg-surface text-center min-w-[90px]"
+                                style={i === 0 ? { backgroundColor: 'var(--theme-secondary-faint)' } : undefined}
                             >
                                 <span
                                     className="text-xl font-black leading-none block"
@@ -244,7 +244,7 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
                                 >
                                     {tile.value}
                                 </span>
-                                <span className="text-[9px] font-black uppercase tracking-[0.18em] text-stone-400 block mt-1">{tile.label}</span>
+                                <span className="text-[9px] font-black uppercase tracking-[0.18em] text-ink-subtle block mt-1">{tile.label}</span>
                             </div>
                         ))}
                     </div>
@@ -253,21 +253,21 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
                 {/* Section 4 — Consistency Rankings */}
                 {significantHabits.length > 0 && (
                     <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 mb-3">Habit Rankings</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-ink-subtle mb-3">Habit Rankings</p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             {/* Most consistent */}
-                            <div className="rounded-2xl border-[3px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] p-3 bg-white">
+                            <div className="rounded-2xl border-3 border-edge-strong shadow-neo p-3 bg-surface">
                                 <p className="text-[9px] font-black uppercase tracking-wider text-emerald-500 mb-2">Most Consistent</p>
                                 <div className="space-y-1.5">
                                     {topConsistent.map((h, i) => (
                                         <div key={h.id} className="flex items-center gap-2">
-                                            <span className="text-[9px] font-black text-stone-300 w-3 shrink-0">{i + 1}</span>
+                                            <span className="text-[9px] font-black text-ink-dim w-3 shrink-0">{i + 1}</span>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center justify-between gap-1">
                                                     <span className="text-xs font-black truncate">{h.name}</span>
                                                     <span className="text-xs font-black shrink-0" style={{ color: theme.primary }}>{Math.round(h.rate)}%</span>
                                                 </div>
-                                                <div className="h-1 rounded-full bg-stone-100 mt-0.5 overflow-hidden">
+                                                <div className="h-1 rounded-full bg-surface-strong mt-0.5 overflow-hidden">
                                                     <div className="h-full rounded-full" style={{ width: `${Math.min(100, h.rate)}%`, backgroundColor: theme.primary }} />
                                                 </div>
                                             </div>
@@ -278,12 +278,12 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
 
                             {/* Least consistent */}
                             {bottomConsistent.length > 0 && (
-                                <div className="rounded-2xl border-[3px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] p-3 bg-white">
+                                <div className="rounded-2xl border-3 border-edge-strong shadow-neo p-3 bg-surface">
                                     <p className="text-[9px] font-black uppercase tracking-wider text-rose-400 mb-2">Needs Attention</p>
                                     <div className="space-y-1.5">
                                         {bottomConsistent.map((h, i) => (
                                             <div key={h.id} className="flex items-center gap-2">
-                                                <span className="text-[9px] font-black text-stone-300 w-3 shrink-0">{i + 1}</span>
+                                                <span className="text-[9px] font-black text-ink-dim w-3 shrink-0">{i + 1}</span>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center justify-between gap-1">
                                                         <span className="text-xs font-black truncate">{h.name}</span>
@@ -292,7 +292,7 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
                                                             {h.isFading && <TrendingDown size={10} className="text-rose-400" />}
                                                         </div>
                                                     </div>
-                                                    <div className="h-1 rounded-full bg-stone-100 mt-0.5 overflow-hidden">
+                                                    <div className="h-1 rounded-full bg-surface-strong mt-0.5 overflow-hidden">
                                                         <div className="h-full rounded-full bg-rose-300" style={{ width: `${Math.min(100, h.rate)}%` }} />
                                                     </div>
                                                 </div>
@@ -308,11 +308,11 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
                 {/* Section 5 — Streak Milestones + Achievements */}
                 {(streakMilestones.length > 0 || achievementMilestones.length > 0 || annualStats.longestHabitStreak?.name) && (
                     <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 mb-3">Milestones & Streaks</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-ink-subtle mb-3">Milestones & Streaks</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {/* Top streak milestones */}
                             {streakMilestones.map((s, i) => (
-                                <div key={i} className="rounded-2xl border-[3px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] p-3 bg-white">
+                                <div key={i} className="rounded-2xl border-3 border-edge-strong shadow-neo p-3 bg-surface">
                                     <div className="flex items-start justify-between gap-2">
                                         <div className="min-w-0">
                                             <p className="text-[9px] font-black uppercase tracking-wider text-amber-500">
@@ -320,24 +320,24 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
                                             </p>
                                             <p className="text-sm font-black truncate mt-0.5">{s.name}</p>
                                             {s.startDate && s.endDate && (
-                                                <p className="text-[10px] font-bold text-stone-400 mt-0.5">
+                                                <p className="text-[10px] font-bold text-ink-subtle mt-0.5">
                                                     {formatStreakDate(s.startDate)} → {formatStreakDate(s.endDate)}
                                                 </p>
                                             )}
                                         </div>
                                         <div className="shrink-0 text-right">
                                             <p className="text-xl font-black leading-none" style={{ color: theme.primary }}>{s.length}</p>
-                                            <p className="text-[9px] font-black text-stone-400 uppercase">days</p>
+                                            <p className="text-[9px] font-black text-ink-subtle uppercase">days</p>
                                         </div>
                                     </div>
                                 </div>
                             ))}
                             {/* Achievement milestone cards */}
                             {achievementMilestones.map((a, i) => (
-                                <div key={i} className="rounded-2xl border-[3px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] p-3" style={{ backgroundColor: theme.secondary + '12' }}>
-                                    <p className="text-[9px] font-black uppercase tracking-wider text-stone-500">{a.label}</p>
+                                <div key={i} className="rounded-2xl border-3 border-edge-strong shadow-neo p-3" style={{ backgroundColor: 'var(--theme-secondary-faint)' }}>
+                                    <p className="text-[9px] font-black uppercase tracking-wider text-ink-muted">{a.label}</p>
                                     <p className="text-xl font-black leading-none mt-1" style={{ color: theme.primary }}>{a.value}</p>
-                                    {a.sub && <p className="text-[9px] font-bold text-stone-400 uppercase mt-0.5">{a.sub}</p>}
+                                    {a.sub && <p className="text-[9px] font-bold text-ink-subtle uppercase mt-0.5">{a.sub}</p>}
                                 </div>
                             ))}
                         </div>
@@ -348,40 +348,40 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Top habits */}
                     <div className="space-y-2">
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">Top Habits</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-ink-subtle">Top Habits</p>
                         <div className="grid grid-cols-1 gap-2">
                             {annualStats.topHabits && annualStats.topHabits[0] && (
-                                <div className="rounded-2xl border-[3px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] p-3 bg-white">
+                                <div className="rounded-2xl border-3 border-edge-strong shadow-neo p-3 bg-surface">
                                     <div className="flex items-start justify-between gap-2">
                                         <div className="min-w-0">
-                                            <p className="text-[9px] font-black uppercase tracking-wider text-stone-400">Anchor Habit</p>
+                                            <p className="text-[9px] font-black uppercase tracking-wider text-ink-subtle">Anchor Habit</p>
                                             <p className="text-sm font-black truncate mt-0.5">{annualStats.topHabits[0].name}</p>
                                         </div>
                                         <div className="shrink-0 text-right">
                                             <p className="text-lg font-black leading-none" style={{ color: theme.primary }}>{Math.round(annualStats.topHabits[0].rate)}%</p>
                                             {annualStats.topHabits[0].badge && (
-                                                <p className="text-[9px] font-black text-stone-400 uppercase">{annualStats.topHabits[0].badge}</p>
+                                                <p className="text-[9px] font-black text-ink-subtle uppercase">{annualStats.topHabits[0].badge}</p>
                                             )}
                                         </div>
                                     </div>
                                 </div>
                             )}
                             {annualStats.mostLoggedHabit?.name && (
-                                <div className="rounded-2xl border-[3px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] p-3 bg-white">
+                                <div className="rounded-2xl border-3 border-edge-strong shadow-neo p-3 bg-surface">
                                     <div className="flex items-start justify-between gap-2">
                                         <div className="min-w-0">
-                                            <p className="text-[9px] font-black uppercase tracking-wider text-stone-400">Most Logged</p>
+                                            <p className="text-[9px] font-black uppercase tracking-wider text-ink-subtle">Most Logged</p>
                                             <p className="text-sm font-black truncate mt-0.5">{annualStats.mostLoggedHabit.name}</p>
                                         </div>
                                         <div className="shrink-0 text-right">
                                             <p className="text-lg font-black leading-none">{annualStats.mostLoggedHabit.completed || 0}</p>
-                                            <p className="text-[9px] font-black text-stone-400 uppercase">times</p>
+                                            <p className="text-[9px] font-black text-ink-subtle uppercase">times</p>
                                         </div>
                                     </div>
                                 </div>
                             )}
                             {annualStats.fadingHabit?.name && (
-                                <div className="rounded-2xl border-[3px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] p-3 bg-rose-50">
+                                <div className="rounded-2xl border-3 border-edge-strong shadow-neo p-3 bg-rose-50">
                                     <div className="flex items-start justify-between gap-2">
                                         <div className="min-w-0">
                                             <p className="text-[9px] font-black uppercase tracking-wider text-rose-400">Needs Revival</p>
@@ -396,12 +396,12 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
 
                     {/* Beginning vs End (right) */}
                     <div className="space-y-2">
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">Beginning vs End</p>
-                        <div className="rounded-2xl border-[3px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] p-4 bg-white">
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-ink-subtle">Beginning vs End</p>
+                        <div className="rounded-2xl border-3 border-edge-strong shadow-neo p-4 bg-surface">
                             {q1Rate !== null || q4Rate !== null ? (
                                 <div className="flex items-center justify-center gap-4">
                                     <div className="text-center">
-                                        <p className="text-[9px] font-black uppercase tracking-wider text-stone-400">Q1 Avg</p>
+                                        <p className="text-[9px] font-black uppercase tracking-wider text-ink-subtle">Q1 Avg</p>
                                         <p className="text-3xl font-black leading-none mt-1">{q1Rate ?? '—'}%</p>
                                     </div>
                                     <div className="flex flex-col items-center gap-1">
@@ -411,19 +411,19 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
                                             ) : q4Rate < q1Rate ? (
                                                 <TrendingDown size={20} className="text-rose-500" />
                                             ) : (
-                                                <Minus size={20} className="text-stone-400" />
+                                                <Minus size={20} className="text-ink-subtle" />
                                             )
                                         ) : (
-                                            <Minus size={20} className="text-stone-400" />
+                                            <Minus size={20} className="text-ink-subtle" />
                                         )}
-                                        <p className="text-[8px] font-black uppercase text-stone-400">
+                                        <p className="text-[8px] font-black uppercase text-ink-subtle">
                                             {q1Rate !== null && q4Rate !== null
                                                 ? q4Rate > q1Rate ? 'Stronger' : q4Rate < q1Rate ? 'Faded' : 'Steady'
                                                 : ''}
                                         </p>
                                     </div>
                                     <div className="text-center">
-                                        <p className="text-[9px] font-black uppercase tracking-wider text-stone-400">Q4 Avg</p>
+                                        <p className="text-[9px] font-black uppercase tracking-wider text-ink-subtle">Q4 Avg</p>
                                         <p className="text-3xl font-black leading-none mt-1">{q4Rate ?? '—'}%</p>
                                     </div>
                                 </div>
@@ -431,33 +431,33 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
                                 <div className="text-center space-y-1">
                                     {q1Rate === null && daysUntilQ4 > 0 ? (
                                         <>
-                                            <p className="text-sm font-black text-stone-500">Q4 unlocks in {daysUntilQ4} days</p>
-                                            <p className="text-[11px] font-medium text-stone-400">
+                                            <p className="text-sm font-black text-ink-muted">Q4 unlocks in {daysUntilQ4} days</p>
+                                            <p className="text-[11px] font-medium text-ink-subtle">
                                                 {q1LoggedDays > 0 ? `${q1LoggedDays} days logged in Q1` : 'No Q1 data logged'} · Q4 starts Oct 1
                                             </p>
                                         </>
                                     ) : q1Rate === null ? (
                                         <>
-                                            <p className="text-sm font-black text-stone-500">{q4LoggedDays} Q4 days logged</p>
-                                            <p className="text-[11px] font-medium text-stone-400">No Q1 data — log habits Jan–Mar to compare</p>
+                                            <p className="text-sm font-black text-ink-muted">{q4LoggedDays} Q4 days logged</p>
+                                            <p className="text-[11px] font-medium text-ink-subtle">No Q1 data — log habits Jan–Mar to compare</p>
                                         </>
                                     ) : (
                                         <>
-                                            <p className="text-sm font-black text-stone-500">{q1LoggedDays} Q1 days logged</p>
-                                            <p className="text-[11px] font-medium text-stone-400">Q4 starts Oct 1 — {daysUntilQ4 > 0 ? `${daysUntilQ4} days away` : 'log habits Oct–Dec to compare'}</p>
+                                            <p className="text-sm font-black text-ink-muted">{q1LoggedDays} Q1 days logged</p>
+                                            <p className="text-[11px] font-medium text-ink-subtle">Q4 starts Oct 1 — {daysUntilQ4 > 0 ? `${daysUntilQ4} days away` : 'log habits Oct–Dec to compare'}</p>
                                         </>
                                     )}
                                 </div>
                             )}
                             {(annualStats.weekdayRate !== undefined || annualStats.weekendRate !== undefined) && (
-                                <div className="flex items-center justify-center gap-3 mt-3 pt-3 border-t border-stone-100">
+                                <div className="flex items-center justify-center gap-3 mt-3 pt-3 border-t border-edge-subtle">
                                     <div className="text-center">
-                                        <p className="text-[9px] font-black uppercase text-stone-400">Weekdays</p>
+                                        <p className="text-[9px] font-black uppercase text-ink-subtle">Weekdays</p>
                                         <p className="text-lg font-black leading-none">{Math.round(annualStats.weekdayRate ?? 0)}%</p>
                                     </div>
-                                    <div className="text-stone-200 text-lg">|</div>
+                                    <div className="text-ink-dim text-lg">|</div>
                                     <div className="text-center">
-                                        <p className="text-[9px] font-black uppercase text-stone-400">Weekends</p>
+                                        <p className="text-[9px] font-black uppercase text-ink-subtle">Weekends</p>
                                         <p className="text-lg font-black leading-none">{Math.round(annualStats.weekendRate ?? 0)}%</p>
                                     </div>
                                 </div>
@@ -470,7 +470,7 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
                 <div>
                     <div className="flex items-center justify-between gap-3 mb-3">
                         <div>
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">{t('annualUi.yearView.monthOverMonth')}</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-ink-subtle">{t('annualUi.yearView.monthOverMonth')}</p>
                             <p className="text-sm font-black uppercase">{t('annualUi.yearView.quickMonthScan')}</p>
                         </div>
                     </div>
@@ -497,33 +497,33 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
                                 <button
                                     key={summary.month}
                                     onClick={() => onOpenMonth(idx)}
-                                    className="rounded-2xl border-[3px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden"
+                                    className="rounded-2xl border-3 border-edge-strong shadow-neo p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-neo active:translate-y-0 active:shadow-neo-sm relative overflow-hidden"
                                     style={
                                         isBestMonth
-                                            ? { backgroundColor: theme.primary + '20' }
+                                            ? { backgroundColor: 'var(--theme-primary-soft)' }
                                             : isWorstMonth
                                                 ? { backgroundColor: '#fee2e2' }
                                                 : { backgroundColor: 'var(--card-bg, #ffffff)' }
                                     }
                                 >
                                     {isBestMonth && (
-                                        <span className="absolute top-1.5 right-1.5 text-[8px] font-black uppercase tracking-wide px-1 py-0.5 rounded" style={{ backgroundColor: theme.primary, color: '#fff' }}>PEAK</span>
+                                        <span className="absolute top-1.5 right-1.5 text-[8px] font-black uppercase tracking-wide px-1 py-1 rounded" style={{ backgroundColor: theme.primary, color: '#fff' }}>PEAK</span>
                                     )}
                                     {isWorstMonth && !isBestMonth && (
-                                        <span className="absolute top-1.5 right-1.5 text-[8px] font-black uppercase tracking-wide px-1 py-0.5 rounded bg-rose-400 text-white">LOW</span>
+                                        <span className="absolute top-1.5 right-1.5 text-[8px] font-black uppercase tracking-wide px-1 py-1 rounded bg-rose-400 text-ink-inverse">LOW</span>
                                     )}
                                     <div className="flex items-center justify-between gap-2 mb-2">
                                         <div className="min-w-0">
                                             <p className="text-[11px] font-black uppercase tracking-[0.16em]">{monthLabel}</p>
-                                            <p className="text-[10px] font-bold text-stone-500 truncate">{statusLabel}</p>
+                                            <p className="text-[10px] font-bold text-ink-muted truncate">{statusLabel}</p>
                                         </div>
-                                        <div className={`text-right ${isPositive ? 'text-emerald-600' : isNegative ? 'text-rose-600' : 'text-stone-500'}`}>
+                                        <div className={`text-right ${isPositive ? 'text-emerald-600' : isNegative ? 'text-rose-600' : 'text-ink-muted'}`}>
                                             <p className="text-sm font-black leading-none">{Math.round(displayRate)}%</p>
                                             <p className="text-[10px] font-bold">{summary.isFutureMonth ? t('annualUi.yearView.upcoming') : formatDelta(t, delta)}</p>
                                         </div>
                                     </div>
 
-                                    <div className="h-2.5 rounded-full bg-stone-100 border border-stone-200 overflow-hidden">
+                                    <div className="h-2.5 rounded-full bg-surface-strong border border-edge overflow-hidden">
                                         <div
                                             className="h-full rounded-full transition-[width] duration-700"
                                             style={{
@@ -540,22 +540,22 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
 
                 {/* Section 8 — Reflection Prompts */}
                 <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 mb-3">Year-End Reflection</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-ink-subtle mb-3">Year-End Reflection</p>
                     {reflectionUnlocked ? (
                         <div className="space-y-2">
                             {REFLECTION_PROMPTS.map((prompt, i) => (
                                 <button
                                     key={i}
                                     onClick={() => setOpenPromptIdx(openPromptIdx === i ? null : i)}
-                                    className="w-full text-left rounded-2xl border-[3px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] p-3 bg-white hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+                                    className="w-full text-left rounded-2xl border-3 border-edge-strong shadow-neo p-3 bg-surface hover:-translate-y-0.5 hover:shadow-neo transition-all"
                                 >
                                     <div className="flex items-center justify-between gap-2">
-                                        <p className="text-sm font-bold text-stone-700">{prompt}</p>
-                                        <span className="shrink-0 text-stone-300 text-lg leading-none">{openPromptIdx === i ? '−' : '+'}</span>
+                                        <p className="text-sm font-bold text-ink">{prompt}</p>
+                                        <span className="shrink-0 text-ink-dim text-lg leading-none">{openPromptIdx === i ? '−' : '+'}</span>
                                     </div>
                                     {openPromptIdx === i && (
                                         <textarea
-                                            className="mt-2 w-full text-sm text-stone-700 bg-stone-50 rounded-xl p-2 border border-stone-200 resize-none focus:outline-none focus:border-stone-400 font-medium"
+                                            className="mt-2 w-full text-sm text-ink bg-surface-muted rounded-xl p-2 border border-edge resize-none focus:outline-none focus:border-edge-muted font-medium"
                                             rows={3}
                                             placeholder="Write your reflection…"
                                             onClick={e => e.stopPropagation()}
@@ -565,10 +565,10 @@ const YearView: React.FC<YearViewProps> = ({ theme, currentYear, annualStats, st
                             ))}
                         </div>
                     ) : (
-                        <div className="rounded-2xl border-[3px] border-dashed border-stone-300 p-5 flex flex-col items-center gap-2 text-center">
+                        <div className="rounded-2xl border-3 border-dashed border-edge-muted p-6 flex flex-col items-center gap-2 text-center">
                             <span className="text-2xl">🔒</span>
-                            <p className="text-sm font-black text-stone-500">Unlocks in {daysUntilYearEnd} days</p>
-                            <p className="text-[11px] font-medium text-stone-400">Year-end reflection opens on Dec 17 — come back then to close out the year.</p>
+                            <p className="text-sm font-black text-ink-muted">Unlocks in {daysUntilYearEnd} days</p>
+                            <p className="text-[11px] font-medium text-ink-subtle">Year-end reflection opens on Dec 17 — come back then to close out the year.</p>
                         </div>
                     )}
                 </div>

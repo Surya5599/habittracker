@@ -187,11 +187,11 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
                             animate={{ rotateY: 0, opacity: 1, x: 0 }}
                             exit={{ rotateY: -90, opacity: 0, x: -24 }}
                             transition={{ duration: 0.4, ease: 'easeInOut' }}
-                            className="relative flex max-h-[calc(100svh-2rem)] h-full flex-col overflow-hidden rounded-2xl bg-white neo-border neo-shadow perspective-1000 transform-gpu"
+                            className="relative flex max-h-[calc(100svh-2rem)] h-full flex-col overflow-hidden rounded-2xl bg-surface neo-border shadow-neo perspective-1000 transform-gpu"
                             style={{ transformStyle: 'preserve-3d', transformOrigin: 'center center' }}
                         >
                                 <div
-                                    className="border-b-[3px] border-black px-5 py-5 text-black"
+                                    className="border-b-3 border-edge-strong px-5 py-5 text-ink-strong"
                                     style={{ background: `linear-gradient(135deg, ${theme.secondary}55 0%, ${theme.primary}40 100%)` }}
                                 >
                                     <div className="flex items-start justify-between gap-4">
@@ -200,18 +200,18 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
                                                 <span className="text-[#404040]">Habi</span>
                                                 <span style={{ color: theme.secondary }}>Card</span>
                                             </h1>
-                                            <p className="mt-2 text-xs font-bold uppercase tracking-[0.16em] text-stone-700">
+                                            <p className="mt-2 text-xs font-bold uppercase tracking-[0.16em] text-ink">
                                                 {modeTitle}
                                             </p>
-                                            <p className="mt-2 max-w-[240px] text-xs font-semibold leading-relaxed text-stone-700">
+                                            <p className="mt-2 max-w-[240px] text-xs font-semibold leading-relaxed text-ink">
                                                 {modeSubtitle}
                                             </p>
                                         </div>
                                         <div
-                                            className="rounded-2xl border-[3px] border-black px-4 py-3 text-center text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+                                            className="rounded-2xl border-3 border-edge-strong px-4 py-3 text-center text-ink-inverse shadow-neo"
                                             style={{ backgroundColor: theme.primary }}
                                         >
-                                            <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/80">
+                                            <div className="text-[10px] font-black uppercase tracking-[0.18em] text-ink-inverse/80">
                                                 {isResetMode ? 'Recovery' : authMode === 'signin' ? 'Login' : 'Signup'}
                                             </div>
                                         </div>
@@ -222,9 +222,9 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
                                     <form className="space-y-4" onSubmit={handleSubmit}>
                                     <div className="space-y-4">
                                         <div>
-                                            <label htmlFor="email" className="mb-2 block text-[10px] font-black uppercase tracking-[0.18em] text-stone-500">Email</label>
-                                        <div className="flex items-center gap-3 rounded-2xl border-[3px] border-black bg-white px-4 py-3">
-                                            <div className={`flex h-8 w-8 items-center justify-center rounded-xl border-[2px] border-black ${emailValid(email) ? 'bg-black text-white' : 'bg-stone-100 text-black'}`}>
+                                            <label htmlFor="email" className="mb-2 block text-[10px] font-black uppercase tracking-[0.18em] text-ink-muted">Email</label>
+                                        <div className="flex items-center gap-3 rounded-2xl border-3 border-edge-strong bg-surface px-4 py-3">
+                                            <div className={`flex h-8 w-8 items-center justify-center rounded-xl border-2 border-edge-strong ${emailValid(email) ? 'bg-theme-primary text-theme-ink' : 'bg-surface-strong text-ink-strong'}`}>
                                                 {emailValid(email) ? <Check size={14} strokeWidth={3} /> : <Mail size={14} strokeWidth={2.5} />}
                                             </div>
                                             <input
@@ -236,7 +236,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
                                                         setEmail(e.target.value);
                                                         resetPanelState();
                                                     }}
-                                                    className="w-full bg-transparent text-sm font-black uppercase text-stone-800 placeholder:text-stone-300 focus:outline-none"
+                                                    className="w-full bg-transparent text-sm font-black uppercase text-ink-strong placeholder:text-ink-dim focus:outline-none"
                                                     disabled={loading}
                                                 />
                                             </div>
@@ -244,9 +244,9 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
 
                                         {!isResetMode && (
                                             <div>
-                                                <label htmlFor="password" className="mb-2 block text-[10px] font-black uppercase tracking-[0.18em] text-stone-500">Password</label>
-                                                <div className="flex items-center gap-3 rounded-2xl border-[3px] border-black bg-white px-4 py-3">
-                                                    <div className={`flex h-8 w-8 items-center justify-center rounded-xl border-[2px] border-black ${fieldFilled(password) ? 'bg-black text-white' : 'bg-stone-100 text-black'}`}>
+                                                <label htmlFor="password" className="mb-2 block text-[10px] font-black uppercase tracking-[0.18em] text-ink-muted">Password</label>
+                                                <div className="flex items-center gap-3 rounded-2xl border-3 border-edge-strong bg-surface px-4 py-3">
+                                                    <div className={`flex h-8 w-8 items-center justify-center rounded-xl border-2 border-edge-strong ${fieldFilled(password) ? 'bg-theme-primary text-theme-ink' : 'bg-surface-strong text-ink-strong'}`}>
                                                         {fieldFilled(password) ? <Check size={14} strokeWidth={3} /> : <Lock size={14} strokeWidth={2.5} />}
                                                     </div>
                                                     <input
@@ -258,7 +258,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
                                                             setPassword(e.target.value);
                                                             resetPanelState();
                                                         }}
-                                                        className="w-full bg-transparent text-sm font-black uppercase text-stone-800 placeholder:text-stone-300 focus:outline-none"
+                                                        className="w-full bg-transparent text-sm font-black uppercase text-ink-strong placeholder:text-ink-dim focus:outline-none"
                                                         disabled={loading}
                                                     />
                                                 </div>
@@ -268,12 +268,12 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
 
                                     {panelMessage && (
                                         <div
-                                            className={`rounded-2xl border-[2px] px-3 py-3 text-[10px] font-bold uppercase tracking-wide ${
+                                            className={`rounded-2xl border-2 px-3 py-3 text-[10px] font-bold uppercase tracking-wide ${
                                                 panelMessage.tone === 'error'
                                                     ? 'border-rose-300 bg-rose-50 text-rose-700'
                                                     : panelMessage.tone === 'success'
                                                         ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
-                                                        : 'border-stone-300 bg-stone-50 text-stone-600'
+                                                        : 'border-edge-muted bg-surface-muted text-ink'
                                             }`}
                                         >
                                             <div>{panelMessage.text}</div>
@@ -294,7 +294,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
                                         <div className="space-y-3 pt-2">
                                             <button
                                                 type="submit"
-                                                className="flex w-full items-center justify-center gap-2 rounded-2xl border-[3px] border-black bg-black px-6 py-3 text-xs font-black uppercase tracking-widest text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:opacity-50"
+                                                className="flex w-full items-center justify-center gap-2 rounded-2xl border-3 border-edge-strong bg-surface-inverse px-6 py-3 text-xs font-black uppercase tracking-widest text-ink-inverse shadow-neo transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-neo-sm disabled:opacity-50"
                                                 disabled={loading}
                                             >
                                                 <ActionIcon size={14} />
@@ -307,7 +307,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
                                                     setIsResetMode(false);
                                                     resetPanelState();
                                                 }}
-                                                className="w-full py-2 text-[9px] font-black uppercase tracking-widest text-stone-400 hover:text-black transition-colors"
+                                                className="w-full py-2 text-[9px] font-black uppercase tracking-widest text-ink-subtle hover:text-ink-strong transition-colors"
                                             >
                                                 Return to Login
                                             </button>
@@ -316,7 +316,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
                                         <div className="space-y-4 pt-2">
                                             <button
                                                 type="submit"
-                                                className="flex w-full items-center justify-center gap-2 rounded-2xl border-[3px] border-black bg-black px-6 py-3.5 text-xs font-black uppercase tracking-widest text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:opacity-50"
+                                                className="flex w-full items-center justify-center gap-2 rounded-2xl border-3 border-edge-strong bg-surface-inverse px-6 py-3 text-xs font-black uppercase tracking-widest text-ink-inverse shadow-neo transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-neo-sm disabled:opacity-50"
                                                 disabled={loading}
                                             >
                                                 <ActionIcon size={14} />
@@ -332,7 +332,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
                                                             setIsResetMode(true);
                                                             resetPanelState();
                                                         }}
-                                                        className="text-[9px] font-black uppercase tracking-widest text-stone-400 hover:text-black transition-colors"
+                                                        className="text-[9px] font-black uppercase tracking-widest text-ink-subtle hover:text-ink-strong transition-colors"
                                                     >
                                                         Forgot your password?
                                                     </button>
@@ -340,9 +340,9 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
                                             )}
 
                                             <div className="relative flex items-center py-1">
-                                                <div className="flex-grow border-t border-stone-100/50"></div>
-                                                <span className="mx-3 flex-shrink text-[8px] font-black uppercase tracking-[0.2em] text-stone-300">or</span>
-                                                <div className="flex-grow border-t border-stone-100/50"></div>
+                                                <div className="flex-grow border-t border-edge-subtle/50"></div>
+                                                <span className="mx-3 flex-shrink text-[8px] font-black uppercase tracking-[0.2em] text-ink-dim">or</span>
+                                                <div className="flex-grow border-t border-edge-subtle/50"></div>
                                             </div>
 
                                             <button
@@ -350,7 +350,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
                                                     e.preventDefault();
                                                     onContinueAsGuest();
                                                 }}
-                                                className="flex w-full items-center justify-center gap-2 rounded-2xl border-[3px] border-black bg-white px-6 py-2.5 text-[10px] font-black uppercase tracking-widest text-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
+                                                className="flex w-full items-center justify-center gap-2 rounded-2xl border-3 border-edge-strong bg-surface px-6 py-2.5 text-[10px] font-black uppercase tracking-widest text-ink-strong shadow-neo transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-neo-sm"
                                             >
                                                 <User size={12} />
                                                 Continue as Guest
@@ -361,17 +361,17 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
                                 </div>
 
                                 {!isResetMode && (
-                                    <div className="grid grid-cols-2 border-t-[3px] border-black bg-white">
+                                    <div className="grid grid-cols-2 border-t-3 border-edge-strong bg-surface">
                                         <button
                                             type="button"
                                             onClick={() => {
                                                 setAuthMode('signup');
                                                 resetPanelState();
                                             }}
-                                            className={`border-r-[3px] border-black p-3 transition-colors ${authMode === 'signup' ? 'bg-stone-100' : 'bg-white'}`}
+                                            className={`border-r-3 border-edge-strong p-3 transition-colors ${authMode === 'signup' ? 'bg-surface-strong' : 'bg-surface'}`}
                                             disabled={loading}
                                         >
-                                            <span className="flex items-center justify-center gap-1.5 text-xs font-black tracking-wider text-black"><UserPlus size={13} /> Sign Up</span>
+                                            <span className="flex items-center justify-center gap-1.5 text-xs font-black tracking-wider text-ink-strong"><UserPlus size={13} /> Sign Up</span>
                                         </button>
                                         <button
                                             type="button"
@@ -379,10 +379,10 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
                                                 setAuthMode('signin');
                                                 resetPanelState();
                                             }}
-                                            className={`p-3 transition-colors ${authMode === 'signin' ? 'bg-stone-100' : 'bg-white'}`}
+                                            className={`p-3 transition-colors ${authMode === 'signin' ? 'bg-surface-strong' : 'bg-surface'}`}
                                             disabled={loading}
                                         >
-                                            <span className="flex items-center justify-center gap-1.5 text-xs font-black tracking-wider text-black"><LogIn size={13} /> Log In</span>
+                                            <span className="flex items-center justify-center gap-1.5 text-xs font-black tracking-wider text-ink-strong"><LogIn size={13} /> Log In</span>
                                         </button>
                                     </div>
                                 )}

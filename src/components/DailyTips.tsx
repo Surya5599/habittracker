@@ -66,17 +66,17 @@ export const DailyTips: React.FC = () => {
     const currentTip = tips[currentIndex];
 
     const renderIcon = (iconName: string) => {
-        if (iconName === 'coffee') return <Coffee size={12} className="text-stone-600" />;
-        return <Lightbulb size={12} className={iconName === 'lightbulb' && currentTip.text.includes('HabiCard') ? "text-amber-500" : "text-stone-400"} />;
+        if (iconName === 'coffee') return <Coffee size={12} className="text-ink" />;
+        return <Lightbulb size={12} className={iconName === 'lightbulb' && currentTip.text.includes('HabiCard') ? "text-amber-500" : "text-ink-subtle"} />;
     };
 
     return (
-        <div className="mt-2 border-t border-stone-100 pt-1.5 px-1 min-h-[32px] flex items-center">
+        <div className="mt-2 border-t border-edge-subtle pt-1.5 px-1 min-h-[32px] flex items-center">
             <div className={`flex gap-2 transition-opacity duration-300 ${fade ? 'opacity-100' : 'opacity-0'}`}>
                 <div className="flex-shrink-0 mt-0.5">
                     {renderIcon(currentTip.icon)}
                 </div>
-                <p className="text-[10px] text-stone-500 font-medium leading-tight">
+                <p className="text-[10px] text-ink-muted font-medium leading-tight">
                     {currentTip.text}
                 </p>
             </div>

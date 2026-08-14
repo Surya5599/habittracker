@@ -1,5 +1,6 @@
 import React from 'react';
 import { Angry, Frown, Meh, Smile, Laugh } from 'lucide-react';
+import { MOOD_SCALE } from '../constants';
 
 interface RetroGridProps {
     days: any[];
@@ -29,18 +30,18 @@ export const RetroGrid: React.FC<RetroGridProps> = ({
     const firstDayShifted = startOfWeek === 'monday' ? (firstDayOfMonth + 6) % 7 : firstDayOfMonth;
 
     const MOOD_CONFIG: Record<number, { icon: any, color: string }> = {
-        1: { icon: Angry, color: '#ef4444' },
-        2: { icon: Frown, color: '#f97316' },
-        3: { icon: Meh, color: '#eab308' },
-        4: { icon: Smile, color: '#84cc16' },
-        5: { icon: Laugh, color: '#10b981' },
+        1: { icon: Angry, color: MOOD_SCALE[0] },
+        2: { icon: Frown, color: MOOD_SCALE[1] },
+        3: { icon: Meh, color: MOOD_SCALE[2] },
+        4: { icon: Smile, color: MOOD_SCALE[3] },
+        5: { icon: Laugh, color: MOOD_SCALE[4] },
     };
 
     const grid = [];
     const isModal = variant === 'modal';
     const weekdayClassName = isModal
-        ? 'text-[9px] sm:text-[10px] font-black text-stone-500 text-center'
-        : 'text-[10px] font-black text-black text-center';
+        ? 'text-[9px] sm:text-[10px] font-black text-ink-muted text-center'
+        : 'text-[10px] font-black text-ink-strong text-center';
 
     const getHabitVisual = (rate: number) => {
         if (rate >= 1) {
@@ -84,7 +85,7 @@ export const RetroGrid: React.FC<RetroGridProps> = ({
                     {percent}%
                 </span>
             ) : (
-                <span className={`${isModal ? 'w-2 h-2' : 'w-1.5 h-1.5'} rounded-full bg-stone-300/70 block`} />
+                <span className={`${isModal ? 'w-2 h-2' : 'w-1.5 h-1.5'} rounded-full bg-surface-sunken/70 block`} />
             );
         } else {
             if (day.mood) {
@@ -92,7 +93,7 @@ export const RetroGrid: React.FC<RetroGridProps> = ({
                 if (config) {
                     bgColor = config.color;
                     const Icon = config.icon;
-                    content = <Icon size={isModal ? 16 : 18} className="text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]" strokeWidth={3} />;
+                    content = <Icon size={isModal ? 16 : 18} className="text-ink-inverse drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]" strokeWidth={3} />;
                 }
             }
         }
@@ -101,13 +102,13 @@ export const RetroGrid: React.FC<RetroGridProps> = ({
             <div
                 key={idx}
                 onClick={() => onDayClick?.(idx + 1)}
-                className={`aspect-square w-full border flex items-center justify-center relative overflow-hidden group mb-[1px] cursor-pointer transition-transform duration-150 hover:-translate-y-[1px] ${isModal ? 'rounded-[10px] border-stone-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]' : 'neo-border bg-white'}`}
+                className={`aspect-square w-full border flex items-center justify-center relative overflow-hidden group mb-[1px] cursor-pointer transition-transform duration-150 hover:-translate-y-[1px] ${isModal ? 'rounded-xl border-edge shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]' : 'neo-border bg-surface'}`}
                 style={{ backgroundColor: bgColor }}
             >
                 <span className={`absolute ${isModal ? 'top-1 left-1 text-[8px] opacity-55' : 'bottom-0 right-0.5 text-[7px] opacity-40'} font-black pointer-events-none select-none`} style={{ color: textColor }}>
                     {idx + 1}
                 </span>
-                <div className={`flex items-center justify-center w-full h-full ${isModal ? 'p-1.5' : 'p-0.5'}`}>
+                <div className={`flex items-center justify-center w-full h-full ${isModal ? 'p-1.5' : 'p-1'}`}>
                     {content}
                 </div>
             </div>

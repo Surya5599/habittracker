@@ -28,33 +28,46 @@ const TaskRow: React.FC<{
     };
 
     return (
-        <div className={`flex items-center gap-3 py-3.5 transition-opacity duration-300 ${done ? 'opacity-0' : 'opacity-100'}`}>
+        <div
+            className={`group/task flex items-center gap-3 py-2.5 -mx-2 px-2 rounded-control transition-all duration-300 hover:bg-theme-primary-faint ${done ? 'opacity-0' : 'opacity-100'}`}
+        >
             <button
                 onClick={handleComplete}
-                className="w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors"
-                style={{ borderColor: theme.primary, backgroundColor: done ? theme.primary : undefined }}
-                title="Mark done"
+                aria-label={`Mark "${task.text}" done`}
+                className="w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center shrink-0 transition-all hover:scale-110 border-edge-muted hover:border-theme-primary"
+                style={done ? { borderColor: theme.primary, backgroundColor: theme.primary } : undefined}
             >
-                {done && <Check size={10} strokeWidth={3} color="white" />}
+                <Check
+                    size={10}
+                    strokeWidth={3.5}
+                    className={done ? 'opacity-100' : 'opacity-0 group-hover/task:opacity-30'}
+                    style={{ color: done ? 'var(--theme-primary-ink)' : theme.primary }}
+                />
             </button>
-            <span className={`flex-1 text-sm font-medium text-stone-800 leading-snug ${done ? 'line-through text-stone-400' : ''}`}>
+
+            <span className={`flex-1 text-sm text-ink-strong leading-snug ${done ? 'line-through text-ink-subtle' : ''}`}>
                 {task.text}
             </span>
-            <button
-                onClick={onAssign}
-                className="p-1.5 rounded-lg transition-colors hover:opacity-80 shrink-0"
-                style={{ backgroundColor: theme.primary + '18' }}
-                title="Assign to date"
-            >
-                <CalendarPlus size={13} style={{ color: theme.primary }} />
-            </button>
-            <button
-                onClick={() => onDelete(task)}
-                className="p-1 text-stone-300 hover:text-stone-500 transition-colors shrink-0"
-                title="Delete"
-            >
-                <X size={14} />
-            </button>
+
+            {/* actions stay quiet until the row is engaged */}
+            <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover/task:opacity-100 focus-within:opacity-100 transition-opacity">
+                <button
+                    onClick={onAssign}
+                    aria-label="Schedule this task"
+                    className="p-1.5 rounded-control transition-colors hover:bg-theme-primary-soft"
+                    title="Schedule"
+                >
+                    <CalendarPlus size={13} style={{ color: theme.primary }} />
+                </button>
+                <button
+                    onClick={() => onDelete(task)}
+                    aria-label="Delete this task"
+                    className="p-1.5 rounded-control text-ink-dim hover:text-missed hover:bg-missed-tint transition-colors"
+                    title="Delete"
+                >
+                    <X size={13} />
+                </button>
+            </div>
         </div>
     );
 };
@@ -166,69 +179,86 @@ export const TasksView: React.FC<TasksViewProps> = ({ notes, updateNote, theme, 
     };
 
     return (
-        <div className="flex flex-col h-full min-h-0 overflow-hidden bg-white">
+        <div className="flex flex-col h-full min-h-0 overflow-hidden bg-surface">
             {/* Header */}
-            <div className="flex items-center gap-2 px-4 py-3 border-b-[3px] border-black bg-white shrink-0">
-                <Inbox size={15} style={{ color: theme.primary }} />
-                <h2 className="flex-1 text-base font-black uppercase tracking-tight text-black">Tasks</h2>
+            <div className="h-1 shrink-0" style={{ backgroundColor: theme.primary }} />
+            <div className="flex items-center gap-2.5 px-4 py-3 border-b-3 border-edge-strong bg-surface shrink-0">
+                <span
+                    className="w-7 h-7 rounded-control flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: 'var(--theme-primary-soft)' }}
+                >
+                    <Inbox size={14} style={{ color: theme.primary }} />
+                </span>
+                <div className="flex-1 min-w-0">
+                    <h2 className="text-base font-black uppercase tracking-tight text-ink-strong leading-none">Tasks</h2>
+                    <p className="text-[10px] text-ink-subtle leading-tight mt-1">
+                        {totalCount === 0 ? 'All clear' : `${totalCount} open${overdueTasks.length ? ` · ${overdueTasks.length} overdue` : ''}`}
+                    </p>
+                </div>
                 {totalCount > 0 && (
-                    <span className="px-2 py-0.5 text-[10px] font-black bg-black text-white">{totalCount}</span>
+                    <span
+                        className="px-2 py-1 rounded-chip text-[10px] font-black tabular-nums"
+                        style={{ backgroundColor: theme.primary, color: 'var(--theme-primary-ink)' }}
+                    >
+                        {totalCount}
+                    </span>
                 )}
-                <div className="hidden sm:flex items-center gap-1.5 px-2 py-1.5 border-2 border-stone-200 focus-within:border-black bg-stone-50 transition-colors">
-                    <Search size={12} className="text-stone-400 shrink-0" />
+                <div className="hidden sm:flex items-center gap-1.5 px-2 py-1.5 rounded-control border-2 border-edge focus-within:border-theme-primary bg-surface-muted transition-colors">
+                    <Search size={12} className="text-ink-subtle shrink-0" />
                     <input
                         ref={searchRef}
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                         placeholder="Search…"
-                        className="text-[11px] font-medium text-stone-700 placeholder:text-stone-300 outline-none bg-transparent w-24"
+                        className="text-[11px] font-medium text-ink placeholder:text-ink-dim outline-none bg-transparent w-24"
                     />
-                    {searchQuery && <button onClick={() => setSearchQuery('')} className="text-stone-300 hover:text-stone-600"><X size={10} /></button>}
+                    {searchQuery && <button onClick={() => setSearchQuery('')} className="text-ink-dim hover:text-ink"><X size={10} /></button>}
                 </div>
                 <button
                     onClick={toggleSearch}
-                    className={`sm:hidden p-1.5 border-2 transition-all ${searchQuery || searchOpen ? 'bg-black text-white border-black' : 'border-stone-200 text-stone-400 hover:border-black hover:text-black'}`}
+                    className={`sm:hidden p-1.5 border-2 transition-all ${searchQuery || searchOpen ? 'bg-theme-primary text-theme-ink border-edge-strong' : 'border-edge text-ink-subtle hover:border-edge-strong hover:text-ink-strong'}`}
                 >
                     <Search size={12} />
                 </button>
-                <button onClick={onClose} className="p-1.5 text-stone-400 hover:text-black hover:bg-stone-100 rounded transition-colors">
+                <button onClick={onClose} className="p-1.5 text-ink-subtle hover:text-ink-strong hover:bg-surface-strong rounded transition-colors">
                     <X size={16} />
                 </button>
             </div>
 
             {searchOpen && (
-                <div className="sm:hidden px-4 py-2 border-b-2 border-black bg-stone-50 shrink-0">
+                <div className="sm:hidden px-4 py-2 border-b-2 border-edge-strong bg-surface-muted shrink-0">
                     <div className="flex items-center gap-2">
-                        <Search size={12} className="text-stone-400 shrink-0" />
+                        <Search size={12} className="text-ink-subtle shrink-0" />
                         <input
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                             placeholder="Search tasks..."
-                            className="flex-1 text-sm font-medium text-stone-800 placeholder:text-stone-400 bg-transparent outline-none"
+                            className="flex-1 text-sm font-medium text-ink-strong placeholder:text-ink-subtle bg-transparent outline-none"
                         />
-                        {searchQuery && <button onClick={() => setSearchQuery('')} className="text-stone-400 hover:text-black"><X size={12} /></button>}
+                        {searchQuery && <button onClick={() => setSearchQuery('')} className="text-ink-subtle hover:text-ink-strong"><X size={12} /></button>}
                     </div>
                 </div>
             )}
 
             {/* Scrollable content */}
-            <div className="flex-1 min-h-0 overflow-y-auto bg-stone-50">
+            <div className="flex-1 min-h-0 overflow-y-auto bg-surface-muted">
                 <div className="p-3 flex flex-col gap-3 pb-4">
 
                     {/* Overdue groups */}
                     {overdueGroups.length > 0 && (
                         <div className="flex flex-col gap-2">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-orange-500 px-1">Overdue</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-warning px-1">Overdue</span>
                             {overdueGroups.map(([dateKey, tasks]) => {
                                 const dateLabel = new Date(dateKey + 'T00:00:00').toLocaleDateString([], {
                                     weekday: 'short', month: 'short', day: 'numeric',
                                 });
                                 return (
-                                    <div key={dateKey} className="overflow-hidden rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] bg-white">
-                                        <div className="px-4 py-2 border-b-2 border-black bg-orange-50">
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-orange-500">{dateLabel}</span>
+                                    <div key={dateKey} className="overflow-hidden rounded-card border-2 border-edge-strong shadow-neo bg-surface">
+                                        <div className="flex items-center justify-between gap-2 px-4 py-2 border-b-2 border-edge-strong bg-warning-faint">
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-warning">{dateLabel}</span>
+                                            <span className="text-[10px] font-bold text-ink-subtle tabular-nums">{tasks.length}</span>
                                         </div>
-                                        <div className="px-4 divide-y divide-stone-100">
+                                        <div className="px-3 py-1 divide-y divide-edge-subtle">
                                             {tasks.map(task => (
                                                 <TaskRow
                                                     key={`overdue-${dateKey}-${task.id}`}
@@ -247,15 +277,31 @@ export const TasksView: React.FC<TasksViewProps> = ({ notes, updateNote, theme, 
                     )}
 
                     {/* Backlog */}
-                    <div className="overflow-hidden rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] bg-white">
-                        <div className="px-4 py-2 border-b-2 border-black bg-stone-100">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">Backlog</span>
+                    <div className="overflow-hidden rounded-card border-2 border-edge-strong shadow-neo bg-surface">
+                        <div
+                            className="flex items-center justify-between gap-2 px-4 py-2 border-b-2 border-edge-strong"
+                            style={{ backgroundColor: 'var(--theme-primary-faint)' }}
+                        >
+                            <span className="text-[10px] font-black uppercase tracking-widest text-ink-muted">Backlog</span>
+                            {manualBacklog.length > 0 && (
+                                <span className="text-[10px] font-bold text-ink-subtle tabular-nums">{manualBacklog.length}</span>
+                            )}
                         </div>
-                        <div className="px-4 divide-y divide-stone-100">
+                        <div className="px-3 py-1 divide-y divide-edge-subtle">
                             {manualBacklog.length === 0 ? (
-                                <p className="text-xs italic py-5 text-center text-stone-300">
-                                    {searchQuery ? 'No matching tasks' : 'Nothing in the backlog — add something below'}
-                                </p>
+                                <div className="py-8 flex flex-col items-center gap-2 text-center">
+                                    <span
+                                        className="w-9 h-9 rounded-chip flex items-center justify-center"
+                                        style={{ backgroundColor: 'var(--theme-primary-soft)' }}
+                                    >
+                                        <Inbox size={16} style={{ color: theme.primary }} />
+                                    </span>
+                                    <p className="text-xs text-ink-muted max-w-[24ch] leading-relaxed">
+                                        {searchQuery
+                                            ? 'No tasks match that search.'
+                                            : 'Your backlog is empty. Anything you add below stays here until you give it a date.'}
+                                    </p>
+                                </div>
                             ) : (
                                 manualBacklog.map(task => (
                                     <TaskRow
@@ -274,7 +320,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ notes, updateNote, theme, 
             </div>
 
             {/* Footer */}
-            <div className="border-t-[3px] border-black shrink-0 p-3 bg-white">
+            <div className="border-t-3 border-edge-strong shrink-0 p-3 bg-surface">
                 <div className="flex items-end gap-3">
                     <input
                         ref={inputRef}
@@ -282,12 +328,13 @@ export const TasksView: React.FC<TasksViewProps> = ({ notes, updateNote, theme, 
                         onChange={e => setNewText(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleAddTask()}
                         placeholder="Add to backlog..."
-                        className="flex-1 text-sm font-medium text-stone-800 placeholder:text-stone-300 bg-transparent outline-none border-b-2 border-stone-200 focus:border-black pb-1 transition-colors"
+                        className="flex-1 text-sm text-ink-strong placeholder:text-ink-dim bg-transparent outline-none border-b-2 border-edge focus:border-theme-primary pb-1.5 transition-colors"
                     />
                     <button
                         onClick={handleAddTask}
                         disabled={!newText.trim()}
-                        className="px-3 py-1.5 rounded-lg bg-black text-white text-[10px] font-black uppercase tracking-wide disabled:opacity-25 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)] active:translate-y-[4px] active:translate-x-[4px] active:shadow-none transition-all flex items-center gap-1.5"
+                        style={{ backgroundColor: theme.primary, color: 'var(--theme-primary-ink)' }}
+                        className="px-3.5 py-2 rounded-control text-[10px] font-black uppercase tracking-wide disabled:opacity-25 shadow-neo-sm hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none active:translate-y-[2px] active:translate-x-[2px] transition-all flex items-center gap-1.5 shrink-0"
                     >
                         <Plus size={12} strokeWidth={3} />
                         Add
@@ -298,23 +345,23 @@ export const TasksView: React.FC<TasksViewProps> = ({ notes, updateNote, theme, 
             {/* Assign-to-date modal */}
             {schedulingTask && (
                 <div
-                    className="fixed inset-0 z-[120] flex items-end sm:items-center justify-center bg-black/30 p-4"
+                    className="fixed inset-0 z-sheet flex items-end sm:items-center justify-center bg-scrim p-4"
                     onClick={() => setSchedulingTask(null)}
                 >
                     <div
-                        className="bg-white neo-border rounded-2xl p-5 w-full max-w-sm flex flex-col gap-4"
+                        className="bg-surface neo-border rounded-2xl p-6 w-full max-w-sm flex flex-col gap-4"
                         onClick={e => e.stopPropagation()}
                     >
                         <div className="flex items-center justify-between">
                             <span className="text-sm font-black uppercase tracking-wide">Assign to date</span>
                             <button
                                 onClick={() => setSchedulingTask(null)}
-                                className="p-1 text-stone-400 hover:text-stone-700 transition-colors"
+                                className="p-1 text-ink-subtle hover:text-ink transition-colors"
                             >
                                 <X size={15} />
                             </button>
                         </div>
-                        <p className="text-xs text-stone-500 truncate border border-stone-100 rounded-lg px-3 py-2 bg-stone-50">
+                        <p className="text-xs text-ink-muted truncate border border-edge-subtle rounded-lg px-3 py-2 bg-surface-muted">
                             "{schedulingTask.text}"
                         </p>
                         <input
@@ -327,12 +374,13 @@ export const TasksView: React.FC<TasksViewProps> = ({ notes, updateNote, theme, 
                                 const year = val.split('-')[0];
                                 if (year && year.length <= 4) setAssignDate(val);
                             }}
-                            className="w-full border-2 border-black rounded-lg px-3 py-2 text-sm font-medium"
+                            className="w-full border-2 border-edge-strong rounded-control px-3 py-2 text-sm focus:border-theme-primary outline-none transition-colors"
                         />
                         <button
                             onClick={handleMoveToDate}
                             disabled={!assignDate}
-                            className="w-full py-2.5 rounded-lg bg-black text-white text-sm font-black uppercase tracking-wide disabled:opacity-30 transition-opacity"
+                            style={{ backgroundColor: theme.primary, color: 'var(--theme-primary-ink)' }}
+                            className="w-full py-2.5 rounded-control text-sm font-black uppercase tracking-wide disabled:opacity-30 transition-opacity"
                         >
                             Move to date
                         </button>

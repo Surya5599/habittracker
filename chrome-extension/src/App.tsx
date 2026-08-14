@@ -181,7 +181,7 @@ const App: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="h-full flex items-center justify-center bg-[#e5e5e5]">
+      <div className="h-full flex items-center justify-center bg-canvas">
         <div className="text-sm font-black uppercase tracking-widest animate-pulse">Loading...</div>
       </div>
     );
@@ -189,21 +189,21 @@ const App: React.FC = () => {
 
   if (!session) {
     return (
-      <div className="p-4 bg-[#e5e5e5] min-h-screen flex items-center justify-center">
+      <div className="p-4 bg-canvas min-h-screen flex items-center justify-center">
         <Toaster position="top-center" />
-        <div className="max-w-md w-full bg-white border-[2px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-6 space-y-6 text-center">
+        <div className="max-w-md w-full bg-surface border-2 border-edge-strong shadow-neo p-6 space-y-6 text-center">
           <img src="/habicard_logo.png" alt="HabiCard" className="w-12 h-12 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-[#444] uppercase tracking-widest">
             Welcome to HabiCard
           </h2>
-          <p className="text-sm text-stone-500">
+          <p className="text-sm text-ink-muted">
             Sign in on the web to sync your habits.
           </p>
           <button
             onClick={() => {
               chrome.tabs.create({ url: `${WEB_APP_URL}/?source=extension` });
             }}
-            className="w-full px-4 py-2 border-[2px] border-black text-sm font-black uppercase tracking-widest bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all flex flex-wrap h-auto items-center justify-center gap-2"
+            className="w-full px-4 py-2 border-2 border-edge-strong text-sm font-black uppercase tracking-widest bg-surface-inverse text-ink-inverse shadow-neo-sm hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all flex flex-wrap h-auto items-center justify-center gap-2"
           >
             <span>Sign in to HabiCard</span>
             <ExternalLink size={14} />
@@ -214,7 +214,7 @@ const App: React.FC = () => {
             href="https://habicard.com/privacy"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[10px] text-stone-500 hover:text-black underline uppercase tracking-widest font-bold"
+            className="text-[10px] text-ink-muted hover:text-ink-strong underline uppercase tracking-widest font-bold"
           >
             Privacy Policy
           </a>
@@ -259,16 +259,16 @@ const App: React.FC = () => {
         headerActions={
           <>
             <button onClick={openFullSite} title="Analytics"
-              className="p-1.5 text-white/80 hover:text-white hover:bg-white/20 rounded transition-colors flex items-center gap-1">
+              className="p-1.5 text-ink-inverse/80 hover:text-ink-inverse hover:bg-surface/20 rounded transition-colors flex items-center gap-1">
               <BarChart3 size={13} strokeWidth={3} />
               <span className="text-[9px] font-black uppercase tracking-widest">Analytics</span>
             </button>
             <button onClick={() => setHabitManagerModalOpen(true)} title="Manage Habits"
-              className="p-1.5 text-white/80 hover:text-white hover:bg-white/20 rounded transition-colors">
+              className="p-1.5 text-ink-inverse/80 hover:text-ink-inverse hover:bg-surface/20 rounded transition-colors">
               <List size={14} />
             </button>
             <button onClick={() => setSettingsModalOpen(true)} title="Settings"
-              className="p-1.5 text-white/80 hover:text-white hover:bg-white/20 rounded transition-colors">
+              className="p-1.5 text-ink-inverse/80 hover:text-ink-inverse hover:bg-surface/20 rounded transition-colors">
               <Settings size={14} />
             </button>
           </>

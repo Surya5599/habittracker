@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BookOpen, Check, Minus, Plus, Trash2, Pencil, ChevronLeft, ChevronRight, Save, Meh, Frown, Smile, Laugh, Angry } from 'lucide-react';
 import { Habit, HabitCompletion, Theme, DailyNote, Task, DayData } from '../types';
+import { MOOD_SCALE } from '../constants';
 import { isCompleted as checkCompleted } from '../utils/stats';
 import { generateUUID } from '../utils/uuid';
 import { isHabitActiveOnDate } from '../utils/habitActivity';
@@ -482,18 +483,18 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
     };
 
     const MOODS = [
-        { value: 1, icon: Angry, label: t('dailyCard.moods.veryBad'), color: '#ef4444', tooltip: t('dailyCard.moods.veryBad') },
-        { value: 2, icon: Frown, label: t('dailyCard.moods.bad'), color: '#f97316', tooltip: t('dailyCard.moods.bad') },
-        { value: 3, icon: Meh, label: t('dailyCard.moods.neutral'), color: '#eab308', tooltip: t('dailyCard.moods.neutral') },
-        { value: 4, icon: Smile, label: t('dailyCard.moods.good'), color: '#84cc16', tooltip: t('dailyCard.moods.good') },
-        { value: 5, icon: Laugh, label: t('dailyCard.moods.veryGood'), color: '#10b981', tooltip: t('dailyCard.moods.veryGood') },
+        { value: 1, icon: Angry, label: t('dailyCard.moods.veryBad'), color: MOOD_SCALE[0], tooltip: t('dailyCard.moods.veryBad') },
+        { value: 2, icon: Frown, label: t('dailyCard.moods.bad'), color: MOOD_SCALE[1], tooltip: t('dailyCard.moods.bad') },
+        { value: 3, icon: Meh, label: t('dailyCard.moods.okay'), color: MOOD_SCALE[2], tooltip: t('dailyCard.moods.okay') },
+        { value: 4, icon: Smile, label: t('dailyCard.moods.good'), color: MOOD_SCALE[3], tooltip: t('dailyCard.moods.good') },
+        { value: 5, icon: Laugh, label: t('dailyCard.moods.veryGood'), color: MOOD_SCALE[4], tooltip: t('dailyCard.moods.veryGood') },
     ];
     const selectedMood = MOODS.find(m => m.value === mood);
     const MoodStatusIcon = selectedMood?.icon || Meh;
     const remainingHabitsCount = Math.max(0, totalHabitsCount - completedHabitsCount);
     const openTasksCount = Math.max(0, totalTasksCount - completedTasksCount);
     const StatusBar = (
-        <div className="flex border-y-2 border-black" style={{ backgroundColor: theme.secondary + '18' }}>
+        <div className="flex border-y-2 border-edge-strong" style={{ backgroundColor: 'var(--theme-secondary-faint)' }}>
             <button
                 onClick={() => {
                     if (onGlobalViewModeChange) {
@@ -503,21 +504,21 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                     setShowTasksView(false);
                     setIsFlipped(false);
                 }}
-                className="flex-1 py-2 px-1 border-r border-black flex flex-col items-center justify-center"
+                className="flex-1 py-2 px-1 border-r border-edge-strong flex flex-col items-center justify-center"
                 title={t('dailyCard.habitsLabel', { defaultValue: 'Habits' })}
                 data-onboarding="status-habits"
             >
-                <span className="text-[10px] font-black uppercase tracking-wider text-stone-500">{t('dailyCard.habitsLabel', { defaultValue: 'Habits' })}</span>
-                <span className="text-[12px] sm:text-[13px] font-black text-stone-700 mt-1">{completedHabitsCount}/{totalHabitsCount}</span>
+                <span className="text-[10px] font-black uppercase tracking-wider text-ink-muted">{t('dailyCard.habitsLabel', { defaultValue: 'Habits' })}</span>
+                <span className="text-[12px] sm:text-[13px] font-black text-ink mt-1">{completedHabitsCount}/{totalHabitsCount}</span>
             </button>
             <button
                 onClick={openTasksView}
-                className="flex-1 py-2 px-1 border-r border-black flex flex-col items-center justify-center"
+                className="flex-1 py-2 px-1 border-r border-edge-strong flex flex-col items-center justify-center"
                 title={t('dailyCard.tasks')}
                 data-onboarding="status-tasks"
             >
-                <span className="text-[10px] font-black uppercase tracking-wider text-stone-500">{t('dailyCard.tasks')}</span>
-                <span className="text-[12px] sm:text-[13px] font-black text-stone-700 mt-1">
+                <span className="text-[10px] font-black uppercase tracking-wider text-ink-muted">{t('dailyCard.tasks')}</span>
+                <span className="text-[12px] sm:text-[13px] font-black text-ink mt-1">
                     {totalTasksCount > 0 ? `${completedTasksCount}/${totalTasksCount}` : '+'}
                 </span>
             </button>
@@ -527,11 +528,11 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 title={t('dailyCard.journal')}
                 data-onboarding="status-journal"
             >
-                <span className="text-[10px] font-black uppercase tracking-wider text-stone-500">{t('dailyCard.journal')}</span>
+                <span className="text-[10px] font-black uppercase tracking-wider text-ink-muted">{t('dailyCard.journal')}</span>
                 {hasMoodTracked ? (
                     <MoodStatusIcon size={18} strokeWidth={2.8} color={selectedMood?.color} />
                 ) : (
-                    <BookOpen size={18} strokeWidth={2.8} className={hasJournalEntry ? 'text-green-700' : 'text-stone-400'} />
+                    <BookOpen size={18} strokeWidth={2.8} className={hasJournalEntry ? 'text-green-700' : 'text-ink-subtle'} />
                 )}
             </button>
         </div>
@@ -539,11 +540,11 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
 
     const HeaderTitle = (
         <div className={`min-w-0 overflow-hidden ${cardStyle === 'large' ? 'text-center px-4' : 'text-left pl-4 pr-1'}`}>
-            <h3 className="text-white font-black tracking-tight text-sm sm:text-base leading-tight truncate">
+            <h3 className="text-ink-inverse font-black tracking-tight text-sm sm:text-base leading-tight truncate">
                 <span className="sm:hidden">{dayNameShort}</span>
                 <span className="hidden sm:inline">{dayName}</span>
             </h3>
-            <p className="text-white/80 font-bold text-[10px] sm:text-[11px] tracking-wide whitespace-nowrap truncate">{dateString}</p>
+            <p className="text-ink-inverse/80 font-bold text-[10px] sm:text-[11px] tracking-wide whitespace-nowrap truncate">{dateString}</p>
         </div>
     );
 
@@ -572,13 +573,13 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-[11px] font-black text-white">{Math.round(progress)}%</span>
+                <span className="text-[11px] font-black text-ink-inverse">{Math.round(progress)}%</span>
             </div>
         </div>
     );
 
     const LargeProgressPanel = (
-        <div className="px-4 pt-1 pb-0 bg-white border-b border-stone-100">
+        <div className="px-4 pt-1 pb-0 bg-surface border-b border-edge-subtle">
             <div className="mx-auto w-[128px] h-[128px] relative">
                 <svg className="w-full h-full transform -rotate-90">
                     <circle
@@ -603,7 +604,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                     />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-2xl font-black text-stone-800">{Math.round(progress)}%</span>
+                    <span className="text-2xl font-black text-ink-strong">{Math.round(progress)}%</span>
                 </div>
             </div>
         </div>
@@ -611,11 +612,11 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
 
     const FrontFace = (
         <div
-            className="relative w-full h-full neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans bg-white"
+            className="relative w-full h-full neo-border shadow-neo rounded-2xl overflow-hidden flex flex-col font-sans bg-surface"
         >
             {/* Header */}
             <div
-                className={`day-date-header py-1.5 px-0 text-center border-b-[2px] border-black relative ${onDateClick && !combinedView ? 'cursor-pointer' : ''}`}
+                className={`day-date-header py-1.5 px-0 text-center border-b-2 border-edge-strong relative ${onDateClick && !combinedView ? 'cursor-pointer' : ''}`}
                 style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}
                 onClick={() => {
                     if (onDateClick && !combinedView) onDateClick(date);
@@ -638,7 +639,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                     e.stopPropagation();
                                     onPrev();
                                 }}
-                                className="p-1 text-white hover:bg-white/20 rounded transition-colors"
+                                className="p-1 text-ink-inverse hover:bg-surface/20 rounded transition-colors"
                             >
                                 <ChevronLeft size={18} strokeWidth={3} />
                             </button>
@@ -655,7 +656,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                     e.stopPropagation();
                                     onNext();
                                 }}
-                                className="p-1 text-white hover:bg-white/20 rounded transition-colors"
+                                className="p-1 text-ink-inverse hover:bg-surface/20 rounded transition-colors"
                             >
                                 <ChevronRight size={18} strokeWidth={3} />
                             </button>
@@ -668,15 +669,15 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
             {cardStyle === 'large' ? LargeProgressPanel : null}
 
             {combinedView && (
-                <div className="border-b-2 border-black bg-stone-50 px-3 py-2">
+                <div className="border-b-2 border-edge-strong bg-surface-muted px-3 py-2">
                     <div className="flex items-center justify-between gap-2">
                         <div>
-                            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-stone-400">Habits</p>
-                            <p className="mt-1 text-base font-black text-stone-900">{completedHabitsCount}/{totalHabitsCount} complete</p>
+                            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-ink-subtle">Habits</p>
+                            <p className="mt-1 text-base font-black text-ink-strong">{completedHabitsCount}/{totalHabitsCount} complete</p>
                         </div>
                         <div className="text-right">
-                            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-stone-400">Focus</p>
-                            <p className="mt-1 text-sm font-black text-stone-600">{remainingHabitsCount > 0 ? `${remainingHabitsCount} left` : 'All done'}</p>
+                            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-ink-subtle">Focus</p>
+                            <p className="mt-1 text-sm font-black text-ink">{remainingHabitsCount > 0 ? `${remainingHabitsCount} left` : 'All done'}</p>
                         </div>
                     </div>
                 </div>
@@ -690,7 +691,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
             {/* Habits List */}
             <div className="py-1 px-2 flex flex-col">
                 <div
-                    className="space-y-0 pr-0.5"
+                    className="space-y-0 pr-1"
                 >
                     {visibleHabitsForDate.length > 0 ? visibleHabitsForDate.map((habit, habitIndex) => {
                         const done = checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
@@ -756,11 +757,11 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                         className="w-1.5 h-1.5 rounded-full shrink-0"
                                         style={{ backgroundColor: habit.color || '#d1d5db', opacity: done ? 0.35 : 1 }}
                                     />
-                                    <span className={`text-[12px] sm:text-[13px] font-bold break-words leading-tight transition-all duration-300 ${inactive ? 'text-amber-700' : (done ? 'text-stone-400 line-through' : 'text-stone-700')}`}>
+                                    <span className={`text-[12px] sm:text-[13px] font-bold break-words leading-tight transition-all duration-300 ${inactive ? 'text-amber-700' : (done ? 'text-ink-subtle line-through' : 'text-ink')}`}>
                                         {(habit.name || t('dailyCard.untitled')).slice(0, 40)}{(habit.name || '').length > 40 ? '…' : ''}
                                     </span>
                                     {habit.weeklyTarget && (
-                                        <span className={`ml-1 text-[10px] px-1.5 py-0.5 border-[1px] font-black uppercase tracking-tighter ${goalMet ? 'bg-black text-white border-black' : 'bg-stone-50 text-stone-400 border-stone-200'}`}>
+                                        <span className={`ml-1 text-[10px] px-1.5 py-1 border font-black uppercase tracking-tighter ${goalMet ? 'bg-theme-primary text-theme-ink border-edge-strong' : 'bg-surface-muted text-ink-subtle border-edge'}`}>
                                             {weekCompletions}/{habit.weeklyTarget}
                                         </span>
                                     )}
@@ -768,7 +769,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                 <motion.div
                                     animate={{ scale: done ? [1, 1.25, 1] : 1 }}
                                     transition={{ duration: 0.18 }}
-                                    className={`border-[2px] border-black flex items-center justify-center transition-all ${cardStyle === 'compact' ? 'w-4 h-4' : 'w-5 h-5'} ${inactive ? 'bg-amber-300 text-amber-900 border-amber-700' : (done ? 'bg-black text-white' : 'bg-white')}`}
+                                    className={`border-2 border-edge-strong flex items-center justify-center transition-all ${cardStyle === 'compact' ? 'w-4 h-4' : 'w-5 h-5'} ${inactive ? 'bg-amber-300 text-amber-900 border-amber-700' : (done ? 'bg-done text-ink-strong' : 'bg-surface')}`}
                                     data-onboarding={habitIndex === 0 ? 'habit-checkbox' : undefined}
                                 >
                                     {inactive ? <Minus size={11} strokeWidth={4} /> : (done && <Check size={11} strokeWidth={4} />)}
@@ -776,15 +777,15 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                             </div>
                         );
                     }) : (
-                        <div className="text-[10px] text-stone-300 italic py-1">{t('dailyCard.noDailyHabits')}</div>
+                        <div className="text-[10px] text-ink-dim italic py-1">{t('dailyCard.noDailyHabits')}</div>
                     )}
                 </div>
             </div>
             </div>
             {!combinedView && (
                 <div
-                    className="mt-auto border-t-2 border-black flex flex-col"
-                    style={{ backgroundColor: theme.secondary + '18' }}
+                    className="mt-auto border-t-2 border-edge-strong flex flex-col"
+                    style={{ backgroundColor: 'var(--theme-secondary-faint)' }}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => {
                         e.preventDefault();
@@ -818,7 +819,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
 
     const TasksFace = (
         <div
-            className="relative w-full h-full neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans bg-white"
+            className="relative w-full h-full neo-border shadow-neo rounded-2xl overflow-hidden flex flex-col font-sans bg-surface"
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => {
                 e.preventDefault();
@@ -843,31 +844,31 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 updateNote(dateKey, { tasks: [...targetTasks, taskToMove] });
             }}
         >
-            <div className="day-date-header p-3 text-center border-b-[2px] border-black relative" style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}>
+            <div className="day-date-header p-3 text-center border-b-2 border-edge-strong relative" style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}>
                 {onPrev && (
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
                             onPrev();
                         }}
-                        className="absolute left-2 top-1/2 -translate-y-1/2 p-1 text-white hover:bg-white/20 rounded transition-colors"
+                        className="absolute left-2 top-1/2 -translate-y-1/2 p-1 text-ink-inverse hover:bg-surface/20 rounded transition-colors"
                         title="Previous day"
                     >
                         <ChevronLeft size={20} strokeWidth={3} />
                     </button>
                 )}
-                <h3 className="text-white font-black uppercase tracking-tighter text-base sm:text-lg leading-tight">
+                <h3 className="text-ink-inverse font-black uppercase tracking-tighter text-base sm:text-lg leading-tight">
                     <span className="sm:hidden">{dayNameShort}</span>
                     <span className="hidden sm:inline">{dayName}</span>
                 </h3>
-                <p className="text-white/80 font-bold text-[9px] sm:text-[10px] tracking-widest whitespace-nowrap">{dateString}</p>
+                <p className="text-ink-inverse/80 font-bold text-[9px] sm:text-[10px] tracking-widest whitespace-nowrap">{dateString}</p>
                 {onNext && (
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
                             onNext();
                         }}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-white hover:bg-white/20 rounded transition-colors"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-ink-inverse hover:bg-surface/20 rounded transition-colors"
                         title="Next day"
                     >
                         <ChevronRight size={20} strokeWidth={3} />
@@ -875,16 +876,16 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 )}
             </div>
 
-            <div className="p-2 border-b-2 border-black bg-stone-50 flex items-center justify-between gap-2">
+            <div className="p-2 border-b-2 border-edge-strong bg-surface-muted flex items-center justify-between gap-2">
                 <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-stone-400">Tasks</p>
-                    <p className="mt-1 text-sm font-black text-stone-900">
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-ink-subtle">Tasks</p>
+                    <p className="mt-1 text-sm font-black text-ink-strong">
                         {totalTasksCount > 0 ? `${openTasksCount} open of ${totalTasksCount}` : 'No tasks yet'}
                     </p>
                 </div>
                 <button
                     onClick={() => addNewTask(false)}
-                    className="inline-flex items-center gap-1 px-2 py-1 border border-black bg-white text-[9px] font-black uppercase tracking-wide hover:bg-stone-100 transition-colors"
+                    className="inline-flex items-center gap-1 px-2 py-1 border border-edge-strong bg-surface text-[9px] font-black uppercase tracking-wide hover:bg-surface-strong transition-colors"
                     data-onboarding="task-add"
                 >
                     <Plus size={9} strokeWidth={3} />
@@ -911,7 +912,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                             boxShadow: task.completed ? '0 0 0 1px rgba(34,197,94,0.25)' : 'none',
                         }}
                         transition={{ duration: 0.22, ease: 'easeOut' }}
-                        className={`relative flex items-center gap-1.5 group border p-1.5 rounded neo-shadow-sm transition-all ${editingTaskId === task.id ? 'ring-2 ring-black' : 'cursor-move'}`}
+                        className={`relative flex items-center gap-1.5 group border p-1.5 rounded shadow-neo-sm transition-all ${editingTaskId === task.id ? 'ring-2 ring-ring' : 'cursor-move'}`}
                     >
                         <button
                             onClick={(e) => {
@@ -926,7 +927,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                             <motion.div
                                 animate={{ scale: task.completed ? [1, 1.25, 1] : 1 }}
                                 transition={{ duration: 0.18 }}
-                                className={`w-5 h-5 rounded-[3px] border-2 border-black flex items-center justify-center transition-colors duration-300 ${task.completed ? 'bg-green-500 border-green-600 text-white' : 'bg-white hover:bg-stone-100'}`}
+                                className={`w-5 h-5 rounded border-2 border-edge-strong flex items-center justify-center transition-colors duration-300 ${task.completed ? 'bg-done border-done text-ink-strong' : 'bg-surface hover:bg-surface-strong'}`}
                             >
                                 {task.completed && <Check size={10} strokeWidth={3.2} />}
                             </motion.div>
@@ -942,14 +943,14 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter') handleFinishEditing(task.id);
                                 }}
-                                className="w-full text-[12px] sm:text-[13px] font-medium bg-transparent outline-none leading-tight border-none p-0 focus:ring-0 text-stone-800"
+                                className="w-full text-[12px] sm:text-[13px] font-medium bg-transparent outline-none leading-tight border-none p-0 focus:ring-0 text-ink-strong"
                                 autoFocus
                                 data-onboarding={taskIndex === 0 ? 'task-input' : undefined}
                             />
                         ) : (
                             <>
                                 <span
-                                    className={`flex-1 text-[12px] sm:text-[13px] font-medium leading-tight break-all ${task.completed ? 'text-stone-400 line-through' : 'text-stone-800'}`}
+                                    className={`flex-1 text-[12px] sm:text-[13px] font-medium leading-tight break-all ${task.completed ? 'text-ink-subtle line-through' : 'text-ink-strong'}`}
                                     onDoubleClick={() => {
                                         clearTaskReveal();
                                         setEditingTaskId(task.id);
@@ -965,7 +966,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                 </span>
 
                                 {revealedTaskId === task.id && (
-                                    <div className="absolute left-8 right-2 top-0 z-20 -translate-y-[calc(100%+4px)] rounded border border-black bg-white px-2 py-1 text-[12px] sm:text-[13px] font-bold leading-tight text-stone-800 shadow-[3px_3px_0_0_rgba(0,0,0,0.12)]">
+                                    <div className="absolute left-8 right-2 top-0 z-20 -translate-y-[calc(100%+4px)] rounded border border-edge-strong bg-surface px-2 py-1 text-[12px] sm:text-[13px] font-bold leading-tight text-ink-strong shadow-neo">
                                         {task.text}
                                     </div>
                                 )}
@@ -979,7 +980,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                     setEditingTaskId(task.id);
                                     setEditingTaskText(task.text);
                                 }}
-                                className="p-1.5 text-stone-400 hover:text-black transition-colors"
+                                className="p-1.5 text-ink-subtle hover:text-ink-strong transition-colors"
                                 title={t('dailyCard.editTask')}
                             >
                                 <Pencil size={11} />
@@ -991,7 +992,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                     const newTasks = currentTasks.filter(t => t.id !== task.id);
                                     updateNote(dateKey, { tasks: newTasks });
                                 }}
-                                className="p-1.5 text-stone-400 hover:text-red-500 transition-colors"
+                                className="p-1.5 text-ink-subtle hover:text-red-500 transition-colors"
                                 title={t('dailyCard.deleteTask')}
                             >
                                 <Trash2 size={11} />
@@ -1000,7 +1001,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                     </motion.div>
                     ))}
                 {(!dayData.tasks || dayData.tasks.length === 0) && (
-                    <div className="text-[10px] text-stone-400 text-center py-4 italic">
+                    <div className="text-[10px] text-ink-subtle text-center py-4 italic">
                         {t('dailyCard.noTasksToday')}
                     </div>
                 )}
@@ -1011,28 +1012,28 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
 
     const JournalFace = (
         <div
-            className="relative w-full h-full neo-border neo-shadow rounded-2xl overflow-hidden flex flex-col font-sans bg-white"
+            className="relative w-full h-full neo-border shadow-neo rounded-2xl overflow-hidden flex flex-col font-sans bg-surface"
         >
             {/* Header */}
-            <div className="day-date-header p-3 text-center border-b-[2px] border-black relative" style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}>
+            <div className="day-date-header p-3 text-center border-b-2 border-edge-strong relative" style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}>
                 {onPrev && (
                     <button
                         onClick={(e) => { e.stopPropagation(); onPrev(); }}
-                        className="absolute left-2 top-1/2 -translate-y-1/2 p-1 text-white hover:bg-white/20 rounded transition-colors"
+                        className="absolute left-2 top-1/2 -translate-y-1/2 p-1 text-ink-inverse hover:bg-surface/20 rounded transition-colors"
                         title="Previous day"
                     >
                         <ChevronLeft size={20} strokeWidth={3} />
                     </button>
                 )}
-                <h3 className="text-white font-black tracking-tight text-sm sm:text-base leading-tight">
+                <h3 className="text-ink-inverse font-black tracking-tight text-sm sm:text-base leading-tight">
                     <span className="sm:hidden">{dayNameShort}</span>
                     <span className="hidden sm:inline">{dayName}</span>
                 </h3>
-                <p className="text-white/80 font-bold text-[9px] sm:text-[10px] tracking-wide whitespace-nowrap">{dateString}</p>
+                <p className="text-ink-inverse/80 font-bold text-[9px] sm:text-[10px] tracking-wide whitespace-nowrap">{dateString}</p>
                 {onNext && (
                     <button
                         onClick={(e) => { e.stopPropagation(); onNext(); }}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-white hover:bg-white/20 rounded transition-colors"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-ink-inverse hover:bg-surface/20 rounded transition-colors"
                         title="Next day"
                     >
                         <ChevronRight size={20} strokeWidth={3} />
@@ -1041,15 +1042,15 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
             </div>
 
             {combinedView && (
-                <div className="border-b-2 border-stone-200 px-4 py-2">
+                <div className="border-b-2 border-edge px-4 py-2">
                     <div className="flex items-center justify-between gap-2">
                         <div>
-                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-stone-400">Journal</p>
-                            <p className="mt-0.5 text-sm font-black text-stone-900">{hasJournalEntry ? 'Entry saved' : 'Ready to reflect'}</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-ink-subtle">Journal</p>
+                            <p className="mt-0.5 text-sm font-black text-ink-strong">{hasJournalEntry ? 'Entry saved' : 'Ready to reflect'}</p>
                         </div>
                         <div className="text-right">
-                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-stone-400">Mood</p>
-                            <p className="mt-0.5 text-xs font-black text-stone-600">{hasMoodTracked ? selectedMood?.label : 'Not logged'}</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-ink-subtle">Mood</p>
+                            <p className="mt-0.5 text-xs font-black text-ink">{hasMoodTracked ? selectedMood?.label : 'Not logged'}</p>
                         </div>
                     </div>
                 </div>
@@ -1062,7 +1063,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
             >
                 {journalEntries.length === 0 && !isAddingEntry && (
-                    <p className="text-center text-[10px] font-black uppercase tracking-widest text-stone-300 py-4" data-onboarding="journal-input">
+                    <p className="text-center text-[10px] font-black uppercase tracking-widest text-ink-dim py-4" data-onboarding="journal-input">
                         No entries yet
                     </p>
                 )}
@@ -1072,34 +1073,34 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                     const EntryMoodIcon = entryMoodObj?.icon;
                     const isEditing = editingEntryId === entry.id;
                     return (
-                        <div key={entry.id} className={`border-2 rounded-xl overflow-hidden ${isEditing ? 'border-black' : 'border-stone-200'}`}>
+                        <div key={entry.id} className={`border-2 rounded-xl overflow-hidden ${isEditing ? 'border-edge-strong' : 'border-edge'}`}>
                             {isEditing ? (
                                 <>
                                     <textarea
                                         value={editingEntryText}
                                         onChange={e => setEditingEntryText(e.target.value)}
                                         autoFocus
-                                        className="w-full px-3 pt-3 pb-2 text-[13px] text-stone-800 resize-none outline-none bg-white leading-relaxed"
+                                        className="w-full px-3 pt-3 pb-2 text-[13px] text-ink-strong resize-none outline-none bg-surface leading-relaxed"
                                         style={{ minHeight: 80, caretColor: theme.primary }}
                                     />
-                                    <div className="flex items-center justify-between gap-1 px-2 py-1.5 border-t border-stone-200" data-onboarding="journal-moods">
+                                    <div className="flex items-center justify-between gap-1 px-2 py-1.5 border-t border-edge" data-onboarding="journal-moods">
                                         {MOODS.map(m => {
                                             const Icon = m.icon;
                                             const sel = editingEntryMood === m.value;
                                             return (
                                                 <button key={m.value} onClick={() => setEditingEntryMood(sel ? undefined : m.value)}
-                                                    className={`flex-1 flex items-center justify-center py-1 rounded-lg border-2 transition-all ${sel ? 'border-black' : 'border-transparent'}`}
+                                                    className={`flex-1 flex items-center justify-center py-1 rounded-lg border-2 transition-all ${sel ? 'border-edge-strong' : 'border-transparent'}`}
                                                     style={sel ? { backgroundColor: m.color + '18' } : {}}>
                                                     <Icon size={15} strokeWidth={sel ? 2.5 : 1.8} style={{ color: sel ? m.color : '#d4cfc9' }} />
                                                 </button>
                                             );
                                         })}
                                     </div>
-                                    <div className="flex items-center justify-between px-3 py-2 border-t border-stone-200">
+                                    <div className="flex items-center justify-between px-3 py-2 border-t border-edge">
                                         <button onClick={() => { setEditingEntryId(null); setEditingEntryText(''); setEditingEntryMood(undefined); }}
-                                            className="text-[9px] font-black uppercase tracking-widest text-stone-400 hover:text-black transition-colors">Cancel</button>
+                                            className="text-[9px] font-black uppercase tracking-widest text-ink-subtle hover:text-ink-strong transition-colors">Cancel</button>
                                         <button onClick={() => handleUpdateEntry(entry.id)}
-                                            className="flex items-center gap-1 px-2.5 py-1.5 text-[9px] font-black uppercase tracking-widest text-white border-[2px] border-black shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all"
+                                            className="flex items-center gap-1 px-2.5 py-1.5 text-[9px] font-black uppercase tracking-widest text-ink-inverse border-2 border-edge-strong shadow-neo-sm hover:-translate-y-0.5 transition-all"
                                             style={{ backgroundColor: theme.primary }}>
                                             <Save size={10} strokeWidth={3} /> Save
                                         </button>
@@ -1108,22 +1109,22 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                             ) : (
                                 <>
                                     {EntryMoodIcon && entryMoodObj && (
-                                        <div className="px-3 py-1.5 border-b border-stone-200">
-                                            <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full"
+                                        <div className="px-3 py-1.5 border-b border-edge">
+                                            <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full"
                                                 style={{ backgroundColor: entryMoodObj.color + '18', color: entryMoodObj.color }}>
                                                 <EntryMoodIcon size={11} strokeWidth={2.5} />
                                                 {entryMoodObj.label}
                                             </span>
                                         </div>
                                     )}
-                                    <p className="px-3 py-3 text-[13px] text-stone-700 leading-relaxed whitespace-pre-wrap">{entry.text}</p>
-                                    <div className="flex items-center justify-between px-3 py-2 border-t border-stone-200">
-                                        <span className="text-[9px] font-black uppercase tracking-widest text-stone-300">{formatEntryTime(entry.createdAt)}</span>
+                                    <p className="px-3 py-3 text-[13px] text-ink leading-relaxed whitespace-pre-wrap">{entry.text}</p>
+                                    <div className="flex items-center justify-between px-3 py-2 border-t border-edge">
+                                        <span className="text-[9px] font-black uppercase tracking-widest text-ink-dim">{formatEntryTime(entry.createdAt)}</span>
                                         <div className="flex items-center gap-3">
                                             <button onClick={() => { setEditingEntryId(entry.id); setEditingEntryText(entry.text); setEditingEntryMood(entry.mood); }}
-                                                className="text-stone-300 hover:text-stone-600 transition-colors"><Pencil size={12} /></button>
+                                                className="text-ink-dim hover:text-ink transition-colors"><Pencil size={12} /></button>
                                             <button onClick={() => handleDeleteEntry(entry.id)}
-                                                className="text-stone-300 hover:text-red-500 transition-colors"><Trash2 size={12} /></button>
+                                                className="text-ink-dim hover:text-red-500 transition-colors"><Trash2 size={12} /></button>
                                         </div>
                                     </div>
                                 </>
@@ -1133,34 +1134,34 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 })}
 
                 {isAddingEntry ? (
-                    <div className="border-2 border-black rounded-xl overflow-hidden">
+                    <div className="border-2 border-edge-strong rounded-xl overflow-hidden">
                         <textarea
                             value={newEntryText}
                             onChange={e => setNewEntryText(e.target.value)}
                             placeholder="Write about your day…"
                             autoFocus
-                            className="w-full px-3 pt-3 pb-2 text-[13px] text-stone-800 placeholder:text-stone-300 resize-none outline-none bg-white leading-relaxed"
+                            className="w-full px-3 pt-3 pb-2 text-[13px] text-ink-strong placeholder:text-ink-dim resize-none outline-none bg-surface leading-relaxed"
                             style={{ minHeight: 100, caretColor: theme.primary }}
                             data-onboarding="journal-input"
                         />
-                        <div className="flex items-center justify-between gap-1 px-2 py-1.5 border-t border-stone-200" data-onboarding="journal-moods">
+                        <div className="flex items-center justify-between gap-1 px-2 py-1.5 border-t border-edge" data-onboarding="journal-moods">
                             {MOODS.map(m => {
                                 const Icon = m.icon;
                                 const sel = newEntryMood === m.value;
                                 return (
                                     <button key={m.value} onClick={() => setNewEntryMood(sel ? undefined : m.value)}
-                                        className={`flex-1 flex items-center justify-center py-1 rounded-lg border-2 transition-all ${sel ? 'border-black' : 'border-transparent'}`}
+                                        className={`flex-1 flex items-center justify-center py-1 rounded-lg border-2 transition-all ${sel ? 'border-edge-strong' : 'border-transparent'}`}
                                         style={sel ? { backgroundColor: m.color + '18' } : {}}>
                                         <Icon size={15} strokeWidth={sel ? 2.5 : 1.8} style={{ color: sel ? m.color : '#d4cfc9' }} />
                                     </button>
                                 );
                             })}
                         </div>
-                        <div className="flex items-center justify-between px-3 py-2 border-t border-stone-200">
+                        <div className="flex items-center justify-between px-3 py-2 border-t border-edge">
                             <button onClick={() => { setIsAddingEntry(false); setNewEntryText(''); setNewEntryMood(undefined); }}
-                                className="text-[9px] font-black uppercase tracking-widest text-stone-400 hover:text-black transition-colors">Cancel</button>
+                                className="text-[9px] font-black uppercase tracking-widest text-ink-subtle hover:text-ink-strong transition-colors">Cancel</button>
                             <button onClick={handleAddEntry}
-                                className="flex items-center gap-1 px-2.5 py-1.5 text-[9px] font-black uppercase tracking-widest text-white border-[2px] border-black shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all"
+                                className="flex items-center gap-1 px-2.5 py-1.5 text-[9px] font-black uppercase tracking-widest text-ink-inverse border-2 border-edge-strong shadow-neo-sm hover:-translate-y-0.5 transition-all"
                                 style={{ backgroundColor: theme.primary }}
                                 data-onboarding="journal-save">
                                 <Save size={10} strokeWidth={3} /> Save
@@ -1170,7 +1171,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 ) : (
                     <button
                         onClick={() => setIsAddingEntry(true)}
-                        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-stone-200 hover:border-stone-400 text-stone-400 hover:text-stone-600 transition-colors"
+                        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-edge hover:border-edge-muted text-ink-subtle hover:text-ink transition-colors"
                         style={{ borderColor: theme.primary + '60', color: theme.primary }}
                     >
                         <Plus size={13} strokeWidth={2.5} />
@@ -1190,7 +1191,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.48, ease: 'easeOut' }}
-                className="w-full h-[min(78svh,900px)] md:h-[600px] grid grid-cols-1 md:grid-cols-3 md:auto-rows-fr md:items-stretch gap-3 overflow-y-auto md:overflow-hidden pr-1 touch-pan-y"
+                className={`w-full grid grid-cols-1 md:grid-cols-3 md:auto-rows-fr md:items-stretch gap-3 overflow-y-auto md:overflow-hidden pr-1 touch-pan-y ${fitParentHeight ? 'h-full' : 'h-[min(78svh,900px)] md:h-[600px]'}`}
                 style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
             >
                 <motion.div

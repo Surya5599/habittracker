@@ -86,18 +86,18 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white border-[2px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-full max-w-md overflow-hidden flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-200">
-                <div className="p-4 border-b-[2px] border-black flex items-center justify-between bg-white">
-                    <h2 className="text-2xl font-black uppercase tracking-tighter text-black">Habits</h2>
-                    <button onClick={onClose} className="border-2 border-transparent hover:border-black p-1 transition-all hover:bg-stone-100">
-                        <X size={20} className="text-black" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-scrim backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-surface border-2 border-edge-strong shadow-neo w-full max-w-md overflow-hidden flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-200">
+                <div className="p-4 border-b-2 border-edge-strong flex items-center justify-between bg-surface">
+                    <h2 className="text-2xl font-black uppercase tracking-tighter text-ink-strong">Habits</h2>
+                    <button onClick={onClose} className="border-2 border-transparent hover:border-edge-strong p-1 transition-all hover:bg-surface-strong">
+                        <X size={20} className="text-ink-strong" />
                     </button>
                 </div>
 
                 <div ref={listRef} className="flex-1 overflow-y-auto p-4">
                     {habits.length === 0 ? (
-                        <div className="text-center py-8 text-stone-400 text-xs font-medium uppercase tracking-wider">
+                        <div className="text-center py-8 text-ink-subtle text-xs font-medium uppercase tracking-wider">
                             No habits yet. Start by adding one!
                         </div>
                     ) : (
@@ -131,15 +131,15 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                     )}
                 </div>
 
-                <div className="p-4 border-t-[2px] border-black bg-stone-50">
+                <div className="p-4 border-t-2 border-edge-strong bg-surface-muted">
                     <button
                         onClick={handleAdd}
-                        className="w-full py-3 bg-black text-white text-xs font-black uppercase tracking-widest border-2 border-black shadow-[4px_4px_0px_0px_gray] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[2px_2px_0px_0px_gray] active:translate-y-[4px] active:translate-x-[4px] active:shadow-none transition-all flex items-center justify-center gap-2"
+                        className="w-full py-3 bg-surface-inverse text-ink-inverse text-xs font-black uppercase tracking-widest border-2 border-edge-strong shadow-[4px_4px_0px_0px_gray] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[2px_2px_0px_0px_gray] active:translate-y-[4px] active:translate-x-[4px] active:shadow-none transition-all flex items-center justify-center gap-2"
                     >
                         <Plus size={16} strokeWidth={3} />
                         Add New Habit
                     </button>
-                    <p className="text-[10px] text-center text-stone-500 mt-3 font-bold uppercase tracking-wide">
+                    <p className="text-[10px] text-center text-ink-muted mt-3 font-bold uppercase tracking-wide">
                         Drag habits to reorder them.
                     </p>
                 </div>
@@ -196,16 +196,16 @@ const HabitItem: React.FC<HabitItemProps> = ({
                 zIndex: 50
             }}
             transition={{ type: "spring", stiffness: 500, damping: 30 }}
-            className="group flex items-center justify-between p-2 bg-white border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
+            className="group flex items-center justify-between p-2 bg-surface border-2 border-edge-strong shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
         >
             <div className="flex items-center gap-2 flex-1 min-w-0">
                 <button
                     onPointerDown={(e) => controls.start(e)}
-                    className="p-1 px-1.5 cursor-grab active:cursor-grabbing text-stone-300 hover:text-black hover:bg-stone-50 rounded transition-all"
+                    className="p-1 px-1.5 cursor-grab active:cursor-grabbing text-ink-dim hover:text-ink-strong hover:bg-surface-muted rounded transition-all"
                 >
                     <GripVertical size={14} strokeWidth={2.5} />
                 </button>
-                <div className="w-4 h-4 rounded-full shrink-0 border-2 border-black" style={{ backgroundColor: habit.color || themePrimary }}></div>
+                <div className="w-4 h-4 rounded-full shrink-0 border-2 border-edge-strong" style={{ backgroundColor: habit.color || themePrimary }}></div>
 
                 {editingId === habit.id ? (
                     <div className="flex-1 flex flex-col gap-2">
@@ -220,20 +220,20 @@ const HabitItem: React.FC<HabitItemProps> = ({
                                     saveEdit(habit.id);
                                 }
                             }}
-                            className="w-full bg-white border-2 border-black px-2 py-1 text-sm font-bold text-black outline-none focus:ring-0 focus:bg-stone-50"
+                            className="w-full bg-surface border-2 border-edge-strong px-2 py-1 text-sm font-bold text-ink-strong outline-none focus:ring-0 focus:bg-surface-muted"
                             placeholder="Habit name"
                         />
                         <div className="flex flex-col gap-3">
-                            <div className="flex border-2 border-black divide-x-2 divide-black self-start overflow-hidden shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                            <div className="flex border-2 border-edge-strong divide-x-2 divide-edge-strong self-start overflow-hidden shadow-neo-sm">
                                 <button
                                     onClick={() => setFrequencyType('fixed')}
-                                    className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest transition-colors ${frequencyType === 'fixed' ? 'bg-black text-white' : 'bg-white text-black hover:bg-stone-50'}`}
+                                    className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest transition-colors ${frequencyType === 'fixed' ? 'bg-surface-inverse text-ink-inverse' : 'bg-surface text-ink-strong hover:bg-surface-muted'}`}
                                 >
                                     Fixed
                                 </button>
                                 <button
                                     onClick={() => setFrequencyType('flexible')}
-                                    className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest transition-colors ${frequencyType === 'flexible' ? 'bg-black text-white' : 'bg-white text-black hover:bg-stone-50'}`}
+                                    className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest transition-colors ${frequencyType === 'flexible' ? 'bg-surface-inverse text-ink-inverse' : 'bg-surface text-ink-strong hover:bg-surface-muted'}`}
                                 >
                                     Flexible
                                 </button>
@@ -261,8 +261,8 @@ const HabitItem: React.FC<HabitItemProps> = ({
                                                     }
                                                 }}
                                                 className={`w-6 h-6 flex items-center justify-center text-[10px] font-black border-2 transition-all ${isSelected
-                                                    ? 'bg-black text-white border-black shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]'
-                                                    : 'bg-white text-stone-300 border-stone-200 hover:border-stone-400'
+                                                    ? 'bg-surface-inverse text-ink-inverse border-edge-strong shadow-neo-sm'
+                                                    : 'bg-surface text-ink-dim border-edge hover:border-edge-muted'
                                                     }`}
                                             >
                                                 {day}
@@ -279,13 +279,13 @@ const HabitItem: React.FC<HabitItemProps> = ({
                                             max="7"
                                             value={editWeeklyTarget || 3}
                                             onChange={(e) => setEditWeeklyTarget(parseInt(e.target.value))}
-                                            className="flex-1 accent-black h-1 bg-stone-200 rounded-lg appearance-none cursor-pointer"
+                                            className="flex-1 accent-black h-1 bg-edge rounded-lg appearance-none cursor-pointer"
                                         />
-                                        <span className="text-xs font-black min-w-[2.5rem] text-center border-2 border-black bg-stone-50 px-1 py-0.5 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]">
+                                        <span className="text-xs font-black min-w-[2.5rem] text-center border-2 border-edge-strong bg-surface-muted px-1 py-1 shadow-neo-sm">
                                             {editWeeklyTarget || 3}x
                                         </span>
                                     </div>
-                                    <span className="text-[9px] font-bold text-stone-500 uppercase tracking-tight">Times per week</span>
+                                    <span className="text-[9px] font-bold text-ink-muted uppercase tracking-tight">Times per week</span>
                                 </div>
                             )}
                         </div>
@@ -293,7 +293,7 @@ const HabitItem: React.FC<HabitItemProps> = ({
                 ) : (
                     <span
                         onClick={() => startEditing(habit)}
-                        className="flex-1 text-sm font-bold text-black truncate cursor-pointer hover:underline decoration-2 underline-offset-2"
+                        className="flex-1 text-sm font-bold text-ink-strong truncate cursor-pointer hover:underline decoration-2 underline-offset-2"
                     >
                         {habit.name || 'Untitled Habit'}
                     </span>
@@ -303,14 +303,14 @@ const HabitItem: React.FC<HabitItemProps> = ({
             <div className="flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
                     onClick={() => editingId === habit.id ? saveEdit(habit.id) : startEditing(habit)}
-                    className="p-1 text-black hover:bg-black hover:text-white border-2 border-transparent hover:border-black transition-all"
+                    className="p-1 text-ink-strong hover:bg-surface-inverse hover:text-ink-inverse border-2 border-transparent hover:border-edge-strong transition-all"
                     title="Edit Name"
                 >
                     {editingId === habit.id ? <Check size={12} strokeWidth={3} /> : <Edit2 size={12} strokeWidth={3} />}
                 </button>
                 <button
                     onClick={() => handleDelete(habit.id)}
-                    className="p-1 text-black hover:bg-red-500 hover:text-white border-2 border-transparent hover:border-black transition-all"
+                    className="p-1 text-ink-strong hover:bg-red-500 hover:text-ink-inverse border-2 border-transparent hover:border-edge-strong transition-all"
                     title="Delete Habit"
                 >
                     <Trash2 size={12} strokeWidth={3} />

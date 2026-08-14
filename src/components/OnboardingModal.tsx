@@ -78,7 +78,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
     const cardFrameRef = useRef<HTMLDivElement | null>(null);
 
     const totalSteps = 10;
-    const hintClass = 'inline-flex items-center px-2 py-1 text-[10px] font-black uppercase tracking-wider border-2 border-black bg-amber-100 text-black';
+    const hintClass = 'inline-flex items-center px-2 py-1 text-[10px] font-black uppercase tracking-wider border-2 border-edge-strong bg-amber-100 text-ink-strong';
     const settingsNote = t('onboarding.settingsNote');
 
     const steps = useMemo(() => ([
@@ -397,13 +397,13 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
             return (
                 <div className="space-y-2">
                     <div className={hintClass}>{t('onboarding.hints.clickLanguage')}</div>
-                    <p className="text-[11px] font-semibold text-stone-500">{settingsNote}</p>
+                    <p className="text-[11px] font-semibold text-ink-muted">{settingsNote}</p>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         {LANGUAGES.map(lang => (
                             <button
                                 key={lang.id}
                                 onClick={() => applyLanguage(lang.id)}
-                                className={`border-2 px-3 py-2 text-sm font-bold ${selectedLanguage === lang.id ? 'border-black bg-black text-white' : 'border-stone-300 bg-white text-black'}`}
+                                className={`border-2 px-3 py-2 text-sm font-bold ${selectedLanguage === lang.id ? 'border-edge-strong bg-surface-inverse text-ink-inverse' : 'border-edge-muted bg-surface text-ink-strong'}`}
                             >
                                 {lang.label}
                             </button>
@@ -417,13 +417,13 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
             return (
                 <div className="space-y-2">
                     <div className={hintClass}>{t('onboarding.hints.clickTheme')}</div>
-                    <p className="text-[11px] font-semibold text-stone-500">{settingsNote}</p>
+                    <p className="text-[11px] font-semibold text-ink-muted">{settingsNote}</p>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         {THEMES.map(theme => (
                             <button
                                 key={theme.name}
                                 onClick={() => applyTheme(theme)}
-                                className={`border-2 p-2 text-left ${selectedTheme.name === theme.name ? 'border-black bg-stone-100' : 'border-stone-300 bg-white text-black'}`}
+                                className={`border-2 p-2 text-left ${selectedTheme.name === theme.name ? 'border-edge-strong bg-surface-strong' : 'border-edge-muted bg-surface text-ink-strong'}`}
                             >
                                 <div className="flex gap-2 mb-2">
                                     <div className="w-5 h-5 rounded-full border" style={{ backgroundColor: theme.primary }} />
@@ -441,17 +441,17 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
             return (
                 <div className="space-y-2">
                     <div className={hintClass}>{t('onboarding.hints.clickStartDay')}</div>
-                    <p className="text-[11px] font-semibold text-stone-500">{settingsNote}</p>
+                    <p className="text-[11px] font-semibold text-ink-muted">{settingsNote}</p>
                     <div className="grid grid-cols-2 gap-2 max-w-sm">
                         <button
                             onClick={() => applyStartOfWeek('monday')}
-                            className={`border-2 px-3 py-3 text-sm font-black ${selectedStartOfWeek === 'monday' ? 'border-black bg-black text-white' : 'border-stone-300 bg-white text-black'}`}
+                            className={`border-2 px-3 py-3 text-sm font-black ${selectedStartOfWeek === 'monday' ? 'border-edge-strong bg-surface-inverse text-ink-inverse' : 'border-edge-muted bg-surface text-ink-strong'}`}
                         >
                             {t('onboarding.days.monday')}
                         </button>
                         <button
                             onClick={() => applyStartOfWeek('sunday')}
-                            className={`border-2 px-3 py-3 text-sm font-black ${selectedStartOfWeek === 'sunday' ? 'border-black bg-black text-white' : 'border-stone-300 bg-white text-black'}`}
+                            className={`border-2 px-3 py-3 text-sm font-black ${selectedStartOfWeek === 'sunday' ? 'border-edge-strong bg-surface-inverse text-ink-inverse' : 'border-edge-muted bg-surface text-ink-strong'}`}
                         >
                             {t('onboarding.days.sunday')}
                         </button>
@@ -462,51 +462,51 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
 
         if (step === 3) {
             return (
-                <div className="border-2 border-black bg-white p-3 space-y-3 max-w-xl">
+                <div className="border-2 border-edge-strong bg-surface p-3 space-y-3 max-w-xl">
                     <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded-full border-2 border-black" style={{ backgroundColor: selectedTheme.primary }} />
+                        <div className="w-4 h-4 rounded-full border-2 border-edge-strong" style={{ backgroundColor: selectedTheme.primary }} />
                         <p className="text-xs font-black uppercase tracking-wider">{t('common.myHabits')}</p>
                     </div>
                     <div className="flex items-center gap-2">
                         <button
                             type="button"
-                            className="px-3 py-1 border-2 border-black bg-black text-white text-[10px] font-black uppercase tracking-widest"
+                            className="px-3 py-1 border-2 border-edge-strong bg-surface-inverse text-ink-inverse text-[10px] font-black uppercase tracking-widest"
                         >
                             {t('common.myHabits')}
                         </button>
-                        <p className="text-[11px] font-semibold text-stone-600">{t('onboarding.manageHabitsHint')}</p>
+                        <p className="text-[11px] font-semibold text-ink">{t('onboarding.manageHabitsHint')}</p>
                     </div>
                     <div className={hintClass}>{t('onboarding.hints.typeHabitName')}</div>
                     <input
                         value={habitName}
                         onChange={(e) => setHabitName(e.target.value)}
                         placeholder={t('habitManager.habitNamePlaceholder')}
-                        className={`w-full border-2 px-3 py-2 text-sm font-semibold ${habitName.trim() ? 'border-black' : 'border-amber-500 animate-pulse'}`}
+                        className={`w-full border-2 px-3 py-2 text-sm font-semibold ${habitName.trim() ? 'border-edge-strong' : 'border-amber-500 animate-pulse'}`}
                     />
                     <textarea
                         value={habitDescription}
                         onChange={(e) => setHabitDescription(e.target.value)}
                         placeholder={t('onboarding.optionalDescription')}
-                        className="w-full border-2 border-black px-3 py-2 text-sm min-h-[70px]"
+                        className="w-full border-2 border-edge-strong px-3 py-2 text-sm min-h-[70px]"
                     />
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-md">
                         <button
                             type="button"
                             onClick={() => setHabitFrequencyType('fixed')}
-                            className={`p-2 border-2 text-left transition-colors ${habitFrequencyType === 'fixed' ? 'border-black bg-black text-white' : 'border-black bg-white text-black hover:bg-stone-50'}`}
+                            className={`p-2 border-2 text-left transition-colors ${habitFrequencyType === 'fixed' ? 'border-edge-strong bg-surface-inverse text-ink-inverse' : 'border-edge-strong bg-surface text-ink-strong hover:bg-surface-muted'}`}
                         >
                             <p className="text-[11px] font-black uppercase tracking-widest">{t('habitManager.fixed')}</p>
-                            <p className={`text-[10px] font-semibold mt-1 ${habitFrequencyType === 'fixed' ? 'text-white/90' : 'text-stone-600'}`}>
+                            <p className={`text-[10px] font-semibold mt-1 ${habitFrequencyType === 'fixed' ? 'text-ink-inverse/90' : 'text-ink'}`}>
                                 {t('onboarding.fixedDescription')}
                             </p>
                         </button>
                         <button
                             type="button"
                             onClick={() => setHabitFrequencyType('flexible')}
-                            className={`p-2 border-2 text-left transition-colors ${habitFrequencyType === 'flexible' ? 'border-black bg-black text-white' : 'border-black bg-white text-black hover:bg-stone-50'}`}
+                            className={`p-2 border-2 text-left transition-colors ${habitFrequencyType === 'flexible' ? 'border-edge-strong bg-surface-inverse text-ink-inverse' : 'border-edge-strong bg-surface text-ink-strong hover:bg-surface-muted'}`}
                         >
                             <p className="text-[11px] font-black uppercase tracking-widest">{t('habitManager.flexible')}</p>
-                            <p className={`text-[10px] font-semibold mt-1 ${habitFrequencyType === 'flexible' ? 'text-white/90' : 'text-stone-600'}`}>
+                            <p className={`text-[10px] font-semibold mt-1 ${habitFrequencyType === 'flexible' ? 'text-ink-inverse/90' : 'text-ink'}`}>
                                 {t('onboarding.flexibleDescription')}
                             </p>
                         </button>
@@ -538,7 +538,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                                                 setHabitFrequency(next.length === 7 ? undefined : next);
                                             }
                                         }}
-                                        className={`w-7 h-7 flex items-center justify-center text-[10px] font-black border-2 transition-all ${isSelected ? 'bg-black text-white border-black' : 'bg-white text-stone-300 border-stone-200 hover:border-stone-400'}`}
+                                        className={`w-7 h-7 flex items-center justify-center text-[10px] font-black border-2 transition-all ${isSelected ? 'bg-theme-primary text-theme-ink border-edge-strong' : 'bg-surface text-ink-dim border-edge hover:border-edge-muted'}`}
                                     >
                                         {day}
                                     </button>
@@ -554,13 +554,13 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                                     max="7"
                                     value={habitWeeklyTarget}
                                     onChange={(e) => setHabitWeeklyTarget(parseInt(e.target.value))}
-                                    className="flex-1 accent-black h-1 bg-stone-200 rounded-lg appearance-none cursor-pointer"
+                                    className="flex-1 accent-black h-1 bg-edge rounded-lg appearance-none cursor-pointer"
                                 />
-                                <span className="text-xs font-black min-w-[2.5rem] text-center border-2 border-black bg-stone-50 px-1 py-0.5">
+                                <span className="text-xs font-black min-w-[2.5rem] text-center border-2 border-edge-strong bg-surface-muted px-1 py-1">
                                     {habitWeeklyTarget}x
                                 </span>
                             </div>
-                            <span className="text-[9px] font-bold text-stone-500 uppercase tracking-tight">{t('habitManager.timesPerWeek')}</span>
+                            <span className="text-[9px] font-bold text-ink-muted uppercase tracking-tight">{t('habitManager.timesPerWeek')}</span>
                         </div>
                     )}
                 </div>
@@ -571,22 +571,22 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
             return (
                 <div className="space-y-3">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div className="border-2 border-black bg-white p-3">
-                            <p className="text-[10px] font-black uppercase tracking-wider text-stone-500 mb-2">{t('onboarding.analytics.consistencyRing')}</p>
-                            <div className="h-24 border border-stone-200 bg-stone-50 flex items-center justify-center">
-                                <div className="w-14 h-14 rounded-full border-[6px] border-black border-t-transparent" />
+                        <div className="border-2 border-edge-strong bg-surface p-3">
+                            <p className="text-[10px] font-black uppercase tracking-wider text-ink-muted mb-2">{t('onboarding.analytics.consistencyRing')}</p>
+                            <div className="h-24 border border-edge bg-surface-muted flex items-center justify-center">
+                                <div className="w-14 h-14 rounded-full border-[6px] border-edge-strong border-t-transparent" />
                             </div>
                         </div>
-                        <div className="border-2 border-black bg-white p-3">
-                            <p className="text-[10px] font-black uppercase tracking-wider text-stone-500 mb-2">{t('onboarding.analytics.weeklyTrend')}</p>
-                            <div className="h-24 border border-stone-200 bg-stone-50 p-2 flex items-end gap-1.5">
+                        <div className="border-2 border-edge-strong bg-surface p-3">
+                            <p className="text-[10px] font-black uppercase tracking-wider text-ink-muted mb-2">{t('onboarding.analytics.weeklyTrend')}</p>
+                            <div className="h-24 border border-edge bg-surface-muted p-2 flex items-end gap-1.5">
                                 {[32, 48, 26, 60, 52, 68, 74].map((h, idx) => (
                                     <div key={idx} className="flex-1 bg-black/80" style={{ height: `${h}%` }} />
                                 ))}
                             </div>
                         </div>
-                        <div className="border-2 border-black bg-white p-3 md:col-span-2">
-                            <p className="text-[10px] font-black uppercase tracking-wider text-stone-500 mb-2">{t('onboarding.analytics.habitBreakdown')}</p>
+                        <div className="border-2 border-edge-strong bg-surface p-3 md:col-span-2">
+                            <p className="text-[10px] font-black uppercase tracking-wider text-ink-muted mb-2">{t('onboarding.analytics.habitBreakdown')}</p>
                             <div className="space-y-2">
                                 {[
                                     [t('onboarding.analytics.sample.reading'), 82],
@@ -598,8 +598,8 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                                             <span>{label}</span>
                                             <span>{val}%</span>
                                         </div>
-                                        <div className="h-2 border border-black bg-stone-100">
-                                            <div className="h-full bg-black" style={{ width: `${val}%` }} />
+                                        <div className="h-2 border border-edge-strong bg-surface-strong">
+                                            <div className="h-full bg-surface-inverse" style={{ width: `${val}%` }} />
                                         </div>
                                     </div>
                                 ))}
@@ -609,7 +609,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                     <div className="pt-1">
                         <button
                             onClick={() => setAnalyticsPreviewSeen(true)}
-                            className={`px-4 py-2 border-2 border-black text-xs font-black uppercase tracking-widest ${analyticsPreviewSeen ? 'bg-black text-white' : 'bg-white text-black'}`}
+                            className={`px-4 py-2 border-2 border-edge-strong text-xs font-black uppercase tracking-widest ${analyticsPreviewSeen ? 'bg-theme-primary text-theme-ink' : 'bg-surface text-ink-strong'}`}
                         >
                             {analyticsPreviewSeen ? t('onboarding.analytics.previewViewed') : t('onboarding.analytics.markSeen')}
                         </button>
@@ -621,7 +621,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         return (
             <div className="space-y-3">
                 {step === 4 && (
-                    <div className="border-2 border-black bg-amber-50 px-2 py-1.5 text-[10px] font-bold text-stone-700 leading-snug">
+                    <div className="border-2 border-edge-strong bg-amber-50 px-2 py-1.5 text-[10px] font-bold text-ink leading-snug">
                         {t('onboarding.step4Explanation')}
                     </div>
                 )}
@@ -643,7 +643,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                     </div>
                 )}
 
-                <div className={`border-2 border-black bg-stone-100 p-2 overflow-hidden ${step >= 4 && !canProceed ? 'ring-2 ring-amber-400' : ''}`}>
+                <div className={`border-2 border-edge-strong bg-surface-strong p-2 overflow-hidden ${step >= 4 && !canProceed ? 'ring-2 ring-amber-400' : ''}`}>
                     <div ref={cardFrameRef} className="relative max-w-[280px] sm:max-w-[340px] mx-auto h-[330px] sm:h-[420px]">
                         <div className="w-full h-full origin-top scale-[0.84] sm:scale-[0.92]">
                             <DailyCard
@@ -670,7 +670,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                                 style={{ left: arrowPosition.left, top: arrowPosition.top, transform: 'translateX(-50%)' }}
                             >
                                 <div className="flex flex-col items-center gap-1 animate-bounce">
-                                    <div className="border-2 border-black bg-amber-100 px-2 py-1 text-[10px] font-black uppercase tracking-wide shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] whitespace-nowrap">
+                                    <div className="border-2 border-edge-strong bg-amber-100 px-2 py-1 text-[10px] font-black uppercase tracking-wide shadow-neo-sm whitespace-nowrap">
                                         {step === 4 && !didCompleteHabit && t('onboarding.hints.clickCheckbox')}
                                         {step === 4 && step4Phase === 'need_skip' && t('onboarding.hints.rightClickLongPress')}
                                         {step === 4 && step4Phase === 'need_uncheck' && t('onboarding.hints.clickAgain')}
@@ -684,7 +684,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                                         {step === 8 && hasTask && hasNamedTask && !hasCompletedTask && t('onboarding.hints.checkItOff')}
                                         {step === 8 && hasTask && hasNamedTask && hasCompletedTask && t('onboarding.hints.great')}
                                     </div>
-                                    <ArrowDown size={18} className="text-black" />
+                                    <ArrowDown size={18} className="text-ink-strong" />
                                 </div>
                             </div>
                         )}
@@ -692,7 +692,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                 </div>
 
                 {step === 4 && (
-                    <div className="text-[11px] text-stone-600 space-y-1">
+                    <div className="text-[11px] text-ink space-y-1">
                         <p>{didCompleteHabit ? t('onboarding.progress.completedDone') : t('onboarding.progress.completedPending')}</p>
                         <p>{didSkipHabit ? t('onboarding.progress.skippedDone') : t('onboarding.progress.skippedPending')}</p>
                         <p>{didUncheckHabit ? t('onboarding.progress.uncheckedDone') : t('onboarding.progress.uncheckedPending')}</p>
@@ -715,22 +715,22 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 backdrop-blur-sm p-4">
-            <div className="bg-white border-[3px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,0.2)] w-full max-w-2xl h-[min(90vh,760px)] overflow-hidden flex flex-col">
-                <div className="p-4 border-b-2 border-black bg-stone-50 shrink-0">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-scrim backdrop-blur-sm p-4">
+            <div className="bg-surface border-3 border-edge-strong shadow-neo-lg rounded-modal w-full max-w-2xl h-[min(90vh,760px)] overflow-hidden flex flex-col">
+                <div className="p-4 border-b-2 border-edge-strong bg-surface-muted shrink-0">
                     <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 border-2 border-black bg-white flex items-center justify-center">
+                            <div className="w-7 h-7 border-2 border-edge-strong bg-surface flex items-center justify-center">
                                 <StepIcon size={15} />
                             </div>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">{t('onboarding.getStarted')}</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-ink-muted">{t('onboarding.getStarted')}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">{t('onboarding.stepOf', { current: step + 1, total: totalSteps })}</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-ink-muted">{t('onboarding.stepOf', { current: step + 1, total: totalSteps })}</span>
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="flex h-8 w-8 items-center justify-center border-2 border-black bg-white text-black transition-colors hover:bg-black hover:text-white"
+                                className="flex h-8 w-8 items-center justify-center border-2 border-edge-strong bg-surface text-ink-strong transition-colors hover:bg-surface-inverse hover:text-ink-inverse"
                                 aria-label="Close tutorial"
                             >
                                 <X size={14} strokeWidth={3} />
@@ -738,33 +738,33 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                         </div>
                     </div>
                     <h2 className="text-xl font-black uppercase tracking-tight">{steps[step].title}</h2>
-                    <p className="text-sm text-stone-600">{steps[step].subtitle}</p>
-                    {!!username && <p className="text-[11px] text-stone-400 mt-1">{username}</p>}
+                    <p className="text-sm text-ink">{steps[step].subtitle}</p>
+                    {!!username && <p className="text-[11px] text-ink-subtle mt-1">{username}</p>}
                 </div>
 
                 <div className="p-4 overflow-y-auto flex-1">
                     {renderStepBody()}
                 </div>
 
-                <div className="p-4 border-t-2 border-black bg-stone-50 flex items-center justify-between shrink-0">
+                <div className="p-4 border-t-2 border-edge-strong bg-surface-muted flex items-center justify-between shrink-0">
                     <button
                         onClick={handleBack}
                         disabled={step === 0}
-                        className="px-4 py-2 border-2 border-black bg-white text-xs font-black uppercase tracking-widest disabled:opacity-40"
+                        className="px-4 py-2 border-2 border-edge-strong bg-surface text-xs font-black uppercase tracking-widest disabled:opacity-40"
                     >
                         {t('onboarding.back')}
                     </button>
                     <div className="flex items-center gap-2">
                         <button
                             onClick={handleSkip}
-                            className="px-4 py-2 border-2 border-black bg-white text-xs font-black uppercase tracking-widest"
+                            className="px-4 py-2 border-2 border-edge-strong bg-surface text-xs font-black uppercase tracking-widest"
                         >
                             {t('onboarding.skip')}
                         </button>
                         <button
                             onClick={handleNext}
                             disabled={!canProceed}
-                            className="px-5 py-2 border-2 border-black bg-black text-white text-xs font-black uppercase tracking-widest disabled:opacity-40"
+                            className="px-5 py-2 border-2 border-edge-strong bg-surface-inverse text-ink-inverse text-xs font-black uppercase tracking-widest disabled:opacity-40"
                         >
                             {step === totalSteps - 1 ? t('onboarding.finish') : t('onboarding.next')}
                         </button>

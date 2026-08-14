@@ -42,13 +42,13 @@ export const WeekPicker: React.FC<WeekPickerProps> = ({ isOpen, onClose, current
     };
 
     return (
-        <div className="absolute top-full left-0 mt-2 z-50 bg-white border border-stone-200 shadow-xl p-4 rounded-lg w-[280px]">
+        <div className="absolute top-full left-0 mt-2 z-50 bg-surface border border-edge shadow-xl p-4 rounded-lg w-[280px]">
             <div className="flex items-center justify-between mb-4">
-                <button onClick={handlePrevMonth} className="p-1 hover:bg-stone-100 rounded-full"><ChevronLeft size={16} /></button>
+                <button onClick={handlePrevMonth} className="p-1 hover:bg-surface-strong rounded-full"><ChevronLeft size={16} /></button>
                 <div className="font-bold text-sm">
                     {viewDate.toLocaleDateString(i18n.language, { month: 'long' })} {viewDate.getFullYear()}
                 </div>
-                <button onClick={handleNextMonth} className="p-1 hover:bg-stone-100 rounded-full"><ChevronRight size={16} /></button>
+                <button onClick={handleNextMonth} className="p-1 hover:bg-surface-strong rounded-full"><ChevronRight size={16} /></button>
             </div>
 
             <div className="grid grid-cols-7 gap-1 mb-2">
@@ -56,7 +56,7 @@ export const WeekPicker: React.FC<WeekPickerProps> = ({ isOpen, onClose, current
                     const d = new Date(2023, 0, 1 + i); // Jan 1 2023 is a Sunday
                     const dayName = d.toLocaleDateString(i18n.language, { weekday: 'short' });
                     return (
-                        <div key={i} className="text-center text-[10px] font-bold text-stone-400 uppercase">
+                        <div key={i} className="text-center text-[10px] font-bold text-ink-subtle uppercase">
                             {dayName}
                         </div>
                     );
@@ -79,7 +79,7 @@ export const WeekPicker: React.FC<WeekPickerProps> = ({ isOpen, onClose, current
                             }}
                             className={`
                                 h-8 w-8 rounded-full text-xs font-bold flex items-center justify-center transition-all
-                                ${isSelected ? 'text-white' : 'hover:bg-stone-100 text-stone-700'}
+                                ${isSelected ? 'text-ink-inverse' : 'hover:bg-surface-strong text-ink'}
                             `}
                             style={isSelected ? { backgroundColor: themePrimary } : {}}
                         >
@@ -89,7 +89,7 @@ export const WeekPicker: React.FC<WeekPickerProps> = ({ isOpen, onClose, current
                 })}
             </div>
 
-            <button onClick={onClose} className="absolute -top-2 -right-2 bg-white border border-stone-200 rounded-full p-1 shadow-md hover:bg-stone-50">
+            <button onClick={onClose} className="absolute -top-2 -right-2 bg-surface border border-edge rounded-full p-1 shadow-md hover:bg-surface-muted">
                 <X size={12} />
             </button>
         </div>
@@ -112,13 +112,13 @@ export const MonthPicker: React.FC<MonthPickerProps> = ({ isOpen, onClose, curre
     if (!isOpen) return null;
 
     return (
-        <div className="absolute top-full left-0 mt-2 z-50 bg-white border border-stone-200 shadow-xl p-4 rounded-lg w-[280px]">
+        <div className="absolute top-full left-0 mt-2 z-50 bg-surface border border-edge shadow-xl p-4 rounded-lg w-[280px]">
             <div className="flex items-center justify-between mb-4">
-                <button onClick={(e) => { e.stopPropagation(); setViewYear(prev => prev - 1); }} className="p-1 hover:bg-stone-100 rounded-full"><ChevronLeft size={16} /></button>
+                <button onClick={(e) => { e.stopPropagation(); setViewYear(prev => prev - 1); }} className="p-1 hover:bg-surface-strong rounded-full"><ChevronLeft size={16} /></button>
                 <div className="font-bold text-sm">
                     {viewYear}
                 </div>
-                <button onClick={(e) => { e.stopPropagation(); setViewYear(prev => prev + 1); }} className="p-1 hover:bg-stone-100 rounded-full"><ChevronRight size={16} /></button>
+                <button onClick={(e) => { e.stopPropagation(); setViewYear(prev => prev + 1); }} className="p-1 hover:bg-surface-strong rounded-full"><ChevronRight size={16} /></button>
             </div>
 
             <div className="grid grid-cols-3 gap-2">
@@ -134,8 +134,8 @@ export const MonthPicker: React.FC<MonthPickerProps> = ({ isOpen, onClose, curre
                                 onClose();
                             }}
                             className={`
-                                py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all
-                                ${isSelected ? 'text-white' : 'hover:bg-stone-100 text-stone-600'}
+                                py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all
+                                ${isSelected ? 'text-ink-inverse' : 'hover:bg-surface-strong text-ink'}
                             `}
                             style={isSelected ? { backgroundColor: themePrimary } : {}}
                         >
@@ -144,7 +144,7 @@ export const MonthPicker: React.FC<MonthPickerProps> = ({ isOpen, onClose, curre
                     );
                 })}
             </div>
-            <button onClick={onClose} className="absolute -top-2 -right-2 bg-white border border-stone-200 rounded-full p-1 shadow-md hover:bg-stone-50">
+            <button onClick={onClose} className="absolute -top-2 -right-2 bg-surface border border-edge rounded-full p-1 shadow-md hover:bg-surface-muted">
                 <X size={12} />
             </button>
         </div>
@@ -167,15 +167,15 @@ export const YearPicker: React.FC<YearPickerProps> = ({ isOpen, onClose, current
     const years = Array.from({ length: 9 }, (_, i) => rangeStart + i);
 
     return (
-        <div className="absolute top-full left-0 mt-2 z-50 bg-white border border-stone-200 shadow-xl p-3 rounded-lg w-[200px]">
+        <div className="absolute top-full left-0 mt-2 z-50 bg-surface border border-edge shadow-xl p-3 rounded-lg w-[200px]">
             <div className="flex items-center justify-between mb-2">
-                <button onClick={() => setRangeStart(s => s - 9)} className="p-1 rounded hover:bg-stone-100 text-stone-500 hover:text-black transition-colors">
+                <button onClick={() => setRangeStart(s => s - 9)} className="p-1 rounded hover:bg-surface-strong text-ink-muted hover:text-ink-strong transition-colors">
                     <ChevronLeft size={14} />
                 </button>
-                <span className="text-[10px] font-black uppercase tracking-wider text-stone-400">
+                <span className="text-[10px] font-black uppercase tracking-wider text-ink-subtle">
                     {rangeStart}–{rangeStart + 8}
                 </span>
-                <button onClick={() => setRangeStart(s => s + 9)} className="p-1 rounded hover:bg-stone-100 text-stone-500 hover:text-black transition-colors">
+                <button onClick={() => setRangeStart(s => s + 9)} className="p-1 rounded hover:bg-surface-strong text-ink-muted hover:text-ink-strong transition-colors">
                     <ChevronRight size={14} />
                 </button>
             </div>
@@ -186,7 +186,7 @@ export const YearPicker: React.FC<YearPickerProps> = ({ isOpen, onClose, current
                         <button
                             key={year}
                             onClick={() => { onYearSelect(year); onClose(); }}
-                            className={`py-1.5 rounded-md text-xs font-bold transition-all ${isSelected ? 'text-white' : 'hover:bg-stone-100 text-stone-600'}`}
+                            className={`py-1.5 rounded-lg text-xs font-bold transition-all ${isSelected ? 'text-ink-inverse' : 'hover:bg-surface-strong text-ink'}`}
                             style={isSelected ? { backgroundColor: themePrimary } : {}}
                         >
                             {year}
@@ -194,7 +194,7 @@ export const YearPicker: React.FC<YearPickerProps> = ({ isOpen, onClose, current
                     );
                 })}
             </div>
-            <button onClick={onClose} className="absolute -top-2 -right-2 bg-white border border-stone-200 rounded-full p-1 shadow-md hover:bg-stone-50">
+            <button onClick={onClose} className="absolute -top-2 -right-2 bg-surface border border-edge rounded-full p-1 shadow-md hover:bg-surface-muted">
                 <X size={12} />
             </button>
         </div>

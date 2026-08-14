@@ -1,0 +1,170 @@
+/* ============================================================================
+   HabiCard design tokens — Tailwind v4 (@theme) mapping
+   ============================================================================
+
+   For the Chrome extension, which runs Tailwind v4.1.18 via @tailwindcss/vite
+   (chrome-extension/package.json) and therefore ignores tailwind.config.js.
+   This file is the v4 equivalent of tailwind.config.js — same token names,
+   same values, both reading src/styles/tokens.css.
+
+   To adopt (NOT done in this step — config only):
+     chrome-extension/src/index.css
+       @import "tailwindcss";
+       @import "../../src/styles/tokens.css";
+       @import "../../src/styles/tailwind-v4-theme.css";
+     …then delete the extension's local .neo-border / .neo-shadow block
+     (index.css:60-66) — its 4px .neo-shadow is superseded by `shadow-neo`,
+     which is 4px, so nothing changes visually. See MIGRATION_NOTES §M1.
+
+   The extension must also set data-color-mode on <html> the way the web app
+   does (index.html:7-14) for the dark token swap to apply.
+   ========================================================================= */
+
+@import './tokens.css';
+
+/* Dark mode keyed to the existing attribute rather than a media query. */
+@custom-variant dark ([data-color-mode='dark'] &);
+
+@theme {
+  /* ── Font families ──────────────────────────────────────────────────────
+     The extension self-hosts these faces (chrome-extension/src/index.css:8-45)
+     at 400/700/900 only — matching the restricted weight set below.
+     `--font-serif` (Playfair) is RESERVED for display/hero text. */
+  --font-sans: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --font-serif: 'Playfair Display', serif;
+  --font-mono: initial; /* removed — 2 uses, web only, no face loaded */
+
+  /* ── Type scale — 18 sizes -> 8 steps ───────────────────────────────────
+     `initial` clears v4's stock scale so removed sizes stop resolving,
+     mirroring the `fontSize` replacement in tailwind.config.js. */
+  --text-*: initial;
+  --text-3xs: 0.5625rem; /* 9px  */
+  --text-3xs--line-height: 1.2;
+  --text-2xs: 0.625rem;  /* 10px — anchor, 241 uses */
+  --text-2xs--line-height: 1.3;
+  --text-xs: 0.75rem;    /* 12px */
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.875rem;   /* 14px — anchor, 136 uses */
+  --text-sm--line-height: 1.25rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.75rem;
+  --text-display: 3rem;  /* 48px */
+  --text-display--line-height: 1.05;
+
+  /* ── Weights — only the loaded faces ───────────────────────────────────── */
+  --font-weight-*: initial;
+  --font-weight-normal: 400;
+  --font-weight-bold: 700;
+  --font-weight-black: 900;
+
+  /* ── Radius — 16 values -> 5 ────────────────────────────────────────────
+     The extension's dominant radius is currently 4px (`rounded`, 14 uses),
+     vs 16px on web. Adopting these tokens deliberately re-aligns the
+     extension to the web silhouette. DESIGN_SYSTEM.md §8, §9 #20. */
+  --radius-*: initial;
+  /* NOTE: the bare `rounded` utility carries v4's built-in 0.25rem, which
+     already equals our 4px step, so no --radius key is declared for it.
+     VERIFY on the first extension build that `rounded` still emits 4px after
+     `--radius-*: initial` — if it does not, add an explicit `@utility rounded`. */
+  --radius-lg: 0.5rem;       /* 8px  */
+  --radius-xl: 0.75rem;      /* 12px */
+  --radius-2xl: 1rem;        /* 16px */
+  --radius-control: 0.5rem;  /* 8px  — buttons, inputs */
+  --radius-card: 1rem;       /* 16px */
+  --radius-modal: 1rem;      /* 16px — all modal shells */
+  --radius-chip: 9999px;
+
+  /* ── Shadow — 7 tiers -> 3 ──────────────────────────────────────────────
+     `--shadow-neo` is 4px, which is what the extension's local .neo-shadow
+     already was, so this is a rename rather than a visual change. */
+  --shadow-*: initial;
+  --shadow-neo-sm: var(--neo-shadow-sm);
+  --shadow-neo: var(--neo-shadow);
+  --shadow-neo-lg: var(--neo-shadow-lg);
+  --shadow-neo-accent: var(--neo-shadow-accent);
+  --shadow-frame: var(--neo-shadow-frame);
+
+  /* ── Colors — EXTENDED, not replaced ────────────────────────────────────
+     The stock palette stays available while ~1000 stone/amber/rose usages
+     migrate. See tailwind.config.js header for the rationale. */
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-soft: var(--surface-soft);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-strong: var(--surface-strong);
+  --color-surface-inverse: var(--surface-inverse);
+  --color-surface-inverse-hover: var(--surface-inverse-hover);
+  --color-surface-sunken: var(--surface-sunken); /* <- bg-black */
+  --color-input: var(--input-bg);
+
+  --color-ink: var(--ink);
+  --color-ink-strong: var(--ink-strong);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-subtle: var(--ink-subtle);
+  --color-ink-dim: var(--ink-dim);
+  --color-ink-inverse: var(--ink-inverse);
+
+  --color-edge: var(--border);
+  --color-edge-strong: var(--border-strong);
+  --color-edge-subtle: var(--border-subtle);
+  --color-edge-muted: var(--border-muted);
+  --color-edge-hover: var(--border-hover);
+  --color-ring: var(--ring);
+
+  --color-theme-primary: var(--theme-primary);
+  --color-theme-ink: var(--theme-primary-ink);
+  --color-theme-secondary-ink: var(--theme-secondary-ink);
+  --color-theme-primary-faint: var(--theme-primary-faint);
+  --color-theme-primary-soft: var(--theme-primary-soft);
+  --color-theme-primary-strong: var(--theme-primary-strong);
+  --color-theme-secondary: var(--theme-secondary);
+  --color-theme-secondary-faint: var(--theme-secondary-faint);
+  --color-theme-secondary-soft: var(--theme-secondary-soft);
+  --color-theme-secondary-strong: var(--theme-secondary-strong);
+
+  --color-done: var(--status-done);
+  --color-done-tint: var(--status-done-tint);
+  --color-complete: var(--status-complete);
+  --color-complete-tint: var(--status-complete-tint);
+  --color-missed: var(--status-missed);
+  --color-missed-tint: var(--status-missed-tint);
+  --color-warning: var(--status-warning);
+  --color-warning-tint: var(--status-warning-tint);
+  --color-warning-faint: var(--status-warning-faint);
+  --color-inactive: var(--status-inactive);
+  --color-inactive-text: var(--status-inactive-text);
+  --color-streak: var(--status-streak);
+
+  --color-mood-1: var(--mood-1);
+  --color-mood-2: var(--mood-2);
+  --color-mood-3: var(--mood-3);
+  --color-mood-4: var(--mood-4);
+  --color-mood-5: var(--mood-5);
+
+  --color-scrim: var(--scrim);
+}
+
+/* ── Border widths ──────────────────────────────────────────────────────────
+   v4 has no border-width theme namespace; `border-3` is generated on demand.
+   The allowed set is 1 / 2 / 3 / 4 — `border-[2.5px]` and `border-[5px]` are
+   out of system. See MIGRATION_NOTES §M3. */
+
+/* ── Z-index layers ─────────────────────────────────────────────────────────
+   v4 has no z-index namespace either, so the named layers are @utility rules.
+   Values are unchanged from current usage, preserving stacking order exactly. */
+@utility z-nav { z-index: 50; }
+@utility z-dropdown { z-index: 60; }
+@utility z-overlay { z-index: 90; }
+@utility z-modal { z-index: 100; }
+@utility z-preview { z-index: 110; }
+@utility z-sheet { z-index: 120; }
+@utility z-dialog { z-index: 200; }
+@utility z-alert { z-index: 210; }
+
+/* ── Semantic spacing ─────────────────────────────────────────────────────── */
+@utility p-card { padding: 1rem; }        /* 16px — default card padding */
+@utility p-card-lg { padding: 1.5rem; }   /* 24px — resolves p-5 vs p-6 -> p-6 */

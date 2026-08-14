@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { Toaster, toast } from 'react-hot-toast';
 import { createPortal } from 'react-dom';
+import { MOOD_SCALE, MOOD_TINTS } from './constants';
 import i18n from './i18n';
-import { X, Search, Key, ChevronLeft, ChevronRight, Sparkles, BarChart2, Activity, ArrowUp, ArrowDown, Minus, Angry, Frown, Meh, Smile, Laugh } from 'lucide-react';
+import { X, Search, Key, ChevronLeft, ChevronRight, Sparkles, BarChart2, Activity, ArrowUp, ArrowDown, Minus, Angry, Frown, Meh, Smile, Laugh, Lock, LogIn } from 'lucide-react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from './supabase';
 import './i18n';
@@ -96,6 +98,38 @@ const DEMO_ANNUAL_STATS = {
   }))
 };
 
+// Staggers stats-panel cards in one at a time on mount (re-plays each time the panel opens).
+const StatCard: React.FC<{ index: number; className?: string; children: React.ReactNode }> = ({ index, className, children }) => (
+  <motion.div
+    className={className}
+    initial={{ opacity: 0, y: 14, scale: 0.98 }}
+    animate={{ opacity: 1, y: 0, scale: 1 }}
+    transition={{ duration: 0.32, delay: index * 0.07, ease: 'easeOut' }}
+  >
+    {children}
+  </motion.div>
+);
+
+// Shown in place of the AI Coach / Insights panels for guest-mode users, who have no
+// account for the underlying data (AI proxy calls, saved insights history) to attach to.
+const LockedPanel: React.FC<{ title: string; description: string }> = ({ title, description }) => (
+  <div className="flex flex-col h-full min-h-[400px]">
+    <div className="neo-border rounded-2xl overflow-hidden bg-surface flex flex-col flex-1 min-h-0 items-center justify-center text-center p-6 gap-3">
+      <div className="w-12 h-12 rounded-full bg-surface-strong border-2 border-edge-strong flex items-center justify-center">
+        <Lock size={18} strokeWidth={2.5} className="text-ink-muted" />
+      </div>
+      <p className="text-sm font-black uppercase tracking-wide text-ink-strong">{title} is locked</p>
+      <p className="text-xs text-ink-muted max-w-[240px]">{description}</p>
+      <button
+        onClick={() => window.location.href = '/signin'}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-edge-strong bg-surface-inverse text-ink-inverse text-xs font-black uppercase tracking-wide hover:bg-surface-inverse-hover transition-colors mt-1"
+      >
+        <LogIn size={11} strokeWidth={3} />Sign in or create an account
+      </button>
+    </div>
+  </div>
+);
+
 const AppContent: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -186,6 +220,29 @@ const AppContent: React.FC = () => {
   const [aiInput, setAiInput] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [aiInsightFired, setAiInsightFired] = useState(false);
+  // The insight is model-generated JSON that also gets persisted, so a single
+  // malformed response used to poison every later load: `aiInsight.categories`
+  // came back undefined and the panel crashed on render. Normalise at every
+  // boundary (parse, DB, guest cache) so the shape is guaranteed downstream.
+  type AiInsightCategory = { category: string; habits: string[]; note: string };
+  type AiInsightShape = { message: string; categories: AiInsightCategory[] };
+
+  const normalizeAiInsight = (raw: any): AiInsightShape | null => {
+    if (!raw || typeof raw !== 'object') return null;
+    const message = typeof raw.message === 'string' ? raw.message : '';
+    const categories: AiInsightCategory[] = Array.isArray(raw.categories)
+      ? raw.categories
+          .filter((c: any) => c && typeof c === 'object')
+          .map((c: any) => ({
+            category: typeof c.category === 'string' ? c.category : 'pattern',
+            habits: Array.isArray(c.habits) ? c.habits.filter((h: any) => typeof h === 'string') : [],
+            note: typeof c.note === 'string' ? c.note : '',
+          }))
+      : [];
+    if (!message && categories.length === 0) return null;
+    return { message, categories };
+  };
+
   const [aiInsight, setAiInsight] = useState<{ message: string; categories: { category: string; habits: string[]; note: string }[] } | null>(null);
   // Guards the AI effects until the day's state (insight/messages/personality) has
   // loaded from the DB (logged-in) or localStorage (guest) — avoids racing a fresh
@@ -208,7 +265,7 @@ const AppContent: React.FC = () => {
         .then(({ data, error }) => {
           if (cancelled) return;
           if (error) logAiError('load_day_db', 'Failed to load AI coach day from DB', error);
-          setAiInsight(data?.insight ?? null);
+          setAiInsight(normalizeAiInsight(data?.insight));
           setAiInsightFired(!!data?.insight);
           setAiMessages(data?.messages ?? []);
           setHasPickedAiPersonalityToday(!!data?.personality);
@@ -220,7 +277,7 @@ const AppContent: React.FC = () => {
     } else if (guestMode) {
       try {
         const cached = JSON.parse(localStorage.getItem(AI_CACHE_KEY) ?? 'null');
-        setAiInsight(cached?.insight ?? null);
+        setAiInsight(normalizeAiInsight(cached?.insight));
         setAiInsightFired(!!cached?.insight);
         setAiMessages(cached?.messages ?? []);
       } catch {
@@ -527,10 +584,10 @@ const AppContent: React.FC = () => {
   const refundAiUsage = () => localStorage.setItem(aiUsageKey, String(Math.max(0, getAiUsage() - 1)));
 
   useEffect(() => {
-    if (rightPanel === 'ai' && aiDayLoaded && !hasAcceptedAiDisclaimer) {
+    if (rightPanel === 'ai' && !guestMode && aiDayLoaded && !hasAcceptedAiDisclaimer) {
       setShowAiDisclaimer(true);
     }
-  }, [rightPanel, aiDayLoaded, hasAcceptedAiDisclaimer]);
+  }, [rightPanel, guestMode, aiDayLoaded, hasAcceptedAiDisclaimer]);
 
   const handleAcceptAiDisclaimer = () => {
     localStorage.setItem('habit_ai_disclaimer_accepted', 'true');
@@ -545,10 +602,10 @@ const AppContent: React.FC = () => {
   };
 
   useEffect(() => {
-    if (rightPanel === 'ai' && aiDayLoaded && hasAcceptedAiDisclaimer && !hasPickedAiPersonalityToday) {
+    if (rightPanel === 'ai' && !guestMode && aiDayLoaded && hasAcceptedAiDisclaimer && !hasPickedAiPersonalityToday) {
       setShowAiPersonalityPicker(true);
     }
-  }, [rightPanel, hasPickedAiPersonalityToday, aiDayLoaded, hasAcceptedAiDisclaimer]);
+  }, [rightPanel, guestMode, hasPickedAiPersonalityToday, aiDayLoaded, hasAcceptedAiDisclaimer]);
 
   const handlePickAiPersonality = (personality: AiCoachPersonality) => {
     setAiPersonality(personality);
@@ -558,7 +615,7 @@ const AppContent: React.FC = () => {
   };
 
   useEffect(() => {
-    if (rightPanel !== 'ai' || aiInsightFired || aiLoading || !hasPickedAiPersonalityToday || !hasAcceptedAiDisclaimer || !aiDayLoaded) return;
+    if (rightPanel !== 'ai' || guestMode || aiInsightFired || aiLoading || !hasPickedAiPersonalityToday || !hasAcceptedAiDisclaimer || !aiDayLoaded) return;
 
     setAiInsightFired(true);
     setAiLoading(true);
@@ -583,7 +640,10 @@ const AppContent: React.FC = () => {
         const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
         const cleaned = raw.replace(/```json|```/g, '').trim();
         try {
-          const parsed = JSON.parse(cleaned);
+          // never trust the model's shape — and never persist an unchecked one,
+          // since a bad object here is replayed from the DB on every later load
+          const parsed = normalizeAiInsight(JSON.parse(cleaned))
+            ?? { message: cleaned, categories: [] };
           setAiInsight(parsed);
           saveAiDay({ insight: parsed, messages: [] });
         } catch (err) {
@@ -598,7 +658,7 @@ const AppContent: React.FC = () => {
         setAiInsight({ message: 'Could not load insights right now.', categories: [] });
       })
       .finally(() => setAiLoading(false));
-  }, [rightPanel, hasPickedAiPersonalityToday, hasAcceptedAiDisclaimer, aiDayLoaded]);
+  }, [rightPanel, guestMode, hasPickedAiPersonalityToday, hasAcceptedAiDisclaimer, aiDayLoaded]);
 
   const sendAiMessage = async (override?: string) => {
     const text = (override ?? aiInput).trim();
@@ -1569,28 +1629,28 @@ const AppContent: React.FC = () => {
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('source') === 'extension' && session) {
     return (
-      <div className="min-h-screen bg-[#F4F4F0] flex items-center justify-center p-4">
-        <div className="max-w-sm w-full bg-white border-[3px] border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] p-8 text-center space-y-5">
+      <div className="min-h-screen bg-canvas flex items-center justify-center p-4">
+        <div className="max-w-sm w-full bg-surface border-3 border-edge-strong shadow-neo p-8 text-center space-y-5">
           <img src="/habicard-icon.png" alt="HabiCard" className="w-14 h-14 mx-auto" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 mb-1">You're all set</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-ink-subtle mb-1">You're all set</p>
             <h2 className="text-2xl font-black uppercase tracking-tight text-[#333]">
               Thank you for<br />signing in.
             </h2>
           </div>
-          <p className="text-sm text-stone-500 leading-relaxed">
+          <p className="text-sm text-ink-muted leading-relaxed">
             Open the extension to log your habits, or stay here for the full experience.
           </p>
           <div className="flex flex-col gap-2 pt-2">
             <button
               onClick={() => window.close()}
-              className="w-full px-6 py-3 bg-black text-white text-xs font-black uppercase tracking-widest border-[2px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all"
+              className="w-full px-6 py-3 bg-surface-inverse text-ink-inverse text-xs font-black uppercase tracking-widest border-2 border-edge-strong shadow-neo hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-neo-sm transition-all"
             >
               Close & open extension
             </button>
             <button
               onClick={() => window.location.href = `${window.location.origin}/app`}
-              className="w-full px-6 py-3 bg-white text-black text-xs font-black uppercase tracking-widest border-[2px] border-black hover:bg-stone-50 transition-colors"
+              className="w-full px-6 py-3 bg-surface text-ink-strong text-xs font-black uppercase tracking-widest border-2 border-edge-strong hover:bg-surface-muted transition-colors"
             >
               Go to full website
             </button>
@@ -1606,27 +1666,27 @@ const AppContent: React.FC = () => {
 
   if (syncError) {
     return (
-      <div className="min-h-[100svh] flex items-center justify-center bg-[#F4F4F0] p-6 font-sans">
-        <div className="w-full max-w-sm border-[3px] border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] bg-white p-6 flex flex-col gap-4">
+      <div className="min-h-[100svh] flex items-center justify-center bg-canvas p-6 font-sans">
+        <div className="w-full max-w-sm border-3 border-edge-strong shadow-neo bg-surface p-6 flex flex-col gap-4">
           <div className="flex flex-col gap-1">
-            <h2 className="text-lg font-black uppercase tracking-tight text-black">Sync Failed</h2>
-            <p className="text-sm text-stone-600 leading-relaxed">{syncError}</p>
+            <h2 className="text-lg font-black uppercase tracking-tight text-ink-strong">Sync Failed</h2>
+            <p className="text-sm text-ink leading-relaxed">{syncError}</p>
           </div>
           <div className="flex flex-col gap-2">
             <button
               onClick={retryGuestSync}
-              className="w-full py-2.5 bg-black text-white font-black uppercase tracking-widest text-xs hover:bg-stone-800 transition-colors border-[2px] border-black"
+              className="w-full py-2.5 bg-surface-inverse text-ink-inverse font-black uppercase tracking-widest text-xs hover:bg-surface-inverse-hover transition-colors border-2 border-edge-strong"
             >
               Try Again
             </button>
             <button
               onClick={dismissSyncError}
-              className="w-full py-2.5 bg-white text-black font-black uppercase tracking-widest text-xs hover:bg-stone-100 transition-colors border-[2px] border-black"
+              className="w-full py-2.5 bg-surface text-ink-strong font-black uppercase tracking-widest text-xs hover:bg-surface-strong transition-colors border-2 border-edge-strong"
             >
               Continue Without My History
             </button>
           </div>
-          <p className="text-[10px] text-stone-400 text-center leading-relaxed">
+          <p className="text-[10px] text-ink-subtle text-center leading-relaxed">
             Your local data is still on this device. You can try again at any time.
           </p>
         </div>
@@ -1635,19 +1695,19 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-[100svh] md:h-[100svh] overflow-y-auto md:overflow-hidden bg-[#F4F4F0] p-2 sm:p-4 pb-20 sm:pb-4 font-sans text-[#444] relative w-full max-w-full">
+    <div className="min-h-[100svh] md:h-[100svh] overflow-y-auto md:overflow-hidden bg-canvas p-2 sm:p-4 pb-20 sm:pb-4 font-sans text-[#444] relative w-full max-w-full">
 
       <Toaster position="top-center" reverseOrder={false} />
 
       {isImpersonating && (
-        <div className="bg-amber-100 border-b-2 border-black p-2 flex items-center justify-between sticky top-0 z-50">
+        <div className="bg-amber-100 border-b-2 border-edge-strong p-2 flex items-center justify-between sticky top-0 z-50">
           <div className="flex items-center gap-2 text-amber-900 font-bold text-sm uppercase tracking-wider">
             <Key size={16} />
             <span>Viewing as: {effectiveUserId}</span>
           </div>
           <button
             onClick={() => window.location.href = '/app'}
-            className="px-3 py-1 bg-black text-white text-xs font-bold uppercase hover:opacity-80 transition-opacity"
+            className="px-3 py-1 bg-surface-inverse text-ink-inverse text-xs font-bold uppercase hover:opacity-80 transition-opacity"
           >
             Exit View
           </button>
@@ -1683,9 +1743,18 @@ const AppContent: React.FC = () => {
         theme={theme}
         userName={session?.user?.email || 'You'}
         isDarkMode={isDarkMode}
+        habits={sortedHabits}
+        completions={completions}
+        annualStats={annualStats}
+        reviewYear={currentYear}
+        narrative={{
+          review: annualStory?.annualSummary?.review,
+          defining: annualStory?.annualSummary?.defining,
+          attention: annualStory?.annualSummary?.attention,
+        }}
       />
 
-      <div className="app-main-frame max-w-full md:h-full mx-auto bg-white border-[3px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] p-2 sm:p-3 flex flex-col gap-3 overflow-visible md:overflow-hidden">
+      <div className="app-main-frame max-w-full md:h-full mx-auto bg-surface border-3 border-edge-strong shadow-neo-lg rounded-modal p-2 sm:p-3 flex flex-col gap-3 overflow-visible md:overflow-hidden">
 
         <Header
           view={view}
@@ -1808,30 +1877,30 @@ const AppContent: React.FC = () => {
         />
 
         {selectedDateForCard && createPortal(
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 md:p-4 bg-black/35 backdrop-blur-[2px] animate-in fade-in duration-200" onClick={() => setSelectedDateForCard(null)}>
+          <div className="fixed inset-0 z-modal flex items-center justify-center p-2 md:p-4 bg-scrim backdrop-blur-[2px] animate-in fade-in duration-200" onClick={() => setSelectedDateForCard(null)}>
             <div className="w-full max-w-6xl h-[calc(100dvh-1rem)] md:h-[calc(100dvh-2rem)] relative animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 flex flex-col pt-[max(env(safe-area-inset-top),0.5rem)] md:pt-0" onClick={e => e.stopPropagation()}>
-              <div className="flex-1 min-h-0 flex flex-col rounded-[30px] border-[3px] border-black bg-white p-3 md:p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.12)] overflow-hidden">
+              <div className="flex-1 min-h-0 flex flex-col rounded-2xl border-3 border-edge-strong bg-surface p-3 md:p-4 shadow-neo-lg overflow-hidden">
                 <div className="grid grid-cols-[1fr_auto] items-start gap-2 md:grid-cols-[1fr_auto_1fr] md:items-center">
                   <div className="justify-self-start min-w-0">
                   {isSearchOpen ? (
                     <button
                       onClick={() => setSelectedDateForCard(null)}
-                      className="text-stone-700 hover:text-black p-2 transition-colors flex items-center gap-2"
+                      className="text-ink hover:text-ink-strong p-2 transition-colors flex items-center gap-2"
                     >
                       <Search size={20} />
                       <span className="font-bold text-sm uppercase tracking-wider truncate">Back to Search</span>
                     </button>
                   ) : (
                     <div className="min-w-0">
-                      <p className="text-[10px] font-black uppercase tracking-[0.22em] text-stone-400">Daily Workspace</p>
+                      <p className="text-[10px] font-black uppercase tracking-[0.22em] text-ink-subtle">Daily Workspace</p>
                       <div className="mt-1 flex flex-wrap gap-2">
-                        <span className="rounded-full border border-stone-200 bg-stone-50 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-stone-700">
+                        <span className="rounded-full border border-edge bg-surface-muted px-2 py-1 text-[10px] font-black uppercase tracking-wide text-ink">
                           Habits {selectedDateSummary?.completedHabits ?? 0}/{selectedDateSummary?.totalHabits ?? 0}
                         </span>
-                        <span className="rounded-full border border-stone-200 bg-stone-50 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-stone-700">
+                        <span className="rounded-full border border-edge bg-surface-muted px-2 py-1 text-[10px] font-black uppercase tracking-wide text-ink">
                           Tasks {selectedDateSummary?.openTasks ?? 0} open
                         </span>
-                        <span className="rounded-full border border-stone-200 bg-stone-50 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-stone-700">
+                        <span className="rounded-full border border-edge bg-surface-muted px-2 py-1 text-[10px] font-black uppercase tracking-wide text-ink">
                           {selectedDateSummary?.hasJournal || selectedDateSummary?.hasMood ? 'Journal updated' : 'Journal empty'}
                         </span>
                       </div>
@@ -1841,7 +1910,7 @@ const AppContent: React.FC = () => {
                   <div className="justify-self-end md:hidden">
                     <button
                       onClick={() => setSelectedDateForCard(null)}
-                      className="text-stone-700 hover:text-black p-2 transition-colors"
+                      className="text-ink hover:text-ink-strong p-2 transition-colors"
                     >
                       <X size={24} />
                     </button>
@@ -1850,7 +1919,7 @@ const AppContent: React.FC = () => {
                     <div className="flex flex-wrap items-center gap-2">
                       <button
                         onClick={() => navigateSelectedCardDate('prev')}
-                        className="text-stone-700 hover:text-black p-2 transition-colors border-2 border-stone-200 hover:border-black bg-stone-50"
+                        className="text-ink hover:text-ink-strong p-2 transition-colors border-2 border-edge hover:border-edge-strong bg-surface-muted"
                         title="Previous day"
                       >
                         <ChevronLeft size={20} />
@@ -1859,19 +1928,19 @@ const AppContent: React.FC = () => {
                         type="date"
                         value={toDateInputValue(selectedDateForCard)}
                         onChange={(e) => updateSelectedCardDateFromInput(e.target.value)}
-                        className="h-10 px-2 text-sm font-bold border-2 border-stone-200 bg-white text-stone-900 focus:outline-none focus:border-black"
+                        className="h-10 px-2 text-sm font-bold border-2 border-edge bg-surface text-ink-strong focus:outline-none focus:border-edge-strong"
                         title="Select date"
                       />
                       <button
                         onClick={() => setSelectedDateForCard(new Date())}
-                        className="h-10 px-2 text-[10px] font-black uppercase tracking-wide text-stone-900 border-2 border-stone-200 hover:border-black bg-stone-50 transition-colors"
+                        className="h-10 px-2 text-[10px] font-black uppercase tracking-wide text-ink-strong border-2 border-edge hover:border-edge-strong bg-surface-muted transition-colors"
                         title="Jump to today"
                       >
                         Today
                       </button>
                       <button
                         onClick={() => navigateSelectedCardDate('next')}
-                        className="text-stone-700 hover:text-black p-2 transition-colors border-2 border-stone-200 hover:border-black bg-stone-50"
+                        className="text-ink hover:text-ink-strong p-2 transition-colors border-2 border-edge hover:border-edge-strong bg-surface-muted"
                         title="Next day"
                       >
                         <ChevronRight size={20} />
@@ -1881,7 +1950,7 @@ const AppContent: React.FC = () => {
                   <div className="hidden justify-self-end md:block">
                     <button
                       onClick={() => setSelectedDateForCard(null)}
-                      className="text-stone-700 hover:text-black p-2 transition-colors"
+                      className="text-ink hover:text-ink-strong p-2 transition-colors"
                     >
                       <X size={24} />
                     </button>
@@ -1981,32 +2050,32 @@ const AppContent: React.FC = () => {
             )}
           </div>
           {rightPanel !== null && (
-            <div className="flex flex-col gap-4 p-4 bg-white/90 border-t-[3px] border-black lg:border-t-0 lg:border-l-[3px] lg:absolute lg:right-0 lg:top-0 lg:bottom-0 lg:w-1/2 lg:z-20 lg:overflow-y-auto" style={{ backdropFilter: 'blur(8px)' }}>
+            <div className="flex flex-col gap-4 p-4 bg-surface/90 border-t-3 border-edge-strong lg:border-t-0 lg:border-l-3 lg:absolute lg:right-0 lg:top-0 lg:bottom-0 lg:w-1/2 lg:z-20 lg:overflow-y-auto" style={{ backdropFilter: 'blur(8px)' }}>
 
               {/* ── Stats panel ── */}
               {rightPanel === 'stats' && <>
 
               {/* ── At a Glance KPI ── */}
-              {view !== 'dashboard' && <div className="neo-border rounded-2xl overflow-hidden bg-white shrink-0">
+              {view !== 'dashboard' && <StatCard index={0} className="neo-border rounded-2xl overflow-hidden bg-surface shrink-0">
                 <div className="h-[3px] rounded-t-2xl" style={{ backgroundColor: theme.primary }} />
                 <div className="p-3">
-                  <p className="text-[9px] font-black uppercase tracking-[0.22em] text-stone-400 mb-3">At a Glance</p>
+                  <p className="text-[9px] font-black uppercase tracking-[0.22em] text-ink-subtle mb-3">At a Glance</p>
                   <div className="grid grid-cols-2 gap-2">
                     {/* Completion % — fills from bottom */}
-                    <div className="rounded-xl border-2 border-black overflow-hidden relative flex flex-col justify-end p-3 min-h-[80px]">
-                      <div className="absolute bottom-0 left-0 right-0 transition-all duration-700 ease-out rounded-b-[10px]" style={{ height: `${Math.min(100, Math.round(statsKpi.pct))}%`, backgroundColor: theme.primary, opacity: 0.15 }} />
+                    <div className="rounded-xl border-2 border-edge-strong overflow-hidden relative flex flex-col justify-end p-3 min-h-[80px]">
+                      <div className="absolute bottom-0 left-0 right-0 transition-all duration-700 ease-out rounded-b-xl" style={{ height: `${Math.min(100, Math.round(statsKpi.pct))}%`, backgroundColor: theme.primary, opacity: 0.15 }} />
                       <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: theme.primary, opacity: Math.min(100, Math.round(statsKpi.pct)) > 0 ? 1 : 0 }} />
-                      <span className="relative text-[9px] font-black uppercase tracking-wider text-stone-400">Completion</span>
+                      <span className="relative text-[9px] font-black uppercase tracking-wider text-ink-subtle">Completion</span>
                       <span className="relative text-4xl font-black leading-none mt-0.5" style={{ color: theme.primary }}>{Math.round(statsKpi.pct)}%</span>
                     </div>
                     {/* Done / Total — fills from bottom based on completion ratio */}
-                    <div className="rounded-xl border-2 border-black overflow-hidden relative flex flex-col justify-end p-3 min-h-[80px]">
-                      <div className="absolute bottom-0 left-0 right-0 transition-all duration-700 ease-out rounded-b-[10px]" style={{ height: `${statsKpi.total > 0 ? Math.min(100, (statsKpi.completed / statsKpi.total) * 100) : 0}%`, backgroundColor: theme.secondary, opacity: 0.18 }} />
+                    <div className="rounded-xl border-2 border-edge-strong overflow-hidden relative flex flex-col justify-end p-3 min-h-[80px]">
+                      <div className="absolute bottom-0 left-0 right-0 transition-all duration-700 ease-out rounded-b-xl" style={{ height: `${statsKpi.total > 0 ? Math.min(100, (statsKpi.completed / statsKpi.total) * 100) : 0}%`, backgroundColor: theme.secondary, opacity: 0.18 }} />
                       <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: theme.secondary, opacity: statsKpi.completed > 0 ? 1 : 0 }} />
-                      <span className="relative text-[9px] font-black uppercase tracking-wider text-stone-400">Done / Total</span>
+                      <span className="relative text-[9px] font-black uppercase tracking-wider text-ink-subtle">Done / Total</span>
                       <div className="relative flex items-baseline gap-1 mt-0.5">
                         <span className="text-4xl font-black leading-none">{statsKpi.completed}</span>
-                        <span className="text-xl font-black text-stone-300">/ {statsKpi.total}</span>
+                        <span className="text-xl font-black text-ink-dim">/ {statsKpi.total}</span>
                       </div>
                     </div>
                     {/* vs Previous — fills based on abs delta */}
@@ -2015,37 +2084,37 @@ const AppContent: React.FC = () => {
                       const fillPct = Math.min(100, Math.abs(d));
                       const fillColor = d > 0 ? '#34d399' : d < 0 ? '#f87171' : '#d4d4d4';
                       return (
-                        <div className="rounded-xl border-2 border-black overflow-hidden relative flex flex-col justify-end p-3 min-h-[80px]">
-                          <div className="absolute bottom-0 left-0 right-0 transition-all duration-700 ease-out rounded-b-[10px]" style={{ height: `${fillPct}%`, backgroundColor: fillColor, opacity: 0.18 }} />
+                        <div className="rounded-xl border-2 border-edge-strong overflow-hidden relative flex flex-col justify-end p-3 min-h-[80px]">
+                          <div className="absolute bottom-0 left-0 right-0 transition-all duration-700 ease-out rounded-b-xl" style={{ height: `${fillPct}%`, backgroundColor: fillColor, opacity: 0.18 }} />
                           <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: fillColor, opacity: fillPct > 0 ? 1 : 0 }} />
-                          <span className="relative text-[9px] font-black uppercase tracking-wider text-stone-400">{statsKpi.label}</span>
-                          <span className={`relative text-3xl font-black leading-none mt-0.5 ${d > 0 ? 'text-emerald-500' : d < 0 ? 'text-rose-500' : 'text-stone-400'}`}>
+                          <span className="relative text-[9px] font-black uppercase tracking-wider text-ink-subtle">{statsKpi.label}</span>
+                          <span className={`relative text-3xl font-black leading-none mt-0.5 ${d > 0 ? 'text-emerald-500' : d < 0 ? 'text-rose-500' : 'text-ink-subtle'}`}>
                             {d > 0 ? '+' : ''}{d}%
                           </span>
                         </div>
                       );
                     })()}
                     {/* Top Habit */}
-                    <div className="rounded-xl border-2 border-black p-3 flex flex-col justify-end min-h-[80px] min-w-0">
-                      <span className="text-[9px] font-black uppercase tracking-wider text-stone-400">Top Habit</span>
+                    <div className="rounded-xl border-2 border-edge-strong p-3 flex flex-col justify-end min-h-[80px] min-w-0">
+                      <span className="text-[9px] font-black uppercase tracking-wider text-ink-subtle">Top Habit</span>
                       <span className="text-base font-black leading-tight break-words mt-0.5">{statsBestHabit?.name || '—'}</span>
                     </div>
                   </div>
                 </div>
-              </div>}
+              </StatCard>}
 
               {/* ── Month Pacing by Week (monthly only) ── */}
               {view === 'monthly' && (() => {
                 return (
-                  <div className="neo-border rounded-2xl overflow-hidden bg-white shrink-0">
+                  <StatCard index={1} className="neo-border rounded-2xl overflow-hidden bg-surface shrink-0">
                     <div className="h-[3px] rounded-t-2xl" style={{ backgroundColor: theme.secondary }} />
                     <div className="p-3">
                       <div className="flex items-end justify-between mb-3">
                         <div>
-                          <p className="text-[8px] font-black uppercase tracking-[0.22em] text-stone-400 mb-0.5">Weekly Snapshot</p>
-                          <p className="text-sm font-black uppercase tracking-wide text-stone-800">Month Pacing by Week</p>
+                          <p className="text-[8px] font-black uppercase tracking-[0.22em] text-ink-subtle mb-0.5">Weekly Snapshot</p>
+                          <p className="text-sm font-black uppercase tracking-wide text-ink-strong">Month Pacing by Week</p>
                         </div>
-                        <span className="text-[9px] font-black text-stone-300 mb-0.5">{weeks.length} checkpoints</span>
+                        <span className="text-[9px] font-black text-ink-dim mb-0.5">{weeks.length} checkpoints</span>
                       </div>
                       <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${weeks.length}, minmax(0, 1fr))` }}>
                         {weeks.map((week, wIndex) => {
@@ -2093,25 +2162,25 @@ const AppContent: React.FC = () => {
                           return (
                             <div
                               key={wIndex}
-                              className={`rounded-xl border bg-white p-2 flex flex-col gap-2 ${isCurrentWeek ? 'border-black border-2' : 'border-stone-200'}`}
+                              className={`rounded-xl border bg-surface p-2 flex flex-col gap-2 ${isCurrentWeek ? 'border-edge-strong border-2' : 'border-edge'}`}
                             >
                               {/* Top: week label + date + circle */}
                               <div className="flex items-start justify-between gap-1">
                                 <div className="min-w-0">
-                                  <p className="text-[7px] font-black uppercase tracking-wider text-stone-400 leading-none">Week {wIndex + 1}</p>
-                                  <p className="text-[8px] font-black uppercase text-stone-700 mt-1 leading-tight">
+                                  <p className="text-[7px] font-black uppercase tracking-wider text-ink-subtle leading-none">Week {wIndex + 1}</p>
+                                  <p className="text-[8px] font-black uppercase text-ink mt-1 leading-tight">
                                     {monthShort} {String(startDate.getDate()).padStart(2, '0')} – {String(endDate.getDate()).padStart(2, '0')}
                                   </p>
                                 </div>
-                                <CircularProgress percentage={weekPerc} size={34} strokeWidth={4} color={theme.secondary} trackColor={theme.secondary + '25'} textClassName="text-[8px]" />
+                                <CircularProgress percentage={weekPerc} size={34} strokeWidth={4} color={theme.secondary} trackColor={'var(--theme-secondary-soft)'} textClassName="text-[8px]" />
                               </div>
                               {/* Divider */}
-                              <div className="border-t border-stone-100" />
+                              <div className="border-t border-edge-subtle" />
                               {/* Bottom: completed + day dots */}
                               <div>
-                                <p className="text-[7px] font-black uppercase tracking-wider text-stone-400 leading-none mb-1">Completed</p>
+                                <p className="text-[7px] font-black uppercase tracking-wider text-ink-subtle leading-none mb-1">Completed</p>
                                 <div className="flex items-end justify-between gap-1">
-                                  <p className="text-base font-black leading-none text-stone-900">{Math.round(weekTotal)}<span className="text-[9px] font-black text-stone-300 ml-0.5">/{Math.round(weekMax)}</span></p>
+                                  <p className="text-base font-black leading-none text-ink-strong">{Math.round(weekTotal)}<span className="text-[9px] font-black text-ink-dim ml-0.5">/{Math.round(weekMax)}</span></p>
                                   {/* Per-day dot bars */}
                                   <div className="flex items-end gap-[2px]" style={{ height: 14 }}>
                                     {dayBars.map((pct, di) => (
@@ -2132,12 +2201,12 @@ const AppContent: React.FC = () => {
                         })}
                       </div>
                     </div>
-                  </div>
+                  </StatCard>
                 );
               })()}
 
               {/* Trend chart */}
-              {view !== 'dashboard' && <div className={`neo-border rounded-2xl overflow-hidden flex flex-col min-h-[220px] ${isDarkMode ? 'bg-[#151515]' : 'bg-[#f9f9f9]'}`}>
+              {view !== 'dashboard' && <StatCard index={2} className={`neo-border rounded-2xl overflow-hidden flex flex-col min-h-[220px] ${isDarkMode ? 'bg-[#151515]' : 'bg-surface-soft'}`}>
                 <div className="h-[3px] shrink-0 rounded-t-2xl" style={{ backgroundColor: theme.primary }} />
                 <div className="flex flex-col flex-1 p-4">
                   <div className="flex justify-between items-center mb-3">
@@ -2145,12 +2214,12 @@ const AppContent: React.FC = () => {
                       {view === 'monthly' ? 'Monthly Trends' : view === 'weekly' ? 'Weekly Trends' : 'Annual Trends'}
                     </h4>
                     <div className="flex items-center gap-2">
-                      <div className={`text-xs font-black px-2 py-1 border-2 border-black ${trendDelta >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      <div className={`text-xs font-black px-2 py-1 border-2 border-edge-strong ${trendDelta >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                         {Math.abs(trendDelta).toFixed(0)}% {trendDeltaLabel}
                       </div>
                       <button
                         onClick={() => setChartType(prev => prev === 'area' ? 'bar' : 'area')}
-                        className="p-1 hover:bg-stone-200 rounded-sm transition-colors text-stone-400 hover:text-stone-600"
+                        className="p-1 hover:bg-edge rounded transition-colors text-ink-subtle hover:text-ink"
                       >
                         {chartType === 'area' ? <BarChart2 size={12} /> : <Activity size={12} />}
                       </button>
@@ -2183,10 +2252,10 @@ const AppContent: React.FC = () => {
                     )}
                   </ResponsiveContainer>
                 </div>
-              </div>}
+              </StatCard>}
               {/* Story panel */}
-              {view !== 'dashboard' && <div className="neo-border rounded-2xl flex flex-col overflow-hidden bg-white flex-1 min-h-0">
-                <div className="text-white text-[10px] font-black uppercase py-2 text-center tracking-widest border-b-[3px] border-black shrink-0" style={{ backgroundColor: theme.primary }}>
+              {view !== 'dashboard' && <StatCard index={3} className="neo-border rounded-2xl flex flex-col overflow-hidden bg-surface flex-1 min-h-0">
+                <div className="text-ink-inverse text-[10px] font-black uppercase py-2 text-center tracking-widest border-b-3 border-edge-strong shrink-0" style={{ backgroundColor: theme.primary }}>
                   {view === 'monthly' ? 'Monthly Success' : view === 'weekly' ? 'Weekly Success' : 'Annual Performance'}
                 </div>
                 <div className="flex-1 flex flex-col p-3 gap-2 overflow-y-auto min-h-0">
@@ -2194,10 +2263,10 @@ const AppContent: React.FC = () => {
                     <>
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-[10px] font-black uppercase text-stone-400 tracking-widest leading-none mb-1">Month Story</p>
+                          <p className="text-[10px] font-black uppercase text-ink-subtle tracking-widest leading-none mb-1">Month Story</p>
                           <div className="flex items-baseline gap-1">
                             <span className="text-3xl font-black leading-none">{monthProgress.completed}</span>
-                            <span className="text-lg font-black text-stone-300">/ {monthProgress.total}</span>
+                            <span className="text-lg font-black text-ink-dim">/ {monthProgress.total}</span>
                           </div>
                         </div>
                         <div className="w-14 h-14 relative">
@@ -2211,14 +2280,14 @@ const AppContent: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="flex-1 min-h-0 bg-stone-50/50 neo-border rounded-xl p-2 overflow-y-auto">
+                      <div className="flex-1 min-h-0 bg-surface-muted/50 neo-border rounded-xl p-2 overflow-y-auto">
                         {(() => {
                           const isCurrentMonth = currentMonthIndex === currentMonthOfYear && currentYear === currentFullYear_ref;
                           const daysElapsed = isCurrentMonth ? currentDayOfMonth : new Date(currentYear, currentMonthIndex + 1, 0).getDate();
                           const story = buildMonthlyStory(monthProgress, topHabitsThisMonth, monthDelta, t, daysElapsed);
                           return (
                             <div className="space-y-2">
-                              <div className="flex items-center gap-1.5"><Sparkles size={10} className="text-amber-500" /><span className="font-serif text-[9px] font-black uppercase tracking-widest text-stone-500">Your story</span></div>
+                              <div className="flex items-center gap-1.5"><Sparkles size={10} className="text-amber-500" /><span className="font-serif text-[9px] font-black uppercase tracking-widest text-ink-muted">Your story</span></div>
                               {story.sections.map((section: any, idx: number) => (
                                 <p key={idx} className="text-[11px] leading-relaxed font-bold">
                                   <FormattedText text={section.text} highlightColor={theme.secondary} className={section.type === 'consistency' ? '' : 'italic'} />
@@ -2233,10 +2302,10 @@ const AppContent: React.FC = () => {
                     <>
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-[10px] font-black uppercase text-stone-400 tracking-widest leading-none mb-1">Week progress</p>
+                          <p className="text-[10px] font-black uppercase text-ink-subtle tracking-widest leading-none mb-1">Week progress</p>
                           <div className="flex items-baseline gap-1">
                             <span className="text-3xl font-black leading-none">{weekProgress.completed}</span>
-                            <span className="text-lg font-black text-stone-300">/ {weekProgress.total}</span>
+                            <span className="text-lg font-black text-ink-dim">/ {weekProgress.total}</span>
                           </div>
                         </div>
                         <div className="w-14 h-14 relative">
@@ -2250,7 +2319,7 @@ const AppContent: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="flex-1 min-h-0 bg-stone-50/50 neo-border rounded-xl p-2 overflow-y-auto">
+                      <div className="flex-1 min-h-0 bg-surface-muted/50 neo-border rounded-xl p-2 overflow-y-auto">
                         {(() => {
                           const daysElapsed = weekOffset === 0
                             ? (startOfWeek === 'sunday' ? today_ref.getDay() + 1 : (today_ref.getDay() === 0 ? 7 : today_ref.getDay()))
@@ -2258,10 +2327,10 @@ const AppContent: React.FC = () => {
                           const story = buildWeeklyStory(weekProgress, weeklyStats, habits, t, daysElapsed);
                           return (
                             <div className="space-y-2">
-                              <div className="flex items-center gap-1.5"><Sparkles size={10} className="text-amber-500" /><span className="font-serif text-[9px] font-black uppercase tracking-widest text-stone-500">Your story</span></div>
+                              <div className="flex items-center gap-1.5"><Sparkles size={10} className="text-amber-500" /><span className="font-serif text-[9px] font-black uppercase tracking-widest text-ink-muted">Your story</span></div>
                               {story.sections.map((section: any, idx: number) => (
                                 <p key={idx} className="text-[11px] leading-relaxed font-bold">
-                                  <FormattedText text={section.text} primaryColor={theme.primary} className="text-black" />
+                                  <FormattedText text={section.text} primaryColor={theme.primary} className="text-ink-strong" />
                                 </p>
                               ))}
                             </div>
@@ -2273,14 +2342,14 @@ const AppContent: React.FC = () => {
                     <>
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5 mb-1"><Sparkles size={10} className="text-amber-500" /><span className="font-serif text-[9px] font-black uppercase tracking-widest text-stone-500">Annual story</span></div>
+                          <div className="flex items-center gap-1.5 mb-1"><Sparkles size={10} className="text-amber-500" /><span className="font-serif text-[9px] font-black uppercase tracking-widest text-ink-muted">Annual story</span></div>
                           {annualStory.annualSummary ? (
                             <div>
-                              <div className="text-[12px] font-black text-stone-900 truncate">{annualStory.annualSummary.support.strongestHabit?.name || 'Year story'}</div>
-                              <p className="text-[10px] font-bold text-stone-500">{annualStory.annualSummary.support.momentumLabel} · {annualStory.annualSummary.support.rhythmLabel}</p>
+                              <div className="text-[12px] font-black text-ink-strong truncate">{annualStory.annualSummary.support.strongestHabit?.name || 'Year story'}</div>
+                              <p className="text-[10px] font-bold text-ink-muted">{annualStory.annualSummary.support.momentumLabel} · {annualStory.annualSummary.support.rhythmLabel}</p>
                             </div>
                           ) : (
-                            <p className="text-[11px] font-bold text-stone-500">No significant outcomes yet</p>
+                            <p className="text-[11px] font-bold text-ink-muted">No significant outcomes yet</p>
                           )}
                         </div>
                         <div className="w-14 h-14 relative shrink-0">
@@ -2297,16 +2366,16 @@ const AppContent: React.FC = () => {
                     </>
                   )}
                 </div>
-              </div>}
+              </StatCard>}
 
               {/* ── Dashboard: Year Trend ── */}
               {view === 'dashboard' && (
-                <div className="neo-border rounded-2xl overflow-hidden flex flex-col min-h-[200px] bg-[#f9f9f9] shrink-0">
+                <StatCard index={3} className="neo-border rounded-2xl overflow-hidden flex flex-col min-h-[200px] bg-surface-soft shrink-0">
                   <div className="h-[3px] shrink-0 rounded-t-2xl" style={{ backgroundColor: theme.primary }} />
                   <div className="flex flex-col flex-1 p-3">
                     <div className="flex justify-between items-center mb-2">
-                      <p className="text-[9px] font-black uppercase tracking-[0.22em] text-stone-400">Year Trend</p>
-                      <div className={`text-[9px] font-black px-2 py-1 border border-black ${trendDelta >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      <p className="text-[9px] font-black uppercase tracking-[0.22em] text-ink-subtle">Year Trend</p>
+                      <div className={`text-[9px] font-black px-2 py-1 border border-edge-strong ${trendDelta >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                         {trendDelta >= 0 ? '+' : ''}{Math.abs(trendDelta).toFixed(0)}% vs LY
                       </div>
                     </div>
@@ -2326,7 +2395,7 @@ const AppContent: React.FC = () => {
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
-                </div>
+                </StatCard>
               )}
 
               {/* ── Dashboard: 52-Week Heatmap ── */}
@@ -2367,10 +2436,10 @@ const AppContent: React.FC = () => {
                 };
 
                 return (
-                  <div className="neo-border rounded-2xl overflow-hidden bg-white shrink-0">
+                  <StatCard index={4} className="neo-border rounded-2xl overflow-hidden bg-surface shrink-0">
                     <div className="h-[3px] rounded-t-2xl" style={{ backgroundColor: theme.secondary }} />
                     <div className="p-3">
-                      <p className="text-[9px] font-black uppercase tracking-[0.22em] text-stone-400 mb-3">52-Week Map</p>
+                      <p className="text-[9px] font-black uppercase tracking-[0.22em] text-ink-subtle mb-3">52-Week Map</p>
                       <div className="overflow-x-auto">
                         <div className="flex gap-[3px]" style={{ minWidth: 'max-content' }}>
                           {weekColumns.map((week, wi) => (
@@ -2380,7 +2449,7 @@ const AppContent: React.FC = () => {
                                 return (
                                   <div
                                     key={di}
-                                    className="w-[10px] h-[10px] rounded-[2px]"
+                                    className="w-[10px] h-[10px] rounded"
                                     style={{ backgroundColor: cell ? getCellColor(cell.pct) : 'transparent' }}
                                   />
                                 );
@@ -2396,7 +2465,7 @@ const AppContent: React.FC = () => {
                               const daysInMonth = new Date(currentYear, m + 1, 0).getDate();
                               labels.push(
                                 <div key={m} style={{ width: Math.ceil(daysInMonth / 7) * 13, minWidth: 0 }}>
-                                  <span className="text-[7px] font-black text-stone-300 uppercase">{monthAbbr[m]}</span>
+                                  <span className="text-[7px] font-black text-ink-dim uppercase">{monthAbbr[m]}</span>
                                 </div>
                               );
                               cellIdx += daysInMonth;
@@ -2406,7 +2475,7 @@ const AppContent: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </StatCard>
                 );
               })()}
 
@@ -2425,37 +2494,37 @@ const AppContent: React.FC = () => {
                 const maxAvg = Math.max(...seasons.map(s => s.avg ?? 0));
 
                 return (
-                  <div className="neo-border rounded-2xl overflow-hidden bg-white shrink-0">
+                  <StatCard index={5} className="neo-border rounded-2xl overflow-hidden bg-surface shrink-0">
                     <div className="h-[3px] rounded-t-2xl" style={{ backgroundColor: theme.secondary }} />
                     <div className="p-3">
-                      <p className="text-[9px] font-black uppercase tracking-[0.22em] text-stone-400 mb-3">Seasonal Patterns</p>
+                      <p className="text-[9px] font-black uppercase tracking-[0.22em] text-ink-subtle mb-3">Seasonal Patterns</p>
                       <div className="grid grid-cols-4 gap-2">
                         {seasons.map(s => {
                           const isBest = s.avg !== null && s.avg === maxAvg && maxAvg > 0;
                           return (
-                            <div key={s.name} className={`rounded-xl border p-2 text-center relative overflow-hidden ${isBest ? 'border-black border-2' : 'border-stone-200'}`}>
+                            <div key={s.name} className={`rounded-xl border p-2 text-center relative overflow-hidden ${isBest ? 'border-edge-strong border-2' : 'border-edge'}`}>
                               {s.avg !== null && s.avg > 0 && (
                                 <div className="absolute bottom-0 left-0 right-0 transition-all duration-500" style={{ height: `${s.avg}%`, backgroundColor: isBest ? theme.primary : theme.secondary, opacity: isBest ? 0.2 : 0.15 }} />
                               )}
-                              <p className="relative text-[8px] font-black uppercase tracking-wide text-stone-500">{s.name}</p>
-                              <p className="relative text-base font-black leading-tight mt-0.5 text-stone-900">{s.avg !== null ? `${s.avg}%` : '—'}</p>
-                              <p className="relative text-[7px] font-bold text-stone-400">{s.label}</p>
+                              <p className="relative text-[8px] font-black uppercase tracking-wide text-ink-muted">{s.name}</p>
+                              <p className="relative text-base font-black leading-tight mt-0.5 text-ink-strong">{s.avg !== null ? `${s.avg}%` : '—'}</p>
+                              <p className="relative text-[7px] font-bold text-ink-subtle">{s.label}</p>
                               {isBest && <p className="relative text-[7px] font-black" style={{ color: theme.primary }}>PEAK</p>}
                             </div>
                           );
                         })}
                       </div>
                     </div>
-                  </div>
+                  </StatCard>
                 );
               })()}
 
               {/* ── Dashboard: Weekday Pattern ── */}
               {view === 'dashboard' && (
-                <div className="neo-border rounded-2xl overflow-hidden bg-white shrink-0">
+                <StatCard index={6} className="neo-border rounded-2xl overflow-hidden bg-surface shrink-0">
                   <div className="h-[3px] rounded-t-2xl" style={{ backgroundColor: theme.secondary }} />
                   <div className="p-3">
-                    <p className="text-[9px] font-black uppercase tracking-[0.22em] text-stone-400 mb-2">Weekday Pattern</p>
+                    <p className="text-[9px] font-black uppercase tracking-[0.22em] text-ink-subtle mb-2">Weekday Pattern</p>
                     <div className="grid grid-cols-2 gap-2">
                       {[
                         { label: 'Weekdays', rate: Math.round(annualStats.weekdayRate ?? 0) },
@@ -2465,40 +2534,40 @@ const AppContent: React.FC = () => {
                           ? (annualStats.weekdayRate ?? 0) >= (annualStats.weekendRate ?? 0)
                           : (annualStats.weekendRate ?? 0) > (annualStats.weekdayRate ?? 0);
                         return (
-                          <div key={label} className={`rounded-xl border relative overflow-hidden p-2 ${isBetter ? 'border-black border-2' : 'border-stone-200'}`}>
+                          <div key={label} className={`rounded-xl border relative overflow-hidden p-2 ${isBetter ? 'border-edge-strong border-2' : 'border-edge'}`}>
                             <div className="absolute bottom-0 left-0 right-0" style={{ height: `${rate}%`, backgroundColor: isBetter ? theme.primary : theme.secondary, opacity: 0.15 }} />
-                            <p className="relative text-[8px] font-black uppercase text-stone-500">{label}</p>
+                            <p className="relative text-[8px] font-black uppercase text-ink-muted">{label}</p>
                             <p className="relative text-xl font-black leading-none mt-0.5" style={{ color: isBetter ? theme.primary : undefined }}>{rate}%</p>
                           </div>
                         );
                       })}
                     </div>
                   </div>
-                </div>
+                </StatCard>
               )}
 
               {/* ── Best / Needs Focus ── */}
-              <div className="grid grid-cols-2 gap-3 shrink-0">
-                <div className="neo-border rounded-2xl overflow-hidden bg-white">
+              <StatCard index={7} className="grid grid-cols-2 gap-3 shrink-0">
+                <div className="neo-border rounded-2xl overflow-hidden bg-surface">
                   <div className="h-[3px] rounded-t-2xl bg-emerald-400" />
                   <div className="p-3 flex flex-col gap-1">
-                    <span className="text-[9px] font-black uppercase tracking-wider text-stone-400">
+                    <span className="text-[9px] font-black uppercase tracking-wider text-ink-subtle">
                       {view === 'weekly' ? 'Best This Week' : view === 'monthly' ? 'Best This Month' : 'Best This Year'}
                     </span>
                     {statsBestHabit ? (
                       <>
                         <span className="text-sm font-black leading-tight break-words">{statsBestHabit.name}</span>
                         <div className="flex items-center gap-1.5 mt-1">
-                          <div className="flex-1 h-1.5 rounded-full bg-stone-100 overflow-hidden">
+                          <div className="flex-1 h-1.5 rounded-full bg-surface-strong overflow-hidden">
                             <div className="h-full rounded-full bg-emerald-400 transition-all" style={{ width: `${Math.min(100, Math.round(statsBestHabit.rate))}%` }} />
                           </div>
                           <span className="text-[10px] font-black text-emerald-600">{Math.round(statsBestHabit.rate)}%</span>
                         </div>
                       </>
-                    ) : <span className="text-xs text-stone-300 font-bold">No data yet</span>}
+                    ) : <span className="text-xs text-ink-dim font-bold">No data yet</span>}
                   </div>
                 </div>
-                <div className="neo-border rounded-2xl overflow-hidden bg-white">
+                <div className="neo-border rounded-2xl overflow-hidden bg-surface">
                   <div className="h-[3px] rounded-t-2xl bg-rose-300" />
                   <div className="p-3 flex flex-col gap-1">
                     <span className="text-[9px] font-black uppercase tracking-wider text-rose-300">
@@ -2508,16 +2577,16 @@ const AppContent: React.FC = () => {
                       <>
                         <span className="text-sm font-black leading-tight break-words">{statsWorstHabit.name}</span>
                         <div className="flex items-center gap-1.5 mt-1">
-                          <div className="flex-1 h-1.5 rounded-full bg-stone-100 overflow-hidden">
+                          <div className="flex-1 h-1.5 rounded-full bg-surface-strong overflow-hidden">
                             <div className="h-full rounded-full bg-rose-300 transition-all" style={{ width: `${Math.min(100, Math.round(statsWorstHabit.rate))}%` }} />
                           </div>
                           <span className="text-[10px] font-black text-rose-400">{Math.round(statsWorstHabit.rate)}%</span>
                         </div>
                       </>
-                    ) : <span className="text-xs text-stone-300 font-bold">On track</span>}
+                    ) : <span className="text-xs text-ink-dim font-bold">On track</span>}
                   </div>
                 </div>
-              </div>
+              </StatCard>
 
               {/* ── Habit Leaderboard ── */}
               {(() => {
@@ -2526,10 +2595,10 @@ const AppContent: React.FC = () => {
                   annualStats.topHabits;
                 if (!list || list.length === 0) return null;
                 return (
-                  <div className="neo-border rounded-2xl overflow-hidden bg-white shrink-0">
+                  <StatCard index={8} className="neo-border rounded-2xl overflow-hidden bg-surface shrink-0">
                     <div className="h-[3px] rounded-t-2xl" style={{ backgroundColor: theme.primary }} />
                     <div className="p-3">
-                      <p className="text-[9px] font-black uppercase tracking-[0.22em] text-stone-400 mb-3">
+                      <p className="text-[9px] font-black uppercase tracking-[0.22em] text-ink-subtle mb-3">
                         {view === 'weekly' ? 'Weekly Leaderboard' : view === 'monthly' ? 'Monthly Leaderboard' : 'Top Habits'}
                       </p>
                       <div className="flex flex-col gap-1.5">
@@ -2538,11 +2607,11 @@ const AppContent: React.FC = () => {
                           const hasCount = h.completed != null && h.total != null && Math.round(h.total) > 0;
                           return (
                             <div key={h.id ?? i} className="flex items-center gap-2">
-                              <span className="text-[9px] font-black text-stone-300 w-3 text-right shrink-0">{i + 1}</span>
+                              <span className="text-[9px] font-black text-ink-dim w-3 text-right shrink-0">{i + 1}</span>
                               <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: h.color || theme.primary }} />
-                              <span className="text-[11px] font-bold text-stone-700 flex-1 min-w-0 truncate">{h.name}</span>
-                              {hasCount && <span className="text-[9px] font-black text-stone-300 shrink-0">{Math.round(h.completed)}/{Math.round(h.total)}</span>}
-                              <div className="w-14 h-1.5 rounded-full bg-stone-100 overflow-hidden shrink-0">
+                              <span className="text-[11px] font-bold text-ink flex-1 min-w-0 truncate">{h.name}</span>
+                              {hasCount && <span className="text-[9px] font-black text-ink-dim shrink-0">{Math.round(h.completed)}/{Math.round(h.total)}</span>}
+                              <div className="w-14 h-1.5 rounded-full bg-surface-strong overflow-hidden shrink-0">
                                 <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: theme.primary }} />
                               </div>
                               <span className="text-[10px] font-black w-7 text-right shrink-0" style={{ color: theme.primary }}>{pct}%</span>
@@ -2551,15 +2620,15 @@ const AppContent: React.FC = () => {
                         })}
                       </div>
                     </div>
-                  </div>
+                  </StatCard>
                 );
               })()}
 
               {/* ── Analytics heatmap ── */}
-              {view !== 'dashboard' && <div className="neo-border rounded-2xl overflow-hidden bg-white shrink-0">
+              {view !== 'dashboard' && <StatCard index={9} className="neo-border rounded-2xl overflow-hidden bg-surface shrink-0">
                 <div className="h-[3px] rounded-t-2xl" style={{ backgroundColor: theme.secondary }} />
                 <div className="p-3">
-                  <p className="text-[9px] font-black uppercase tracking-[0.22em] text-stone-400 mb-3">
+                  <p className="text-[9px] font-black uppercase tracking-[0.22em] text-ink-subtle mb-3">
                     {view === 'weekly' ? 'Day Breakdown' : view === 'monthly' ? 'Month Heatmap' : 'Year Overview'}
                   </p>
 
@@ -2573,11 +2642,11 @@ const AppContent: React.FC = () => {
                       return new Date(now.getFullYear(), now.getMonth(), diff);
                     })();
                     const MOOD_MAP: Record<number, { icon: React.ElementType; color: string; bg: string }> = {
-                      1: { icon: Angry,  color: '#ef4444', bg: '#fee2e2' },
-                      2: { icon: Frown,  color: '#f97316', bg: '#ffedd5' },
-                      3: { icon: Meh,    color: '#eab308', bg: '#fef9c3' },
-                      4: { icon: Smile,  color: '#84cc16', bg: '#ecfccb' },
-                      5: { icon: Laugh,  color: '#10b981', bg: '#d1fae5' },
+                      1: { icon: Angry,  color: MOOD_SCALE[0], bg: MOOD_TINTS[0] },
+                      2: { icon: Frown,  color: MOOD_SCALE[1], bg: MOOD_TINTS[1] },
+                      3: { icon: Meh,    color: MOOD_SCALE[2], bg: MOOD_TINTS[2] },
+                      4: { icon: Smile,  color: MOOD_SCALE[3], bg: MOOD_TINTS[3] },
+                      5: { icon: Laugh,  color: MOOD_SCALE[4], bg: MOOD_TINTS[4] },
                     };
                     const days = weeklyStats.map((d: any, i: number) => {
                       const date = new Date(weekStart_dates);
@@ -2598,16 +2667,16 @@ const AppContent: React.FC = () => {
                         <div className="flex gap-2">
                           {days.map((d, i) => (
                             <div key={i} className="flex-1 text-center">
-                              <span className={`text-[10px] font-black uppercase ${d.isToday ? 'text-black' : 'text-stone-400'}`}>{d.label}</span>
+                              <span className={`text-[10px] font-black uppercase ${d.isToday ? 'text-ink-strong' : 'text-ink-subtle'}`}>{d.label}</span>
                             </div>
                           ))}
                         </div>
                         {/* Completion tiles */}
                         <div className="flex gap-2">
                           {days.map((d, i) => (
-                            <div key={i} className={`relative flex-1 aspect-square rounded-xl overflow-hidden flex items-end justify-center pb-1.5 ${d.isToday ? 'border-2 border-black' : 'border border-stone-200'} ${d.pct === 0 ? 'bg-stone-50' : ''}`}>
+                            <div key={i} className={`relative flex-1 aspect-square rounded-xl overflow-hidden flex items-end justify-center pb-1.5 ${d.isToday ? 'border-2 border-edge-strong' : 'border border-edge'} ${d.pct === 0 ? 'bg-surface-muted' : ''}`}>
                               {d.pct > 0 && <div className="absolute bottom-0 left-0 right-0 transition-all duration-500 ease-out" style={{ height: `${d.pct}%`, backgroundColor: d.pct >= 100 ? theme.primary : theme.secondary, opacity: d.pct >= 100 ? 1 : 0.8 }} />}
-                              <span className={`relative text-xs font-black leading-none ${d.pct >= 50 ? 'text-white' : d.pct === 0 ? 'text-stone-300' : 'text-stone-700'}`}>{d.pct}%</span>
+                              <span className={`relative text-xs font-black leading-none ${d.pct >= 50 ? 'text-ink-inverse' : d.pct === 0 ? 'text-ink-dim' : 'text-ink'}`}>{d.pct}%</span>
                             </div>
                           ))}
                         </div>
@@ -2616,10 +2685,10 @@ const AppContent: React.FC = () => {
                           {days.map((d, i) => {
                             const MoodIcon = d.moodMeta?.icon;
                             return (
-                              <div key={i} className={`relative flex-1 aspect-square rounded-xl overflow-hidden flex items-center justify-center ${d.isToday ? 'border-2 border-black' : 'border border-stone-200'}`} style={{ backgroundColor: d.moodMeta?.bg || '#f9fafb' }}>
+                              <div key={i} className={`relative flex-1 aspect-square rounded-xl overflow-hidden flex items-center justify-center ${d.isToday ? 'border-2 border-edge-strong' : 'border border-edge'}`} style={{ backgroundColor: d.moodMeta?.bg || '#f9fafb' }}>
                                 {MoodIcon
                                   ? <MoodIcon size={20} color={d.moodMeta!.color} strokeWidth={2.5} />
-                                  : <span className="text-[10px] font-black text-stone-300">—</span>}
+                                  : <span className="text-[10px] font-black text-ink-dim">—</span>}
                               </div>
                             );
                           })}
@@ -2636,7 +2705,7 @@ const AppContent: React.FC = () => {
                       <div>
                         <div className="grid grid-cols-7 gap-1 mb-1.5">
                           {dayLabels.map((l, i) => (
-                            <div key={i} className="text-center text-[8px] font-black text-stone-300">{l}</div>
+                            <div key={i} className="text-center text-[8px] font-black text-ink-dim">{l}</div>
                           ))}
                         </div>
                         <div className="grid grid-cols-7 gap-1">
@@ -2648,13 +2717,13 @@ const AppContent: React.FC = () => {
                             const cellNote = notes[cellDateKey];
                             const moodVal = cellNote && !Array.isArray(cellNote) ? (cellNote as any).mood : undefined;
                             const MOOD_ICON_MAP: Record<number, React.ElementType> = { 1: Angry, 2: Frown, 3: Meh, 4: Smile, 5: Laugh };
-                            const MOOD_COLOR_MAP: Record<number, string> = { 1: '#ef4444', 2: '#f97316', 3: '#eab308', 4: '#84cc16', 5: '#10b981' };
+                            const MOOD_COLOR_MAP: Record<number, string> = { 1: MOOD_SCALE[0], 2: MOOD_SCALE[1], 3: MOOD_SCALE[2], 4: MOOD_SCALE[3], 5: MOOD_SCALE[4] };
                             const CellMoodIcon = typeof moodVal === 'number' ? MOOD_ICON_MAP[moodVal] : null;
                             const cellMoodColor = typeof moodVal === 'number' ? MOOD_COLOR_MAP[moodVal] : null;
                             return (
                               <div
                                 key={d.day}
-                                className={`aspect-square rounded-lg border relative overflow-hidden ${isToday ? 'border-black border-2' : 'border-stone-200'}`}
+                                className={`aspect-square rounded-lg border relative overflow-hidden ${isToday ? 'border-edge-strong border-2' : 'border-edge'}`}
                                 style={{ backgroundColor: '#fafaf9' }}
                               >
                                 {/* Bottom fill to pct */}
@@ -2662,7 +2731,7 @@ const AppContent: React.FC = () => {
                                   <div className="absolute bottom-0 left-0 right-0 transition-all duration-500" style={{ height: `${pct}%`, backgroundColor: pct >= 100 ? theme.primary : theme.secondary, opacity: 0.82 }} />
                                 )}
                                 {/* Day — top left */}
-                                <span className={`absolute top-1 left-1 text-[10px] font-black leading-none z-10 ${pct >= 90 ? 'text-white' : 'text-stone-700'}`}>{d.day}</span>
+                                <span className={`absolute top-1 left-1 text-[10px] font-black leading-none z-10 ${pct >= 90 ? 'text-ink-inverse' : 'text-ink'}`}>{d.day}</span>
                                 {/* Mood — center */}
                                 {CellMoodIcon && (
                                   <div className="absolute inset-0 flex items-center justify-center z-10">
@@ -2671,7 +2740,7 @@ const AppContent: React.FC = () => {
                                 )}
                                 {/* % — bottom center */}
                                 <div className="absolute bottom-1 left-0 right-0 flex justify-center z-10">
-                                  <span className={`text-[10px] font-black leading-none ${pct >= 40 ? 'text-white' : pct >= 0 ? 'text-stone-600' : 'text-stone-300'}`}>
+                                  <span className={`text-[10px] font-black leading-none ${pct >= 40 ? 'text-ink-inverse' : pct >= 0 ? 'text-ink' : 'text-ink-dim'}`}>
                                     {pct >= 0 ? `${pct}%` : '—'}
                                   </span>
                                 </div>
@@ -2690,22 +2759,26 @@ const AppContent: React.FC = () => {
                         const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
                         const isCurrent = i === new Date().getMonth() && currentYear === new Date().getFullYear();
                         return (
-                          <div key={i} className={`rounded-lg border-2 overflow-hidden flex flex-col items-center py-2 gap-1 relative ${isCurrent ? 'border-black' : 'border-stone-200'}`}>
+                          <div key={i} className={`rounded-lg border-2 overflow-hidden flex flex-col items-center py-2 gap-1 relative ${isCurrent ? 'border-edge-strong' : 'border-edge'}`}>
                             <div className="absolute inset-0" style={{ backgroundColor: theme.secondary, opacity: pct >= 100 ? 0 : pct / 100 * 0.7 }} />
                             {pct >= 100 && <div className="absolute inset-0" style={{ backgroundColor: theme.primary }} />}
-                            <span className={`relative text-[8px] font-black uppercase ${pct >= 60 ? 'text-white' : 'text-stone-500'}`}>{monthNames[i]}</span>
-                            <span className={`relative text-[10px] font-black ${pct >= 60 ? 'text-white' : 'text-stone-800'}`}>{pct}%</span>
+                            <span className={`relative text-[8px] font-black uppercase ${pct >= 60 ? 'text-ink-inverse' : 'text-ink-muted'}`}>{monthNames[i]}</span>
+                            <span className={`relative text-[10px] font-black ${pct >= 60 ? 'text-ink-inverse' : 'text-ink-strong'}`}>{pct}%</span>
                           </div>
                         );
                       })}
                     </div>
                   )}
                 </div>
-              </div>}
+              </StatCard>}
               </>}
 
               {/* ── AI Coach panel ── */}
-              {rightPanel === 'ai' && (() => {
+              {rightPanel === 'ai' && guestMode && (
+                <LockedPanel title="AI Coach" description="Create an account or sign in to chat with your AI Coach and get personalized insight cards." />
+              )}
+
+              {rightPanel === 'ai' && !guestMode && (() => {
                 const catMeta: Record<string, { badge: string; label: string }> = {
                   solid:   { badge: 'bg-emerald-100 text-emerald-700 border-emerald-200', label: '✓ Locked In' },
                   dead:    { badge: 'bg-rose-100 text-rose-700 border-rose-200',          label: '✕ Dead Weight' },
@@ -2715,27 +2788,27 @@ const AppContent: React.FC = () => {
                 };
                 return (
                   <div className="flex flex-col h-full min-h-[400px]">
-                    <div className="neo-border rounded-2xl overflow-hidden bg-white flex flex-col flex-1 min-h-0">
+                    <div className="neo-border rounded-2xl overflow-hidden bg-surface flex flex-col flex-1 min-h-0">
                       <div className="h-[3px] rounded-t-2xl" style={{ backgroundColor: theme.primary }} />
-                      <div className="px-3 py-2 border-b-[2px] border-black flex items-center justify-between gap-2 shrink-0">
-                        <p className="text-[9px] font-black uppercase tracking-[0.22em] text-stone-500 shrink-0">AI Coach</p>
+                      <div className="px-3 py-2 border-b-2 border-edge-strong flex items-center justify-between gap-2 shrink-0">
+                        <p className="text-[9px] font-black uppercase tracking-[0.22em] text-ink-muted shrink-0">AI Coach</p>
                         <div className="flex items-center gap-2">
                           <img
                             src={personalityAvatarUrl(aiPersonality)}
                             alt={AI_COACH_PERSONALITIES.find(p => p.id === aiPersonality)?.label ?? 'Coach'}
-                            className="w-5 h-5 rounded-full border border-black bg-stone-100 shrink-0"
+                            className="w-5 h-5 rounded-full border border-edge-strong bg-surface-strong shrink-0"
                           />
                           <select
                             value={aiPersonality}
                             onChange={e => setAiPersonality(e.target.value as AiCoachPersonality)}
                             title="Coach personality"
-                            className="text-[9px] font-bold uppercase tracking-wide text-stone-600 bg-stone-50 border border-stone-200 rounded px-1 py-0.5 focus:outline-none focus:border-stone-400"
+                            className="text-[9px] font-bold uppercase tracking-wide text-ink bg-surface-muted border border-edge rounded px-1 py-1 focus:outline-none focus:border-edge-muted"
                           >
                             {AI_COACH_PERSONALITIES.map(p => (
                               <option key={p.id} value={p.id}>{p.label}</option>
                             ))}
                           </select>
-                          <span className="text-[9px] font-bold text-stone-400 whitespace-nowrap">{Math.max(0, aiRemaining)} left today</span>
+                          <span className="text-[9px] font-bold text-ink-subtle whitespace-nowrap">{Math.max(0, aiRemaining)} left today</span>
                         </div>
                       </div>
 
@@ -2744,14 +2817,14 @@ const AppContent: React.FC = () => {
                         {/* Loading skeleton */}
                         {aiLoading && !aiInsight && (
                           <div className="space-y-2 animate-pulse">
-                            <div className="rounded-xl border-2 border-stone-100 p-3 bg-stone-50">
-                              <div className="h-2.5 w-full bg-stone-200 rounded mb-1.5" />
-                              <div className="h-2.5 w-4/5 bg-stone-200 rounded mb-1.5" />
-                              <div className="h-2.5 w-3/5 bg-stone-200 rounded" />
+                            <div className="rounded-xl border-2 border-edge-subtle p-3 bg-surface-muted">
+                              <div className="h-2.5 w-full bg-edge rounded mb-1.5" />
+                              <div className="h-2.5 w-4/5 bg-edge rounded mb-1.5" />
+                              <div className="h-2.5 w-3/5 bg-edge rounded" />
                             </div>
-                            <div className="h-2 w-full bg-stone-100 rounded" />
-                            <div className="h-2 w-full bg-stone-100 rounded" />
-                            <div className="h-2 w-2/3 bg-stone-100 rounded" />
+                            <div className="h-2 w-full bg-surface-strong rounded" />
+                            <div className="h-2 w-full bg-surface-strong rounded" />
+                            <div className="h-2 w-2/3 bg-surface-strong rounded" />
                           </div>
                         )}
 
@@ -2761,27 +2834,27 @@ const AppContent: React.FC = () => {
                             {/* Coach message bubble */}
                             <div className="flex justify-start">
                               <div
-                                className="rounded-xl rounded-bl-none px-3 py-2.5 text-[11px] font-medium leading-relaxed text-stone-800 border-[2px] border-black"
-                                style={{ backgroundColor: theme.secondary + '18' }}
+                                className="rounded-xl rounded-bl-none px-3 py-2.5 text-[11px] font-medium leading-relaxed text-ink-strong border-2 border-edge-strong"
+                                style={{ backgroundColor: 'var(--theme-secondary-faint)' }}
                               >
                                 {aiInsight.message}
                               </div>
                             </div>
 
                             {/* Category rows */}
-                            {aiInsight.categories.length > 0 && (
+                            {(aiInsight.categories?.length ?? 0) > 0 && (
                               <div className="flex flex-col gap-2">
-                                {aiInsight.categories.map((cat, i) => {
+                                {(aiInsight.categories ?? []).map((cat, i) => {
                                   const meta = catMeta[cat.category] ?? catMeta.pattern;
                                   return (
                                     <div key={i} className="flex flex-col gap-0.5">
                                       <div className="flex items-center gap-1.5 flex-wrap">
-                                        <span className={`shrink-0 text-[9px] font-black px-1.5 py-0.5 rounded border ${meta.badge}`}>{meta.label}</span>
-                                        {cat.habits.length > 0 && (
-                                          <span className="text-[11px] font-black text-stone-700 leading-snug">{cat.habits.join(', ')}</span>
+                                        <span className={`shrink-0 text-[9px] font-black px-1.5 py-1 rounded border ${meta.badge}`}>{meta.label}</span>
+                                        {(cat.habits?.length ?? 0) > 0 && (
+                                          <span className="text-[11px] font-black text-ink leading-snug">{(cat.habits ?? []).join(', ')}</span>
                                         )}
                                       </div>
-                                      <p className="text-[11px] text-stone-500 font-medium leading-snug pl-0.5">{cat.note}</p>
+                                      <p className="text-[11px] text-ink-muted font-medium leading-snug pl-1">{cat.note}</p>
                                     </div>
                                   );
                                 })}
@@ -2793,9 +2866,9 @@ const AppContent: React.FC = () => {
                         {/* Chat separator */}
                         {aiMessages.length > 0 && (
                           <div className="flex items-center gap-2 py-1">
-                            <div className="flex-1 h-px bg-stone-200" />
-                            <span className="text-[9px] font-black uppercase tracking-wider text-stone-300">Chat</span>
-                            <div className="flex-1 h-px bg-stone-200" />
+                            <div className="flex-1 h-px bg-edge" />
+                            <span className="text-[9px] font-black uppercase tracking-wider text-ink-dim">Chat</span>
+                            <div className="flex-1 h-px bg-edge" />
                           </div>
                         )}
 
@@ -2803,8 +2876,8 @@ const AppContent: React.FC = () => {
                         {aiMessages.map((msg, i) => (
                           <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                             <div
-                              className={`max-w-[85%] rounded-xl px-3 py-2 text-[11px] font-medium leading-snug border-[2px] border-black ${msg.role === 'user' ? 'rounded-br-none' : 'rounded-bl-none text-stone-800'}`}
-                              style={msg.role === 'user' ? { backgroundColor: theme.primary, color: '#fff' } : { backgroundColor: theme.secondary + '18' }}
+                              className={`max-w-[85%] rounded-xl px-3 py-2 text-[11px] font-medium leading-snug border-2 border-edge-strong ${msg.role === 'user' ? 'rounded-br-none' : 'rounded-bl-none text-ink-strong'}`}
+                              style={msg.role === 'user' ? { backgroundColor: theme.primary, color: '#fff' } : { backgroundColor: 'var(--theme-secondary-faint)' }}
                             >
                               {msg.text.split(/(\*\*[^*]+\*\*)/).map((part, j) =>
                                 part.startsWith('**') && part.endsWith('**')
@@ -2817,21 +2890,21 @@ const AppContent: React.FC = () => {
 
                         {aiLoading && aiInsight && (
                           <div className="flex justify-start">
-                            <div className="rounded-xl px-3 py-2 border-[2px] border-black text-stone-400 text-[11px]" style={{ backgroundColor: theme.secondary + '18' }}>
+                            <div className="rounded-xl px-3 py-2 border-2 border-edge-strong text-ink-subtle text-[11px]" style={{ backgroundColor: 'var(--theme-secondary-faint)' }}>
                               <span className="animate-pulse">···</span>
                             </div>
                           </div>
                         )}
                       </div>
 
-                      <div className="border-t-[2px] border-black p-2 flex flex-col gap-2 shrink-0">
+                      <div className="border-t-2 border-edge-strong p-2 flex flex-col gap-2 shrink-0">
                         {aiInsight && !aiLoading && aiRemaining > 0 && (
                           <div className="flex flex-wrap gap-1.5">
                             {AI_SUGGESTED_QUESTIONS.map((q) => (
                               <button
                                 key={q}
                                 onClick={() => sendAiMessage(q)}
-                                className="text-[10px] font-semibold px-2 py-1 rounded-lg border-[2px] border-black bg-white hover:bg-stone-50 transition-colors text-left"
+                                className="text-[10px] font-semibold px-2 py-1 rounded-lg border-2 border-edge-strong bg-surface hover:bg-surface-muted transition-colors text-left"
                               >
                                 {q}
                               </button>
@@ -2840,7 +2913,7 @@ const AppContent: React.FC = () => {
                         )}
                         <div className="flex gap-2">
                         {aiRemaining <= 0 ? (
-                          <p className="flex-1 text-[10px] text-stone-400 font-bold text-center py-2">Daily limit reached. Come back tomorrow!</p>
+                          <p className="flex-1 text-[10px] text-ink-subtle font-bold text-center py-2">Daily limit reached. Come back tomorrow!</p>
                         ) : (
                           <>
                             <input
@@ -2849,12 +2922,12 @@ const AppContent: React.FC = () => {
                               onChange={e => setAiInput(e.target.value)}
                               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAiMessage(); } }}
                               placeholder="Ask your coach..."
-                              className="flex-1 text-[11px] font-medium border-[2px] border-black rounded-lg px-2 py-1.5 focus:outline-none focus:border-stone-600 bg-stone-50"
+                              className="flex-1 text-[11px] font-medium border-2 border-edge-strong rounded-lg px-2 py-1.5 focus:outline-none focus:border-edge-hover bg-surface-muted"
                             />
                             <button
                               onClick={() => sendAiMessage()}
                               disabled={aiLoading || !aiInput.trim()}
-                              className="border-[2px] border-black rounded-lg px-2 py-1.5 flex items-center justify-center disabled:opacity-40 transition-opacity"
+                              className="border-2 border-edge-strong rounded-lg px-2 py-1.5 flex items-center justify-center disabled:opacity-40 transition-opacity"
                               style={{ backgroundColor: theme.primary }}
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
@@ -2869,7 +2942,10 @@ const AppContent: React.FC = () => {
               })()}
 
               {/* ── Insights panel ── */}
-              {rightPanel === 'insights' && (
+              {rightPanel === 'insights' && guestMode && (
+                <LockedPanel title="Insights" description="Create an account or sign in to unlock pattern insights about your habits." />
+              )}
+              {rightPanel === 'insights' && !guestMode && (
                 <InsightsPanel insights={insights} theme={theme} />
               )}
             </div>
@@ -2886,11 +2962,11 @@ const AppContent: React.FC = () => {
 
       {isTasksOpen && (
         <div
-          className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 p-3 backdrop-blur-sm"
+          className="fixed inset-0 z-preview flex items-center justify-center bg-scrim p-3 backdrop-blur-sm"
           onClick={() => setIsTasksOpen(false)}
         >
           <div
-            className="bg-white neo-border neo-shadow rounded-2xl w-full max-w-lg flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+            className="bg-surface neo-border shadow-neo rounded-2xl w-full max-w-lg flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
             style={{ maxHeight: 'min(85vh, 680px)' }}
             onClick={e => e.stopPropagation()}
           >
@@ -2901,11 +2977,11 @@ const AppContent: React.FC = () => {
 
       {isListsOpen && (
         <div
-          className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 p-3 backdrop-blur-sm"
+          className="fixed inset-0 z-preview flex items-center justify-center bg-scrim p-3 backdrop-blur-sm"
           onClick={() => setIsListsOpen(false)}
         >
           <div
-            className="bg-white neo-border neo-shadow rounded-2xl w-full max-w-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+            className="bg-surface neo-border shadow-neo rounded-2xl w-full max-w-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
             style={{ maxHeight: 'min(85vh, 680px)' }}
             onClick={e => e.stopPropagation()}
           >
@@ -2995,7 +3071,7 @@ const SignInPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-x-hidden overflow-y-auto bg-[#F4F4F0]">
+    <div className="min-h-screen relative overflow-x-hidden overflow-y-auto bg-canvas">
       <Toaster position="top-center" reverseOrder={false} />
 
       {/* Showcase Background */}
@@ -3101,7 +3177,7 @@ const SupportPage: React.FC = () => {
   if (loading) return <LoadingScreen />;
 
   return (
-    <div className="min-h-screen bg-[#F4F4F0]">
+    <div className="min-h-screen bg-canvas">
       <FeedbackModal
         isOpen={true}
         onClose={() => navigate('/')}

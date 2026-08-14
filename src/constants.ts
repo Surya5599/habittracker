@@ -27,6 +27,25 @@ export const THEMES = [
   { name: 'Monochrome', primary: '#2d2d2d', secondary: '#6b6b6b' },
 ];
 
+/**
+ * Canonical mood 1-5 scale. Previously hand-typed identically in 6 files
+ * (DESIGN_SYSTEM.md §1.6, §9 #9). Index 0 = mood 1.
+ *
+ * Deliberately plain hex strings, NOT `var(--mood-N)`: consumers include SVG
+ * presentation attributes (lucide's `color` prop, `fill=`), a detached PDF
+ * document, canvas `ctx.fillStyle`, and hex-alpha concatenation
+ * (`MOOD_SCALE[i] + '18'`) — none of which can resolve a CSS variable.
+ * The matching `--mood-1..5` tokens exist for CSS/className contexts.
+ */
+export const MOOD_SCALE = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#10b981'];
+
+/**
+ * Background tints paired with MOOD_SCALE. These were duplicated too, and
+ * disagreed: mood 3 was #fef9c3 in App.tsx but #fef3c7 in exportJournalPdf.ts.
+ * Unified on the yellow-100 value (#fef9c3), since mood 3 is yellow-500.
+ */
+export const MOOD_TINTS = ['#fee2e2', '#ffedd5', '#fef9c3', '#ecfccb', '#d1fae5'];
+
 export const LOCAL_HABITS_KEY = 'guest_habits';
 export const LOCAL_COMPLETIONS_KEY = 'guest_completions';
 

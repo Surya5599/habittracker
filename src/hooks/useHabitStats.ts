@@ -123,6 +123,52 @@ export const useHabitStats = (
         };
     };
 
+    // Score an arbitrary inclusive date range with the same rules the week and month
+    // builders use: frequency, createdAt/archivedAt, manually inactive days, and the
+    // weeklyTarget/7 proration for flexible habits. Days after today are excluded, so a
+    // range still in progress is judged on what it has actually had a chance to do.
+    //
+    // The all-time "best" figures used to divide by `habits.length * daysInRange`, which
+    // scored historical periods against habits that didn't exist yet and ignored every
+    // rule above — a week from before a habit was created could not reach 100%.
+    const scoreDateRange = (startDate: Date, endDate: Date) => {
+        const today = new Date();
+        const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+        const lastDate = endDate > endOfToday ? endOfToday : endDate;
+
+        let possible = 0;
+        let completed = 0;
+
+        habits.forEach(h => {
+            let hPossible = 0;
+            let hActual = 0;
+
+            const cursor = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+            while (cursor <= lastDate) {
+                if (!isHabitInactiveOnDate(h, cursor)) {
+                    if (h.weeklyTarget) {
+                        hPossible += h.weeklyTarget / 7;
+                    } else if (isHabitDueOnDate(h, cursor)) {
+                        hPossible += 1;
+                    }
+                    if (isCompleted(h.id, cursor.getDate(), completions, cursor.getMonth(), cursor.getFullYear())) {
+                        hActual++;
+                    }
+                }
+                cursor.setDate(cursor.getDate() + 1);
+            }
+
+            possible += hPossible;
+            completed += h.weeklyTarget ? Math.min(hActual, hPossible) : hActual;
+        });
+
+        return {
+            completed,
+            possible,
+            rate: possible > 0 ? (completed / possible) * 100 : 0
+        };
+    };
+
     const buildDailyStatsForMonth = (targetMonthIndex: number, targetYear: number) => {
         const targetDaysInMonth = new Date(targetYear, targetMonthIndex + 1, 0).getDate();
         const targetMonthDates = Array.from({ length: targetDaysInMonth }, (_, index) => index + 1);
@@ -396,6 +442,11 @@ export const useHabitStats = (
             });
             mPossible = Math.round(mPossible);
             mProRatedPossible = Math.round(mProRatedPossible);
+            // `mCompleted` accumulates a fractional value for weeklyTarget habits,
+            // because their monthly cap is (weeklyTarget / 7) * daysInMonth. It was
+            // the only one of the three not rounded, which surfaced as counts like
+            // "840.857 completions". A completion count is discrete by definition.
+            mCompleted = Math.round(mCompleted);
             totalCompletions += mCompleted;
             totalPossible += mPossible;
             proRatedTotalPossible += mProRatedPossible;
@@ -698,12 +749,12 @@ export const useHabitStats = (
             const year = parseInt(yStr);
             const monthIdx = parseInt(mStr) - 1;
             const daysInMonth = new Date(year, monthIdx + 1, 0).getDate();
-            const totalPossible = daysInMonth * habits.length;
-            return {
-                key, year, monthIdx, count,
-                rate: totalPossible > 0 ? (count / totalPossible) * 100 : 0
-            };
-        }).sort((a, b) => b.rate - a.rate)[0];
+            const scored = scoreDateRange(
+                new Date(year, monthIdx, 1),
+                new Date(year, monthIdx, daysInMonth)
+            );
+            return { key, year, monthIdx, count, rate: scored.rate };
+        }).filter(m => m.rate > 0).sort((a, b) => b.rate - a.rate)[0];
 
         const streakMilestones = [...habitPerformance]
             .filter(h => h.maxStreak >= 7 && h.streakStart)
@@ -745,9 +796,10 @@ export const useHabitStats = (
     }, [habits, completions, notes, weekOffset, startOfWeek]);
 
     const allTimeBestWeek = useMemo(() => {
+        // Only weeks that saw at least one completion are candidates; the counts
+        // themselves are no longer the score, they just bound the search.
         const weekCounts: Record<string, number> = {};
 
-        // Iterate all habits and their completions
         habits.forEach(h => {
             const hCompletions = completions[h.id] || {};
             Object.keys(hCompletions).forEach(dateKey => {
@@ -770,13 +822,12 @@ export const useHabitStats = (
             });
         });
 
-        const best = Object.entries(weekCounts).map(([key, count]) => {
-            const totalPossible = habits.length * 7;
-            const rate = totalPossible > 0 ? (count / totalPossible) * 100 : 0;
+        const best = Object.entries(weekCounts).map(([key]) => {
             const [y, m, d] = key.split('-').map(Number);
             const startOfWeekDate = new Date(y, m - 1, d);
             const endOfWeekDate = new Date(startOfWeekDate);
             endOfWeekDate.setDate(startOfWeekDate.getDate() + 6);
+            const rate = scoreDateRange(startOfWeekDate, endOfWeekDate).rate;
 
             const startYear = startOfWeekDate.getFullYear();
             const endYear = endOfWeekDate.getFullYear();
@@ -799,10 +850,11 @@ export const useHabitStats = (
                 year: y,
                 rate
             };
-        }).sort((a, b) => b.rate - a.rate)[0];
+        }).filter(w => w.rate > 0).sort((a, b) => b.rate - a.rate)[0];
 
         return best || { rate: 0, dateRangeStr: '', year: 0 };
-    }, [habits, completions, startOfWeek]);
+        // `notes` matters now: scoreDateRange excludes manually inactive days.
+    }, [habits, completions, notes, startOfWeek]);
 
     const weekDelta = weekProgress.percentage - prevWeekProgress.percentage;
 

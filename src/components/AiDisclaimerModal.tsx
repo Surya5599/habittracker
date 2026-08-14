@@ -12,12 +12,12 @@ export const AiDisclaimerModal: React.FC<AiDisclaimerModalProps> = ({ isOpen, on
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[210] flex items-center justify-center bg-black/50 p-3 backdrop-blur-sm">
+        <div className="fixed inset-0 z-alert flex items-center justify-center bg-scrim p-3 backdrop-blur-sm">
             <div
-                className="bg-white neo-border neo-shadow rounded-2xl w-full max-w-md flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+                className="bg-surface neo-border shadow-neo rounded-2xl w-full max-w-md flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
             >
                 <div className="h-[3px]" style={{ backgroundColor: themePrimary }} />
-                <div className="px-4 py-3 border-b-[2px] border-black flex items-center gap-2 shrink-0">
+                <div className="px-4 py-3 border-b-2 border-edge-strong flex items-center gap-2 shrink-0">
                     <Bot size={16} />
                     <p className="text-sm font-black uppercase tracking-wide">Before you chat with AI Coach</p>
                 </div>
@@ -30,20 +30,20 @@ export const AiDisclaimerModal: React.FC<AiDisclaimerModalProps> = ({ isOpen, on
                             it's a fun nudge, not professional advice.
                         </p>
                     </div>
-                    <p className="text-[11px] text-stone-600 leading-snug">
+                    <p className="text-[11px] text-ink leading-snug">
                         Your habit names, completion history, and chat messages are sent to a third-party AI
                         service to generate responses. Don't share anything sensitive in the chat.
                     </p>
                     <div className="mt-1 flex gap-2">
                         <button
                             onClick={onCancel}
-                            className="px-4 py-2.5 rounded-xl border-2 border-stone-300 text-sm font-black uppercase tracking-wide text-stone-600 transition-colors hover:border-stone-500 hover:text-stone-800"
+                            className="px-4 py-2.5 rounded-xl border-2 border-edge-muted text-sm font-black uppercase tracking-wide text-ink transition-colors hover:border-edge-hover hover:text-ink-strong"
                         >
                             Not now
                         </button>
                         <button
                             onClick={onAccept}
-                            className="flex-1 py-2.5 rounded-xl border-2 border-black text-sm font-black uppercase tracking-wide text-white transition-all duration-100 active:translate-x-[1px] active:translate-y-[1px]"
+                            className="flex-1 py-2.5 rounded-xl border-2 border-edge-strong text-sm font-black uppercase tracking-wide text-ink-inverse transition-all duration-100 active:translate-x-[1px] active:translate-y-[1px]"
                             style={{ backgroundColor: themePrimary, boxShadow: '3px 3px 0px 0px rgba(0,0,0,1)' }}
                         >
                             I understand, continue

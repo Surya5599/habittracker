@@ -1,4 +1,47 @@
 @import "tailwindcss";
+@import "../../src/styles/tokens.css";
+
+/* Interim token bridge for the shadow batch (MIGRATION_NOTES.md §M5).
+   ADDITIVE ONLY — no `--shadow-*: initial`, so the stock scale the later
+   batches still rely on keeps working. Superseded by
+   src/styles/tailwind-v4-theme.css once all batches land. */
+@theme {
+  --shadow-neo-sm: var(--neo-shadow-sm);
+  --shadow-neo: var(--neo-shadow);
+  --shadow-neo-lg: var(--neo-shadow-lg);
+  --shadow-neo-accent: var(--neo-shadow-accent);
+
+  /* Batch 2 (radius) — semantic aliases only; the numeric steps keep their
+     stock values so nothing existing shifts. */
+  --radius-control: 0.5rem; /* 8px  */
+  --radius-card: 1rem;      /* 16px */
+  --radius-modal: 1rem;     /* 16px */
+  --radius-chip: 9999px;
+
+  /* Batch 4 (colour) — additive; stock palette stays live. Plain var() is fine
+     here: v4 applies /opacity modifiers natively via color-mix(in oklab, ...),
+     verified with @tailwindcss/cli@4. Only the v3 web config needs alpha(). */
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-soft: var(--surface-soft);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-strong: var(--surface-strong);
+  --color-surface-inverse: var(--surface-inverse);
+  --color-surface-inverse-hover: var(--surface-inverse-hover);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-ink: var(--ink);
+  --color-ink-strong: var(--ink-strong);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-subtle: var(--ink-subtle);
+  --color-ink-dim: var(--ink-dim);
+  --color-ink-inverse: var(--ink-inverse);
+  --color-edge: var(--border);
+  --color-edge-strong: var(--border-strong);
+  --color-edge-subtle: var(--border-subtle);
+  --color-edge-muted: var(--border-muted);
+  --color-edge-hover: var(--border-hover);
+  --color-ring: var(--ring);
+}
 
 html, body {
   margin: 0;

@@ -68,23 +68,23 @@ export const ResolutionsModal: React.FC<ResolutionsModalProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white border-[3px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] w-full max-w-md flex flex-col relative animate-in slide-in-from-bottom-4 duration-300">
+        <div className="fixed inset-0 z-dropdown flex items-center justify-center p-4 bg-scrim backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-surface border-3 border-edge-strong shadow-neo-lg rounded-modal w-full max-w-md flex flex-col relative animate-in slide-in-from-bottom-4 duration-300">
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-stone-400 hover:text-black transition-colors"
+                    className="absolute top-4 right-4 text-ink-subtle hover:text-ink-strong transition-colors"
                 >
                     <X size={20} />
                 </button>
 
-                <div className="p-6 border-b border-stone-100 bg-stone-50">
+                <div className="p-6 border-b border-edge-subtle bg-surface-muted">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-amber-100 text-amber-600 rounded-sm border border-amber-200">
+                        <div className="p-2 bg-amber-100 text-amber-600 rounded border border-amber-200">
                             <Sparkles size={20} />
                         </div>
                         <h2 className="text-xl font-black uppercase tracking-tight">{year} Resolutions</h2>
                     </div>
-                    <p className="text-sm text-stone-500 font-medium leading-relaxed">
+                    <p className="text-sm text-ink-muted font-medium leading-relaxed">
                         Define your 5 core pillars for {year}. These are not just tasks, but the identity you are building. Keep them actionable and meaningful.
                     </p>
                 </div>
@@ -93,7 +93,7 @@ export const ResolutionsModal: React.FC<ResolutionsModalProps> = ({
                     {resolutions.map((res, idx) => (
                         <div key={idx} className="flex flex-col gap-1.5">
                             <div className="flex items-center justify-between">
-                                <label className="text-[10px] font-black uppercase text-stone-400 tracking-wider flex items-center gap-1.5">
+                                <label className="text-[10px] font-black uppercase text-ink-subtle tracking-wider flex items-center gap-1.5">
                                     <Target size={10} /> Resolution #{idx + 1}
                                 </label>
                                 {res.text.trim() && (
@@ -103,7 +103,7 @@ export const ResolutionsModal: React.FC<ResolutionsModalProps> = ({
                                                 if (res.locked) return;
                                                 setPendingLockIdx(pendingLockIdx === idx ? null : idx);
                                             }}
-                                            className={`lock-trigger-btn text-[10px] uppercase font-bold flex items-center gap-1 px-1.5 py-0.5 rounded transition-colors ${res.locked ? 'text-amber-600 bg-amber-50 cursor-default' : 'text-stone-300 hover:text-black hover:bg-stone-100'}`}
+                                            className={`lock-trigger-btn text-[10px] uppercase font-bold flex items-center gap-1 px-1.5 py-1 rounded transition-colors ${res.locked ? 'text-amber-600 bg-amber-50 cursor-default' : 'text-ink-dim hover:text-ink-strong hover:bg-surface-strong'}`}
                                             title={res.locked ? "Locked for the year" : "Lock this resolution"}
                                         >
                                             {res.locked ? <Lock size={10} /> : <Unlock size={10} />}
@@ -112,15 +112,15 @@ export const ResolutionsModal: React.FC<ResolutionsModalProps> = ({
 
                                         {/* Integrated Tooltip Confirmation */}
                                         {pendingLockIdx === idx && (
-                                            <div className="lock-tooltip-container absolute bottom-full right-0 mb-2 w-64 bg-black text-white p-4 rounded-sm shadow-xl z-50 animate-in fade-in zoom-in-95 duration-200">
-                                                <div className="absolute bottom-[-6px] right-3 w-3 h-3 bg-black rotate-45"></div>
+                                            <div className="lock-tooltip-container absolute bottom-full right-0 mb-2 w-64 bg-surface-inverse text-ink-inverse p-4 rounded shadow-xl z-50 animate-in fade-in zoom-in-95 duration-200">
+                                                <div className="absolute bottom-[-6px] right-3 w-3 h-3 bg-surface-inverse rotate-45"></div>
                                                 <div className="flex items-start gap-3 mb-3">
-                                                    <div className="p-1.5 bg-amber-500/20 text-amber-500 rounded-sm shrink-0">
+                                                    <div className="p-1.5 bg-amber-500/20 text-amber-500 rounded shrink-0">
                                                         <AlertTriangle size={16} />
                                                     </div>
                                                     <div>
                                                         <h4 className="font-bold text-sm uppercase tracking-wide text-amber-500 mb-1">Lock of Promise</h4>
-                                                        <p className="text-[11px] leading-relaxed text-stone-300">
+                                                        <p className="text-[11px] leading-relaxed text-ink-dim">
                                                             Are you sure? This resolution will be <strong>locked until the end of the year</strong>. This is a promise to yourself that cannot be edited.
                                                         </p>
                                                     </div>
@@ -128,7 +128,7 @@ export const ResolutionsModal: React.FC<ResolutionsModalProps> = ({
                                                 <div className="flex items-center gap-2 justify-end">
                                                     <button
                                                         onClick={() => setPendingLockIdx(null)}
-                                                        className="px-3 py-1.5 text-[10px] font-bold uppercase text-stone-400 hover:text-white transition-colors"
+                                                        className="px-3 py-1.5 text-[10px] font-bold uppercase text-ink-subtle hover:text-ink-inverse transition-colors"
                                                     >
                                                         Cancel
                                                     </button>
@@ -139,7 +139,7 @@ export const ResolutionsModal: React.FC<ResolutionsModalProps> = ({
                                                             setResolutions(newRes);
                                                             setPendingLockIdx(null);
                                                         }}
-                                                        className="bg-amber-500 text-black px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-sm hover:bg-amber-400 transition-colors"
+                                                        className="bg-amber-500 text-ink-strong px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded hover:bg-amber-400 transition-colors"
                                                     >
                                                         Yes, Lock It
                                                     </button>
@@ -161,9 +161,9 @@ export const ResolutionsModal: React.FC<ResolutionsModalProps> = ({
                                     }}
                                     disabled={res.locked}
                                     placeholder={`Enter resolution #${idx + 1}...`}
-                                    className={`w-full border p-3 text-sm font-bold transition-all rounded-sm ${res.locked
-                                        ? 'bg-amber-50/50 border-amber-200 text-stone-600 italic select-none'
-                                        : 'bg-stone-50 border-stone-200 text-stone-800 placeholder:text-stone-300 focus:outline-none focus:border-stone-400 focus:ring-1 focus:ring-stone-200'
+                                    className={`w-full border p-3 text-sm font-bold transition-all rounded ${res.locked
+                                        ? 'bg-amber-50/50 border-amber-200 text-ink italic select-none'
+                                        : 'bg-surface-muted border-edge text-ink-strong placeholder:text-ink-dim focus:outline-none focus:border-edge-muted focus:ring-1 focus:ring-edge'
                                         }`}
                                 />
                                 {res.locked && (
@@ -176,10 +176,10 @@ export const ResolutionsModal: React.FC<ResolutionsModalProps> = ({
                     ))}
                 </div>
 
-                <div className="p-4 bg-stone-50 border-t border-stone-100 flex justify-end">
+                <div className="p-4 bg-surface-muted border-t border-edge-subtle flex justify-end">
                     <button
                         onClick={handleSave}
-                        className="flex items-center gap-2 bg-black text-white px-6 py-3 font-black uppercase text-sm tracking-wider hover:bg-stone-800 transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.2)] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[4px]"
+                        className="flex items-center gap-2 bg-surface-inverse text-ink-inverse px-6 py-3 font-black uppercase text-sm tracking-wider hover:bg-surface-inverse-hover transition-colors shadow-neo hover:shadow-neo-sm hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[4px]"
                     >
                         <Save size={16} /> Save Resolutions
                     </button>

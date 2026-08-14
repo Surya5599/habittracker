@@ -47,20 +47,20 @@ export const ShareCustomizationModal: React.FC<ShareCustomizationModalProps> = (
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4" onClick={onClose}>
+        <div className="fixed inset-0 bg-scrim flex items-center justify-center z-dropdown p-4" onClick={onClose}>
             <div
-                className="bg-white border-[3px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+                className="bg-surface border-3 border-edge-strong shadow-neo-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="bg-black text-white p-4 flex items-center justify-between border-b-[3px] border-black">
+                <div className="bg-surface-inverse text-ink-inverse p-4 flex items-center justify-between border-b-3 border-edge-strong">
                     <div className="flex items-center gap-2">
                         <Share2 size={20} />
                         <h2 className="font-black uppercase tracking-widest text-sm">Customize Share Card</h2>
                     </div>
                     <button
                         onClick={onClose}
-                        className="hover:bg-white/20 p-1 rounded transition-colors"
+                        className="hover:bg-surface/20 p-1 rounded transition-colors"
                     >
                         <X size={20} />
                     </button>
@@ -71,13 +71,13 @@ export const ShareCustomizationModal: React.FC<ShareCustomizationModalProps> = (
                     <div className="space-y-6">
                         {/* Color Schemes */}
                         <div>
-                            <h3 className="text-xs font-black uppercase tracking-widest text-stone-500 mb-3">Color Scheme</h3>
+                            <h3 className="text-xs font-black uppercase tracking-widest text-ink-muted mb-3">Color Scheme</h3>
                             <div className="flex flex-wrap gap-2">
                                 {THEMES.map((scheme) => (
                                     <button
                                         key={scheme.name}
                                         onClick={() => setSelectedColorScheme(scheme)}
-                                        className={`w-10 h-10 border-2 transition-all hover:scale-105 active:scale-95 ${selectedColorScheme.name === scheme.name ? 'border-black ring-2 ring-black ring-offset-2 scale-110' : 'border-stone-200'}`}
+                                        className={`w-10 h-10 border-2 transition-all hover:scale-105 active:scale-95 ${selectedColorScheme.name === scheme.name ? 'border-edge-strong ring-2 ring-ring ring-offset-2 scale-110' : 'border-edge'}`}
                                         title={scheme.name}
                                         style={{
                                             backgroundColor: scheme.primary
@@ -89,15 +89,15 @@ export const ShareCustomizationModal: React.FC<ShareCustomizationModalProps> = (
 
                         {/* Motivational Messages */}
                         <div>
-                            <h3 className="text-xs font-black uppercase tracking-widest text-stone-500 mb-3">Motivational Message</h3>
+                            <h3 className="text-xs font-black uppercase tracking-widest text-ink-muted mb-3">Motivational Message</h3>
                             <div className="grid grid-cols-2 gap-2">
                                 {MOTIVATIONAL_MESSAGES.map((message) => (
                                     <button
                                         key={message}
                                         onClick={() => setSelectedMessage(message)}
-                                        className={`border-[2px] border-black px-3 py-2 text-[11px] font-black uppercase tracking-tight transition-all ${selectedMessage === message
-                                            ? 'bg-black text-white shadow-none translate-y-0.5'
-                                            : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5'
+                                        className={`border-2 border-edge-strong px-3 py-2 text-[11px] font-black uppercase tracking-tight transition-all ${selectedMessage === message
+                                            ? 'bg-surface-inverse text-ink-inverse shadow-none translate-y-0.5'
+                                            : 'bg-surface text-ink-strong shadow-neo-sm hover:-translate-y-0.5'
                                             }`}
                                     >
                                         {message}
@@ -109,21 +109,21 @@ export const ShareCustomizationModal: React.FC<ShareCustomizationModalProps> = (
 
                     {/* Right Column: Preview */}
                     <div className="flex flex-col items-center">
-                        <h3 className="text-xs font-black uppercase tracking-widest text-stone-500 mb-3 self-start">Live Preview</h3>
-                        <div className="bg-stone-100 p-6 border-[2px] border-black w-full flex justify-center rounded-xl">
+                        <h3 className="text-xs font-black uppercase tracking-widest text-ink-muted mb-3 self-start">Live Preview</h3>
+                        <div className="bg-surface-strong p-6 border-2 border-edge-strong w-full flex justify-center rounded-xl">
                             {/* Share card preview - Scaled down version of generated card */}
-                            <div className="bg-white border-[2.5px] border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] w-[200px] aspect-[800/1120] relative flex flex-col font-sans rounded-[12px] overflow-hidden">
+                            <div className="bg-surface border-2 border-edge-strong shadow-neo w-[200px] aspect-[800/1120] relative flex flex-col font-sans rounded-xl overflow-hidden">
                                 {/* Header */}
                                 <div
-                                    className="h-[44px] border-b-[2.5px] border-black flex flex-col items-center justify-center -space-y-0.5"
+                                    className="h-[44px] border-b-2 border-edge-strong flex flex-col items-center justify-center -space-y-0.5"
                                     style={{
                                         background: selectedColorScheme.gradient
                                             ? `linear-gradient(90deg, ${selectedColorScheme.primary}, ${selectedColorScheme.secondary})`
                                             : selectedColorScheme.primary
                                     }}
                                 >
-                                    <div className="text-white font-bold text-[18px] uppercase tracking-wider" style={{ fontFamily: 'Arial' }}>MONDAY</div>
-                                    <div className="text-white/80 font-bold text-[8px] tracking-widest" style={{ fontFamily: 'Arial' }}>JAN 2, 2026</div>
+                                    <div className="text-ink-inverse font-bold text-[18px] uppercase tracking-wider" style={{ fontFamily: 'Arial' }}>MONDAY</div>
+                                    <div className="text-ink-inverse/80 font-bold text-[8px] tracking-widest" style={{ fontFamily: 'Arial' }}>JAN 2, 2026</div>
                                 </div>
 
                                 {/* Body */}
@@ -201,16 +201,16 @@ export const ShareCustomizationModal: React.FC<ShareCustomizationModalProps> = (
                 </div>
 
                 {/* Footer */}
-                <div className="border-t-[3px] border-black p-4 flex gap-3 bg-stone-50">
+                <div className="border-t-3 border-edge-strong p-4 flex gap-3 bg-surface-muted">
                     <button
                         onClick={onClose}
-                        className="flex-1 px-4 py-3 border-[2px] border-black bg-white text-black font-black uppercase tracking-widest text-xs shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all"
+                        className="flex-1 px-4 py-3 border-2 border-edge-strong bg-surface text-ink-strong font-black uppercase tracking-widest text-xs shadow-neo-sm hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={handleShare}
-                        className="flex-1 px-4 py-3 border-[2px] border-black bg-black text-white font-black uppercase tracking-widest text-xs shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2"
+                        className="flex-1 px-4 py-3 border-2 border-edge-strong bg-surface-inverse text-ink-inverse font-black uppercase tracking-widest text-xs shadow-neo-sm hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2"
                     >
                         <Share2 size={14} />
                         Share Now

@@ -16,6 +16,132 @@
         })();
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        /* Interim token bridge for the CDN build — MIGRATION_NOTES.md prerequisite 1(b).
+           ADDITIVE ONLY: it extends boxShadow so the shadow-token batch resolves, while
+           every stock utility the later batches still rely on keeps working. Values are
+           the CSS vars from src/styles/tokens.css, so dark mode swaps at the token level.
+           Superseded by tailwind.config.js once the app moves to a real Tailwind build. */
+        /* v3 silently DROPS the /opacity modifier on a plain var() colour (verified
+           against tailwindcss@3: `bg-surface/20` emits no rule at all). color-mix plus
+           the <alpha-value> placeholder fixes it; unmodified usage resolves to
+           calc(1 * 100%) = the colour unchanged. v4 already does this natively. */
+        var alpha = function (v) {
+            return 'color-mix(in srgb, var(' + v + ') calc(<alpha-value> * 100%), transparent)';
+        };
+        tailwind.config = {
+            theme: {
+                extend: {
+                    boxShadow: {
+                        'neo-sm': 'var(--neo-shadow-sm)',
+                        neo: 'var(--neo-shadow)',
+                        'neo-lg': 'var(--neo-shadow-lg)',
+                        'neo-accent': 'var(--neo-shadow-accent)',
+                        frame: 'var(--neo-shadow-frame)',
+                    },
+                    /* Batch 2 (radius). Semantic aliases only — the five numeric
+                       steps keep their stock values, so `rounded`/`-lg`/`-xl`/`-2xl`/
+                       `-full` are unchanged. `sm`/`md`/`3xl` are still present here
+                       (additive bridge); the full config removes them. */
+                    borderRadius: {
+                        control: '0.5rem', // 8px  — buttons, inputs, icon buttons
+                        card: '1rem',      // 16px — main-view cards
+                        modal: '1rem',     // 16px — ALL modal shells + the app frame
+                        chip: '9999px',    // pills, badges, avatars
+                    },
+                    /* Batch 3 (border width). Stock v3 has 0/1/2/4/8 but no 3,
+                       and 3px is the structural weight (93 uses). Additive: 8 is
+                       left in place here; the full config drops it (0 uses). */
+                    borderWidth: {
+                        3: '3px',
+                    },
+                    /* Batch 7 (z-index). Names the values already in use, so
+                       stacking order is preserved exactly. `z-50` is NOT named:
+                       it is doing double duty for nav chrome AND four modal
+                       shells — see UNRESOLVED.md batch 7. */
+                    zIndex: {
+                        nav: '50',
+                        dropdown: '60',
+                        overlay: '90',
+                        modal: '100',
+                        preview: '110',
+                        sheet: '120',
+                        dialog: '200',
+                        alert: '210',
+                    },
+                    /* Batch 4 (colour). Additive — the stock stone/amber/rose
+                       palette stays live while migration proceeds file by file.
+                       Wrapped via alpha() so the `/opacity` modifier works. */
+                    colors: {
+                        canvas: alpha('--canvas'),
+                        surface: {
+                            DEFAULT: alpha('--surface'),
+                            soft: alpha('--surface-soft'),
+                            muted: alpha('--surface-muted'),
+                            strong: alpha('--surface-strong'),
+                            /* <- bg-black (104 uses). A SURFACE token, not ink-strong:
+                               that is a text colour and is #eeeeee in dark, which would
+                               render invisibly against itself. */
+                            inverse: alpha('--surface-inverse'),
+                            'inverse-hover': alpha('--surface-inverse-hover'),
+                            sunken: alpha('--surface-sunken'),
+                        },
+                        input: alpha('--input-bg'),
+                        ink: {
+                            DEFAULT: alpha('--ink'),
+                            strong: alpha('--ink-strong'),
+                            muted: alpha('--ink-muted'),
+                            subtle: alpha('--ink-subtle'),
+                            dim: alpha('--ink-dim'),
+                            inverse: alpha('--ink-inverse'),
+                        },
+                        edge: {
+                            DEFAULT: alpha('--border'),
+                            strong: alpha('--border-strong'),
+                            subtle: alpha('--border-subtle'),
+                            muted: alpha('--border-muted'),
+                            hover: alpha('--border-hover'),
+                        },
+                        ring: alpha('--ring'),
+                        mood: {
+                            1: alpha('--mood-1'), 2: alpha('--mood-2'), 3: alpha('--mood-3'),
+                            4: alpha('--mood-4'), 5: alpha('--mood-5'),
+                        },
+                        missed: { DEFAULT: alpha('--status-missed'), tint: alpha('--status-missed-tint') },
+                        warning: {
+                            DEFAULT: alpha('--status-warning'),
+                            tint: alpha('--status-warning-tint'),
+                            faint: alpha('--status-warning-faint'),
+                        },
+                        inactive: { DEFAULT: alpha('--status-inactive'), text: alpha('--status-inactive-text') },
+                        streak: alpha('--status-streak'),
+                        scrim: alpha('--scrim'),
+                        /* Theme-derived. Safe to bridge now that useTheme mirrors
+                           the active preset onto --theme-primary/--theme-secondary
+                           (MIGRATION_NOTES.md prerequisite 3, done in batch 6). */
+                        theme: {
+                            primary: alpha('--theme-primary'),
+                            ink: 'var(--theme-primary-ink)',
+                            'secondary-ink': 'var(--theme-secondary-ink)',
+                            'primary-faint': 'var(--theme-primary-faint)',
+                            'primary-soft': 'var(--theme-primary-soft)',
+                            'primary-strong': 'var(--theme-primary-strong)',
+                            secondary: alpha('--theme-secondary'),
+                            'secondary-faint': 'var(--theme-secondary-faint)',
+                            'secondary-soft': 'var(--theme-secondary-soft)',
+                            'secondary-strong': 'var(--theme-secondary-strong)',
+                        },
+                        done: { DEFAULT: alpha('--status-done'), tint: 'var(--status-done-tint)' },
+                        complete: { DEFAULT: alpha('--status-complete'), tint: 'var(--status-complete-tint)' },
+                        /* `done` / `complete` / `theme-*` are intentionally NOT
+                           bridged yet: they resolve through --theme-primary /
+                           --theme-secondary, which nothing writes at runtime.
+                           See MIGRATION_NOTES.md prerequisite 3. */
+                    },
+                },
+            },
+        };
+    </script>
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Playfair+Display:wght@700;900&display=swap"
         rel="stylesheet">

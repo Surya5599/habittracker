@@ -7,9 +7,9 @@ interface StatCardProps {
 
 export const StatCard: React.FC<StatCardProps> = ({ label, value }) => {
     return (
-        <div className="flex justify-between items-center text-[10px] font-bold border-b border-stone-100 py-1">
-            <span className="uppercase text-stone-400">{label}</span>
-            <span className="bg-stone-50 px-2">{value}</span>
+        <div className="flex justify-between items-center text-[10px] font-bold border-b border-edge-subtle py-1">
+            <span className="uppercase text-ink-subtle">{label}</span>
+            <span className="bg-surface-muted px-2">{value}</span>
         </div>
     );
 };

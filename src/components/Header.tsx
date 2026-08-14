@@ -195,16 +195,16 @@ export const Header: React.FC<HeaderProps> = ({
     const [autoAddHabitOnOpen, setAutoAddHabitOnOpen] = React.useState(false);
 
     const navTab = (active: boolean) =>
-        `flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-all duration-100 border ${active ? 'text-orange-600 bg-orange-50 border-orange-200 shadow-[2px_2px_0px_0px_rgba(234,88,12,0.22)]' : 'text-stone-500 border-transparent hover:text-stone-800 hover:bg-stone-50 hover:border-stone-200 hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.1)]'}`;
+        `flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-all duration-100 border ${active ? 'text-orange-600 bg-orange-50 border-orange-200 shadow-[2px_2px_0px_0px_rgba(234,88,12,0.22)]' : 'text-ink-muted border-transparent hover:text-ink-strong hover:bg-surface-muted hover:border-edge hover:shadow-neo-sm'}`;
 
     const viewTab = (active: boolean) =>
-        `px-3 py-1 text-xs font-semibold rounded-md transition-all duration-100 ${active ? 'bg-black text-white shadow-[1px_1px_0px_0px_rgba(0,0,0,0.5)]' : 'text-stone-500 hover:text-stone-800 hover:bg-white hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.1)]'}`;
+        `px-3 py-1 text-xs font-semibold rounded-lg transition-all duration-100 ${active ? 'bg-theme-primary text-theme-ink shadow-neo-sm' : 'text-ink-muted hover:text-ink-strong hover:bg-surface hover:shadow-neo-sm'}`;
 
     const logTodayBtnCls = logTodayStatus === 'done'
-        ? 'flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-emerald-500 hover:bg-emerald-600 text-white transition-colors mr-2'
+        ? 'flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-emerald-500 hover:bg-emerald-600 text-ink-inverse transition-colors mr-2'
         : logTodayStatus === 'partial'
-            ? 'flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-amber-500 hover:bg-amber-600 text-white transition-colors mr-2'
-            : 'flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-orange-600 hover:bg-orange-700 text-white transition-colors mr-2';
+            ? 'flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-amber-500 hover:bg-amber-600 text-ink-inverse transition-colors mr-2'
+            : 'flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-orange-600 hover:bg-orange-700 text-ink-inverse transition-colors mr-2';
 
     const badgeCount = React.useMemo(() => {
         return buildAchievements(
@@ -277,7 +277,7 @@ export const Header: React.FC<HeaderProps> = ({
     const currentLabel = view === 'monthly' ? monthLabel : view === 'dashboard' ? dashboardLabel : weekLabel;
 
     return (
-        <div className="flex flex-col bg-white rounded-2xl border border-stone-200 shadow-sm">
+        <div className="flex flex-col bg-surface rounded-2xl border border-edge shadow-sm">
 
             {/* ─── ROW 1: Logo · Nav tabs (desktop) · Streak (desktop) · CTAs · Icons ─── */}
             <div className="flex items-center gap-1 px-3 sm:px-4 py-2.5 sm:py-3">
@@ -301,7 +301,7 @@ export const Header: React.FC<HeaderProps> = ({
                     <button onClick={onOpenTasks} className={navTab(false)}>
                         <ListTodo size={14} />Tasks
                         {(tasksCount ?? 0) > 0 && (
-                            <span className="ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-black bg-orange-100 text-orange-600 leading-none">
+                            <span className="ml-0.5 px-1.5 py-1 rounded-full text-[10px] font-black bg-orange-100 text-orange-600 leading-none">
                                 {tasksCount}
                             </span>
                         )}
@@ -309,24 +309,24 @@ export const Header: React.FC<HeaderProps> = ({
                     <button onClick={onOpenLists} className={navTab(false)}>
                         <List size={14} />Lists
                         {(listsCount ?? 0) > 0 && (
-                            <span className="ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-100 text-indigo-600 leading-none">
+                            <span className="ml-0.5 px-1.5 py-1 rounded-full text-[10px] font-black bg-indigo-100 text-indigo-600 leading-none">
                                 {listsCount}
                             </span>
                         )}
                     </button>
                 </nav>
 
-                <div className="hidden md:block w-px h-5 bg-stone-200 mx-2 shrink-0" />
+                <div className="hidden md:block w-px h-5 bg-edge mx-2 shrink-0" />
 
                 {/* Streak — sm+ only */}
                 <button
                     onClick={() => setIsStreakModalOpen(true)}
-                    className="hidden sm:flex items-center gap-2 transition-all duration-100 shrink-0 px-2 py-1 rounded-lg border border-transparent hover:border-stone-200 hover:bg-stone-50 hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.1)]"
+                    className="hidden sm:flex items-center gap-2 transition-all duration-100 shrink-0 px-2 py-1 rounded-lg border border-transparent hover:border-edge hover:bg-surface-muted hover:shadow-neo-sm"
                 >
                     <Flame size={15} className="text-orange-500" />
                     <div className="leading-none text-left">
-                        <div className="text-xs font-black uppercase tracking-wide text-stone-800">{annualStats.currentStreak} day streak</div>
-                        <div className="text-[10px] text-stone-400 mt-0.5">{badgeCount} badge{badgeCount !== 1 ? 's' : ''} unlocked</div>
+                        <div className="text-xs font-black uppercase tracking-wide text-ink-strong">{annualStats.currentStreak} day streak</div>
+                        <div className="text-[10px] text-ink-subtle mt-0.5">{badgeCount} badge{badgeCount !== 1 ? 's' : ''} unlocked</div>
                     </div>
                 </button>
 
@@ -335,7 +335,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {/* Add Habit icon — mobile only */}
                 <button
                     onClick={() => { setAutoAddHabitOnOpen(true); setIsHabitModalOpen(true); }}
-                    className="sm:hidden p-2 rounded-lg border-2 border-black text-stone-900 bg-white active:translate-x-[0.5px] active:translate-y-[0.5px]"
+                    className="sm:hidden p-2 rounded-lg border-2 border-edge-strong text-ink-strong bg-surface active:translate-x-[0.5px] active:translate-y-[0.5px]"
                     style={{ boxShadow: '2px 2px 0px 0px rgba(0,0,0,1)' }}
                 >
                     <Plus size={14} strokeWidth={3} />
@@ -350,7 +350,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {/* Add Habit — icon-only on mobile, full label on sm+ */}
                 <button
                     onClick={() => { setAutoAddHabitOnOpen(true); setIsHabitModalOpen(true); }}
-                    className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg border-2 border-black text-sm font-black uppercase tracking-wide text-stone-900 bg-white transition-all duration-100 mr-1 active:translate-x-[2px] active:translate-y-[2px]"
+                    className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg border-2 border-edge-strong text-sm font-black uppercase tracking-wide text-ink-strong bg-surface transition-all duration-100 mr-1 active:translate-x-[2px] active:translate-y-[2px]"
                     style={{ boxShadow: '3px 3px 0px 0px rgba(0,0,0,1)' }}
                     onMouseEnter={e => (e.currentTarget.style.boxShadow = '1px 1px 0px 0px rgba(0,0,0,1)')}
                     onMouseLeave={e => (e.currentTarget.style.boxShadow = '3px 3px 0px 0px rgba(0,0,0,1)')}
@@ -364,7 +364,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {/* Notifications */}
                 <button
                     onClick={onOpenWhatsNew}
-                    className="relative p-2 text-stone-400 hover:text-stone-700 transition-all rounded-lg hover:bg-stone-50 border border-transparent hover:border-stone-200"
+                    className="relative p-2 text-ink-subtle hover:text-ink transition-all rounded-lg hover:bg-surface-muted border border-transparent hover:border-edge"
                 >
                     <Bell size={16} />
                     {(hasUnseenWhatsNew || hasUnreadFeedback) && (
@@ -394,7 +394,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {guestMode && (
                     <button
                         onClick={() => window.location.href = '/signin'}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-black bg-black text-white text-xs font-black uppercase tracking-wide hover:bg-stone-800 transition-colors ml-1"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-2 border-edge-strong bg-surface-inverse text-ink-inverse text-xs font-black uppercase tracking-wide hover:bg-surface-inverse-hover transition-colors ml-1"
                     >
                         <LogIn size={11} strokeWidth={3} />Sign in
                     </button>
@@ -403,7 +403,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {!guestMode && (
                     <button
                         onClick={handleLogout}
-                        className="p-2 text-stone-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
+                        className="p-2 text-ink-subtle hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
                         title="Log out"
                     >
                         <LogOut size={15} />
@@ -412,10 +412,10 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
 
             {/* ─── ROW 2: Date nav · Week/Month/Year · Sort · Stats ─── */}
-            <div className="flex items-center gap-1 px-3 sm:px-4 py-2 border-t border-stone-100 date-selector-container">
+            <div className="flex items-center gap-1 px-3 sm:px-4 py-2 border-t border-edge-subtle date-selector-container">
 
                 {/* View switcher — desktop only (bottom nav handles this on mobile) */}
-                <div className="hidden sm:flex items-center gap-0.5 bg-stone-100 rounded-lg p-0.5 ml-1">
+                <div className="hidden sm:flex items-center gap-0.5 bg-surface-strong rounded-lg p-1 ml-1">
                     <button onClick={() => { resetWeekOffset(); setView('weekly'); }} className={viewTab(view === 'weekly')}>Week</button>
                     <button onClick={() => { setView('monthly'); const now = new Date(); setCurrentMonthIndex(now.getMonth()); setCurrentYear(now.getFullYear()); }} className={viewTab(view === 'monthly')}>Month</button>
                     <button onClick={() => { setView('dashboard'); setCurrentYear(new Date().getFullYear()); }} className={viewTab(view === 'dashboard')}>Year</button>
@@ -424,7 +424,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {/* Date navigation */}
                 <button
                     onClick={() => view === 'monthly' ? navigateMonth('prev') : view === 'weekly' ? navigateWeek('prev') : setCurrentYear(prev => prev - 1)}
-                    className="p-1 text-stone-400 hover:text-stone-700 transition-colors shrink-0"
+                    className="p-1 text-ink-subtle hover:text-ink transition-colors shrink-0"
                 >
                     <ChevronLeft size={16} />
                 </button>
@@ -436,7 +436,7 @@ export const Header: React.FC<HeaderProps> = ({
                         else if (view === 'weekly') { setShowWeekSelector(!showWeekSelector); setShowMonthSelector(false); setShowYearSelector(false); }
                         else { setShowYearSelector(!showYearSelector); setShowWeekSelector(false); setShowMonthSelector(false); }
                     }}
-                    className="text-sm font-semibold text-stone-700 hover:text-stone-900 transition-colors relative whitespace-nowrap"
+                    className="text-sm font-semibold text-ink hover:text-ink-strong transition-colors relative whitespace-nowrap"
                 >
                     {currentLabel}
                     {view === 'monthly' && <MonthPicker isOpen={showMonthSelector} onClose={() => setShowMonthSelector(false)} currentMonthIndex={currentMonthIndex} currentYear={currentYear} onMonthSelect={handleMonthSelect} themePrimary={theme.primary} />}
@@ -446,7 +446,7 @@ export const Header: React.FC<HeaderProps> = ({
 
                 <button
                     onClick={() => view === 'monthly' ? navigateMonth('next') : view === 'weekly' ? navigateWeek('next') : setCurrentYear(prev => prev + 1)}
-                    className="p-1 text-stone-400 hover:text-stone-700 transition-colors shrink-0"
+                    className="p-1 text-ink-subtle hover:text-ink transition-colors shrink-0"
                 >
                     <ChevronRight size={16} />
                 </button>
@@ -454,7 +454,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {/* Sort — icon+label on sm+, icon-only on mobile */}
                 <button
                     onClick={onCycleSortMode}
-                    className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${sortMode !== 'default' ? 'bg-orange-50 text-orange-600 border border-orange-200' : 'text-stone-500 hover:text-stone-800 hover:bg-stone-50'}`}
+                    className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${sortMode !== 'default' ? 'bg-orange-50 text-orange-600 border border-orange-200' : 'text-ink-muted hover:text-ink-strong hover:bg-surface-muted'}`}
                 >
                     <ArrowUpDown size={12} strokeWidth={2.5} />
                     {sortMode === 'name' ? 'A–Z' : sortMode === 'color' ? 'Color' : sortMode === 'completion' ? 'To Do' : 'Sort'}
@@ -463,7 +463,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {/* Today button */}
                 <button
                     onClick={onLogToday}
-                    className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-stone-500 hover:text-stone-800 hover:bg-stone-50 transition-colors"
+                    className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-ink-muted hover:text-ink-strong hover:bg-surface-muted transition-colors"
                 >
                     <Sun size={12} strokeWidth={2.5} />
                     Today
@@ -481,15 +481,15 @@ export const Header: React.FC<HeaderProps> = ({
                 {aiCoachEnabled && (
                     <button
                         onClick={() => onSetRightPanel?.('ai')}
-                        className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 border-2 border-black text-[10px] font-black uppercase tracking-wide transition-all duration-100 ml-1 ${
+                        className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 border-2 border-edge-strong text-[10px] font-black uppercase tracking-wide transition-all duration-100 ml-1 ${
                             rightPanel === 'ai'
-                                ? 'bg-black text-white translate-x-[2px] translate-y-[2px]'
-                                : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px]'
+                                ? 'bg-theme-primary text-theme-ink translate-x-[2px] translate-y-[2px]'
+                                : 'bg-surface text-ink-strong shadow-neo-sm hover:shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px]'
                         }`}
                     >
                         <Bot size={12} strokeWidth={2.5} />
                         <span className="hidden sm:inline">AI Coach</span>
-                        <span className={`text-[8px] font-black px-1 py-px leading-none ${rightPanel === 'ai' ? 'bg-white text-black' : 'bg-black text-white'}`}>
+                        <span className={`text-[8px] font-black px-1 py-px leading-none ${rightPanel === 'ai' ? 'bg-surface text-ink-strong' : 'bg-surface-inverse text-ink-inverse'}`}>
                             {rightPanel === 'ai' ? 'ON' : 'OFF'}
                         </span>
                     </button>
@@ -498,15 +498,15 @@ export const Header: React.FC<HeaderProps> = ({
                 {/* Insights button */}
                 <button
                     onClick={() => onSetRightPanel?.('insights')}
-                    className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 border-2 border-black text-[10px] font-black uppercase tracking-wide transition-all duration-100 ml-1 ${
+                    className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 border-2 border-edge-strong text-[10px] font-black uppercase tracking-wide transition-all duration-100 ml-1 ${
                         rightPanel === 'insights'
-                            ? 'bg-black text-white translate-x-[2px] translate-y-[2px]'
-                            : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px]'
+                            ? 'bg-theme-primary text-theme-ink translate-x-[2px] translate-y-[2px]'
+                            : 'bg-surface text-ink-strong shadow-neo-sm hover:shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px]'
                     }`}
                 >
                     <Sparkles size={12} strokeWidth={2.5} />
                     <span className="hidden sm:inline">Insights</span>
-                    <span className={`text-[8px] font-black px-1 py-px leading-none ${rightPanel === 'insights' ? 'bg-white text-black' : 'bg-black text-white'}`}>
+                    <span className={`text-[8px] font-black px-1 py-px leading-none ${rightPanel === 'insights' ? 'bg-surface text-ink-strong' : 'bg-surface-inverse text-ink-inverse'}`}>
                         {rightPanel === 'insights' ? 'ON' : 'OFF'}
                     </span>
                 </button>
@@ -514,15 +514,15 @@ export const Header: React.FC<HeaderProps> = ({
                 {/* Stats toggle */}
                 <button
                     onClick={onToggleStats}
-                    className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 border-2 border-black text-[10px] font-black uppercase tracking-wide transition-all duration-100 ml-1 ${
+                    className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 border-2 border-edge-strong text-[10px] font-black uppercase tracking-wide transition-all duration-100 ml-1 ${
                         statsOpen
-                            ? 'bg-black text-white translate-x-[2px] translate-y-[2px]'
-                            : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px]'
+                            ? 'bg-theme-primary text-theme-ink translate-x-[2px] translate-y-[2px]'
+                            : 'bg-surface text-ink-strong shadow-neo-sm hover:shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px]'
                     }`}
                 >
                     <BarChart2 size={12} strokeWidth={2.5} />
                     <span className="hidden sm:inline">Stats</span>
-                    <span className={`text-[8px] font-black px-1 py-px leading-none ${statsOpen ? 'bg-white text-black' : 'bg-black text-white'}`}>
+                    <span className={`text-[8px] font-black px-1 py-px leading-none ${statsOpen ? 'bg-surface text-ink-strong' : 'bg-surface-inverse text-ink-inverse'}`}>
                         {statsOpen ? 'ON' : 'OFF'}
                     </span>
                 </button>

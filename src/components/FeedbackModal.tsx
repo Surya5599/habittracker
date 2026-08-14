@@ -522,7 +522,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                         href={attachment.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block overflow-hidden neo-border bg-stone-100"
+                        className="block overflow-hidden neo-border bg-surface-strong"
                     >
                         <img
                             src={attachment.url}
@@ -530,7 +530,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                             className="h-28 w-full object-cover"
                             loading="lazy"
                         />
-                        <div className="border-t border-black/10 bg-white px-2 py-1.5 text-[10px] font-bold text-stone-600 truncate">
+                        <div className="border-t border-edge-strong/10 bg-surface px-2 py-1.5 text-[10px] font-bold text-ink truncate">
                             {attachment.name}
                         </div>
                     </a>
@@ -551,7 +551,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                         href={attachment.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block overflow-hidden neo-border bg-stone-100"
+                        className="block overflow-hidden neo-border bg-surface-strong"
                     >
                         <img
                             src={attachment.url}
@@ -559,7 +559,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                             className="h-24 w-full object-cover"
                             loading="lazy"
                         />
-                        <div className="border-t border-black/10 bg-white px-2 py-1.5 text-[10px] font-bold text-stone-600 truncate">
+                        <div className="border-t border-edge-strong/10 bg-surface px-2 py-1.5 text-[10px] font-bold text-ink truncate">
                             {attachment.name}
                         </div>
                     </a>
@@ -778,10 +778,10 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                 ? { label: 'In Progress', classes: 'text-sky-700' }
                 : bucket === 'completed'
                     ? { label: 'Completed', classes: 'text-emerald-700' }
-                    : { label: 'Locked Away', classes: 'text-stone-600' };
+                    : { label: 'Locked Away', classes: 'text-ink' };
 
         return (
-            <div key={item.id} onClick={() => handleThreadSelect(item)} className="p-3 bg-white neo-border hover:bg-stone-50 cursor-pointer transition-colors group relative">
+            <div key={item.id} onClick={() => handleThreadSelect(item)} className="p-3 bg-surface neo-border hover:bg-surface-muted cursor-pointer transition-colors group relative">
                 {(hasNewReply || awaitingAdmin) && (
                     <span
                         className={`absolute top-2 right-2 w-2 h-2 rounded-full animate-pulse z-10 ${awaitingAdmin ? 'bg-amber-500' : 'bg-red-500'}`}
@@ -789,32 +789,32 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                     />
                 )}
                 <div className="flex items-start justify-between mb-1">
-                    <span className={`text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 border border-black ${item.type === 'bug' ? 'bg-rose-100 text-rose-800' : 'bg-sky-100 text-sky-800'}`}>
+                    <span className={`text-[10px] font-black uppercase tracking-widest px-1.5 py-1 border border-edge-strong ${item.type === 'bug' ? 'bg-rose-100 text-rose-800' : 'bg-sky-100 text-sky-800'}`}>
                         {item.type}
                     </span>
-                    <span className="text-[10px] text-stone-400 font-bold">Updated {new Date(latestActivity).toLocaleString()}</span>
+                    <span className="text-[10px] text-ink-subtle font-bold">Updated {new Date(latestActivity).toLocaleString()}</span>
                 </div>
-                <p className="text-sm font-medium text-stone-800 line-clamp-2 leading-snug">{item.content}</p>
+                <p className="text-sm font-medium text-ink-strong line-clamp-2 leading-snug">{item.content}</p>
                 {activeTab === 'admin' && (
-                    <div className="mt-2 text-[10px] text-stone-500 space-y-0.5">
-                        <p className="font-semibold text-stone-700">{getReporterName(item)}</p>
+                    <div className="mt-2 text-[10px] text-ink-muted space-y-0.5">
+                        <p className="font-semibold text-ink">{getReporterName(item)}</p>
                         <p>{getReporterEmail(item) || 'Email unavailable'}</p>
                         <p className="font-mono">User ID: {item.user_id || 'guest'}</p>
                     </div>
                 )}
-                <div className="flex items-center justify-between mt-2 pt-2 border-t border-dashed border-stone-200">
+                <div className="flex items-center justify-between mt-2 pt-2 border-t border-dashed border-edge">
                     <div className="flex items-center gap-1.5">
                         <span className={`text-[9px] font-bold uppercase ${statusMeta.classes} flex items-center gap-1`}>
                             {bucket === 'completed' && <CheckCircle2 size={10} />}
                             {statusMeta.label}
                         </span>
                         {isLikelyThankYouThread(item) && bucket !== 'locked_away' && (
-                            <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[8px] font-black uppercase tracking-wide text-stone-500">
+                            <span className="rounded-full bg-surface-strong px-2 py-1 text-[8px] font-black uppercase tracking-wide text-ink-muted">
                                 Thanks-only
                             </span>
                         )}
                     </div>
-                    <div className="flex items-center gap-1 text-[10px] font-bold text-stone-400 group-hover:text-black transition-colors">
+                    <div className="flex items-center gap-1 text-[10px] font-bold text-ink-subtle group-hover:text-ink-strong transition-colors">
                         <span>View Thread</span>
                         <ChevronRight size={12} />
                     </div>
@@ -826,12 +826,12 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-            <div className="bg-white neo-border neo-shadow w-full max-w-md h-[min(560px,85vh)] flex flex-col animate-in fade-in zoom-in duration-200 overflow-hidden">
+        <div className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-scrim backdrop-blur-sm">
+            <div className="bg-surface neo-border shadow-neo rounded-modal w-full max-w-md h-[min(560px,85vh)] flex flex-col animate-in fade-in zoom-in duration-200 overflow-hidden">
                 {/* Header */}
-                <div className="flex items-center justify-between gap-3 p-4 border-b-2 border-black bg-stone-50 shrink-0">
+                <div className="flex items-center justify-between gap-3 p-4 border-b-2 border-edge-strong bg-surface-muted shrink-0">
                     <div className="flex items-center gap-2 min-w-0">
-                        <MessageSquare size={18} className="text-black" />
+                        <MessageSquare size={18} className="text-ink-strong" />
                         <h2 className="text-lg font-black uppercase tracking-tight">Feedback</h2>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
@@ -852,7 +852,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                         </a>
                         <button
                             onClick={onClose}
-                            className="p-1 hover:bg-stone-200 rounded-full transition-colors"
+                            className="p-1 hover:bg-edge rounded-full transition-colors"
                         >
                             <X size={20} />
                         </button>
@@ -861,16 +861,16 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
 
                 {/* Tabs */}
                 {userId && !selectedThread && (
-                    <div className="flex border-b-2 border-black bg-stone-100 shrink-0">
+                    <div className="flex border-b-2 border-edge-strong bg-surface-strong shrink-0">
                         <button
                             onClick={() => handleTabChange('new')}
-                            className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest transition-colors ${activeTab === 'new' ? 'bg-white text-black border-b-2 border-black -mb-0.5' : 'text-stone-500 hover:text-black'}`}
+                            className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest transition-colors ${activeTab === 'new' ? 'bg-surface text-ink-strong border-b-2 border-edge-strong -mb-0.5' : 'text-ink-muted hover:text-ink-strong'}`}
                         >
                             New Post
                         </button>
                         <button
                             onClick={() => handleTabChange('history')}
-                            className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest transition-colors relative ${activeTab === 'history' ? 'bg-white text-black border-b-2 border-black -mb-0.5' : 'text-stone-500 hover:text-black'}`}
+                            className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest transition-colors relative ${activeTab === 'history' ? 'bg-surface text-ink-strong border-b-2 border-edge-strong -mb-0.5' : 'text-ink-muted hover:text-ink-strong'}`}
                         >
                             My History
                             {hasUnreadFeedback && (
@@ -878,7 +878,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                             )}
                         </button>
                         {isAdmin && (
-                            <div className={`flex flex-1 items-center ${activeTab === 'admin' ? 'bg-black text-white' : 'text-stone-500 hover:text-black'}`}>
+                            <div className={`flex flex-1 items-center ${activeTab === 'admin' ? 'bg-theme-primary text-theme-ink' : 'text-ink-muted hover:text-ink-strong'}`}>
                                 <button
                                     onClick={() => handleTabChange('admin')}
                                     className="flex-1 py-2 text-[10px] font-black uppercase tracking-widest transition-colors"
@@ -888,7 +888,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                                 {activeTab === 'admin' && (
                                     <button
                                         onClick={fetchAdminInbox}
-                                        className="px-2 py-2 border-l border-white/25 hover:bg-white/10 transition-colors"
+                                        className="px-2 py-2 border-l border-ink-inverse/25 hover:bg-surface/10 transition-colors"
                                         title="Refresh inbox"
                                         aria-label="Refresh inbox"
                                     >
@@ -914,24 +914,24 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                             )}
                             {!userId && (
                                 <div>
-                                    <label className="text-[10px] font-black uppercase text-stone-500 mb-2 block">Your Email</label>
+                                    <label className="text-[10px] font-black uppercase text-ink-muted mb-2 block">Your Email</label>
                                     <input
                                         type="email"
                                         value={guestEmail}
                                         onChange={(e) => setGuestEmail(e.target.value)}
                                         placeholder="you@example.com"
-                                        className="w-full p-3 neo-border focus:ring-0 focus:outline-none text-sm font-medium placeholder:text-stone-300"
+                                        className="w-full p-3 neo-border focus:ring-0 focus:outline-none text-sm font-medium placeholder:text-ink-dim"
                                         required
                                     />
                                 </div>
                             )}
                             <div>
-                                <label className="text-[10px] font-black uppercase text-stone-500 mb-2 block">Feedback Type</label>
+                                <label className="text-[10px] font-black uppercase text-ink-muted mb-2 block">Feedback Type</label>
                                 <div className="grid grid-cols-2 gap-2">
                                     <button
                                         type="button"
                                         onClick={() => setType('bug')}
-                                        className={`flex items-center justify-center gap-2 py-2 neo-border transition-all ${type === 'bug' ? 'bg-black text-white' : 'bg-white text-stone-600 hover:border-stone-400'}`}
+                                        className={`flex items-center justify-center gap-2 py-2 neo-border transition-all ${type === 'bug' ? 'bg-theme-primary text-theme-ink' : 'bg-surface text-ink hover:border-edge-muted'}`}
                                     >
                                         <Bug size={14} />
                                         <span className="text-xs font-bold uppercase">Bug Report</span>
@@ -939,7 +939,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                                     <button
                                         type="button"
                                         onClick={() => setType('suggestion')}
-                                        className={`flex items-center justify-center gap-2 py-2 neo-border transition-all ${type === 'suggestion' ? 'bg-black text-white' : 'bg-white text-stone-600 hover:border-stone-400'}`}
+                                        className={`flex items-center justify-center gap-2 py-2 neo-border transition-all ${type === 'suggestion' ? 'bg-theme-primary text-theme-ink' : 'bg-surface text-ink hover:border-edge-muted'}`}
                                     >
                                         <MessageSquare size={14} />
                                         <span className="text-xs font-bold uppercase">Suggestion</span>
@@ -948,21 +948,21 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                             </div>
 
                             <div>
-                                <label className="text-[10px] font-black uppercase text-stone-500 mb-2 block">Your Message</label>
+                                <label className="text-[10px] font-black uppercase text-ink-muted mb-2 block">Your Message</label>
                                 <textarea
                                     value={content}
                                     onChange={(e) => setContent(e.target.value)}
                                     placeholder={type === 'bug' ? "Describe clinical details of the bug..." : "Tell us what feature you'd like to see!"}
-                                    className="w-full h-32 p-3 neo-border focus:ring-0 focus:outline-none text-sm font-medium resize-none placeholder:text-stone-300 sm:h-36"
+                                    className="w-full h-32 p-3 neo-border focus:ring-0 focus:outline-none text-sm font-medium resize-none placeholder:text-ink-dim sm:h-36"
                                 />
                             </div>
 
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between gap-3">
-                                    <label className="text-[10px] font-black uppercase text-stone-500 block">Images</label>
-                                    <span className="text-[10px] font-bold text-stone-400">{attachments.length}/{MAX_ATTACHMENTS}</span>
+                                    <label className="text-[10px] font-black uppercase text-ink-muted block">Images</label>
+                                    <span className="text-[10px] font-bold text-ink-subtle">{attachments.length}/{MAX_ATTACHMENTS}</span>
                                 </div>
-                                <label className="inline-flex cursor-pointer items-center gap-2 border-2 border-dashed border-stone-300 bg-stone-50 px-3 py-2 text-xs font-bold uppercase tracking-wide text-stone-600 transition-colors hover:border-black hover:text-black">
+                                <label className="inline-flex cursor-pointer items-center gap-2 border-2 border-dashed border-edge-muted bg-surface-muted px-3 py-2 text-xs font-bold uppercase tracking-wide text-ink transition-colors hover:border-edge-strong hover:text-ink-strong">
                                     <ImagePlus size={14} />
                                     Attach Image
                                     <input
@@ -973,18 +973,18 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                                         className="hidden"
                                     />
                                 </label>
-                                <p className="text-[10px] text-stone-400">Up to 3 images, 5 MB each.</p>
+                                <p className="text-[10px] text-ink-subtle">Up to 3 images, 5 MB each.</p>
                                 {attachments.length > 0 && (
                                     <div className="grid grid-cols-3 gap-2">
                                         {attachments.map((attachment, index) => (
-                                            <div key={`${attachment.file.name}-${index}`} className="overflow-hidden neo-border bg-white">
+                                            <div key={`${attachment.file.name}-${index}`} className="overflow-hidden neo-border bg-surface">
                                                 <img
                                                     src={attachment.previewUrl}
                                                     alt={attachment.file.name}
                                                     className="h-20 w-full object-cover"
                                                 />
-                                                <div className="border-t border-black/10 p-1.5">
-                                                    <p className="truncate text-[10px] font-bold text-stone-600">{attachment.file.name}</p>
+                                                <div className="border-t border-edge-strong/10 p-1.5">
+                                                    <p className="truncate text-[10px] font-bold text-ink">{attachment.file.name}</p>
                                                     <button
                                                         type="button"
                                                         onClick={() => removeAttachment(index, setAttachments)}
@@ -1004,7 +1004,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                             <button
                                 type="submit"
                                 disabled={submitting}
-                                className="mt-auto w-full shrink-0 py-3 bg-black text-white neo-border neo-shadow font-black uppercase tracking-widest text-sm flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all disabled:opacity-50 disabled:pointer-events-none"
+                                className="mt-auto w-full shrink-0 py-3 bg-surface-inverse text-ink-inverse neo-border shadow-neo font-black uppercase tracking-widest text-sm flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all disabled:opacity-50 disabled:pointer-events-none"
                             >
                                 {submitting ? 'Submitting...' : 'Send Feedback'}
                                 <Send size={14} />
@@ -1017,16 +1017,16 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                         <div className="flex-1 overflow-y-auto p-2 space-y-2">
                             {!userId && activeTab === 'history' ? (
                                 <div className="flex flex-col items-center justify-center h-full text-center p-4">
-                                    <User size={32} className="text-stone-300 mb-2" />
-                                    <p className="text-sm font-bold text-stone-600">Guest Mode</p>
-                                    <p className="text-xs text-stone-400 max-w-[200px] mt-1">
+                                    <User size={32} className="text-ink-dim mb-2" />
+                                    <p className="text-sm font-bold text-ink">Guest Mode</p>
+                                    <p className="text-xs text-ink-subtle max-w-[200px] mt-1">
                                         Sign in to view your feedback history and receive replies.
                                     </p>
                                 </div>
                             ) : loadingHistory ? (
-                                <div className="flex items-center justify-center h-full text-stone-400 text-xs italic">Loading...</div>
+                                <div className="flex items-center justify-center h-full text-ink-subtle text-xs italic">Loading...</div>
                             ) : history.length === 0 ? (
-                                <div className="flex items-center justify-center h-full text-stone-400 text-xs italic">No feedback history found.</div>
+                                <div className="flex items-center justify-center h-full text-ink-subtle text-xs italic">No feedback history found.</div>
                             ) : activeTab === 'admin' ? (
                                 <div className="space-y-3">
                                     <div className="p-2 bg-amber-50 neo-border">
@@ -1038,7 +1038,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                                         </div>
                                         <div className="space-y-2">
                                             {history.filter(item => getThreadBucket(item) === 'needs_response').length === 0 ? (
-                                                <div className="p-3 bg-white neo-border text-[11px] text-stone-500">No messages waiting for a response.</div>
+                                                <div className="p-3 bg-surface neo-border text-[11px] text-ink-muted">No messages waiting for a response.</div>
                                             ) : (
                                                 history.filter(item => getThreadBucket(item) === 'needs_response').map(item => renderThreadCard(item))
                                             )}
@@ -1054,7 +1054,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                                         </div>
                                         <div className="space-y-2">
                                             {history.filter(item => getThreadBucket(item) === 'in_progress').length === 0 ? (
-                                                <div className="p-3 bg-white neo-border text-[11px] text-stone-500">No active threads in progress.</div>
+                                                <div className="p-3 bg-surface neo-border text-[11px] text-ink-muted">No active threads in progress.</div>
                                             ) : (
                                                 history.filter(item => getThreadBucket(item) === 'in_progress').map(item => renderThreadCard(item))
                                             )}
@@ -1070,23 +1070,23 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                                         </div>
                                         <div className="space-y-2">
                                             {history.filter(item => getThreadBucket(item) === 'completed').length === 0 ? (
-                                                <div className="p-3 bg-white neo-border text-[11px] text-stone-500">No completed threads yet.</div>
+                                                <div className="p-3 bg-surface neo-border text-[11px] text-ink-muted">No completed threads yet.</div>
                                             ) : (
                                                 history.filter(item => getThreadBucket(item) === 'completed').map(item => renderThreadCard(item))
                                             )}
                                         </div>
                                     </div>
 
-                                    <div className="p-2 bg-stone-100 neo-border">
+                                    <div className="p-2 bg-surface-strong neo-border">
                                         <div className="flex items-center justify-between mb-2">
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-stone-700">Locked Away</p>
-                                            <span className="text-[10px] font-bold text-stone-600">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-ink">Locked Away</p>
+                                            <span className="text-[10px] font-bold text-ink">
                                                 {history.filter(item => getThreadBucket(item) === 'locked_away').length}
                                             </span>
                                         </div>
                                         <div className="space-y-2">
                                             {history.filter(item => getThreadBucket(item) === 'locked_away').length === 0 ? (
-                                                <div className="p-3 bg-white neo-border text-[11px] text-stone-500">No locked-away threads.</div>
+                                                <div className="p-3 bg-surface neo-border text-[11px] text-ink-muted">No locked-away threads.</div>
                                             ) : (
                                                 history.filter(item => getThreadBucket(item) === 'locked_away').map(item => renderThreadCard(item))
                                             )}
@@ -1101,8 +1101,8 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
 
                     {/* THREAD VIEW */}
                     {selectedThread && (
-                        <div className="flex flex-col h-full bg-stone-50">
-                            <div className="p-2 border-b border-stone-200 bg-white flex items-center gap-2 shrink-0">
+                        <div className="flex flex-col h-full bg-surface-muted">
+                            <div className="p-2 border-b border-edge bg-surface flex items-center gap-2 shrink-0">
                                 <button
                                     onClick={() => {
                                         setReplyContent('');
@@ -1112,7 +1112,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                                         });
                                         setSelectedThread(null);
                                     }}
-                                    className="p-1 hover:bg-stone-100 rounded"
+                                    className="p-1 hover:bg-surface-strong rounded"
                                 >
                                     <ChevronRight size={18} className="rotate-180" />
                                 </button>
@@ -1122,15 +1122,15 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                                 {/* Original Post */}
                                 <div className="flex gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-stone-200 flex items-center justify-center shrink-0 border border-black">
-                                        <User size={14} className="text-stone-500" />
+                                    <div className="w-8 h-8 rounded-full bg-edge flex items-center justify-center shrink-0 border border-edge-strong">
+                                        <User size={14} className="text-ink-muted" />
                                     </div>
                                     <div className="flex-1 space-y-1">
                         <div className="flex items-baseline gap-2">
                             <span className="text-xs font-black">
                                 {activeTab === 'admin' ? getReporterName(selectedThread) : 'You'}
                             </span>
-                            <span className="text-[10px] text-stone-400">{new Date(selectedThread.created_at).toLocaleString()}</span>
+                            <span className="text-[10px] text-ink-subtle">{new Date(selectedThread.created_at).toLocaleString()}</span>
                         </div>
                                 {activeTab === 'admin' && (
                             <div className="mt-2">
@@ -1139,7 +1139,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                                         type="button"
                                         onClick={() => handleMarkComplete(selectedThread)}
                                         disabled={submitting}
-                                        className="px-2 py-1 border border-black bg-stone-50 text-[10px] font-black uppercase tracking-widest text-stone-700 hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        className="px-2 py-1 border border-edge-strong bg-surface-muted text-[10px] font-black uppercase tracking-widest text-ink hover:bg-surface-strong disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                     >
                                         Mark Complete
                                     </button>
@@ -1149,7 +1149,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                                         type="button"
                                         onClick={() => handleLockAway(selectedThread)}
                                         disabled={submitting}
-                                        className="ml-2 px-2 py-1 border border-stone-300 bg-stone-100 text-[10px] font-black uppercase tracking-widest text-stone-700 hover:bg-stone-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        className="ml-2 px-2 py-1 border border-edge-muted bg-surface-strong text-[10px] font-black uppercase tracking-widest text-ink hover:bg-edge disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                     >
                                         {isLikelyThankYouThread(selectedThread) ? 'Lock Away Thanks' : 'Lock Away'}
                                     </button>
@@ -1175,7 +1175,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                             </div>
                         )}
                         {activeTab === 'admin' && (
-                            <div className="text-[10px] text-stone-500 space-y-0.5">
+                            <div className="text-[10px] text-ink-muted space-y-0.5">
                                 <p>{getReporterEmail(selectedThread) || 'Email unavailable'}</p>
                                                 <p className="font-mono">User ID: {selectedThread.user_id || 'guest'}</p>
                                                 {getTicketUrl(selectedThread) && (
@@ -1183,7 +1183,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                                                 )}
                                             </div>
                                         )}
-                                        <div className="bg-white p-3 neo-border rounded-tl-none text-sm text-stone-800 leading-relaxed shadow-sm">
+                                        <div className="bg-surface p-3 neo-border rounded-tl-none text-sm text-ink-strong leading-relaxed shadow-sm">
                                             {selectedThread.content}
                                         </div>
                                         {renderAttachmentGallery(selectedThread)}
@@ -1193,17 +1193,17 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                                 {/* Replies */}
                                 {selectedThread.replies?.map(reply => (
                                     <div key={reply.id} className={`flex gap-3 ${reply.is_admin_reply ? 'flex-row-reverse' : ''}`}>
-                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border border-black ${reply.is_admin_reply ? 'bg-black text-white' : 'bg-stone-200 text-stone-500'}`}>
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border border-edge-strong ${reply.is_admin_reply ? 'bg-theme-primary text-theme-ink' : 'bg-edge text-ink-muted'}`}>
                                             {reply.is_admin_reply ? <Shield size={14} /> : <User size={14} />}
                                         </div>
                                         <div className={`flex-1 space-y-1 flex flex-col ${reply.is_admin_reply ? 'items-end' : 'items-start'}`}>
                                             <div className={`flex items-baseline gap-2 ${reply.is_admin_reply ? 'flex-row-reverse' : ''}`}>
                                                 <span className="text-xs font-black">{reply.is_admin_reply ? 'HabiCard' : 'You'}</span>
-                                                <span className="text-[10px] text-stone-400">{new Date(reply.created_at).toLocaleString()}</span>
+                                                <span className="text-[10px] text-ink-subtle">{new Date(reply.created_at).toLocaleString()}</span>
                                             </div>
                                             <div className={`p-3 neo-border text-sm leading-relaxed shadow-sm max-w-[90%] ${reply.is_admin_reply
-                                                ? 'bg-stone-900 text-white rounded-tr-none'
-                                                : 'bg-white text-stone-800 rounded-tl-none'
+                                                ? 'bg-theme-primary text-theme-ink rounded-tr-none'
+                                                : 'bg-surface text-ink-strong rounded-tl-none'
                                                 }`}>
                                                 {reply.content}
                                             </div>
@@ -1215,18 +1215,18 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                             </div>
 
                             {/* Reply Input */}
-                            <form onSubmit={handleReply} className="p-3 bg-white border-t border-stone-200 shrink-0 space-y-2">
+                            <form onSubmit={handleReply} className="p-3 bg-surface border-t border-edge shrink-0 space-y-2">
                                 {replyAttachments.length > 0 && (
                                     <div className="grid grid-cols-3 gap-2">
                                         {replyAttachments.map((attachment, index) => (
-                                            <div key={`${attachment.file.name}-${index}`} className="overflow-hidden neo-border bg-white">
+                                            <div key={`${attachment.file.name}-${index}`} className="overflow-hidden neo-border bg-surface">
                                                 <img
                                                     src={attachment.previewUrl}
                                                     alt={attachment.file.name}
                                                     className="h-16 w-full object-cover"
                                                 />
-                                                <div className="border-t border-black/10 p-1.5">
-                                                    <p className="truncate text-[10px] font-bold text-stone-600">{attachment.file.name}</p>
+                                                <div className="border-t border-edge-strong/10 p-1.5">
+                                                    <p className="truncate text-[10px] font-bold text-ink">{attachment.file.name}</p>
                                                     <button
                                                         type="button"
                                                         onClick={() => removeAttachment(index, setReplyAttachments)}
@@ -1245,9 +1245,9 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                                         value={replyContent}
                                         onChange={(e) => setReplyContent(e.target.value)}
                                         placeholder={isAdmin ? "Reply as Admin..." : "Write a reply..."}
-                                        className="flex-1 bg-stone-100 border-none rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-black outline-none"
+                                        className="flex-1 bg-surface-strong border-none rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-ring outline-none"
                                     />
-                                    <label className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-stone-300 bg-stone-50 px-2 py-2 text-[10px] font-black uppercase text-stone-600 hover:border-black hover:text-black">
+                                    <label className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-edge-muted bg-surface-muted px-2 py-2 text-[10px] font-black uppercase text-ink hover:border-edge-strong hover:text-ink-strong">
                                         <ImagePlus size={13} />
                                         Image
                                         <input
@@ -1261,7 +1261,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, u
                                     <button
                                         type="submit"
                                         disabled={(!replyContent.trim() && replyAttachments.length === 0) || submitting}
-                                        className="p-2 bg-black text-white rounded-lg disabled:opacity-50 hover:bg-stone-800 transition-colors"
+                                        className="p-2 bg-surface-inverse text-ink-inverse rounded-lg disabled:opacity-50 hover:bg-surface-inverse-hover transition-colors"
                                     >
                                         <Send size={16} />
                                     </button>

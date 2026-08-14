@@ -63,14 +63,14 @@ export const DailyQuote: React.FC = () => {
         }
     };
 
-    if (loading) return <div className="h-12 animate-pulse bg-stone-100 rounded-sm w-full mt-2" />;
+    if (loading) return <div className="h-12 animate-pulse bg-surface-strong rounded w-full mt-2" />;
 
     return (
-        <div className="mt-2 border-t border-stone-200 pt-2 px-1">
+        <div className="mt-2 border-t border-edge pt-2 px-1">
             <div className="flex gap-2 items-start">
-                <Quote size={12} className="text-stone-400 flex-shrink-0 mt-1 fill-current" />
+                <Quote size={12} className="text-ink-subtle flex-shrink-0 mt-1 fill-current" />
                 <div className="flex flex-col gap-0 w-full">
-                    <span className="text-[9px] font-black uppercase text-stone-400 tracking-wider">I want to do this because</span>
+                    <span className="text-[9px] font-black uppercase text-ink-subtle tracking-wider">I want to do this because</span>
                     <input
                         ref={inputRef}
                         type="text"
@@ -79,7 +79,7 @@ export const DailyQuote: React.FC = () => {
                         onBlur={handleSave}
                         onKeyDown={handleKeyDown}
                         placeholder="...enter your motivation here"
-                        className="w-full bg-transparent border-b border-stone-200 focus:border-black outline-none text-[11px] font-medium text-stone-700 leading-tight italic placeholder:text-stone-300 py-0.5 transition-colors"
+                        className="w-full bg-transparent border-b border-edge focus:border-edge-strong outline-none text-[11px] font-medium text-ink leading-tight italic placeholder:text-ink-dim py-1 transition-colors"
                     />
                 </div>
             </div>

@@ -184,14 +184,14 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                     strokeLinecap="round" className="transition-all duration-1000 ease-out" />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-[9px] font-black text-white">{Math.round(progress)}%</span>
+                <span className="text-[9px] font-black text-ink-inverse">{Math.round(progress)}%</span>
             </div>
         </div>
     );
 
     // ── Large progress ring (large: below header) ──
     const LargeRing = (
-        <div className="flex justify-center pt-3 pb-2 bg-white border-b border-stone-100 flex-shrink-0">
+        <div className="flex justify-center pt-3 pb-2 bg-surface border-b border-edge-subtle flex-shrink-0">
             <div className="relative w-[110px] h-[110px]">
                 <svg className="w-full h-full -rotate-90">
                     <circle cx="55" cy="55" r="44" stroke="rgba(0,0,0,0.06)" strokeWidth="10" fill="transparent" />
@@ -201,7 +201,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                         strokeLinecap="round" className="transition-all duration-1000 ease-out" />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-2xl font-black text-stone-800">{Math.round(progress)}%</span>
+                    <span className="text-2xl font-black text-ink-strong">{Math.round(progress)}%</span>
                 </div>
             </div>
         </div>
@@ -209,40 +209,40 @@ export const DailyCard: React.FC<DailyCardProps> = ({
 
     // ── Status / Tab row pinned at bottom ──
     const StatusBar = (
-        <div className="flex flex-col border-t-[2px] border-black bg-white flex-shrink-0">
+        <div className="flex flex-col border-t-2 border-edge-strong bg-surface flex-shrink-0">
         <div className="grid grid-cols-3">
             <button
                 onClick={() => setActiveTab('habits')}
-                className={`py-2 px-1 flex flex-col items-center justify-center border-r border-black transition-colors ${activeTab === 'habits' ? 'bg-stone-100' : 'hover:bg-stone-50'}`}
+                className={`py-2 px-1 flex flex-col items-center justify-center border-r border-edge-strong transition-colors ${activeTab === 'habits' ? 'bg-surface-strong' : 'hover:bg-surface-muted'}`}
             >
-                <span className="text-[8px] font-black uppercase tracking-wider text-stone-500">My Habits</span>
-                <span className="text-[10px] font-black text-stone-700 mt-0.5">{completedCount}/{totalCount}</span>
+                <span className="text-[8px] font-black uppercase tracking-wider text-ink-muted">My Habits</span>
+                <span className="text-[10px] font-black text-ink mt-0.5">{completedCount}/{totalCount}</span>
             </button>
             <button
                 onClick={() => setActiveTab('tasks')}
-                className={`py-2 px-1 flex flex-col items-center justify-center border-r border-black transition-colors ${activeTab === 'tasks' ? 'bg-stone-100' : 'hover:bg-stone-50'}`}
+                className={`py-2 px-1 flex flex-col items-center justify-center border-r border-edge-strong transition-colors ${activeTab === 'tasks' ? 'bg-surface-strong' : 'hover:bg-surface-muted'}`}
             >
-                <span className="text-[8px] font-black uppercase tracking-wider text-stone-500">Tasks</span>
-                <span className="text-[10px] font-black text-stone-700 mt-0.5">
+                <span className="text-[8px] font-black uppercase tracking-wider text-ink-muted">Tasks</span>
+                <span className="text-[10px] font-black text-ink mt-0.5">
                     {tasks.length > 0 ? `${completedTasksCount}/${tasks.length}` : '+'}
                 </span>
             </button>
             <button
                 onClick={() => setActiveTab('journal')}
-                className={`py-2 px-1 flex flex-col items-center justify-center transition-colors ${activeTab === 'journal' ? 'bg-stone-100' : 'hover:bg-stone-50'}`}
+                className={`py-2 px-1 flex flex-col items-center justify-center transition-colors ${activeTab === 'journal' ? 'bg-surface-strong' : 'hover:bg-surface-muted'}`}
             >
-                <span className="text-[8px] font-black uppercase tracking-wider text-stone-500">Journal</span>
+                <span className="text-[8px] font-black uppercase tracking-wider text-ink-muted">Journal</span>
                 <div className="mt-0.5">
                     {activeMood
                         ? <activeMood.icon size={14} strokeWidth={2.5} style={{ color: activeMood.color }} />
-                        : <BookOpen size={14} strokeWidth={2.5} className={hasJournalEntry ? 'text-green-600' : 'text-stone-400'} />
+                        : <BookOpen size={14} strokeWidth={2.5} className={hasJournalEntry ? 'text-green-600' : 'text-ink-subtle'} />
                     }
                 </div>
             </button>
         </div>
-        <div className="flex justify-center py-1 border-t border-stone-100">
+        <div className="flex justify-center py-1 border-t border-edge-subtle">
             <a href="https://habicard.com/privacy" target="_blank" rel="noopener noreferrer"
-                className="text-[8px] text-stone-300 hover:text-stone-500 uppercase tracking-widest font-bold transition-colors">
+                className="text-[8px] text-ink-dim hover:text-ink-muted uppercase tracking-widest font-bold transition-colors">
                 Privacy Policy
             </a>
         </div>
@@ -273,22 +273,22 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                             <div key={habit.id} onClick={() => toggleCompletion(habit.id, dateKey)}
                                 className="flex items-center justify-between cursor-pointer hover:bg-black/5 rounded px-1 py-1.5 -mx-1 transition-colors">
                                 <div className="flex items-center gap-1.5 flex-1 min-w-0 mr-2">
-                                    <span className={`text-[11px] font-bold truncate ${done ? 'text-stone-400 line-through' : 'text-stone-700'}`}>
+                                    <span className={`text-[11px] font-bold truncate ${done ? 'text-ink-subtle line-through' : 'text-ink'}`}>
                                         {habit.name || 'Untitled'}
                                     </span>
                                     {habit.weeklyTarget && (
-                                        <span className={`text-[8px] px-1 border font-black flex-shrink-0 ${goalMet ? 'bg-black text-white border-black' : 'bg-stone-50 text-stone-400 border-stone-200'}`}>
+                                        <span className={`text-[8px] px-1 border font-black flex-shrink-0 ${goalMet ? 'bg-surface-inverse text-ink-inverse border-edge-strong' : 'bg-surface-muted text-ink-subtle border-edge'}`}>
                                             {weekCount}/{habit.weeklyTarget}wk
                                         </span>
                                     )}
                                 </div>
-                                <div className={`w-4 h-4 border-2 border-black flex items-center justify-center flex-shrink-0 transition-all ${done ? 'bg-black text-white' : 'bg-white'}`}>
+                                <div className={`w-4 h-4 border-2 border-edge-strong flex items-center justify-center flex-shrink-0 transition-all ${done ? 'bg-surface-inverse text-ink-inverse' : 'bg-surface'}`}>
                                     {done && <Check size={10} strokeWidth={4} />}
                                 </div>
                             </div>
                         );
                     }) : (
-                        <div className="text-[9px] text-stone-300 text-center py-4 italic">No habits due today</div>
+                        <div className="text-[9px] text-ink-dim text-center py-4 italic">No habits due today</div>
                     )}
                 </div>
             </div>
@@ -297,7 +297,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
             {totalCount > 0 && completedCount === totalCount && (
                 <button
                     onClick={() => onShareClick({ date, dayName, dateString, completedCount, totalCount, progress: actualProgress })}
-                    className="w-full p-2.5 bg-black text-white font-black uppercase tracking-widest text-[10px] hover:bg-stone-800 transition-all flex items-center justify-center gap-2 border-t border-black flex-shrink-0"
+                    className="w-full p-2.5 bg-surface-inverse text-ink-inverse font-black uppercase tracking-widest text-[10px] hover:bg-surface-inverse-hover transition-all flex items-center justify-center gap-2 border-t border-edge-strong flex-shrink-0"
                 >
                     <Share2 size={12} />
                     Share Achievement
@@ -310,16 +310,16 @@ export const DailyCard: React.FC<DailyCardProps> = ({
     const TasksView = (
         <div ref={contentRef} className="flex-1 min-h-0 overflow-y-auto p-2 space-y-1.5" style={{ overscrollBehavior: 'contain' }}>
             <div onClick={addTask}
-                className="flex items-center gap-2 p-1.5 border border-dashed border-stone-200 rounded cursor-pointer hover:border-stone-400 transition-colors">
-                <Plus size={10} strokeWidth={3} className="text-stone-300 flex-shrink-0" />
-                <span className="text-[10px] text-stone-300 font-medium">Add a task...</span>
+                className="flex items-center gap-2 p-1.5 border border-dashed border-edge rounded cursor-pointer hover:border-edge-muted transition-colors">
+                <Plus size={10} strokeWidth={3} className="text-ink-dim flex-shrink-0" />
+                <span className="text-[10px] text-ink-dim font-medium">Add a task...</span>
             </div>
             {tasks.map(task => (
                 <div key={task.id}
-                    className={`flex items-start gap-2 group bg-white border p-1.5 rounded transition-all ${editingTaskId === task.id ? 'border-black' : 'border-stone-100 hover:border-stone-200'}`}>
+                    className={`flex items-start gap-2 group bg-surface border p-1.5 rounded transition-all ${editingTaskId === task.id ? 'border-edge-strong' : 'border-edge-subtle hover:border-edge'}`}>
                     <button onClick={() => updateNote(dateKey, { tasks: tasks.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t) })}
                         className="flex-shrink-0 mt-0.5">
-                        <div className={`w-3 h-3 border border-black flex items-center justify-center transition-all ${task.completed ? 'bg-black text-white' : 'bg-white hover:bg-stone-100'}`}>
+                        <div className={`w-3 h-3 border border-edge-strong flex items-center justify-center transition-all ${task.completed ? 'bg-surface-inverse text-ink-inverse' : 'bg-surface hover:bg-surface-strong'}`}>
                             {task.completed && <Check size={8} strokeWidth={4} />}
                         </div>
                     </button>
@@ -328,17 +328,17 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                             onChange={(e) => setEditingTaskText(e.target.value)}
                             onBlur={() => handleFinishEditing(task.id)}
                             onKeyDown={(e) => { if (e.key === 'Enter') handleFinishEditing(task.id); }}
-                            className="flex-1 text-[10px] font-medium bg-transparent outline-none text-stone-800 min-w-0"
+                            className="flex-1 text-[10px] font-medium bg-transparent outline-none text-ink-strong min-w-0"
                             autoFocus />
                     ) : (
                         <span onDoubleClick={() => { setEditingTaskId(task.id); setEditingTaskText(task.text); }}
-                            className={`flex-1 text-[10px] font-medium break-words min-w-0 ${task.completed ? 'text-stone-400 line-through' : 'text-stone-800'}`}>
-                            {task.text || <span className="italic text-stone-300">empty</span>}
+                            className={`flex-1 text-[10px] font-medium break-words min-w-0 ${task.completed ? 'text-ink-subtle line-through' : 'text-ink-strong'}`}>
+                            {task.text || <span className="italic text-ink-dim">empty</span>}
                         </span>
                     )}
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                        <button onClick={() => { setEditingTaskId(task.id); setEditingTaskText(task.text); }} className="text-stone-400 hover:text-black"><Pencil size={9} /></button>
-                        <button onClick={() => updateNote(dateKey, { tasks: tasks.filter(t => t.id !== task.id) })} className="text-stone-400 hover:text-red-500"><Trash2 size={9} /></button>
+                        <button onClick={() => { setEditingTaskId(task.id); setEditingTaskText(task.text); }} className="text-ink-subtle hover:text-ink-strong"><Pencil size={9} /></button>
+                        <button onClick={() => updateNote(dateKey, { tasks: tasks.filter(t => t.id !== task.id) })} className="text-ink-subtle hover:text-red-500"><Trash2 size={9} /></button>
                     </div>
                 </div>
             ))}
@@ -349,7 +349,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
     const JournalView = (
         <div ref={contentRef} className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 p-3" style={{ overscrollBehavior: 'contain' }}>
             <div>
-                <label className="text-[9px] font-black uppercase tracking-widest text-stone-400 block mb-1.5">Mood</label>
+                <label className="text-[9px] font-black uppercase tracking-widest text-ink-subtle block mb-1.5">Mood</label>
                 <div className="grid grid-cols-5 gap-1">
                     {MOODS.map(m => {
                         const isSelected = moodDraft === m.value;
@@ -357,7 +357,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                         return (
                             <button key={m.value} onClick={() => setMoodDraft(isSelected ? undefined : m.value)}
                                 title={m.tooltip}
-                                className={`flex items-center justify-center p-2 rounded-lg transition-all ${isSelected ? 'scale-110' : 'hover:bg-stone-50 hover:scale-105'}`}
+                                className={`flex items-center justify-center p-2 rounded-lg transition-all ${isSelected ? 'scale-110' : 'hover:bg-surface-muted hover:scale-105'}`}
                                 style={{ backgroundColor: isSelected ? m.color + '25' : undefined }}>
                                 <Icon size={18} strokeWidth={isSelected ? 2.5 : 2}
                                     style={{ color: isSelected ? m.color : '#d1d5db' }} />
@@ -367,13 +367,13 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                 </div>
             </div>
             <div className="flex-1 flex flex-col min-h-0">
-                <label className="text-[9px] font-black uppercase tracking-widest text-stone-400 block mb-1.5">Notes</label>
+                <label className="text-[9px] font-black uppercase tracking-widest text-ink-subtle block mb-1.5">Notes</label>
                 <textarea value={journalDraft} onChange={(e) => setJournalDraft(e.target.value)}
                     placeholder="Write about today..."
-                    className="flex-1 min-h-[80px] p-2.5 bg-stone-50 border-2 border-transparent focus:border-black rounded-xl resize-none text-[11px] leading-relaxed placeholder:text-stone-300 outline-none font-medium" />
+                    className="flex-1 min-h-[80px] p-2.5 bg-surface-muted border-2 border-transparent focus:border-edge-strong rounded-xl resize-none text-[11px] leading-relaxed placeholder:text-ink-dim outline-none font-medium" />
             </div>
             <button onClick={handleSaveJournal}
-                className="w-full py-2 text-white text-[10px] font-black uppercase tracking-widest rounded-lg flex items-center justify-center gap-1.5 flex-shrink-0 hover:opacity-80 transition-opacity"
+                className="w-full py-2 text-ink-inverse text-[10px] font-black uppercase tracking-widest rounded-lg flex items-center justify-center gap-1.5 flex-shrink-0 hover:opacity-80 transition-opacity"
                 style={{ backgroundColor: theme.primary }}>
                 <Save size={11} /> Save Entry
             </button>
@@ -381,23 +381,23 @@ export const DailyCard: React.FC<DailyCardProps> = ({
     );
 
     return (
-        <div className={`relative w-full bg-white overflow-hidden flex flex-col font-sans border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] ${cardStyle === 'large' ? 'h-[540px]' : 'h-[460px]'}`}>
+        <div className={`relative w-full bg-surface overflow-hidden flex flex-col font-sans border-3 border-edge-strong shadow-neo ${cardStyle === 'large' ? 'h-[540px]' : 'h-[460px]'}`}>
 
             {/* Header */}
-            <div className="border-b-[2px] border-black flex-shrink-0"
+            <div className="border-b-2 border-edge-strong flex-shrink-0"
                 style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}>
                 <div className={`w-full grid items-center py-2 ${cardStyle === 'compact'
                     ? 'grid-cols-[28px_minmax(0,1fr)_48px_28px]'
                     : 'grid-cols-[28px_minmax(0,1fr)_28px]'}`}>
-                    <button onClick={onPrev} className="flex items-center justify-center p-1 text-white hover:bg-white/20 rounded transition-colors">
+                    <button onClick={onPrev} className="flex items-center justify-center p-1 text-ink-inverse hover:bg-surface/20 rounded transition-colors">
                         <ChevronLeft size={18} strokeWidth={3} />
                     </button>
 
                     <div className="text-left pl-1 min-w-0 overflow-hidden">
-                        <h3 className="text-white font-black tracking-tight text-sm leading-tight truncate">{dayName}</h3>
+                        <h3 className="text-ink-inverse font-black tracking-tight text-sm leading-tight truncate">{dayName}</h3>
                         <div className="relative">
                             <button onClick={() => setShowDatePicker(!showDatePicker)}
-                                className="text-white/80 font-bold text-[9px] tracking-wide hover:text-white transition-colors truncate block">
+                                className="text-ink-inverse/80 font-bold text-[9px] tracking-wide hover:text-ink-inverse transition-colors truncate block">
                                 {dateString}
                             </button>
                             {onDateSelect && (
@@ -409,7 +409,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
 
                     {cardStyle === 'compact' && SmallRing}
 
-                    <button onClick={onNext} className="flex items-center justify-center p-1 text-white hover:bg-white/20 rounded transition-colors">
+                    <button onClick={onNext} className="flex items-center justify-center p-1 text-ink-inverse hover:bg-surface/20 rounded transition-colors">
                         <ChevronRight size={18} strokeWidth={3} />
                     </button>
                 </div>
@@ -417,7 +417,7 @@ export const DailyCard: React.FC<DailyCardProps> = ({
 
             {/* Action strip — analytics, habits, settings */}
             {headerActions && (
-                <div className="flex items-center justify-end gap-1 px-2 py-1 border-b border-black/10 flex-shrink-0"
+                <div className="flex items-center justify-end gap-1 px-2 py-1 border-b border-edge-strong/10 flex-shrink-0"
                     style={{ backgroundColor: (isToday ? theme.primary : theme.secondary) + 'dd' }}>
                     {headerActions}
                 </div>

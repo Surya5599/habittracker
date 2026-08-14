@@ -314,17 +314,17 @@ const AchievementGlyph: React.FC<{ icon: AchievementCard['icon']; unlocked: bool
     if (icon === 'calendar') {
         return (
             <div className="relative h-[34px] w-[34px]">
-                <div className="absolute inset-0 rounded-[10px] border border-slate-300/80 bg-white shadow-[0_5px_14px_rgba(15,23,42,0.12)]" />
-                <div className="absolute inset-x-0 top-0 h-[10px] rounded-t-[10px] border-b border-slate-200/90" style={{ background: `linear-gradient(180deg, ${accent} 0%, #bfdbfe 100%)` }} />
+                <div className="absolute inset-0 rounded-xl border border-slate-300/80 bg-surface shadow-[0_5px_14px_rgba(15,23,42,0.12)]" />
+                <div className="absolute inset-x-0 top-0 h-[10px] rounded-t-xl border-b border-slate-200/90" style={{ background: `linear-gradient(180deg, ${accent} 0%, #bfdbfe 100%)` }} />
                 <div className="absolute left-[6px] top-[3px] h-[6px] w-[6px] rounded-full bg-gradient-to-b from-slate-100 to-slate-400 shadow-[0_1px_2px_rgba(15,23,42,0.35)]" />
                 <div className="absolute right-[6px] top-[3px] h-[6px] w-[6px] rounded-full bg-gradient-to-b from-slate-100 to-slate-400 shadow-[0_1px_2px_rgba(15,23,42,0.35)]" />
                 <div className="absolute inset-x-[7px] bottom-[7px] top-[14px] grid grid-cols-3 gap-[2px]">
                     {Array.from({ length: 6 }).map((_, idx) => (
-                        <div key={idx} className="rounded-[2px] bg-stone-200" />
+                        <div key={idx} className="rounded bg-edge" />
                     ))}
                 </div>
-                <div className="absolute bottom-[4px] right-[4px] flex h-[13px] w-[13px] items-center justify-center rounded-[4px] border border-emerald-300 bg-gradient-to-b from-emerald-300 to-emerald-500 shadow-[0_2px_4px_rgba(16,185,129,0.35)]">
-                    <CheckCircle2 size={8} strokeWidth={3} className="text-black" />
+                <div className="absolute bottom-[4px] right-[4px] flex h-[13px] w-[13px] items-center justify-center rounded border border-emerald-300 bg-gradient-to-b from-emerald-300 to-emerald-500 shadow-[0_2px_4px_rgba(16,185,129,0.35)]">
+                    <CheckCircle2 size={8} strokeWidth={3} className="text-ink-strong" />
                 </div>
             </div>
         );
@@ -364,25 +364,25 @@ export const StreakModal: React.FC<StreakModalProps> = ({
         .sort((a, b) => b.progress - a.progress)[0] || null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-scrim backdrop-blur-sm animate-in fade-in duration-200">
             <div
-                className="bg-white w-full max-w-4xl neo-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] rounded-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
+                className="bg-surface w-full max-w-4xl neo-border shadow-neo-lg rounded-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="px-6 py-5 border-b-[3px] border-black flex items-center justify-between relative" style={{ backgroundColor: theme.primary }}>
+                <div className="px-6 py-5 border-b-3 border-edge-strong flex items-center justify-between relative" style={{ backgroundColor: theme.primary }}>
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-white rounded-xl border-2 border-white/40">
+                        <div className="p-2 bg-surface rounded-xl border-2 border-ink-inverse/40">
                             <Flame size={24} className="text-orange-500 fill-orange-500" />
                         </div>
                         <div>
-                            <h2 className="font-serif text-xl font-black text-white uppercase tracking-tighter leading-tight">Streak Master</h2>
-                            <p className="text-white/70 text-[10px] font-black uppercase tracking-widest">Your consistency records</p>
+                            <h2 className="font-serif text-xl font-black text-ink-inverse uppercase tracking-tighter leading-tight">Streak Master</h2>
+                            <p className="text-ink-inverse/70 text-[10px] font-black uppercase tracking-widest">Your consistency records</p>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 rounded-full border-2 border-white/40 hover:bg-black/10 transition-colors text-white"
+                        className="p-2 rounded-full border-2 border-ink-inverse/40 hover:bg-black/10 transition-colors text-ink-inverse"
                     >
                         <X size={20} strokeWidth={3} />
                     </button>
@@ -394,7 +394,7 @@ export const StreakModal: React.FC<StreakModalProps> = ({
                         <button
                             type="button"
                             onClick={() => setActiveTab('streaks')}
-                            className={`bg-orange-50 border-2 border-orange-200 p-6 rounded-2xl flex items-center justify-between text-left transition-all ${activeTab === 'streaks' ? 'ring-2 ring-black' : 'hover:-translate-y-0.5'}`}
+                            className={`bg-orange-50 border-2 border-orange-200 p-6 rounded-2xl flex items-center justify-between text-left transition-all ${activeTab === 'streaks' ? 'ring-2 ring-ring' : 'hover:-translate-y-0.5'}`}
                         >
                             <div className="flex flex-col">
                                 <span className="text-[10px] font-black uppercase tracking-widest text-orange-400 mb-1">Total Streak</span>
@@ -408,7 +408,7 @@ export const StreakModal: React.FC<StreakModalProps> = ({
                         <button
                             type="button"
                             onClick={() => setActiveTab('streaks')}
-                            className={`bg-amber-50 border-2 border-amber-200 p-6 rounded-2xl flex items-center justify-between text-left transition-all ${activeTab === 'streaks' ? 'ring-2 ring-black' : 'hover:-translate-y-0.5'}`}
+                            className={`bg-amber-50 border-2 border-amber-200 p-6 rounded-2xl flex items-center justify-between text-left transition-all ${activeTab === 'streaks' ? 'ring-2 ring-ring' : 'hover:-translate-y-0.5'}`}
                         >
                             <div className="flex flex-col">
                                 <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 mb-1">Best Ever</span>
@@ -422,7 +422,7 @@ export const StreakModal: React.FC<StreakModalProps> = ({
                         <button
                             type="button"
                             onClick={() => setActiveTab('badges')}
-                            className={`bg-violet-50 border-2 border-violet-200 p-6 rounded-2xl flex items-center justify-between text-left transition-all ${activeTab === 'badges' ? 'ring-2 ring-black' : 'hover:-translate-y-0.5'}`}
+                            className={`bg-violet-50 border-2 border-violet-200 p-6 rounded-2xl flex items-center justify-between text-left transition-all ${activeTab === 'badges' ? 'ring-2 ring-ring' : 'hover:-translate-y-0.5'}`}
                         >
                             <div className="flex flex-col">
                                 <span className="text-[10px] font-black uppercase tracking-widest text-violet-400 mb-1">Badges</span>
@@ -436,45 +436,45 @@ export const StreakModal: React.FC<StreakModalProps> = ({
                     </div>
 
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                        <div className="inline-flex rounded-2xl border-2 border-stone-200 bg-stone-50 p-1">
+                        <div className="inline-flex rounded-2xl border-2 border-edge bg-surface-muted p-1">
                             <button
                                 type="button"
                                 onClick={() => setActiveTab('streaks')}
-                                className={`rounded-xl px-4 py-2 text-[11px] font-black uppercase tracking-[0.16em] transition-colors ${activeTab === 'streaks' ? 'bg-white text-black shadow-sm border border-stone-200' : 'text-stone-500'}`}
+                                className={`rounded-xl px-4 py-2 text-[11px] font-black uppercase tracking-[0.16em] transition-colors ${activeTab === 'streaks' ? 'bg-surface text-ink-strong shadow-sm border border-edge' : 'text-ink-muted'}`}
                             >
                                 Streaks
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setActiveTab('badges')}
-                                className={`rounded-xl px-4 py-2 text-[11px] font-black uppercase tracking-[0.16em] transition-colors ${activeTab === 'badges' ? 'bg-white text-black shadow-sm border border-stone-200' : 'text-stone-500'}`}
+                                className={`rounded-xl px-4 py-2 text-[11px] font-black uppercase tracking-[0.16em] transition-colors ${activeTab === 'badges' ? 'bg-surface text-ink-strong shadow-sm border border-edge' : 'text-ink-muted'}`}
                             >
                                 Badges
                             </button>
                         </div>
 
                         {activeTab === 'badges' && (
-                            <div className="w-full max-w-md rounded-2xl border-2 border-stone-100 bg-white p-4">
-                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-stone-400">Next Goal Target</p>
+                            <div className="w-full max-w-md rounded-2xl border-2 border-edge-subtle bg-surface p-4">
+                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-ink-subtle">Next Goal Target</p>
                                 {nextAchievement ? (
                                     <>
-                                        <p className="mt-2 text-xl font-black text-stone-900">{nextAchievement.title}</p>
-                                        <p className="mt-1 text-sm font-bold text-stone-500">{nextAchievement.description}</p>
-                                        <div className="mt-4 h-3 w-full overflow-hidden rounded-full bg-stone-100">
+                                        <p className="mt-2 text-xl font-black text-ink-strong">{nextAchievement.title}</p>
+                                        <p className="mt-1 text-sm font-bold text-ink-muted">{nextAchievement.description}</p>
+                                        <div className="mt-4 h-3 w-full overflow-hidden rounded-full bg-surface-strong">
                                             <div
                                                 className="h-full rounded-full transition-all duration-700"
                                                 style={{ width: `${nextAchievement.progress}%`, backgroundColor: theme.primary }}
                                             />
                                         </div>
-                                        <div className="mt-3 flex items-center justify-between text-[11px] font-bold text-stone-500">
+                                        <div className="mt-3 flex items-center justify-between text-[11px] font-bold text-ink-muted">
                                             <span>{nextAchievement.progressLabel}</span>
                                             <span>{nextAchievement.detail}</span>
                                         </div>
                                     </>
                                 ) : (
                                     <>
-                                        <p className="mt-2 text-xl font-black text-stone-900">All goals cleared</p>
-                                        <p className="mt-1 text-sm font-bold text-stone-500">You have unlocked every streak badge target.</p>
+                                        <p className="mt-2 text-xl font-black text-ink-strong">All goals cleared</p>
+                                        <p className="mt-1 text-sm font-bold text-ink-muted">You have unlocked every streak badge target.</p>
                                     </>
                                 )}
                             </div>
@@ -484,17 +484,17 @@ export const StreakModal: React.FC<StreakModalProps> = ({
                     {activeTab === 'streaks' ? (
                         <div className="space-y-4">
                             <div className="flex items-center gap-2 mb-2">
-                                <Zap size={14} className="text-stone-400" />
-                                <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">All Your Streaks</span>
+                                <Zap size={14} className="text-ink-subtle" />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-ink-subtle">All Your Streaks</span>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {topHabits.map((habit) => (
-                                    <div key={habit.id} className="bg-stone-50 border-2 border-stone-100 p-4 rounded-2xl group hover:border-black transition-all flex flex-col justify-between">
+                                    <div key={habit.id} className="bg-surface-muted border-2 border-edge-subtle p-4 rounded-2xl group hover:border-edge-strong transition-all flex flex-col justify-between">
                                         <div className="flex items-center justify-between mb-4">
                                             <div className="flex flex-col max-w-[60%]">
-                                                <span className="text-sm font-black text-stone-800 group-hover:text-black transition-colors truncate" title={habit.name}>{habit.name}</span>
-                                                <span className="text-[9px] font-bold text-stone-400 uppercase tracking-tight mt-0.5">{habit.badge}</span>
+                                                <span className="text-sm font-black text-ink-strong group-hover:text-ink-strong transition-colors truncate" title={habit.name}>{habit.name}</span>
+                                                <span className="text-[9px] font-bold text-ink-subtle uppercase tracking-tight mt-0.5">{habit.badge}</span>
                                             </div>
                                             <div className="flex items-center gap-1.5 text-orange-600 bg-orange-50 px-2 py-1 rounded-lg border border-orange-100">
                                                 <Flame size={14} className="fill-orange-600" />
@@ -505,16 +505,16 @@ export const StreakModal: React.FC<StreakModalProps> = ({
                                         <div className="space-y-3">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex flex-col">
-                                                    <span className="text-[8px] font-black text-stone-400 uppercase tracking-tighter">Personal Best</span>
-                                                    <span className="text-xs font-black text-stone-600">{habit.maxStreak} Days</span>
+                                                    <span className="text-[8px] font-black text-ink-subtle uppercase tracking-tighter">Personal Best</span>
+                                                    <span className="text-xs font-black text-ink">{habit.maxStreak} Days</span>
                                                 </div>
                                                 <div className="flex flex-col items-end">
-                                                    <span className="text-[8px] font-black text-stone-400 uppercase tracking-tighter">Total Hits</span>
-                                                    <span className="text-xs font-black text-stone-600">{habit.completed}</span>
+                                                    <span className="text-[8px] font-black text-ink-subtle uppercase tracking-tighter">Total Hits</span>
+                                                    <span className="text-xs font-black text-ink">{habit.completed}</span>
                                                 </div>
                                             </div>
 
-                                            <div className="h-2 w-full bg-stone-200 rounded-full overflow-hidden">
+                                            <div className="h-2 w-full bg-edge rounded-full overflow-hidden">
                                                 <div
                                                     className="h-full transition-all duration-1000"
                                                     style={{
@@ -531,19 +531,19 @@ export const StreakModal: React.FC<StreakModalProps> = ({
                     ) : (
                         <div className="space-y-4">
                             <div className="flex items-center gap-2 mb-2">
-                                <Award size={14} className="text-stone-400" />
-                                <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">Achievements</span>
+                                <Award size={14} className="text-ink-subtle" />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-ink-subtle">Achievements</span>
                             </div>
 
-                            <div className="rounded-[28px] border-[3px] border-black bg-white p-5 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.12)]">
+                            <div className="rounded-2xl border-3 border-edge-strong bg-surface p-6 shadow-neo-lg">
                                 <div className="flex flex-wrap items-start justify-between gap-3">
                                     <div>
-                                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-stone-400">Unlocked Badges</p>
-                                        <p className="mt-1 text-lg font-black text-stone-900">{unlockedAchievements.length} / {achievements.length} collected</p>
+                                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-ink-subtle">Unlocked Badges</p>
+                                        <p className="mt-1 text-lg font-black text-ink-strong">{unlockedAchievements.length} / {achievements.length} collected</p>
                                     </div>
-                                    <div className="rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-right">
-                                        <p className="text-[9px] font-black uppercase tracking-[0.16em] text-stone-400">Best Habit Streak</p>
-                                        <p className="text-sm font-black text-stone-900">{longestHabitStreak} days</p>
+                                    <div className="rounded-2xl border border-edge bg-surface-muted px-3 py-2 text-right">
+                                        <p className="text-[9px] font-black uppercase tracking-[0.16em] text-ink-subtle">Best Habit Streak</p>
+                                        <p className="text-sm font-black text-ink-strong">{longestHabitStreak} days</p>
                                     </div>
                                 </div>
 
@@ -570,31 +570,31 @@ export const StreakModal: React.FC<StreakModalProps> = ({
                                                                 boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.5), inset 0 -10px 18px rgba(15,23,42,0.12), 0 12px 24px rgba(15,23,42,0.18)'
                                                             }}
                                                         />
-                                                        <div className="absolute inset-[3px] rounded-full border border-white/80" />
+                                                        <div className="absolute inset-[3px] rounded-full border border-ink-inverse/80" />
                                                         <div className="absolute inset-[8px] rounded-full border border-slate-200/80 bg-gradient-to-b from-white via-[#f8fafc] to-slate-100 shadow-[inset_0_6px_10px_rgba(255,255,255,0.8)]" />
                                                         <div className="absolute left-[12px] bottom-[20px] text-[#d4af37] opacity-90">✦</div>
                                                         <div className="absolute right-[12px] top-[18px] text-[#d4af37] opacity-85">✦</div>
-                                                        <div className="absolute bottom-[11px] left-1/2 z-10 min-h-[28px] w-[82px] -translate-x-1/2 rounded-[14px] border border-slate-300 bg-gradient-to-b from-white to-slate-100 px-2 py-1 shadow-[0_8px_14px_rgba(15,23,42,0.14)]" />
+                                                        <div className="absolute bottom-[11px] left-1/2 z-10 min-h-[28px] w-[82px] -translate-x-1/2 rounded-xl border border-slate-300 bg-gradient-to-b from-white to-slate-100 px-2 py-1 shadow-[0_8px_14px_rgba(15,23,42,0.14)]" />
                                                         <div className="absolute bottom-[14px] left-1/2 z-20 flex min-h-[22px] w-[76px] -translate-x-1/2 items-center justify-center text-center text-[6px] font-black uppercase leading-[1.05] tracking-[0.04em] text-slate-900">
                                                             <span className="line-clamp-2 break-words">{achievement.title}</span>
                                                         </div>
-                                                        <div className="absolute left-1/2 top-[38px] z-20 flex h-[42px] w-[42px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-[14px] border border-slate-300 bg-gradient-to-b from-white to-slate-100 shadow-[0_10px_18px_rgba(15,23,42,0.12)]">
+                                                        <div className="absolute left-1/2 top-[38px] z-20 flex h-[42px] w-[42px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-xl border border-slate-300 bg-gradient-to-b from-white to-slate-100 shadow-[0_10px_18px_rgba(15,23,42,0.12)]">
                                                             <AchievementGlyph icon={achievement.icon} unlocked={unlocked} theme={theme} />
                                                         </div>
                                                         <div className="absolute right-[15px] top-[15px] h-[7px] w-[7px] rounded-full bg-gradient-to-b from-[#fef08a] to-[#facc15] shadow-[0_1px_2px_rgba(250,204,21,0.35)]" />
-                                                        <div className={`absolute -bottom-1 left-1/2 h-5 min-w-[52px] -translate-x-1/2 rounded-full border px-2 text-[8px] font-black uppercase tracking-[0.18em] leading-[18px] ${unlocked ? `${tier.badge} border-black/10` : 'border-stone-200 bg-stone-100 text-stone-500'}`}>
+                                                        <div className={`absolute -bottom-1 left-1/2 h-5 min-w-[52px] -translate-x-1/2 rounded-full border px-2 text-[8px] font-black uppercase tracking-[0.18em] leading-[18px] ${unlocked ? `${tier.badge} border-edge-strong/10` : 'border-edge bg-surface-strong text-ink-muted'}`}>
                                                             {tier.label}
                                                         </div>
                                                     </div>
-                                                    <p className={`mt-4 text-[13px] font-black leading-tight ${unlocked ? 'text-stone-900' : 'text-stone-500'}`}>{achievement.title}</p>
-                                                    <p className="mt-1 text-[10px] font-bold leading-tight text-stone-400">{achievement.detail}</p>
-                                                    <div className="mt-3 h-1.5 w-full max-w-[112px] overflow-hidden rounded-full bg-stone-200">
+                                                    <p className={`mt-4 text-[13px] font-black leading-tight ${unlocked ? 'text-ink-strong' : 'text-ink-muted'}`}>{achievement.title}</p>
+                                                    <p className="mt-1 text-[10px] font-bold leading-tight text-ink-subtle">{achievement.detail}</p>
+                                                    <div className="mt-3 h-1.5 w-full max-w-[112px] overflow-hidden rounded-full bg-edge">
                                                         <div
                                                             className="h-full rounded-full transition-all duration-700"
                                                             style={{ width: `${achievement.progress}%`, backgroundColor: unlocked ? theme.secondary : '#78716c' }}
                                                         />
                                                     </div>
-                                                    <div className="mt-2 flex min-h-8 items-center justify-center text-[9px] font-black uppercase tracking-[0.14em] text-stone-400">
+                                                    <div className="mt-2 flex min-h-8 items-center justify-center text-[9px] font-black uppercase tracking-[0.14em] text-ink-subtle">
                                                         <span>{unlocked ? 'Unlocked' : achievement.progressLabel}</span>
                                                     </div>
                                             </button>
@@ -607,8 +607,8 @@ export const StreakModal: React.FC<StreakModalProps> = ({
                 </div>
 
                 {/* Footer Tip */}
-                <div className="p-4 bg-stone-50 border-t-2 border-black text-center">
-                    <p className="text-[10px] font-bold text-stone-500 italic">
+                <div className="p-4 bg-surface-muted border-t-2 border-edge-strong text-center">
+                    <p className="text-[10px] font-bold text-ink-muted italic">
                         "Your future is found in your daily routine."
                     </p>
                 </div>

@@ -145,7 +145,7 @@
         "moods": {
             "veryBad": "Sehr schlecht",
             "bad": "Schlecht",
-            "neutral": "Neutral",
+            "okay": "Okay",
             "good": "Gut",
             "veryGood": "Sehr gut"
         },
@@ -327,14 +327,7 @@
             "noTopHabitYet": "No top habit yet",
             "moodThisMonth": "Mood this month",
             "moodWithCount": "{{mood}} ({{count}})",
-            "noMoodYet": "No mood yet",
-            "moods": {
-                "angry": "Angry",
-                "low": "Low",
-                "neutral": "Neutral",
-                "good": "Good",
-                "great": "Great"
-            }
+            "noMoodYet": "No mood yet"
         },
         "story": {
             "title": "Your Story This Year",

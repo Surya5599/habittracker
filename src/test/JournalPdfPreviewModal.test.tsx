@@ -118,7 +118,7 @@ describe('JournalPdfPreviewModal', () => {
     it('calls onClose when X button in header is clicked', () => {
         render(<JournalPdfPreviewModal {...defaultProps} />);
         // The top-bar X button closes the modal
-        const topBar = document.querySelector('.border-b-\\[3px\\]');
+        const topBar = document.querySelector('.border-b-3');
         const xBtn = topBar?.querySelector('button:last-child');
         if (xBtn) fireEvent.click(xBtn);
         expect(defaultProps.onClose).toHaveBeenCalled();

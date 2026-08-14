@@ -165,34 +165,34 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                 transition={{ duration: 0.25 }}
             >
                 {/* Weekly summary strip */}
-                <div className="shrink-0 grid grid-cols-[1fr_1fr_1.2fr_auto] items-stretch gap-px rounded-2xl overflow-hidden border-[2px] border-black bg-black/10 shadow-[3px_3px_0_0_rgba(0,0,0,0.10)]">
+                <div className="shrink-0 grid grid-cols-[1fr_1fr_1.2fr_auto] items-stretch gap-px rounded-2xl overflow-hidden border-2 border-edge-strong bg-black/10 shadow-neo">
                     <div className="flex items-center justify-between gap-4 px-4 py-2 bg-gradient-to-br from-white to-[#fff7ef]">
-                        <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.16em] text-stone-400">Week</span>
+                        <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.16em] text-ink-subtle">Week</span>
                         <span className="text-lg font-black leading-none" style={{ color: theme.primary }}>{weeklySummary.weekPct}%</span>
                     </div>
                     <div className="flex items-center justify-between gap-4 px-4 py-2 bg-gradient-to-br from-white to-[#f6fbf6]">
-                        <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.16em] text-stone-400">Done</span>
-                        <span className="text-lg font-black leading-none text-stone-800">{weeklySummary.totalDone}<span className="text-stone-300 text-xs">/{weeklySummary.totalPossible}</span></span>
+                        <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.16em] text-ink-subtle">Done</span>
+                        <span className="text-lg font-black leading-none text-ink-strong">{weeklySummary.totalDone}<span className="text-ink-dim text-xs">/{weeklySummary.totalPossible}</span></span>
                     </div>
                     <div className="flex items-center justify-between gap-4 px-4 py-2 bg-gradient-to-br from-white to-[#f2f0fb]">
-                        <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.16em] text-stone-400">Best Day</span>
-                        <span className="text-lg font-black leading-none text-stone-800">{weeklySummary.bestDayLabel || '—'}<span className="text-stone-300 text-xs ml-1">{weeklySummary.bestDayPct >= 0 ? ` ${weeklySummary.bestDayPct}%` : ''}</span></span>
+                        <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.16em] text-ink-subtle">Best Day</span>
+                        <span className="text-lg font-black leading-none text-ink-strong">{weeklySummary.bestDayLabel || '—'}<span className="text-ink-dim text-xs ml-1">{weeklySummary.bestDayPct >= 0 ? ` ${weeklySummary.bestDayPct}%` : ''}</span></span>
                     </div>
                     {/* Mini day bars */}
                     <div className="flex items-end gap-px px-3 py-2 bg-gradient-to-br from-white to-[#fafafa]">
                         {weeklySummary.dayStats.map((d, i) => (
                             <div key={i} className="flex flex-col items-center gap-0.5">
-                                <div className="w-4 h-6 rounded-sm overflow-hidden bg-stone-100 flex items-end border border-black/5">
+                                <div className="w-4 h-6 rounded overflow-hidden bg-surface-strong flex items-end border border-edge-strong/5">
                                     <div
-                                        className="w-full rounded-sm transition-all duration-500"
+                                        className="w-full rounded transition-all duration-500"
                                         style={{
                                             height: d.pct >= 0 ? `${d.pct}%` : '0%',
-                                            backgroundColor: d.pct >= 100 ? theme.primary : theme.secondary,
+                                            backgroundColor: d.pct >= 100 ? 'var(--status-complete)' : 'var(--status-done)',
                                             opacity: d.pct >= 100 ? 1 : 0.8,
                                         }}
                                     />
                                 </div>
-                                <span className="text-[8px] font-black tracking-wide text-stone-400">{d.label}</span>
+                                <span className="text-[8px] font-black tracking-wide text-ink-subtle">{d.label}</span>
                             </div>
                         ))}
                     </div>
@@ -204,7 +204,7 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                         <div className="flex items-center justify-center gap-1 px-1">
                             <button
                                 onClick={handlePrevDay}
-                                className="p-1 rounded hover:bg-stone-100 text-stone-400 hover:text-black transition-colors"
+                                className="p-1 rounded hover:bg-surface-strong text-ink-subtle hover:text-ink-strong transition-colors"
                             >
                                 <ChevronLeft size={14} />
                             </button>
@@ -217,10 +217,10 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                                         onClick={() => setMobileDayIndex(i)}
                                         className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-colors ${
                                             isActive
-                                                ? 'bg-black text-white'
+                                                ? 'bg-theme-primary text-theme-ink'
                                                 : isToday
-                                                ? 'bg-stone-200 text-black'
-                                                : 'text-stone-400 hover:text-black hover:bg-stone-100'
+                                                ? 'bg-edge text-ink-strong'
+                                                : 'text-ink-subtle hover:text-ink-strong hover:bg-surface-strong'
                                         }`}
                                     >
                                         {label}
@@ -229,7 +229,7 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                             })}
                             <button
                                 onClick={handleNextDay}
-                                className="p-1 rounded hover:bg-stone-100 text-stone-400 hover:text-black transition-colors"
+                                className="p-1 rounded hover:bg-surface-strong text-ink-subtle hover:text-ink-strong transition-colors"
                             >
                                 <ChevronRight size={14} />
                             </button>
@@ -270,7 +270,7 @@ export const WeeklyView: React.FC<WeeklyViewProps> = ({
                                     <div
                                         key={i}
                                         className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider ${
-                                            isToday ? 'bg-black text-white' : 'text-stone-400'
+                                            isToday ? 'bg-theme-primary text-theme-ink' : 'text-ink-subtle'
                                         }`}
                                     >
                                         {label}

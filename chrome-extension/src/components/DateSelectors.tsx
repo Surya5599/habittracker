@@ -41,18 +41,18 @@ export const WeekPicker: React.FC<WeekPickerProps> = ({ isOpen, onClose, current
     };
 
     return (
-        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 bg-white border border-stone-200 shadow-xl p-4 rounded-lg w-[280px]">
+        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 bg-surface border border-edge shadow-xl p-4 rounded-lg w-[280px]">
             <div className="flex items-center justify-between mb-4">
-                <button onClick={handlePrevMonth} className="p-1 hover:bg-stone-100 rounded-full"><ChevronLeft size={16} /></button>
+                <button onClick={handlePrevMonth} className="p-1 hover:bg-surface-strong rounded-full"><ChevronLeft size={16} /></button>
                 <div className="font-bold text-sm">
                     {MONTHS[viewDate.getMonth()]} {viewDate.getFullYear()}
                 </div>
-                <button onClick={handleNextMonth} className="p-1 hover:bg-stone-100 rounded-full"><ChevronRight size={16} /></button>
+                <button onClick={handleNextMonth} className="p-1 hover:bg-surface-strong rounded-full"><ChevronRight size={16} /></button>
             </div>
 
             <div className="grid grid-cols-7 gap-1 mb-2">
                 {DAYS_OF_WEEK_SHORT.map(day => (
-                    <div key={day} className="text-center text-[10px] font-bold text-stone-400 uppercase">
+                    <div key={day} className="text-center text-[10px] font-bold text-ink-subtle uppercase">
                         {day}
                     </div>
                 ))}
@@ -74,8 +74,8 @@ export const WeekPicker: React.FC<WeekPickerProps> = ({ isOpen, onClose, current
                             }}
                             className={`
                                 h-8 w-8 rounded-full text-xs font-bold flex flex-col items-center justify-center transition-all relative
-                                ${isSelected ? 'text-white' : 'hover:bg-stone-100 text-stone-700'}
-                                ${isSystemToday && !isSelected ? 'text-black font-black' : ''}
+                                ${isSelected ? 'text-ink-inverse' : 'hover:bg-surface-strong text-ink'}
+                                ${isSystemToday && !isSelected ? 'text-ink-strong font-black' : ''}
                             `}
                             style={isSelected ? { backgroundColor: themePrimary } : {}}
                         >
@@ -88,20 +88,20 @@ export const WeekPicker: React.FC<WeekPickerProps> = ({ isOpen, onClose, current
                 })}
             </div>
 
-            <div className="mt-3 pt-2 border-t border-stone-100 flex justify-center">
+            <div className="mt-3 pt-2 border-t border-edge-subtle flex justify-center">
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
                         onWeekSelect(new Date());
                         onClose();
                     }}
-                    className="text-xs font-black uppercase tracking-widest px-3 py-1 bg-black text-white rounded hover:bg-stone-800 transition-colors"
+                    className="text-xs font-black uppercase tracking-widest px-3 py-1 bg-surface-inverse text-ink-inverse rounded hover:bg-surface-inverse-hover transition-colors"
                 >
                     Today
                 </button>
             </div>
 
-            <button onClick={onClose} className="absolute -top-2 -right-2 bg-white border border-stone-200 rounded-full p-1 shadow-md hover:bg-stone-50">
+            <button onClick={onClose} className="absolute -top-2 -right-2 bg-surface border border-edge rounded-full p-1 shadow-md hover:bg-surface-muted">
                 <X size={12} />
             </button>
         </div>

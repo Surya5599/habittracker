@@ -4,6 +4,7 @@ import { AppState } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { INITIAL_HABITS, LOCAL_HABITS_KEY, LOCAL_COMPLETIONS_KEY } from '../constants';
 import { reportError } from '../lib/errorReporting';
+import { remapOpHabitId, pruneOrphanedTempOps, partitionOrphanedTempOps, describeOp, isTempHabitId } from '../utils/habitQueue';
 
 const HABITS_QUEUE_KEY = 'habit_tracker_habits_queue_v1';
 const MISSING_COLUMN_REGEX = /'([^']+)' column/i;
@@ -50,19 +51,6 @@ const mapDbHabit = (h) => ({
     createdAt: h.created_at,
     archivedAt: h.archived_at
 });
-
-const remapOpHabitId = (op, oldId, newId) => {
-    const next = { ...op };
-    if (next.habitId === oldId) next.habitId = newId;
-    if (next.clientId === oldId) next.clientId = newId;
-    if (Array.isArray(next.habitIds)) {
-        next.habitIds = next.habitIds.map((id) => (id === oldId ? newId : id));
-    }
-    if (next.payload?.id === oldId) {
-        next.payload = { ...next.payload, id: newId };
-    }
-    return next;
-};
 
 export const useHabits = (session, guestMode) => {
     const [habits, setHabits] = useState([]);
@@ -179,6 +167,14 @@ export const useHabits = (session, guestMode) => {
             if (error) throw error;
             if (data?.id && op.clientId && op.clientId !== data.id) {
                 await remapLocalIds(op.clientId, data.id);
+            } else if (!data?.id && isTempHabitId(op.clientId)) {
+                // The insert reported success but gave us no row back, so there is no
+                // uuid to remap onto. Worth knowing about: the caller's queued edits and
+                // completions for this habit are about to be discarded as unresolvable.
+                reportError(
+                    new Error(`Habit insert for ${op.clientId} returned no row; temp id cannot be resolved`),
+                    { scope: 'habits:insert-missing-id' },
+                );
             }
             return;
         }
@@ -238,23 +234,81 @@ export const useHabits = (session, guestMode) => {
         markSyncing();
 
         try {
-            let queue = [...queueRef.current];
-            while (queue.length > 0) {
-                const op = queue[0];
+            // Always read the head from queueRef rather than from a snapshot taken up
+            // front. A habit_insert calls remapLocalIds, which rewrites the temp id
+            // (`tmp-…`) to the real uuid across every queued op — including the
+            // completion that was recorded before the server had assigned one. Looping
+            // over a pre-loop copy meant the next persistQueue wrote that stale copy
+            // straight back over the remap, so the completion still carried `tmp-…` and
+            // Postgres rejected it: invalid input syntax for type uuid.
+            //
+            // Bounded so a persist that fails to shrink the queue can't spin forever.
+            // Clear out anything left unresolvable by the snapshot bug above before
+            // trying to send it — otherwise the first bad op throws and blocks the rest.
+            const { kept, dropped } = partitionOrphanedTempOps(queueRef.current);
+            if (dropped.length > 0) {
+                // Name the ops. "referencing an unresolvable temp habit id" told us a
+                // change was lost but not which one or what stranded it, which left the
+                // cause unguessable from the log alone.
+                reportError(
+                    new Error(
+                        `Dropped ${dropped.length} queued op(s) referencing an unresolvable temp habit id: ` +
+                        dropped.map(describeOp).join(' | ') +
+                        ` (kept ${kept.length}: ${kept.map(op => op?.type).join(',') || 'none'})`,
+                    ),
+                    { scope: 'habits:prune-orphaned-ops' },
+                );
+                await persistQueue(kept);
+            }
+
+            let guard = queueRef.current.length + 8;
+            while (queueRef.current.length > 0 && guard-- > 0) {
+                const op = queueRef.current[0];
+                let rejected = false;
                 try {
                     await executeOp(op, session.user.id);
                 } catch (opError) {
                     // FK violation (23503): the referenced row is gone — stale op, drop it silently.
                     // PGRST116: row not found — same treatment.
+                    // 22P02 (invalid text representation): the op carries a malformed id
+                    // the server will never accept. Retrying it forever would wedge the
+                    // whole queue, so drop it and keep going.
                     const code = opError?.code;
-                    if (code === '23503' || code === 'PGRST116') {
-                        // intentionally swallowed — op is no longer valid
+                    if (code === '23503' || code === 'PGRST116' || code === '22P02') {
+                        rejected = true;
+                        if (code === '22P02') reportError(opError, { scope: 'habits:dropped-malformed-op' });
                     } else {
                         throw opError;
                     }
                 }
-                queue = queue.slice(1);
-                await persistQueue(queue);
+
+                let rest = queueRef.current.slice(1);
+
+                // A habit_insert is the only thing that turns a `tmp-…` id into a real
+                // uuid, and it does that through remapLocalIds while it executes. If it
+                // leaves the queue without having done so — rejected above, or accepted
+                // but no row returned — everything still pointing at that temp id is
+                // unresolvable. Cut those loose here, where we know which insert failed
+                // and why, rather than letting a later replay find them stranded and
+                // report a bare "unresolvable temp habit id" with no cause attached.
+                //
+                // After a successful remap nothing references the temp id any more, so
+                // this finds nothing to drop and costs one pass over a short array.
+                if (op.type === 'habit_insert' && isTempHabitId(op.clientId)) {
+                    const kept = pruneOrphanedTempOps(rest);
+                    if (kept.length !== rest.length) {
+                        reportError(
+                            new Error(
+                                `Discarded ${rest.length - kept.length} queued op(s) depending on habit insert ` +
+                                `${op.clientId}, which ${rejected ? 'was rejected by the server' : 'returned no id'}`,
+                            ),
+                            { scope: 'habits:insert-dependents-discarded' },
+                        );
+                        rest = kept;
+                    }
+                }
+
+                await persistQueue(rest);
             }
             markSynced();
         } catch (error) {
@@ -453,7 +507,16 @@ export const useHabits = (session, guestMode) => {
     useEffect(() => {
         const loadQueue = async () => {
             const raw = await AsyncStorage.getItem(HABITS_QUEUE_KEY);
-            queueRef.current = raw ? JSON.parse(raw) : [];
+            const stored = raw ? JSON.parse(raw) : [];
+            const pruned = pruneOrphanedTempOps(stored);
+            // Persist, don't just hold it in memory. Pruning only `queueRef` left the
+            // orphans sitting in storage, so every launch reloaded and re-pruned the same
+            // dead ops — and any code path that wrote the queue from a fresh read would
+            // resurrect them.
+            queueRef.current = pruned;
+            if (pruned.length !== stored.length) {
+                await AsyncStorage.setItem(HABITS_QUEUE_KEY, JSON.stringify(pruned));
+            }
         };
         loadQueue();
     }, []);

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef } from 'react';
-import { X, Plus, CalendarPlus, Check, Search, Inbox } from 'lucide-react';
+import { X, Plus, CalendarPlus, Check, Search, Inbox, Trash2 } from 'lucide-react';
 import { DailyNote, DayData, Task, Theme } from '../types';
 
 interface TaskWithSource extends Task {
@@ -78,6 +78,9 @@ export const TasksView: React.FC<TasksViewProps> = ({ notes, updateNote, theme, 
     const [assignDate, setAssignDate] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [searchOpen, setSearchOpen] = useState(false);
+    // bulk delete is irreversible, so it asks once in place rather than firing
+    // straight off a single click
+    const [confirmClearOverdue, setConfirmClearOverdue] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
     const searchRef = useRef<HTMLInputElement>(null);
 
@@ -124,6 +127,11 @@ export const TasksView: React.FC<TasksViewProps> = ({ notes, updateNote, theme, 
     }, [backlogTasks, searchQuery]);
 
     const totalCount = overdueTasks.length + (backlogTasks.filter(t => !t.completed).length);
+    const visibleOverdueCount = overdueGroups.reduce((n, [, tasks]) => n + tasks.length, 0);
+
+    // Derived rather than an effect: if the list empties underneath a pending
+    // confirmation the prompt just stops showing, no setState during render.
+    const clearArmed = confirmClearOverdue && visibleOverdueCount > 0;
 
     const handleAddTask = () => {
         if (!newText.trim()) return;
@@ -144,6 +152,21 @@ export const TasksView: React.FC<TasksViewProps> = ({ notes, updateNote, theme, 
                 tasks: backlogTasks.map(t => t.id === task.id ? { ...t, completed: true } : t),
             });
         }
+    };
+
+    /**
+     * Clear every overdue task currently listed. Grouped by date and written once
+     * per date: calling the single-task delete in a loop would read a stale
+     * `notes` for each call and the later writes would resurrect earlier ones.
+     * Completed tasks on those dates are kept — they are history, not overdue.
+     */
+    const handleClearOverdue = () => {
+        overdueGroups.forEach(([dateKey, tasks]) => {
+            const removing = new Set(tasks.map(t => t.id));
+            const remaining = (notes[dateKey]?.tasks || []).filter(t => !removing.has(t.id));
+            updateNote(dateKey, { tasks: remaining });
+        });
+        setConfirmClearOverdue(false);
     };
 
     const handleDelete = (task: TaskWithSource) => {
@@ -247,7 +270,39 @@ export const TasksView: React.FC<TasksViewProps> = ({ notes, updateNote, theme, 
                     {/* Overdue groups */}
                     {overdueGroups.length > 0 && (
                         <div className="flex flex-col gap-2">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-warning px-1">Overdue</span>
+                            <div className="flex items-center justify-between gap-2 px-1">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-warning">
+                                    Overdue
+                                </span>
+                                {clearArmed ? (
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="text-[10px] text-ink-muted">
+                                            Clear {visibleOverdueCount}{searchQuery ? ' matching' : ''}?
+                                        </span>
+                                        <button
+                                            onClick={handleClearOverdue}
+                                            className="px-2 py-1 rounded-control text-[10px] font-black uppercase tracking-wide bg-missed text-ink-inverse hover:opacity-90 transition-opacity"
+                                        >
+                                            Clear
+                                        </button>
+                                        <button
+                                            onClick={() => setConfirmClearOverdue(false)}
+                                            className="px-2 py-1 rounded-control text-[10px] font-bold uppercase tracking-wide text-ink-muted hover:text-ink-strong transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={() => setConfirmClearOverdue(true)}
+                                        className="inline-flex items-center gap-1 px-2 py-1 rounded-control text-[10px] font-bold uppercase tracking-wide text-ink-muted hover:text-missed hover:bg-missed-tint transition-colors"
+                                        title="Delete every overdue task listed below"
+                                    >
+                                        <Trash2 size={11} />
+                                        Clear all past
+                                    </button>
+                                )}
+                            </div>
                             {overdueGroups.map(([dateKey, tasks]) => {
                                 const dateLabel = new Date(dateKey + 'T00:00:00').toLocaleDateString([], {
                                     weekday: 'short', month: 'short', day: 'numeric',

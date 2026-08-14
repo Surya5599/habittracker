@@ -6,3 +6,76 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+    /* ── The two motions the neo-brutalist language actually implies ─────────
+       The identity of this UI is the hard offset shadow, and there are exactly
+       two honest things to do with it: push an element INTO its shadow (a
+       control being pressed) or lift it AWAY from the page (a card being
+       picked up). Both were already in the codebase but applied ad hoc —
+       `hover:-translate-y-0.5` in 13 places against `hover:translate-y-0.5` in
+       8, i.e. the same gesture meaning opposite things. These name them.
+
+       Transform + box-shadow only, so both stay on the compositor. */
+
+    /* Controls: hover closes some of the gap, active closes all of it. */
+    .neo-press {
+        transition-property: transform, box-shadow;
+        transition-duration: 100ms;
+        transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .neo-press:hover {
+        transform: translate(1px, 1px);
+        box-shadow: var(--neo-shadow-sm);
+    }
+
+    .neo-press:active {
+        transform: translate(2px, 2px);
+        box-shadow: none;
+    }
+
+    /* Cards: hover raises the surface, and only that. Deepening the shadow was
+       tempting but wrong — the sites that lift rest at shadow-neo-sm (2px) or at
+       no shadow at all, so jumping them to the 8px tier reads as a different
+       component rather than the same one lifted. Whatever shadow the card
+       already carries stays put. */
+    .neo-lift {
+        transition-property: transform;
+        transition-duration: 150ms;
+        transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .neo-lift:hover {
+        transform: translateY(-2px);
+    }
+}
+
+/* ── Reduced motion ─────────────────────────────────────────────────────────
+   Nothing in the app honoured prefers-reduced-motion before this. Movement is
+   removed while state changes stay instant and legible: a pressed control still
+   loses its shadow, an entering panel still appears, neither travels.
+   Unlayered on purpose so it outranks the @layer components rules above. */
+@media (prefers-reduced-motion: reduce) {
+
+    .neo-press,
+    .neo-lift {
+        transition-duration: 1ms;
+    }
+
+    .neo-press:hover,
+    .neo-press:active,
+    .neo-lift:hover {
+        transform: none;
+    }
+
+    /* tailwindcss-animate entrances: keep the fade, drop the travel and scale */
+    .animate-in {
+        animation-duration: 1ms !important;
+    }
+
+    .animate-pulse,
+    .animate-spin-slow {
+        animation: none !important;
+    }
+}

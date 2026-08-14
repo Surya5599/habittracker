@@ -394,7 +394,7 @@ export const StreakModal: React.FC<StreakModalProps> = ({
                         <button
                             type="button"
                             onClick={() => setActiveTab('streaks')}
-                            className={`bg-orange-50 border-2 border-orange-200 p-6 rounded-2xl flex items-center justify-between text-left transition-all ${activeTab === 'streaks' ? 'ring-2 ring-ring' : 'hover:-translate-y-0.5'}`}
+                            className={`bg-orange-50 border-2 border-orange-200 p-6 rounded-2xl flex items-center justify-between text-left transition-all ${activeTab === 'streaks' ? 'ring-2 ring-ring' : 'neo-lift'}`}
                         >
                             <div className="flex flex-col">
                                 <span className="text-[10px] font-black uppercase tracking-widest text-orange-400 mb-1">Total Streak</span>
@@ -408,7 +408,7 @@ export const StreakModal: React.FC<StreakModalProps> = ({
                         <button
                             type="button"
                             onClick={() => setActiveTab('streaks')}
-                            className={`bg-amber-50 border-2 border-amber-200 p-6 rounded-2xl flex items-center justify-between text-left transition-all ${activeTab === 'streaks' ? 'ring-2 ring-ring' : 'hover:-translate-y-0.5'}`}
+                            className={`bg-amber-50 border-2 border-amber-200 p-6 rounded-2xl flex items-center justify-between text-left transition-all ${activeTab === 'streaks' ? 'ring-2 ring-ring' : 'neo-lift'}`}
                         >
                             <div className="flex flex-col">
                                 <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 mb-1">Best Ever</span>
@@ -422,7 +422,7 @@ export const StreakModal: React.FC<StreakModalProps> = ({
                         <button
                             type="button"
                             onClick={() => setActiveTab('badges')}
-                            className={`bg-violet-50 border-2 border-violet-200 p-6 rounded-2xl flex items-center justify-between text-left transition-all ${activeTab === 'badges' ? 'ring-2 ring-ring' : 'hover:-translate-y-0.5'}`}
+                            className={`bg-violet-50 border-2 border-violet-200 p-6 rounded-2xl flex items-center justify-between text-left transition-all ${activeTab === 'badges' ? 'ring-2 ring-ring' : 'neo-lift'}`}
                         >
                             <div className="flex flex-col">
                                 <span className="text-[10px] font-black uppercase tracking-widest text-violet-400 mb-1">Badges</span>

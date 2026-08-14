@@ -687,14 +687,14 @@ export const LandingPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setAuthModalMode('signin')}
-            className="inline-flex min-h-10 items-center justify-center rounded-full border-3 border-edge-strong bg-surface px-3 py-2 text-[11px] font-black uppercase tracking-[0.1em] text-ink-strong transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-neo-sm"
+            className="inline-flex min-h-10 items-center justify-center rounded-full border-3 border-edge-strong bg-surface px-3 py-2 text-[11px] font-black uppercase tracking-[0.1em] text-ink-strong neo-press"
           >
             Log In
           </button>
           <button
             type="button"
             onClick={() => setAuthModalMode('signup')}
-            className="shadow-neo inline-flex min-h-10 items-center justify-center rounded-full border-3 border-edge-strong bg-[var(--landing-neo-yellow)] px-3 py-2 text-[11px] font-black uppercase tracking-[0.1em] text-ink-strong transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-neo-sm"
+            className="shadow-neo inline-flex min-h-10 items-center justify-center rounded-full border-3 border-edge-strong bg-[var(--landing-neo-yellow)] px-3 py-2 text-[11px] font-black uppercase tracking-[0.1em] text-ink-strong neo-press"
           >
             Sign Up
           </button>
@@ -710,7 +710,7 @@ export const LandingPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setAuthModalMode('signup')}
-            className="shadow-neo rounded-full border-3 border-edge-strong bg-[var(--landing-neo-yellow)] px-4 py-2 text-sm font-black uppercase tracking-[0.14em] text-ink-strong transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-neo-sm"
+            className="shadow-neo rounded-full border-3 border-edge-strong bg-[var(--landing-neo-yellow)] px-4 py-2 text-sm font-black uppercase tracking-[0.14em] text-ink-strong neo-press"
           >
             Sign Up
           </button>
@@ -906,7 +906,7 @@ export const LandingPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setAuthModalMode(null)}
-                className="absolute right-5 top-5 z-20 flex h-10 w-10 items-center justify-center rounded-full border-3 border-edge-strong bg-surface text-ink-strong shadow-neo transition-transform hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-neo-sm"
+                className="absolute right-5 top-5 z-20 flex h-10 w-10 items-center justify-center rounded-full border-3 border-edge-strong bg-surface text-ink-strong shadow-neo neo-press"
                 aria-label="Close authentication popup"
               >
                 <X className="h-4 w-4" />

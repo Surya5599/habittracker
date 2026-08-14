@@ -204,13 +204,13 @@ export const ShareCustomizationModal: React.FC<ShareCustomizationModalProps> = (
                 <div className="border-t-3 border-edge-strong p-4 flex gap-3 bg-surface-muted">
                     <button
                         onClick={onClose}
-                        className="flex-1 px-4 py-3 border-2 border-edge-strong bg-surface text-ink-strong font-black uppercase tracking-widest text-xs shadow-neo-sm hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all"
+                        className="flex-1 px-4 py-3 border-2 border-edge-strong bg-surface text-ink-strong font-black uppercase tracking-widest text-xs shadow-neo-sm neo-press"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={handleShare}
-                        className="flex-1 px-4 py-3 border-2 border-edge-strong bg-surface-inverse text-ink-inverse font-black uppercase tracking-widest text-xs shadow-neo-sm hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2"
+                        className="flex-1 px-4 py-3 border-2 border-edge-strong bg-surface-inverse text-ink-inverse font-black uppercase tracking-widest text-xs shadow-neo-sm neo-press flex items-center justify-center gap-2"
                     >
                         <Share2 size={14} />
                         Share Now

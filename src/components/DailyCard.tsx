@@ -1100,7 +1100,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                         <button onClick={() => { setEditingEntryId(null); setEditingEntryText(''); setEditingEntryMood(undefined); }}
                                             className="text-[9px] font-black uppercase tracking-widest text-ink-subtle hover:text-ink-strong transition-colors">Cancel</button>
                                         <button onClick={() => handleUpdateEntry(entry.id)}
-                                            className="flex items-center gap-1 px-2.5 py-1.5 text-[9px] font-black uppercase tracking-widest text-ink-inverse border-2 border-edge-strong shadow-neo-sm hover:-translate-y-0.5 transition-all"
+                                            className="flex items-center gap-1 px-2.5 py-1.5 text-[9px] font-black uppercase tracking-widest text-ink-inverse border-2 border-edge-strong shadow-neo-sm neo-lift transition-all"
                                             style={{ backgroundColor: theme.primary }}>
                                             <Save size={10} strokeWidth={3} /> Save
                                         </button>
@@ -1161,7 +1161,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                             <button onClick={() => { setIsAddingEntry(false); setNewEntryText(''); setNewEntryMood(undefined); }}
                                 className="text-[9px] font-black uppercase tracking-widest text-ink-subtle hover:text-ink-strong transition-colors">Cancel</button>
                             <button onClick={handleAddEntry}
-                                className="flex items-center gap-1 px-2.5 py-1.5 text-[9px] font-black uppercase tracking-widest text-ink-inverse border-2 border-edge-strong shadow-neo-sm hover:-translate-y-0.5 transition-all"
+                                className="flex items-center gap-1 px-2.5 py-1.5 text-[9px] font-black uppercase tracking-widest text-ink-inverse border-2 border-edge-strong shadow-neo-sm neo-lift transition-all"
                                 style={{ backgroundColor: theme.primary }}
                                 data-onboarding="journal-save">
                                 <Save size={10} strokeWidth={3} /> Save

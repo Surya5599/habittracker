@@ -294,7 +294,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
                                         <div className="space-y-3 pt-2">
                                             <button
                                                 type="submit"
-                                                className="flex w-full items-center justify-center gap-2 rounded-2xl border-3 border-edge-strong bg-surface-inverse px-6 py-3 text-xs font-black uppercase tracking-widest text-ink-inverse shadow-neo transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-neo-sm disabled:opacity-50"
+                                                className="flex w-full items-center justify-center gap-2 rounded-2xl border-3 border-edge-strong bg-surface-inverse px-6 py-3 text-xs font-black uppercase tracking-widest text-ink-inverse shadow-neo neo-press disabled:opacity-50"
                                                 disabled={loading}
                                             >
                                                 <ActionIcon size={14} />
@@ -316,7 +316,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
                                         <div className="space-y-4 pt-2">
                                             <button
                                                 type="submit"
-                                                className="flex w-full items-center justify-center gap-2 rounded-2xl border-3 border-edge-strong bg-surface-inverse px-6 py-3 text-xs font-black uppercase tracking-widest text-ink-inverse shadow-neo transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-neo-sm disabled:opacity-50"
+                                                className="flex w-full items-center justify-center gap-2 rounded-2xl border-3 border-edge-strong bg-surface-inverse px-6 py-3 text-xs font-black uppercase tracking-widest text-ink-inverse shadow-neo neo-press disabled:opacity-50"
                                                 disabled={loading}
                                             >
                                                 <ActionIcon size={14} />
@@ -350,7 +350,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onContinueAsGuest, initialMo
                                                     e.preventDefault();
                                                     onContinueAsGuest();
                                                 }}
-                                                className="flex w-full items-center justify-center gap-2 rounded-2xl border-3 border-edge-strong bg-surface px-6 py-2.5 text-[10px] font-black uppercase tracking-widest text-ink-strong shadow-neo transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-neo-sm"
+                                                className="flex w-full items-center justify-center gap-2 rounded-2xl border-3 border-edge-strong bg-surface px-6 py-2.5 text-[10px] font-black uppercase tracking-widest text-ink-strong shadow-neo neo-press"
                                             >
                                                 <User size={12} />
                                                 Continue as Guest

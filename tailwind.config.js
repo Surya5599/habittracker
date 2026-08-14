@@ -1,3 +1,5 @@
+import animate from 'tailwindcss-animate';
+
 /* ============================================================================
    HabiCard — Tailwind design-system config
    ============================================================================
@@ -47,6 +49,7 @@
  *  Tailwind substitutes 1, so `calc(1 * 100%)` returns the colour unchanged.
  *  v4 does this natively, so src/styles/tailwind-v4-theme.css keeps plain var() values. */
 const alpha = (v) => `color-mix(in srgb, var(${v}) calc(<alpha-value> * 100%), transparent)`;
+
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -123,9 +126,9 @@ export default {
        Restricted to the three faces actually loaded — Inter 400/700/900
        (index.html:35; chrome-extension/src/index.css:8-45).
        (DESIGN_SYSTEM.md §2.3, §9 #15)
-       font-medium (57 uses) and font-semibold (23) had NO loaded face and were
-       rendering synthetically. They are removed, not aliased, so every one of
-       those 80 call sites must be consciously reassigned. See §M7. */
+       font-medium (57 uses) and font-semibold (23) have NO loaded face and
+       render synthetically. Because this config is additive they still resolve;
+       the 80 call sites remain to be reassigned. See §M7. */
 
 
     extend: {
@@ -133,7 +136,7 @@ export default {
       normal: '400',
       bold: '700',
       black: '900', // 493 uses — the app's default voice
-      // REMOVED: thin, extralight, light, medium(57), semibold(23), extrabold
+      // Stock medium/semibold/light still resolve (additive config) — see §M7.
     },
     fontSize: {
       '3xs': ['0.5625rem', { lineHeight: '1.2' }], // 9px  — 115 uses; absorbs 8px (39)
@@ -317,6 +320,18 @@ export default {
         gutter: '0.75rem', // 12px — the densest common step (p-3, 92 uses)
       },
 
+      /* SettingsMenu's gear used a hand-written `.animate-spin-slow` rule that
+         referenced a `spin` keyframe no build ever emitted, so it never turned. */
+      keyframes: {
+        'spin-slow': {
+          from: { transform: 'rotate(0deg)' },
+          to: { transform: 'rotate(360deg)' },
+        },
+      },
+      animation: {
+        'spin-slow': 'spin-slow 3s linear infinite',
+      },
+
       /* ══ Z-INDEX ════════════════════════════════════════════════════════
          Names the 9 unscaled values already in use (50/60/90/100/110/120/
          200/210) so new surfaces stop inventing numbers. Values are
@@ -335,7 +350,7 @@ export default {
     },
   },
 
-  plugins: [],
+  plugins: [animate],
 };
 
 /* ============================================================================

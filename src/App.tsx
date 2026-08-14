@@ -1644,7 +1644,7 @@ const AppContent: React.FC = () => {
           <div className="flex flex-col gap-2 pt-2">
             <button
               onClick={() => window.close()}
-              className="w-full px-6 py-3 bg-surface-inverse text-ink-inverse text-xs font-black uppercase tracking-widest border-2 border-edge-strong shadow-neo hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-neo-sm transition-all"
+              className="w-full px-6 py-3 bg-surface-inverse text-ink-inverse text-xs font-black uppercase tracking-widest border-2 border-edge-strong shadow-neo neo-press"
             >
               Close & open extension
             </button>
@@ -3027,7 +3027,6 @@ const AppContent: React.FC = () => {
       />
 
       <style>{`
-        .animate-spin-slow { animation: spin 3s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         ::-webkit-scrollbar { height: 8px; width: 8px; }
         ::-webkit-scrollbar-thumb { background: #000; border: 2px solid #fff; border-radius: 0; }

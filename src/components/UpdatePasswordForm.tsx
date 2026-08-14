@@ -48,7 +48,7 @@ export const UpdatePasswordForm: React.FC<UpdatePasswordFormProps> = ({ onSucces
                     </div>
                     <button
                         type="submit"
-                        className="w-full px-4 py-2 border-2 border-edge-strong text-sm font-black uppercase tracking-widest bg-surface-inverse text-ink-inverse shadow-neo-sm hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all disabled:opacity-50"
+                        className="w-full px-4 py-2 border-2 border-edge-strong text-sm font-black uppercase tracking-widest bg-surface-inverse text-ink-inverse shadow-neo-sm neo-press disabled:opacity-50"
                         disabled={loading}
                     >
                         {loading ? 'Updating...' : 'Update Password'}

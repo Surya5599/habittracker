@@ -389,7 +389,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ notes, updateNote, theme, 
                         onClick={handleAddTask}
                         disabled={!newText.trim()}
                         style={{ backgroundColor: theme.primary, color: '#ffffff' }}
-                        className="px-3.5 py-2 rounded-control text-[10px] font-black uppercase tracking-wide disabled:opacity-25 shadow-neo-sm hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none active:translate-y-[2px] active:translate-x-[2px] transition-all flex items-center gap-1.5 shrink-0"
+                        className="px-3.5 py-2 rounded-control text-[10px] font-black uppercase tracking-wide disabled:opacity-25 shadow-neo-sm neo-press flex items-center gap-1.5 shrink-0"
                     >
                         <Plus size={12} strokeWidth={3} />
                         Add

@@ -179,7 +179,7 @@ export const ResolutionsModal: React.FC<ResolutionsModalProps> = ({
                 <div className="p-4 bg-surface-muted border-t border-edge-subtle flex justify-end">
                     <button
                         onClick={handleSave}
-                        className="flex items-center gap-2 bg-surface-inverse text-ink-inverse px-6 py-3 font-black uppercase text-sm tracking-wider hover:bg-surface-inverse-hover transition-colors shadow-neo hover:shadow-neo-sm hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[4px]"
+                        className="flex items-center gap-2 bg-surface-inverse text-ink-inverse px-6 py-3 font-black uppercase text-sm tracking-wider hover:bg-surface-inverse-hover transition-colors shadow-neo hover:shadow-neo-sm neo-press"
                     >
                         <Save size={16} /> Save Resolutions
                     </button>

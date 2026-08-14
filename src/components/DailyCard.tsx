@@ -749,7 +749,11 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                     clearLongPress();
                                     toggleHabitInactive(habit.id, dateKey);
                                 }}
-                                className={`flex items-start justify-between group cursor-pointer hover:bg-black/5 rounded-lg px-1.5 -mx-1.5 transition-all touch-pan-y relative ${cardStyle === 'compact' ? 'py-1' : 'py-1.5'}`}
+                                // Row metrics deliberately do not follow cardStyle. The compact card
+                                // earns its space in the header — a small progress badge instead of
+                                // a full strip — not by shrinking the habit list, which is the part
+                                // being read and tapped.
+                                className="flex items-start justify-between group cursor-pointer hover:bg-black/5 rounded-lg px-1.5 -mx-1.5 py-1.5 transition-all touch-pan-y relative"
                                 style={{ touchAction: 'pan-y' }}
                             >
                                 <div className="flex items-center flex-1 min-w-0 gap-1.5">
@@ -769,7 +773,7 @@ export const DailyCard: React.FC<DailyCardProps & { combinedView?: boolean }> = 
                                 <motion.div
                                     animate={{ scale: done ? [1, 1.25, 1] : 1 }}
                                     transition={{ duration: 0.18 }}
-                                    className={`border-2 border-edge-strong flex items-center justify-center transition-all ${cardStyle === 'compact' ? 'w-4 h-4' : 'w-5 h-5'} ${inactive ? 'bg-amber-300 text-amber-900 border-amber-700' : (done ? 'bg-done text-ink-strong' : 'bg-surface')}`}
+                                    className={`border-2 border-edge-strong flex items-center justify-center transition-all w-5 h-5 ${inactive ? 'bg-amber-300 text-amber-900 border-amber-700' : (done ? 'bg-done text-ink-strong' : 'bg-surface')}`}
                                     data-onboarding={habitIndex === 0 ? 'habit-checkbox' : undefined}
                                 >
                                     {inactive ? <Minus size={11} strokeWidth={4} /> : (done && <Check size={11} strokeWidth={4} />)}

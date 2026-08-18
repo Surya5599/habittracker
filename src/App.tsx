@@ -1168,6 +1168,10 @@ const AppContent: React.FC = () => {
 
   const handleOnboardingComplete = async () => {
     setShowOnboarding(false);
+    // A user who just finished onboarding has never used an older version of
+    // the app, so the "What's New" changelog has nothing relevant to show them
+    // — mark it seen now instead of stacking it right behind onboarding.
+    markWhatsNewAsSeen();
 
     if (session?.user && !isImpersonating) {
       try {

@@ -21,6 +21,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthForm } from '../components/AuthForm';
 import { useTheme } from '../hooks/useTheme';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { THEMES, MOOD_SCALE } from '../constants';
 import { supabase } from '../supabase';
 
@@ -592,6 +593,10 @@ export const LandingPage: React.FC = () => {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup' | null>(null);
+  useDocumentTitle(
+    'HabiCard — Build Habits That Stick',
+    'HabiCard turns your daily goals into visual, satisfying habit cards. Track habits, journal your mood, manage tasks, and get personalized weekly and yearly insights.'
+  );
 
   useEffect(() => {
     let active = true;

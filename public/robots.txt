@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /app
+Disallow: /auth/callback
+Disallow: /update-password
+
+Sitemap: https://habicard.com/sitemap.xml

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Shield, Lock, Eye, Server, Mail, MessageSquare, Trash2, Globe } from 'lucide-react';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 interface PrivacyPolicyProps {
     onOpenFeedback: () => void;
@@ -8,6 +9,7 @@ interface PrivacyPolicyProps {
 
 export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onOpenFeedback }) => {
     const navigate = useNavigate();
+    useDocumentTitle('Privacy Policy — HabiCard', 'How HabiCard collects, uses, and protects your data.');
 
     return (
         <div className="min-h-screen bg-canvas p-2 sm:p-4 font-sans text-[#444]">

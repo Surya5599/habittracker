@@ -1,0 +1,16 @@
+-- SECURITY FIX: the original "Users can update their own profile" policy
+-- (05_add_profiles.sql) had no WITH CHECK and no column restriction, so any
+-- signed-in user could run
+--   supabase.from('profiles').update({ is_admin: true }).eq('id', <own id>)
+-- or the same for is_premium/premium_status/stripe_*, since RLS only filters
+-- which ROW you can touch, not which COLUMNS. Every sensitive flag
+-- (is_admin, is_premium, premium_status, stripe_customer_id, ...) lives on
+-- this same row.
+--
+-- No client code (web/mobile/chrome-extension) ever calls
+-- `.from('profiles').update(...)` — all legitimate profile writes happen
+-- server-side (the on_auth_user_created trigger, the Stripe webhook edge
+-- function, admin RPCs), all of which use the service role and bypass RLS
+-- entirely. So the client-facing UPDATE policy has zero legitimate use and
+-- can simply be removed.
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;

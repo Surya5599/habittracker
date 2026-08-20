@@ -402,6 +402,7 @@
     "genericError": "出了点问题，请重试。",
     "sessionExpired": "登录已过期，请重新登录。",
     "incorrectPassword": "密码不正确，请重试。",
+    "checkEmailIfNew": "如果你刚刚注册，请先通过我们发送的链接确认邮箱。",
     "accountExists": "该邮箱已注册，请直接登录。",
     "resetFailed": "无法发送重置邮件，请重试。"
   },

@@ -402,6 +402,7 @@
     "genericError": "Algo deu errado. Tente novamente.",
     "sessionExpired": "Sua sessão expirou. Entre novamente.",
     "incorrectPassword": "Senha incorreta. Tente novamente.",
+    "checkEmailIfNew": "Se você acabou de se cadastrar, confirme seu e-mail pelo link que enviamos.",
     "accountExists": "Já existe uma conta com este e-mail. Faça login.",
     "resetFailed": "Não conseguimos enviar o e-mail de redefinição. Tente novamente."
   },

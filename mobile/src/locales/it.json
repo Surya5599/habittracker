@@ -376,6 +376,7 @@
     "genericError": "Qualcosa è andato storto. Riprova.",
     "sessionExpired": "La sessione è scaduta. Accedi di nuovo.",
     "incorrectPassword": "Password errata. Riprova.",
+    "checkEmailIfNew": "Se ti sei appena registrato, conferma la tua e-mail con il link che ti abbiamo inviato.",
     "accountExists": "Esiste già un account con questa email. Accedi.",
     "resetFailed": "Non siamo riusciti a inviare l'email di reimpostazione. Riprova."
   },

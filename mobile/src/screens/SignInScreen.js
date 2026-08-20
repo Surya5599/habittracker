@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, TouchableOpacity, Alert, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
-import * as Linking from 'expo-linking';
 import tw from 'twrnc';
 import { supabase } from '../lib/supabase';
 import { NeoButton, NeoInput, NeoCard } from '../components/NeoComponents';
@@ -13,7 +12,19 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
     const [loading, setLoading] = useState(false);
     const [isResetMode, setIsResetMode] = useState(false);
     const [isNewAccount, setIsNewAccount] = useState(false);
-    const authCallbackUrl = Linking.createURL('auth/callback');
+    // Signup confirmation goes to a static hand-off page that forwards the tokens into
+    // habicard://auth/callback, so the person ends up signed in *in the app*. Pointing
+    // this straight at the app scheme would strand anyone who opens the email on a
+    // desktop or in a client that won't follow a custom scheme. Use the canonical www
+    // host: habicard.com 301s to www, and Supabase matches the redirect allow-list against
+    // the URL we send, not where it eventually lands.
+    const signUpRedirectUrl = 'https://www.habicard.com/auth/mobile-callback';
+
+    // Password recovery deliberately stays on the web: the set-a-new-password UI lives at
+    // /update-password and the app has no equivalent screen. Do not repoint this at
+    // habicard:// — allow-listing the scheme in Supabase would otherwise deep-link
+    // recovery links into an app that can't complete them.
+    const passwordResetRedirectUrl = 'https://www.habicard.com/auth/callback';
 
     const isInvalidRefreshTokenError = (error) => {
         const message = (error?.message || '').toLowerCase();
@@ -32,19 +43,6 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
         return normalized.includes('invalid login credentials')
             || normalized.includes('invalid password')
             || normalized.includes('wrong password');
-    };
-
-    const lookupEmailStatus = async (candidateEmail) => {
-        const { data, error } = await supabase.functions.invoke('auth-email-status', {
-            body: { email: candidateEmail }
-        });
-
-        if (error) throw error;
-
-        return {
-            exists: Boolean(data?.exists),
-            confirmed: Boolean(data?.confirmed),
-        };
     };
 
     const getFriendlyAuthMessage = (error, fallbackKey = 'auth.genericError') => {
@@ -83,7 +81,7 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
 
         if (isResetMode) {
             const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: authCallbackUrl,
+                redirectTo: passwordResetRedirectUrl,
             });
             if (error) {
                 Alert.alert('Error', getFriendlyAuthMessage(error, 'auth.resetFailed'));
@@ -105,7 +103,7 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
             const { error: signUpError, data: signUpData } = await supabase.auth.signUp({
                 email,
                 password,
-                options: { emailRedirectTo: authCallbackUrl },
+                options: { emailRedirectTo: signUpRedirectUrl },
             });
 
             if (signUpError) {
@@ -148,16 +146,12 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
         }
 
         if (isWrongPasswordError(loginError.message)) {
-            try {
-                const status = await lookupEmailStatus(email);
-                if (status.exists && !status.confirmed) {
-                    Alert.alert('Info', t('auth.checkEmail'));
-                } else {
-                    Alert.alert('Error', t('auth.incorrectPassword'));
-                }
-            } catch {
-                Alert.alert('Error', t('auth.incorrectPassword'));
-            }
+            // Supabase returns the same "invalid credentials" for a wrong password and for a
+            // wrong password on an unconfirmed account, and we deliberately don't ask the
+            // server which it was — an endpoint that answers "does this email have an
+            // account?" for anyone who asks is an enumeration oracle. Show both the error
+            // and the confirmation hint instead, so a stuck new signup still knows what to do.
+            Alert.alert(t('auth.incorrectPassword'), t('auth.checkEmailIfNew'));
             setLoading(false);
             return;
         }

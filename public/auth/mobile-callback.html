@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Opening HabiCard</title>
+<!--
+  Hand-off page for mobile email confirmation.
+
+  Supabase sends the confirmation link to /auth/v1/verify, which redirects here with the
+  session in the URL fragment. This page forwards that fragment into the habicard:// app
+  scheme so the person lands signed in *in the app* rather than signed in on the website.
+
+  It is deliberately a standalone static file, not a route in the React app: index.html
+  boots the Supabase client with detectSessionInUrl enabled, which would consume the
+  tokens and strip the fragment before the app ever saw them.
+
+  Netlify serves it at /auth/mobile-callback via the rewrite in netlify.toml.
+-->
+<style>
+  :root {
+    --ink: #161616;
+    --paper: #e8e4e1;
+    --card: #ffffff;
+    --rose: #c19a9a;
+    --muted: #6b6462;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    line-height: 1.5;
+  }
+  main {
+    width: 100%;
+    max-width: 23rem;
+    background: var(--card);
+    border: 2px solid var(--ink);
+    border-radius: 1rem;
+    box-shadow: 5px 5px 0 var(--ink);
+    padding: 1.75rem 1.5rem;
+    text-align: center;
+  }
+  .wordmark {
+    font-size: 1.75rem;
+    font-weight: 900;
+    letter-spacing: -0.045em;
+    text-transform: uppercase;
+    margin: 0 0 1.25rem;
+  }
+  .wordmark span { color: var(--rose); }
+  h1 {
+    font-size: 1.0625rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.5rem;
+  }
+  p {
+    font-size: 0.875rem;
+    color: var(--muted);
+    margin: 0 0 1.5rem;
+  }
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 0.9rem 1rem;
+    background: var(--ink);
+    color: #fff;
+    border: 2px solid var(--ink);
+    border-radius: 0.75rem;
+    font-size: 0.6875rem;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn:focus-visible { outline: 3px solid var(--rose); outline-offset: 2px; }
+  .btn-secondary {
+    margin-top: 0.75rem;
+    background: transparent;
+    color: var(--ink);
+    border-style: dashed;
+    border-color: #b9b2ae;
+  }
+  .note {
+    margin: 1.25rem 0 0;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .is-error .wordmark span { color: #b3261e; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main id="card">
+  <p class="wordmark">Habi<span>Card</span></p>
+
+  <div id="ok">
+    <h1 id="ok-title">Email confirmed</h1>
+    <p id="ok-body">Taking you back to the app&hellip;</p>
+    <a class="btn" id="open-app" href="#">Open HabiCard</a>
+    <a class="btn btn-secondary" id="open-web" href="/auth/callback">Continue in the browser</a>
+    <p class="note">Opened this on a computer? Use &ldquo;Continue in the browser&rdquo;, or just sign in on your phone &mdash; your email is confirmed either way.</p>
+  </div>
+
+  <div id="err" hidden>
+    <h1 id="err-title">That link didn&rsquo;t work</h1>
+    <p id="err-body">The link may have expired or already been used.</p>
+    <a class="btn" href="/">Go to HabiCard</a>
+  </div>
+</main>
+
+<script>
+  (function () {
+    var APP_SCHEME_URL = 'habicard://auth/callback';
+
+    // The fragment never reaches the server, so read it here and pass it along verbatim.
+    var hash = window.location.hash.replace(/^#/, '');
+    var search = window.location.search.replace(/^\?/, '');
+
+    function readParam(name) {
+      var fromHash = new URLSearchParams(hash).get(name);
+      if (fromHash) return fromHash;
+      return new URLSearchParams(search).get(name);
+    }
+
+    var error = readParam('error') || readParam('error_code');
+    var hasSession = readParam('access_token') || readParam('code');
+
+    if (error || !hasSession) {
+      document.getElementById('ok').hidden = true;
+      document.getElementById('err').hidden = false;
+      document.getElementById('card').className = 'is-error';
+      var description = readParam('error_description');
+      if (description) {
+        document.getElementById('err-body').textContent = description.replace(/\+/g, ' ');
+      }
+      return;
+    }
+
+    var target = APP_SCHEME_URL + (search ? '?' + search : '') + (hash ? '#' + hash : '');
+    document.getElementById('open-app').setAttribute('href', target);
+    document.getElementById('open-web').setAttribute(
+      'href',
+      '/auth/callback' + (search ? '?' + search : '') + (hash ? '#' + hash : '')
+    );
+
+    // Try the app straight away. If it isn't installed nothing visible happens and the
+    // buttons above are still there, which is why they are rendered before this runs.
+    window.location.replace(target);
+
+    // If we're still here a moment later, the hand-off didn't take — say so plainly
+    // instead of leaving "Taking you back to the app..." on screen forever.
+    window.setTimeout(function () {
+      document.getElementById('ok-body').textContent = 'Tap below to finish signing in.';
+    }, 2500);
+  })();
+</script>
+</body>
+</html>

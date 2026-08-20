@@ -402,6 +402,7 @@
     "genericError": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
     "sessionExpired": "Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.",
     "incorrectPassword": "Falsches Passwort. Bitte erneut versuchen.",
+    "checkEmailIfNew": "Wenn du dich gerade registriert hast, bestätige zuerst deine E-Mail über den gesendeten Link.",
     "accountExists": "Mit dieser E-Mail existiert bereits ein Konto. Bitte anmelden.",
     "resetFailed": "Die E-Mail zum Zurücksetzen konnte nicht gesendet werden. Bitte erneut versuchen."
   },

@@ -10,9 +10,13 @@ const lines = vars
   .filter((name) => process.env[name])
   .map((name) => `${name}=${process.env[name]}`);
 
-if (lines.length === 0) {
-  console.warn('[write-env] No SUPABASE_URL/SUPABASE_ANON_KEY found in process.env — skipping .env write.');
-  process.exit(0);
+const missing = vars.filter((name) => !process.env[name]);
+if (missing.length > 0) {
+  // Fail the build rather than ship a binary with no backend: react-native-dotenv would
+  // inline `undefined`, createClient would throw, and the app would crash on launch —
+  // which reads to App Review as a broken app, not a misconfigured build.
+  console.error(`[write-env] Missing required build env: ${missing.join(', ')}. Set them on the EAS build profile or as project secrets.`);
+  process.exit(1);
 }
 
 fs.writeFileSync(path.join(__dirname, '..', '.env'), lines.join('\n') + '\n');

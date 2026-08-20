@@ -24,6 +24,17 @@ const AWS_ACCESS_KEY_ID = Deno.env.get('AWS_ACCESS_KEY_ID')!;
 const AWS_SECRET_ACCESS_KEY = Deno.env.get('AWS_SECRET_ACCESS_KEY')!;
 const SES_FROM_EMAIL = Deno.env.get('SES_FROM_EMAIL') ?? 'info@habicard.com';
 
+// Accounts that must never be warned or swept, whatever their activity looks like.
+// The App Store / Play reviewer credentials live in the demo account: if a hand-triggered
+// run warned or deleted it mid-review, the reviewer would be locked out of the app and the
+// submission would come back rejected. Override with EXEMPT_EMAILS (comma separated).
+const EXEMPT_EMAILS = new Set(
+  (Deno.env.get('EXEMPT_EMAILS') ?? 'demo@habicard.com')
+    .split(',')
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean),
+);
+
 // Stay well under SES's default sending rate so a run of ~1,300 emails
 // doesn't trip AWS's throttling.
 const SEND_DELAY_MS = Number(Deno.env.get('SES_SEND_DELAY_MS') ?? '150');
@@ -131,8 +142,11 @@ Deno.serve(async (req) => {
       throw rpcError;
     }
 
-    const targets = limit ? (candidates ?? []).slice(0, limit) : (candidates ?? []);
-    console.log(`[inactive-user-warning] dryRun=${dryRun} matched=${candidates?.length ?? 0} targeting=${targets.length}`);
+    const matched = candidates ?? [];
+    const eligible = matched.filter((row) => !EXEMPT_EMAILS.has(String(row.email ?? '').trim().toLowerCase()));
+    const exempted = matched.length - eligible.length;
+    const targets = limit ? eligible.slice(0, limit) : eligible;
+    console.log(`[inactive-user-warning] dryRun=${dryRun} matched=${matched.length} exempt=${exempted} targeting=${targets.length}`);
 
     let sent = 0;
     const failed: Array<{ userId: string; error: string }> = [];
@@ -160,7 +174,8 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({
       dryRun,
-      totalMatched: candidates?.length ?? 0,
+      totalMatched: matched.length,
+      exempted,
       targeted: targets.length,
       sent,
       failed,

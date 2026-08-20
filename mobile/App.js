@@ -1,5 +1,6 @@
 import 'react-native-url-polyfill/auto';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { Appearance } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -35,6 +36,10 @@ const ONBOARDING_COMPLETED_KEY = 'habit_onboarding_completed';
 
 export default function App() {
   const [session, setSession] = useState(null);
+  // Last refresh token we saw, used to recover from a SIGNED_OUT the user never asked for.
+  const rememberedRefreshTokenRef = useRef(null);
+  const recoveringSessionRef = useRef(false);
+  const lastRecoveryAttemptRef = useRef(0);
   const [guestMode, setGuestMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('weekly'); // 'weekly' | 'journal' | 'dashboard' | 'coach'
@@ -166,9 +171,51 @@ export default function App() {
 
     const {
       data: { subscription }
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) setGuestMode(false);
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        rememberedRefreshTokenRef.current = session.refresh_token || null;
+        setSession(session);
+        setGuestMode(false);
+        recoveringSessionRef.current = false;
+        return;
+      }
+
+      // auth-js drops the stored session on *any* non-retryable refresh failure — a rate
+      // limited token endpoint, or a refresh token that lost a rotation race. That is not
+      // the user asking to sign out, so try the remembered refresh token once before
+      // leaving them at the sign-in screen. Deferred out of this callback because auth
+      // calls made inside it deadlock against the client's lock.
+      const recoverable =
+        event === 'SIGNED_OUT' &&
+        rememberedRefreshTokenRef.current &&
+        !recoveringSessionRef.current &&
+        Date.now() - lastRecoveryAttemptRef.current > 30000;
+
+      setSession(null);
+
+      if (!recoverable) {
+        rememberedRefreshTokenRef.current = null;
+        return;
+      }
+
+      const refreshToken = rememberedRefreshTokenRef.current;
+      recoveringSessionRef.current = true;
+      lastRecoveryAttemptRef.current = Date.now();
+
+      setTimeout(async () => {
+        try {
+          const { data, error } = await supabase.auth.refreshSession({ refresh_token: refreshToken });
+          if (error || !data?.session) {
+            // A real sign-out revokes the token, so failing here is the expected path.
+            rememberedRefreshTokenRef.current = null;
+          }
+        } catch (error) {
+          rememberedRefreshTokenRef.current = null;
+          reportError(error, { scope: 'auth:session-recovery' });
+        } finally {
+          recoveringSessionRef.current = false;
+        }
+      }, 0);
     });
 
     const checkGuest = async () => {
@@ -210,6 +257,13 @@ export default function App() {
       subscription?.unsubscribe();
     };
   }, []);
+
+  // The app's light/dark choice is its own preference, not the OS one, so push it into
+  // the native layer — otherwise iOS renders alerts, keyboards and action sheets in the
+  // system appearance and they clash with the theme the user actually picked.
+  useEffect(() => {
+    Appearance.setColorScheme(colorMode === 'dark' ? 'dark' : 'light');
+  }, [colorMode]);
 
   // Sync session language
   useEffect(() => {

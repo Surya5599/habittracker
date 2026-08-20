@@ -402,6 +402,7 @@
     "genericError": "Une erreur est survenue. Réessayez.",
     "sessionExpired": "Votre session a expiré. Reconnectez-vous.",
     "incorrectPassword": "Mot de passe incorrect. Réessayez.",
+    "checkEmailIfNew": "Si vous venez de créer votre compte, confirmez votre e-mail avec le lien que nous avons envoyé.",
     "accountExists": "Un compte existe déjà avec cet e-mail. Connectez-vous.",
     "resetFailed": "Impossible d'envoyer l'e-mail de réinitialisation. Réessayez."
   },

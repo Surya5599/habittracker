@@ -402,6 +402,7 @@
     "genericError": "Algo ha fallado. Inténtalo de nuevo.",
     "sessionExpired": "Tu sesión ha caducado. Vuelve a iniciar sesión.",
     "incorrectPassword": "Contraseña incorrecta. Inténtalo de nuevo.",
+    "checkEmailIfNew": "Si acabas de registrarte, confirma tu correo con el enlace que te enviamos.",
     "accountExists": "Ya existe una cuenta con este correo. Inicia sesión.",
     "resetFailed": "No hemos podido enviar el correo de restablecimiento. Inténtalo de nuevo."
   },

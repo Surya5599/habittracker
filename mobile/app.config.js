@@ -35,7 +35,10 @@ module.exports = {
     description: 'HabiCard is a calming, card-based habit tracker with daily logs, notes, and analytics.',
     orientation: 'portrait',
     icon: './assets/icon.png',
-    userInterfaceStyle: 'light',
+    // 'automatic' is required for Appearance.setColorScheme() to take effect at runtime;
+    // App.js pins it to the user's in-app light/dark choice so native alerts, keyboards
+    // and action sheets match the theme they picked rather than the OS setting.
+    userInterfaceStyle: 'automatic',
     newArchEnabled: true,
     runtimeVersion: {
       policy: 'appVersion',
@@ -61,6 +64,16 @@ module.exports = {
       edgeToEdgeEnabled: true,
       package: selectedVariant.androidPackage,
       versionCode: 1,
+      // expo-file-system ships inside the expo package and contributes the legacy storage
+      // permissions to the merged manifest even though nothing here touches the filesystem
+      // (there's no export or share feature on mobile). They'd still be listed on the Play
+      // store page and can pull the app into the photo/video permissions declaration, so
+      // drop them. VIBRATE (haptics) and POST_NOTIFICATIONS / RECEIVE_BOOT_COMPLETED
+      // (reminders, and restoring them after a reboot) are all genuinely used.
+      blockedPermissions: [
+        'android.permission.READ_EXTERNAL_STORAGE',
+        'android.permission.WRITE_EXTERNAL_STORAGE',
+      ],
     },
     web: {
       favicon: './assets/favicon.png',

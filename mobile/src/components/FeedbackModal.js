@@ -3,8 +3,6 @@ import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
   Alert,
-  Image,
-  Linking,
   Modal,
   ScrollView,
   Text,
@@ -15,9 +13,6 @@ import {
 import tw from 'twrnc';
 import { Bug, MessageSquare, Send, X, ChevronLeft } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
-
-const KO_FI_URL = 'https://ko-fi.com/B0B31VLYXB';
-const KO_FI_IMAGE = 'https://storage.ko-fi.com/cdn/kofi6.png?v=6';
 
 export const FeedbackModal = ({
   isOpen,
@@ -38,7 +33,6 @@ export const FeedbackModal = ({
   const [selectedThread, setSelectedThread] = useState(null);
   const [replyContent, setReplyContent] = useState('');
 
-  const donationUrl = (process.env.EXPO_PUBLIC_DONATION_URL || KO_FI_URL).trim();
   const isDark = colorMode === 'dark';
   const outlineColor = isDark ? '#ffffff' : '#000000';
 
@@ -251,26 +245,6 @@ export const FeedbackModal = ({
                   textAlignVertical="top"
                   style={tw`min-h-[140px] text-sm text-stone-800`}
                 />
-              </View>
-
-              <View style={tw`bg-rose-50 border border-rose-200 rounded-xl p-3`}>
-                <Text style={tw`text-[10px] font-black uppercase tracking-widest text-rose-700 mb-2`}>Support development</Text>
-                <TouchableOpacity
-                  onPress={async () => {
-                    const canOpen = await Linking.canOpenURL(donationUrl);
-                    if (canOpen) {
-                      await Linking.openURL(donationUrl);
-                    } else {
-                      Alert.alert(t('feedback.unableToOpenLink'), donationUrl);
-                    }
-                  }}
-                >
-                  <Image
-                    source={{ uri: KO_FI_IMAGE }}
-                    style={{ width: 145, height: 36 }}
-                    resizeMode="contain"
-                  />
-                </TouchableOpacity>
               </View>
 
               <TouchableOpacity

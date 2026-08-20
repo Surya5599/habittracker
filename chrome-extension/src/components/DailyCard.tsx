@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Check, Plus, Trash2, Pencil, ChevronLeft, ChevronRight, BookOpen, Save, Meh, Frown, Smile, Laugh, Angry, Share2 } from 'lucide-react';
 import { Habit, HabitCompletion, Theme, DailyNote, Task, DayData, JournalEntry } from '../types';
 import { DAYS_OF_WEEK } from '../constants';
@@ -33,30 +34,14 @@ interface DailyCardProps {
     headerActions?: React.ReactNode;
 }
 
-// Read the most recent entry's text from string | JournalEntry[].
-// Showing only the latest entry preserves the multi-entry structure on web
-// while giving the extension a single editable text field.
-const getJournalText = (journal: string | JournalEntry[] | undefined): string => {
-    if (!journal) return '';
-    if (typeof journal === 'string') return journal;
-    if (journal.length === 0) return '';
-    return journal[journal.length - 1].text;
+const parseJournalEntries = (j: string | JournalEntry[] | undefined): JournalEntry[] => {
+    if (!j) return [];
+    if (Array.isArray(j)) return j.filter(e => e.text);
+    if (typeof j === 'string' && j.trim()) return [{ id: '1', text: j, createdAt: Date.now() }];
+    return [];
 };
 
-// Build the value to save: update the last entry in place (preserving earlier
-// entries written from web), or create a fresh single-entry array.
-const buildJournalUpdate = (
-    existing: string | JournalEntry[] | undefined,
-    newText: string,
-    newId: string
-): JournalEntry[] => {
-    if (!existing || typeof existing === 'string' || existing.length === 0) {
-        return [{ id: newId, text: newText, createdAt: Date.now() }];
-    }
-    const entries = [...existing];
-    entries[entries.length - 1] = { ...entries[entries.length - 1], text: newText };
-    return entries;
-};
+const formatEntryTime = (ts: number) => new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
 const MOODS = [
     { value: 1, icon: Angry,  color: '#ef4444', tooltip: 'Very Bad'  },
@@ -87,10 +72,10 @@ export const DailyCard: React.FC<DailyCardProps> = ({
     const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
     const [editingTaskText, setEditingTaskText] = useState('');
     const [showDatePicker, setShowDatePicker] = useState(false);
-    const [journalDraft, setJournalDraft] = useState('');
-    const [moodDraft, setMoodDraft] = useState<number | undefined>(undefined);
     const taskInputRef = useRef<HTMLInputElement>(null);
-    const contentRef = useRef<HTMLDivElement>(null);
+    const habitsRef = useRef<HTMLDivElement>(null);
+    const tasksRef = useRef<HTMLDivElement>(null);
+    const journalRef = useRef<HTMLDivElement>(null);
 
     const dayName = DAYS_OF_WEEK[date.getDay()];
     const dayNameShort = dayName.slice(0, 3);
@@ -107,10 +92,60 @@ export const DailyCard: React.FC<DailyCardProps> = ({
     };
     const dayData = getDayData();
 
+    // ── Journal — full multi-entry parity with web (add/edit/delete, per-entry mood) ──
+    const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(() => parseJournalEntries(dayData.journal));
+    const [isAddingEntry, setIsAddingEntry] = useState(false);
+    const [newEntryText, setNewEntryText] = useState('');
+    const [newEntryMood, setNewEntryMood] = useState<number | undefined>(undefined);
+    const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
+    const [editingEntryText, setEditingEntryText] = useState('');
+    const [editingEntryMood, setEditingEntryMood] = useState<number | undefined>(undefined);
+
     useEffect(() => {
-        setJournalDraft(getJournalText(dayData.journal));
-        setMoodDraft(dayData.mood);
+        setJournalEntries(parseJournalEntries(dayData.journal));
+        setIsAddingEntry(false);
+        setEditingEntryId(null);
     }, [dateKey]);
+
+    const saveEntries = (updated: JournalEntry[]) => {
+        const latestMood = [...updated].reverse().find(e => e.mood)?.mood ?? dayData.mood;
+        updateNote(dateKey, { journal: updated, mood: latestMood });
+    };
+
+    const handleAddEntry = () => {
+        if (!newEntryText.trim()) return;
+        const entry: JournalEntry = { id: generateUUID(), text: newEntryText.trim(), mood: newEntryMood, createdAt: Date.now() };
+        const updated = [...journalEntries, entry];
+        setJournalEntries(updated);
+        setIsAddingEntry(false);
+        setNewEntryText('');
+        setNewEntryMood(undefined);
+        saveEntries(updated);
+    };
+
+    const handleUpdateEntry = (id: string) => {
+        if (!editingEntryText.trim()) return;
+        const updated = journalEntries.map(e => e.id === id ? { ...e, text: editingEntryText, mood: editingEntryMood } : e);
+        setJournalEntries(updated);
+        setEditingEntryId(null);
+        setEditingEntryText('');
+        setEditingEntryMood(undefined);
+        saveEntries(updated);
+    };
+
+    const handleDeleteEntry = (id: string) => {
+        const updated = journalEntries.filter(e => e.id !== id);
+        setJournalEntries(updated);
+        saveEntries(updated);
+    };
+
+    useEffect(() => {
+        if (isAddingEntry && journalRef.current) {
+            setTimeout(() => {
+                journalRef.current!.scrollTo({ top: journalRef.current!.scrollHeight, behavior: 'smooth' });
+            }, 50);
+        }
+    }, [isAddingEntry]);
 
     // Progress
     const allHabits = habits;
@@ -127,10 +162,11 @@ export const DailyCard: React.FC<DailyCardProps> = ({
     // Tasks
     const tasks = dayData.tasks || [];
     const completedTasksCount = tasks.filter(t => t.completed).length;
+    const openTasksCount = tasks.length - completedTasksCount;
 
-    // Journal
+    // Journal status (for the tab bar icon)
     const activeMood = MOODS.find(m => m.value === dayData.mood);
-    const hasJournalEntry = !!(getJournalText(dayData.journal).trim());
+    const hasJournalEntry = journalEntries.some(e => e.text.trim());
 
     const handleFinishEditing = (taskId: string) => {
         const currentTasks = dayData.tasks || [];
@@ -145,13 +181,6 @@ export const DailyCard: React.FC<DailyCardProps> = ({
         setEditingTaskId(null);
     };
 
-    const handleSaveJournal = () => {
-        updateNote(dateKey, {
-            mood: moodDraft,
-            journal: buildJournalUpdate(dayData.journal, journalDraft, generateUUID()),
-        });
-    };
-
     const addTask = () => {
         const newTask: Task = { id: generateUUID(), text: '', completed: false };
         updateNote(dateKey, { tasks: [...tasks, newTask] });
@@ -159,18 +188,18 @@ export const DailyCard: React.FC<DailyCardProps> = ({
         setEditingTaskText('');
     };
 
-    // Smooth scroll for content area
+    // Smooth scroll for whichever face is currently visible
     useEffect(() => {
-        const el = contentRef.current;
-        if (!el) return;
+        const refs = [habitsRef, tasksRef, journalRef];
         const handleWheel = (e: WheelEvent) => {
+            const el = e.currentTarget as HTMLElement;
             if (el.scrollHeight <= el.clientHeight + 1) return;
             e.preventDefault();
             e.stopPropagation();
             el.scrollTop += e.deltaY;
         };
-        el.addEventListener('wheel', handleWheel, { passive: false });
-        return () => el.removeEventListener('wheel', handleWheel);
+        refs.forEach(ref => ref.current?.addEventListener('wheel', handleWheel, { passive: false }));
+        return () => refs.forEach(ref => ref.current?.removeEventListener('wheel', handleWheel));
     }, [activeTab]);
 
     // ── Small progress ring (compact: inside header) ──
@@ -189,13 +218,13 @@ export const DailyCard: React.FC<DailyCardProps> = ({
         </div>
     );
 
-    // ── Large progress ring (large: below header) ──
+    // ── Large progress ring (large: below header) — matches web's LargeProgressPanel ──
     const LargeRing = (
-        <div className="flex justify-center pt-3 pb-2 bg-surface border-b border-edge-subtle flex-shrink-0">
-            <div className="relative w-[110px] h-[110px]">
+        <div className="px-4 pt-1 pb-0 bg-surface border-b border-edge-subtle flex-shrink-0">
+            <div className="mx-auto w-[128px] h-[128px] relative">
                 <svg className="w-full h-full -rotate-90">
-                    <circle cx="55" cy="55" r="44" stroke="rgba(0,0,0,0.06)" strokeWidth="10" fill="transparent" />
-                    <circle cx="55" cy="55" r="44" stroke={theme.secondary} strokeWidth="10" fill="transparent"
+                    <circle cx="64" cy="64" r="44" stroke="rgba(0,0,0,0.06)" strokeWidth="10" fill="transparent" />
+                    <circle cx="64" cy="64" r="44" stroke={theme.secondary} strokeWidth="10" fill="transparent"
                         strokeDasharray={2 * Math.PI * 44}
                         strokeDashoffset={2 * Math.PI * 44 * (1 - progress / 100)}
                         strokeLinecap="round" className="transition-all duration-1000 ease-out" />
@@ -207,9 +236,9 @@ export const DailyCard: React.FC<DailyCardProps> = ({
         </div>
     );
 
-    // ── Status / Tab row pinned at bottom ──
+    // ── Status / Tab row — embedded in every face, exactly like web's shared StatusBar ──
     const StatusBar = (
-        <div className="flex flex-col border-t-2 border-edge-strong bg-surface flex-shrink-0">
+        <div className="flex flex-col border-t-2 border-edge-strong flex-shrink-0" style={{ backgroundColor: 'var(--theme-secondary-faint)' }}>
         <div className="grid grid-cols-3">
             <button
                 onClick={() => setActiveTab('habits')}
@@ -249,143 +278,10 @@ export const DailyCard: React.FC<DailyCardProps> = ({
         </div>
     );
 
-    // ── Habits view ──
-    const HabitsView = (
-        <>
-            <div className="flex-1 min-h-0 overflow-y-auto" ref={contentRef} style={{ overscrollBehavior: 'contain' }}>
-                <div className="py-1 px-3">
-                    {allHabits.length > 0 ? allHabits.map(habit => {
-                        const done = checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
-                        const today = date;
-                        const day = today.getDay();
-                        const diff = today.getDate() - (day === 0 ? 6 : day - 1);
-                        const monday = new Date(today.getFullYear(), today.getMonth(), diff);
-                        let weekCount = 0;
-                        if (habit.weeklyTarget) {
-                            for (let i = 0; i < 7; i++) {
-                                const d = new Date(monday);
-                                d.setDate(monday.getDate() + i);
-                                if (checkCompleted(habit.id, d.getDate(), completions, d.getMonth(), d.getFullYear())) weekCount++;
-                            }
-                        }
-                        const goalMet = habit.weeklyTarget ? weekCount >= habit.weeklyTarget : false;
-                        return (
-                            <div key={habit.id} onClick={() => toggleCompletion(habit.id, dateKey)}
-                                className="flex items-center justify-between cursor-pointer hover:bg-black/5 rounded px-1 py-1.5 -mx-1 transition-colors">
-                                <div className="flex items-center gap-1.5 flex-1 min-w-0 mr-2">
-                                    <span className={`text-[11px] font-bold truncate ${done ? 'text-ink-subtle line-through' : 'text-ink'}`}>
-                                        {habit.name || 'Untitled'}
-                                    </span>
-                                    {habit.weeklyTarget && (
-                                        <span className={`text-[8px] px-1 border font-black flex-shrink-0 ${goalMet ? 'bg-surface-inverse text-ink-inverse border-edge-strong' : 'bg-surface-muted text-ink-subtle border-edge'}`}>
-                                            {weekCount}/{habit.weeklyTarget}wk
-                                        </span>
-                                    )}
-                                </div>
-                                <div className={`w-4 h-4 border-2 border-edge-strong flex items-center justify-center flex-shrink-0 transition-all ${done ? 'bg-surface-inverse text-ink-inverse' : 'bg-surface'}`}>
-                                    {done && <Check size={10} strokeWidth={4} />}
-                                </div>
-                            </div>
-                        );
-                    }) : (
-                        <div className="text-[9px] text-ink-dim text-center py-4 italic">No habits due today</div>
-                    )}
-                </div>
-            </div>
-
-            {/* Share strip — only when all done */}
-            {totalCount > 0 && completedCount === totalCount && (
-                <button
-                    onClick={() => onShareClick({ date, dayName, dateString, completedCount, totalCount, progress: actualProgress })}
-                    className="w-full p-2.5 bg-surface-inverse text-ink-inverse font-black uppercase tracking-widest text-[10px] hover:bg-surface-inverse-hover transition-all flex items-center justify-center gap-2 border-t border-edge-strong flex-shrink-0"
-                >
-                    <Share2 size={12} />
-                    Share Achievement
-                </button>
-            )}
-        </>
-    );
-
-    // ── Tasks view ──
-    const TasksView = (
-        <div ref={contentRef} className="flex-1 min-h-0 overflow-y-auto p-2 space-y-1.5" style={{ overscrollBehavior: 'contain' }}>
-            <div onClick={addTask}
-                className="flex items-center gap-2 p-1.5 border border-dashed border-edge rounded cursor-pointer hover:border-edge-muted transition-colors">
-                <Plus size={10} strokeWidth={3} className="text-ink-dim flex-shrink-0" />
-                <span className="text-[10px] text-ink-dim font-medium">Add a task...</span>
-            </div>
-            {tasks.map(task => (
-                <div key={task.id}
-                    className={`flex items-start gap-2 group bg-surface border p-1.5 rounded transition-all ${editingTaskId === task.id ? 'border-edge-strong' : 'border-edge-subtle hover:border-edge'}`}>
-                    <button onClick={() => updateNote(dateKey, { tasks: tasks.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t) })}
-                        className="flex-shrink-0 mt-0.5">
-                        <div className={`w-3 h-3 border border-edge-strong flex items-center justify-center transition-all ${task.completed ? 'bg-surface-inverse text-ink-inverse' : 'bg-surface hover:bg-surface-strong'}`}>
-                            {task.completed && <Check size={8} strokeWidth={4} />}
-                        </div>
-                    </button>
-                    {editingTaskId === task.id ? (
-                        <input ref={taskInputRef} type="text" value={editingTaskText}
-                            onChange={(e) => setEditingTaskText(e.target.value)}
-                            onBlur={() => handleFinishEditing(task.id)}
-                            onKeyDown={(e) => { if (e.key === 'Enter') handleFinishEditing(task.id); }}
-                            className="flex-1 text-[10px] font-medium bg-transparent outline-none text-ink-strong min-w-0"
-                            autoFocus />
-                    ) : (
-                        <span onDoubleClick={() => { setEditingTaskId(task.id); setEditingTaskText(task.text); }}
-                            className={`flex-1 text-[10px] font-medium break-words min-w-0 ${task.completed ? 'text-ink-subtle line-through' : 'text-ink-strong'}`}>
-                            {task.text || <span className="italic text-ink-dim">empty</span>}
-                        </span>
-                    )}
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                        <button onClick={() => { setEditingTaskId(task.id); setEditingTaskText(task.text); }} className="text-ink-subtle hover:text-ink-strong"><Pencil size={9} /></button>
-                        <button onClick={() => updateNote(dateKey, { tasks: tasks.filter(t => t.id !== task.id) })} className="text-ink-subtle hover:text-red-500"><Trash2 size={9} /></button>
-                    </div>
-                </div>
-            ))}
-        </div>
-    );
-
-    // ── Journal view ──
-    const JournalView = (
-        <div ref={contentRef} className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 p-3" style={{ overscrollBehavior: 'contain' }}>
-            <div>
-                <label className="text-[9px] font-black uppercase tracking-widest text-ink-subtle block mb-1.5">Mood</label>
-                <div className="grid grid-cols-5 gap-1">
-                    {MOODS.map(m => {
-                        const isSelected = moodDraft === m.value;
-                        const Icon = m.icon;
-                        return (
-                            <button key={m.value} onClick={() => setMoodDraft(isSelected ? undefined : m.value)}
-                                title={m.tooltip}
-                                className={`flex items-center justify-center p-2 rounded-lg transition-all ${isSelected ? 'scale-110' : 'hover:bg-surface-muted hover:scale-105'}`}
-                                style={{ backgroundColor: isSelected ? m.color + '25' : undefined }}>
-                                <Icon size={18} strokeWidth={isSelected ? 2.5 : 2}
-                                    style={{ color: isSelected ? m.color : '#d1d5db' }} />
-                            </button>
-                        );
-                    })}
-                </div>
-            </div>
-            <div className="flex-1 flex flex-col min-h-0">
-                <label className="text-[9px] font-black uppercase tracking-widest text-ink-subtle block mb-1.5">Notes</label>
-                <textarea value={journalDraft} onChange={(e) => setJournalDraft(e.target.value)}
-                    placeholder="Write about today..."
-                    className="flex-1 min-h-[80px] p-2.5 bg-surface-muted border-2 border-transparent focus:border-edge-strong rounded-xl resize-none text-[11px] leading-relaxed placeholder:text-ink-dim outline-none font-medium" />
-            </div>
-            <button onClick={handleSaveJournal}
-                className="w-full py-2 text-ink-inverse text-[10px] font-black uppercase tracking-widest rounded-lg flex items-center justify-center gap-1.5 flex-shrink-0 hover:opacity-80 transition-opacity"
-                style={{ backgroundColor: theme.primary }}>
-                <Save size={11} /> Save Entry
-            </button>
-        </div>
-    );
-
-    return (
-        <div className={`relative w-full bg-surface overflow-hidden flex flex-col font-sans border-3 border-edge-strong shadow-neo ${cardStyle === 'large' ? 'h-[540px]' : 'h-[460px]'}`}>
-
-            {/* Header */}
-            <div className="border-b-2 border-edge-strong flex-shrink-0"
-                style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}>
+    // ── FRONT FACE — Habits ──
+    const FrontFace = (
+        <div className="relative w-full h-full neo-border shadow-neo rounded-2xl overflow-hidden flex flex-col font-sans bg-surface">
+            <div className="border-b-2 border-edge-strong flex-shrink-0" style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}>
                 <div className={`w-full grid items-center py-2 ${cardStyle === 'compact'
                     ? 'grid-cols-[28px_minmax(0,1fr)_48px_28px]'
                     : 'grid-cols-[28px_minmax(0,1fr)_28px]'}`}>
@@ -415,7 +311,6 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                 </div>
             </div>
 
-            {/* Action strip — analytics, habits, settings */}
             {headerActions && (
                 <div className="flex items-center justify-end gap-1 px-2 py-1 border-b border-edge-strong/10 flex-shrink-0"
                     style={{ backgroundColor: (isToday ? theme.primary : theme.secondary) + 'dd' }}>
@@ -423,18 +318,297 @@ export const DailyCard: React.FC<DailyCardProps> = ({
                 </div>
             )}
 
-            {/* Large ring — only in large mode */}
             {cardStyle === 'large' && LargeRing}
 
-            {/* Content — flex-1, switches by active tab */}
-            <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-                {activeTab === 'habits'  && HabitsView}
-                {activeTab === 'tasks'   && TasksView}
-                {activeTab === 'journal' && JournalView}
+            <div ref={habitsRef} className="flex-1 min-h-0 overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
+                <div className="py-1 px-3">
+                    {allHabits.length > 0 ? allHabits.map(habit => {
+                        const done = checkCompleted(habit.id, date.getDate(), completions, date.getMonth(), date.getFullYear());
+                        const today = date;
+                        const day = today.getDay();
+                        const diff = today.getDate() - (day === 0 ? 6 : day - 1);
+                        const monday = new Date(today.getFullYear(), today.getMonth(), diff);
+                        let weekCount = 0;
+                        if (habit.weeklyTarget) {
+                            for (let i = 0; i < 7; i++) {
+                                const d = new Date(monday);
+                                d.setDate(monday.getDate() + i);
+                                if (checkCompleted(habit.id, d.getDate(), completions, d.getMonth(), d.getFullYear())) weekCount++;
+                            }
+                        }
+                        const goalMet = habit.weeklyTarget ? weekCount >= habit.weeklyTarget : false;
+                        return (
+                            <div key={habit.id} onClick={() => toggleCompletion(habit.id, dateKey)}
+                                className="flex items-center justify-between cursor-pointer hover:bg-black/5 rounded-lg px-1.5 -mx-1.5 py-1.5 transition-all">
+                                <div className="flex items-center gap-1.5 flex-1 min-w-0 mr-2">
+                                    <div
+                                        className="w-1.5 h-1.5 rounded-full shrink-0"
+                                        style={{ backgroundColor: habit.color || '#d1d5db', opacity: done ? 0.35 : 1 }}
+                                    />
+                                    <span className={`text-[11px] font-bold truncate ${done ? 'text-ink-subtle line-through' : 'text-ink'}`}>
+                                        {habit.name || 'Untitled'}
+                                    </span>
+                                    {habit.weeklyTarget && (
+                                        <span className={`text-[8px] px-1 border font-black flex-shrink-0 ${goalMet ? 'bg-theme-primary text-white border-edge-strong' : 'bg-surface-muted text-ink-subtle border-edge'}`}>
+                                            {weekCount}/{habit.weeklyTarget}wk
+                                        </span>
+                                    )}
+                                </div>
+                                <motion.div
+                                    animate={{ scale: done ? [1, 1.25, 1] : 1 }}
+                                    transition={{ duration: 0.18 }}
+                                    className={`w-5 h-5 border-2 border-edge-strong flex items-center justify-center flex-shrink-0 transition-all ${done ? 'bg-done text-ink-strong' : 'bg-surface'}`}
+                                >
+                                    {done && <Check size={11} strokeWidth={4} />}
+                                </motion.div>
+                            </div>
+                        );
+                    }) : (
+                        <div className="text-[9px] text-ink-dim text-center py-4 italic">No habits due today</div>
+                    )}
+                </div>
             </div>
 
-            {/* Status bar — pinned at bottom */}
+            {totalCount > 0 && completedCount === totalCount && (
+                <button
+                    onClick={() => onShareClick({ date, dayName, dateString, completedCount, totalCount, progress: actualProgress })}
+                    className="w-full p-2.5 bg-surface-inverse text-ink-inverse font-black uppercase tracking-widest text-[10px] hover:bg-surface-inverse-hover transition-all flex items-center justify-center gap-2 border-t border-edge-strong flex-shrink-0"
+                >
+                    <Share2 size={12} />
+                    Share Achievement
+                </button>
+            )}
+
             {StatusBar}
+        </div>
+    );
+
+    // Shared prev/next mini header used by the Tasks/Journal back faces — matches web's
+    // TasksFace/JournalFace header (centered title + chevrons, no date-picker/headerActions).
+    const BackFaceHeader = (
+        <div className="p-3 text-center border-b-2 border-edge-strong relative flex-shrink-0" style={{ backgroundColor: isToday ? theme.primary : theme.secondary }}>
+            {onPrev && (
+                <button onClick={(e) => { e.stopPropagation(); onPrev(); }}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 p-1 text-ink-inverse hover:bg-surface/20 rounded transition-colors">
+                    <ChevronLeft size={20} strokeWidth={3} />
+                </button>
+            )}
+            <h3 className="text-ink-inverse font-black tracking-tight text-sm leading-tight">{dayName}</h3>
+            <p className="text-ink-inverse/80 font-bold text-[9px] tracking-wide whitespace-nowrap">{dateString}</p>
+            {onNext && (
+                <button onClick={(e) => { e.stopPropagation(); onNext(); }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-ink-inverse hover:bg-surface/20 rounded transition-colors">
+                    <ChevronRight size={20} strokeWidth={3} />
+                </button>
+            )}
+        </div>
+    );
+
+    // ── BACK FACE — Tasks ──
+    const TasksFace = (
+        <div className="relative w-full h-full neo-border shadow-neo rounded-2xl overflow-hidden flex flex-col font-sans bg-surface">
+            {BackFaceHeader}
+
+            <div className="p-2 border-b-2 border-edge-strong bg-surface-muted flex items-center justify-between gap-2 flex-shrink-0">
+                <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-ink-subtle">Tasks</p>
+                    <p className="mt-1 text-sm font-black text-ink-strong">
+                        {tasks.length > 0 ? `${openTasksCount} open of ${tasks.length}` : 'No tasks yet'}
+                    </p>
+                </div>
+                <button onClick={addTask}
+                    className="inline-flex items-center gap-1 px-2 py-1 border border-edge-strong bg-surface text-[9px] font-black uppercase tracking-wide hover:bg-surface-strong transition-colors">
+                    <Plus size={9} strokeWidth={3} />
+                    Add
+                </button>
+            </div>
+
+            <div ref={tasksRef} className="flex-1 min-h-0 overflow-y-auto p-2 space-y-1.5" style={{ overscrollBehavior: 'contain' }}>
+                {tasks.map(task => (
+                    <motion.div key={task.id}
+                        animate={{
+                            backgroundColor: task.completed ? '#f0fdf4' : '#ffffff',
+                            borderColor: task.completed ? '#86efac' : 'rgba(0,0,0,0)',
+                            boxShadow: task.completed ? '0 0 0 1px rgba(34,197,94,0.25)' : 'none',
+                        }}
+                        transition={{ duration: 0.22, ease: 'easeOut' }}
+                        className={`flex items-start gap-2 group border p-1.5 rounded shadow-neo-sm transition-all ${editingTaskId === task.id ? 'ring-2 ring-ring border-edge-strong' : 'border-edge-subtle hover:border-edge'}`}>
+                        <button onClick={() => updateNote(dateKey, { tasks: tasks.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t) })}
+                            className="flex-shrink-0 mt-0.5">
+                            <motion.div
+                                animate={{ scale: task.completed ? [1, 1.25, 1] : 1 }}
+                                transition={{ duration: 0.18 }}
+                                className={`w-5 h-5 rounded border-2 border-edge-strong flex items-center justify-center transition-colors duration-300 ${task.completed ? 'bg-done border-done text-ink-strong' : 'bg-surface hover:bg-surface-strong'}`}>
+                                {task.completed && <Check size={10} strokeWidth={3.2} />}
+                            </motion.div>
+                        </button>
+                        {editingTaskId === task.id ? (
+                            <input ref={taskInputRef} type="text" value={editingTaskText}
+                                onChange={(e) => setEditingTaskText(e.target.value)}
+                                onBlur={() => handleFinishEditing(task.id)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleFinishEditing(task.id); }}
+                                className="flex-1 text-[11px] font-medium bg-transparent outline-none text-ink-strong min-w-0"
+                                autoFocus />
+                        ) : (
+                            <span onDoubleClick={() => { setEditingTaskId(task.id); setEditingTaskText(task.text); }}
+                                className={`flex-1 text-[11px] font-medium break-words min-w-0 ${task.completed ? 'text-ink-subtle line-through' : 'text-ink-strong'}`}>
+                                {task.text || <span className="italic text-ink-dim">empty</span>}
+                            </span>
+                        )}
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                            <button onClick={() => { setEditingTaskId(task.id); setEditingTaskText(task.text); }} className="text-ink-subtle hover:text-ink-strong"><Pencil size={11} /></button>
+                            <button onClick={() => updateNote(dateKey, { tasks: tasks.filter(t => t.id !== task.id) })} className="text-ink-subtle hover:text-red-500"><Trash2 size={11} /></button>
+                        </div>
+                    </motion.div>
+                ))}
+                {tasks.length === 0 && (
+                    <div className="text-[10px] text-ink-subtle text-center py-4 italic">No tasks for today</div>
+                )}
+            </div>
+
+            {StatusBar}
+        </div>
+    );
+
+    // ── BACK FACE — Journal (full multi-entry parity with web) ──
+    const JournalFace = (
+        <div className="relative w-full h-full neo-border shadow-neo rounded-2xl overflow-hidden flex flex-col font-sans bg-surface">
+            {BackFaceHeader}
+
+            <div ref={journalRef} className="flex-1 min-h-0 overflow-y-auto p-2.5 space-y-2 " style={{ overscrollBehavior: 'contain' }}>
+                {journalEntries.length === 0 && !isAddingEntry && (
+                    <p className="text-center text-[9px] font-black uppercase tracking-widest text-ink-dim py-4">No entries yet</p>
+                )}
+
+                {journalEntries.map(entry => {
+                    const entryMoodObj = MOODS.find(m => m.value === entry.mood);
+                    const EntryMoodIcon = entryMoodObj?.icon;
+                    const isEditing = editingEntryId === entry.id;
+                    return (
+                        <div key={entry.id} className={`border-2 rounded-xl overflow-hidden ${isEditing ? 'border-edge-strong' : 'border-edge'}`}>
+                            {isEditing ? (
+                                <>
+                                    <textarea
+                                        value={editingEntryText}
+                                        onChange={e => setEditingEntryText(e.target.value)}
+                                        autoFocus
+                                        className="w-full px-2.5 pt-2.5 pb-1.5 text-[11px] text-ink-strong resize-none outline-none bg-surface leading-relaxed"
+                                        style={{ minHeight: 64 }}
+                                    />
+                                    <div className="flex items-center justify-between gap-1 px-1.5 py-1 border-t border-edge">
+                                        {MOODS.map(m => {
+                                            const Icon = m.icon;
+                                            const sel = editingEntryMood === m.value;
+                                            return (
+                                                <button key={m.value} onClick={() => setEditingEntryMood(sel ? undefined : m.value)}
+                                                    className={`flex-1 flex items-center justify-center py-1 rounded-lg border-2 transition-all ${sel ? 'border-edge-strong' : 'border-transparent'}`}
+                                                    style={sel ? { backgroundColor: m.color + '18' } : {}}>
+                                                    <Icon size={14} strokeWidth={sel ? 2.5 : 1.8} style={{ color: sel ? m.color : '#d4cfc9' }} />
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    <div className="flex items-center justify-between px-2.5 py-1.5 border-t border-edge">
+                                        <button onClick={() => { setEditingEntryId(null); setEditingEntryText(''); setEditingEntryMood(undefined); }}
+                                            className="text-[8px] font-black uppercase tracking-widest text-ink-subtle hover:text-ink-strong transition-colors">Cancel</button>
+                                        <button onClick={() => handleUpdateEntry(entry.id)}
+                                            className="flex items-center gap-1 px-2 py-1 text-[8px] font-black uppercase tracking-widest text-ink-inverse border-2 border-edge-strong shadow-neo-sm transition-all"
+                                            style={{ backgroundColor: theme.primary }}>
+                                            <Save size={9} strokeWidth={3} /> Save
+                                        </button>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    {EntryMoodIcon && entryMoodObj && (
+                                        <div className="px-2.5 py-1 border-b border-edge">
+                                            <span className="inline-flex items-center gap-1 text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full"
+                                                style={{ backgroundColor: entryMoodObj.color + '18', color: entryMoodObj.color }}>
+                                                <EntryMoodIcon size={10} strokeWidth={2.5} />
+                                                {entryMoodObj.tooltip}
+                                            </span>
+                                        </div>
+                                    )}
+                                    <p className="px-2.5 py-2 text-[11px] text-ink leading-relaxed whitespace-pre-wrap">{entry.text}</p>
+                                    <div className="flex items-center justify-between px-2.5 py-1.5 border-t border-edge">
+                                        <span className="text-[8px] font-black uppercase tracking-widest text-ink-dim">{formatEntryTime(entry.createdAt)}</span>
+                                        <div className="flex items-center gap-2.5">
+                                            <button onClick={() => { setEditingEntryId(entry.id); setEditingEntryText(entry.text); setEditingEntryMood(entry.mood); }}
+                                                className="text-ink-dim hover:text-ink transition-colors"><Pencil size={11} /></button>
+                                            <button onClick={() => handleDeleteEntry(entry.id)}
+                                                className="text-ink-dim hover:text-red-500 transition-colors"><Trash2 size={11} /></button>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    );
+                })}
+
+                {isAddingEntry ? (
+                    <div className="border-2 border-edge-strong rounded-xl overflow-hidden">
+                        <textarea
+                            value={newEntryText}
+                            onChange={e => setNewEntryText(e.target.value)}
+                            placeholder="Write about your day…"
+                            autoFocus
+                            className="w-full px-2.5 pt-2.5 pb-1.5 text-[11px] text-ink-strong placeholder:text-ink-dim resize-none outline-none bg-surface leading-relaxed"
+                            style={{ minHeight: 80 }}
+                        />
+                        <div className="flex items-center justify-between gap-1 px-1.5 py-1 border-t border-edge">
+                            {MOODS.map(m => {
+                                const Icon = m.icon;
+                                const sel = newEntryMood === m.value;
+                                return (
+                                    <button key={m.value} onClick={() => setNewEntryMood(sel ? undefined : m.value)}
+                                        className={`flex-1 flex items-center justify-center py-1 rounded-lg border-2 transition-all ${sel ? 'border-edge-strong' : 'border-transparent'}`}
+                                        style={sel ? { backgroundColor: m.color + '18' } : {}}>
+                                        <Icon size={14} strokeWidth={sel ? 2.5 : 1.8} style={{ color: sel ? m.color : '#d4cfc9' }} />
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <div className="flex items-center justify-between px-2.5 py-1.5 border-t border-edge">
+                            <button onClick={() => { setIsAddingEntry(false); setNewEntryText(''); setNewEntryMood(undefined); }}
+                                className="text-[8px] font-black uppercase tracking-widest text-ink-subtle hover:text-ink-strong transition-colors">Cancel</button>
+                            <button onClick={handleAddEntry}
+                                className="flex items-center gap-1 px-2 py-1 text-[8px] font-black uppercase tracking-widest text-ink-inverse border-2 border-edge-strong shadow-neo-sm transition-all"
+                                style={{ backgroundColor: theme.primary }}>
+                                <Save size={9} strokeWidth={3} /> Save
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <button
+                        onClick={() => setIsAddingEntry(true)}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed text-ink-subtle hover:text-ink transition-colors"
+                        style={{ borderColor: theme.primary + '60', color: theme.primary }}
+                    >
+                        <Plus size={12} strokeWidth={2.5} />
+                        <span className="text-[8px] font-black uppercase tracking-widest">Add entry</span>
+                    </button>
+                )}
+            </div>
+
+            {StatusBar}
+        </div>
+    );
+
+    const flipped = activeTab !== 'habits';
+
+    return (
+        <div className={`relative w-full ${cardStyle === 'large' ? 'h-[540px]' : 'h-[460px]'}`} style={{ perspective: '1200px' }}>
+            <div
+                className="relative w-full h-full transition-transform duration-700"
+                style={{ transformStyle: 'preserve-3d', transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
+            >
+                <div className="absolute inset-0" style={{ backfaceVisibility: 'hidden', pointerEvents: flipped ? 'none' : 'auto' }}>
+                    {FrontFace}
+                </div>
+                <div className="absolute inset-0" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', pointerEvents: flipped ? 'auto' : 'none' }}>
+                    {activeTab === 'tasks' ? TasksFace : JournalFace}
+                </div>
+            </div>
         </div>
     );
 };

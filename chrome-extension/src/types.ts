@@ -27,6 +27,7 @@ export interface Task {
 export interface JournalEntry {
   id: string;
   text: string;
+  mood?: number;
   createdAt: number;
 }
 

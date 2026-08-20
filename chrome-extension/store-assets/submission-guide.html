@@ -1,0 +1,168 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>HabiCard Chrome Extension — Submission Guide</title>
+<style>
+  @page { size: A4; margin: 22mm 18mm; }
+  * { box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; color: #222; font-size: 12.5px; line-height: 1.55; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 28px 0 8px; padding-bottom: 6px; border-bottom: 3px solid #222; text-transform: uppercase; letter-spacing: 0.04em; }
+  h3 { font-size: 13px; margin: 16px 0 4px; text-transform: uppercase; letter-spacing: 0.03em; color: #444; }
+  .subtitle { color: #666; font-size: 13px; margin-bottom: 18px; }
+  .cover { text-align: center; padding: 60px 0 40px; }
+  .cover .word { font-size: 34px; font-weight: 900; letter-spacing: 0.05em; }
+  .cover .word span { color: #b2967d; }
+  .cover .tag { font-size: 15px; color: #555; margin-top: 10px; }
+  .cover .meta { margin-top: 40px; font-size: 12px; color: #888; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 16px; font-size: 12px; }
+  th, td { border: 1px solid #ccc; padding: 7px 10px; text-align: left; vertical-align: top; }
+  th { background: #f2f0eb; width: 26%; font-weight: 700; }
+  .box { background: #f7f5f0; border: 1px solid #ddd; border-left: 4px solid #8da18d; padding: 12px 14px; margin: 10px 0; border-radius: 3px; }
+  .box.warn { border-left-color: #b2967d; background: #faf3ec; }
+  .paste { background: #1e1e1e; color: #e8e8e8; padding: 12px 14px; border-radius: 4px; font-family: 'Consolas', monospace; font-size: 11px; white-space: pre-wrap; margin: 8px 0 16px; }
+  .checklist { list-style: none; padding: 0; }
+  .checklist li { padding: 4px 0 4px 26px; position: relative; }
+  .checklist li::before { content: "☐"; position: absolute; left: 0; font-size: 15px; }
+  .pagebreak { page-break-before: always; }
+  .small { font-size: 11px; color: #666; }
+  .yes { color: #4a7a4a; font-weight: 700; }
+  .no { color: #999; }
+  footer-note { display:block; margin-top: 30px; font-size: 10.5px; color: #999; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="word">HABI<span>CARD</span></div>
+  <div class="tag">Chrome Web Store Submission Guide</div>
+  <div class="meta">
+    Extension version 1.0.2 · Manifest V3<br/>
+    Prepared for the Developer Dashboard "Store Listing" and "Privacy Practices" questionnaires
+  </div>
+</div>
+
+<div class="pagebreak"></div>
+
+<h2>1. What's in this package</h2>
+<table>
+  <tr><th>Upload zip</th><td>store-assets/habicard-extension-v1.0.2.zip — built from <code>dist/</code>, manifest.json at zip root</td></tr>
+  <tr><th>Icon (128×128)</th><td>store-assets/icon-128.png</td></tr>
+  <tr><th>Screenshots (4)</th><td>store-assets/screenshots/01-daily-habits.jpg, 02-tasks.jpg, 03-journal.jpg, 04-settings.jpg — 1280×800, JPEG</td></tr>
+  <tr><th>Small promo tile</th><td>store-assets/promo-small-440x280.jpg</td></tr>
+  <tr><th>Marquee promo tile</th><td>store-assets/promo-marquee-1400x560.jpg</td></tr>
+</table>
+
+<h2>2. Fixed since the last two rejections</h2>
+<div class="box">
+  <strong>v1.0.0 rejection — "User Data Privacy" (invalid privacy policy link):</strong> already fixed — <code>habicard.com/privacy</code> is a live, standalone policy page.
+</div>
+<div class="box">
+  <strong>v1.0.1 rejection — "Inaccurate Description":</strong> already fixed — the store description below only lists features actually present in the popup (no monthly calendar, no analytics dashboard mentions beyond the link-out, no offline mode claims).
+</div>
+<div class="box">
+  <strong>New this pass:</strong> removed the unused <code>"tabs"</code> permission from the manifest (the extension only calls <code>chrome.tabs.create</code>, which needs no permission at all — the declared-but-unused permission is exactly the #1 reason Chrome reviewers reject/delay extensions). Version bumped to 1.0.2 so this is a distinguishable, re-reviewable build.
+</div>
+
+<h2>3. Store Listing tab — paste these in exactly</h2>
+<table>
+  <tr><th>Title</th><td>HabiCard - Habit Tracker</td></tr>
+  <tr><th>Summary</th><td>Track your daily habits and build consistency with HabiCard.</td></tr>
+  <tr><th>Category</th><td>Productivity → Workflow &amp; Planning</td></tr>
+  <tr><th>Language</th><td>English (United States)</td></tr>
+  <tr><th>Homepage URL</th><td>https://habicard.com/</td></tr>
+  <tr><th>Support URL</th><td>https://habicard.com/support</td></tr>
+  <tr><th>Mature content</th><td>No</td></tr>
+</table>
+
+<h3>Description (paste verbatim)</h3>
+<div class="paste">HabiCard is a habit tracker that lives in your browser toolbar — one click to check in on your day, no tab switching required.
+
+Sign in with your HabiCard account to sync your habits, then open the popup to log your day in seconds.
+
+WHAT'S IN THE POPUP
+
+• My Habits tab — check off each habit for the day, see your completion ring update live
+• Tasks tab — add and complete one-off tasks for the day
+• Journal tab — write a quick note and log your mood
+• Progress ring — at-a-glance percentage of habits completed today
+• Navigate days — go back to log a missed day or check yesterday
+• Theme options — choose a color scheme in Settings
+• Compact or full card view — pick the density that suits you
+
+REQUIRES A FREE HABICARD ACCOUNT
+
+Sign up at habicard.com. Your habits sync across the extension and the full web app, where you can access monthly views and trend analytics.</div>
+
+<h2>4. Privacy Practices tab</h2>
+<p>This is the questionnaire that actually gets your submission rejected if answered vaguely. Answer exactly as below — it matches what the shipped code (<code>manifest.json</code>, <code>src/content.ts</code>, <code>src/supabase.ts</code>) actually does, which is what reviewers cross-check against in 2026.</p>
+
+<h3>Single purpose description</h3>
+<div class="paste">HabiCard is a habit-tracking companion that lets a signed-in HabiCard user view and update their daily habits, tasks, and journal entries from a browser-toolbar popup, kept in sync with their account on habicard.com.</div>
+
+<h3>Permission justifications</h3>
+<table>
+  <tr><th>storage</th><td>Stores the user's Supabase authentication session locally (<code>chrome.storage.local</code>) so they stay signed in between popup opens, and stores the "compact vs. large" card-density display preference. No data is stored for any purpose beyond running the signed-in user's own session.</td></tr>
+  <tr><th>Host permission: habicard.com, *.habicard.com, localhost (content script)</th><td>A content script runs only on these domains to read the existing web-app login session from that page's <code>localStorage</code> and mirror it into the extension's storage, so a user who is already signed in on habicard.com doesn't have to sign in again in the popup. It does not read, modify, or inject anything into any other page or any other site.</td></tr>
+</table>
+<div class="box warn">There is no <code>host_permissions</code> block and no broad <code>&lt;all_urls&gt;</code> access anywhere in the manifest — if the form asks "does this extension request access to all URLs," the answer is <strong>No</strong>.</div>
+
+<h3>Remote code</h3>
+<div class="box">
+  <strong>Does this extension use remote code?</strong> No. <code>content_security_policy.extension_pages</code> is <code>script-src 'self'</code> — all JavaScript ships inside the package; nothing is fetched and executed at runtime. Network calls (to Supabase) only exchange data, never code.
+</div>
+
+<h3>Data collection disclosure — check exactly these boxes</h3>
+<table>
+  <tr><th>Personally identifiable information</th><td><span class="yes">Yes</span> — the account email address, via Supabase Auth, to identify the signed-in user.</td></tr>
+  <tr><th>Authentication information</th><td><span class="yes">Yes</span> — the Supabase session/access token, to keep the user signed in.</td></tr>
+  <tr><th>Website content / user activity (user-generated content)</th><td><span class="yes">Yes</span> — the habit names, completion checkmarks, task text, and journal entries/mood the user types into the popup, synced to their own account.</td></tr>
+  <tr><th>Health information</th><td><span class="no">No</span></td></tr>
+  <tr><th>Financial or payment information</th><td><span class="no">No</span></td></tr>
+  <tr><th>Location</th><td><span class="no">No</span></td></tr>
+  <tr><th>Web browsing history</th><td><span class="no">No</span></td></tr>
+  <tr><th>Personal communications</th><td><span class="no">No</span></td></tr>
+</table>
+
+<h3>Certification checkboxes (all should be checked truthfully — this is accurate for HabiCard)</h3>
+<ul class="checklist">
+  <li>I do not sell or transfer user data to third parties outside of approved use cases.</li>
+  <li>I do not use or transfer user data for purposes unrelated to the extension's single purpose (all data collected is used only to run the user's own habit-tracking account).</li>
+  <li>I do not use or transfer user data to determine creditworthiness or for lending purposes.</li>
+  <li>No HabiCard staff or automated system reads user content for any purpose other than the features described above (e.g. Supabase infrastructure processing, security, legal compliance).</li>
+</ul>
+
+<h3>Privacy policy URL</h3>
+<div class="paste">https://habicard.com/privacy</div>
+<p class="small">This must be a fully public URL — verify it loads without being signed in before submitting.</p>
+
+<div class="pagebreak"></div>
+
+<h2>5. Graphic assets — sizes already verified</h2>
+<table>
+  <tr><th>Store icon</th><td>128×128 PNG — store-assets/icon-128.png ✅</td></tr>
+  <tr><th>Screenshots</th><td>4 × 1280×800 JPEG (min. 1 required, 2+ recommended) — real popup UI, not mockups ✅</td></tr>
+  <tr><th>Small promo tile</th><td>440×280 JPEG ✅ (optional, but improves search-result appearance)</td></tr>
+  <tr><th>Marquee promo tile</th><td>1400×560 JPEG ✅ (optional, used if Google features the listing)</td></tr>
+</table>
+<p class="small">All screenshots show the actual DailyCard/SettingsModal components rendered with seeded demo data (a fixed demo date, sample habits/tasks/journal entry) — not the live production popup, since the popup requires a real signed-in session to show data. The UI itself is 100% the shipped code.</p>
+
+<h2>6. Final pre-submission checklist</h2>
+<ul class="checklist">
+  <li>Upload <code>habicard-extension-v1.0.2.zip</code> as the package</li>
+  <li>Confirm <code>https://habicard.com/privacy</code> loads publicly, no login wall</li>
+  <li>Confirm <code>https://habicard.com/support</code> loads publicly</li>
+  <li>Paste Title / Summary / Description exactly as in Section 3</li>
+  <li>Upload icon-128.png as the store icon</li>
+  <li>Upload all 4 screenshots (Section 5)</li>
+  <li>Upload both promo tiles (optional but recommended)</li>
+  <li>Complete Privacy Practices tab exactly as in Section 4</li>
+  <li>Double-check the manifest version shown in the dashboard reads 1.0.2</li>
+  <li>Submit for review</li>
+</ul>
+
+<footer-note>Generated for the HabiCard Chrome extension · package built from chrome-extension/dist at manifest version 1.0.2</footer-note>
+
+</body>
+</html>

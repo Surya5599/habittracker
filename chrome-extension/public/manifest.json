@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "HabiCard - Habit Tracker",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "description": "Track your daily habits and build consistency with HabiCard.",
     "action": {
         "default_popup": "index.html",
@@ -17,8 +17,7 @@
         "128": "icon-128.png"
     },
     "permissions": [
-        "storage",
-        "tabs"
+        "storage"
     ],
     "content_security_policy": {
         "extension_pages": "script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src https://ogduktbkmjfvygzhvqdr.supabase.co https://habicard.com wss://ogduktbkmjfvygzhvqdr.supabase.co"

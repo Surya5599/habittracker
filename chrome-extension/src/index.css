@@ -41,6 +41,14 @@
   --color-edge-muted: var(--border-muted);
   --color-edge-hover: var(--border-hover);
   --color-ring: var(--ring);
+
+  /* "Done" state uses the active theme's secondary colour (matches the web
+     card) rather than a flat black — see tokens.css --status-done. */
+  --color-done: var(--status-done);
+  --color-done-tint: var(--status-done-tint);
+
+  --color-theme-primary: var(--theme-primary);
+  --color-theme-secondary: var(--theme-secondary);
 }
 
 html, body {

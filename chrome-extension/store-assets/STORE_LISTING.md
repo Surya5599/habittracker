@@ -65,44 +65,33 @@ Sign up at habicard.com. Your habits sync across the extension and the full web 
 - **Status:** Ready
 
 ### Screenshots (REQUIRED — minimum 2)
-- **Size:** 1280x800 or 640x400
-- **Format:** JPEG or 24-bit PNG (no alpha)
-- **Status:** Need to be captured manually
-
-**How to capture:**
-1. Load the unpacked extension in Chrome (`chrome://extensions` → Load unpacked → select `dist/`)
-2. Open the popup and resize to a good state
-3. Use Chrome DevTools device toolbar set to 400x600 or capture the popup window
-4. Use macOS Screenshot (`Cmd+Shift+4`) and crop to 1280x800 canvas
-
-**Suggested shots (extension popup ONLY — do not use web app screenshots):**
-| File | What to show |
-|---|---|
-| `screenshots/01-daily-habits.png` | My Habits tab with several habits checked, progress ring showing % |
-| `screenshots/02-tasks.png` | Tasks tab with a few tasks listed |
-| `screenshots/03-journal.png` | Journal tab with mood selector and a note typed |
-| `screenshots/04-settings.png` | Settings modal open showing theme color options |
+- **Size:** 1280x800, JPEG
+- **Status:** ✅ Done — `store-assets/screenshots/01-daily-habits.jpg` … `04-settings.jpg`, generated from the real DailyCard/SettingsModal components with seeded demo data (see `submission-guide.html`/PDF for how)
 
 ### Small Promo Tile
 - **Size:** 440x280px
-- **Format:** JPEG or 24-bit PNG (no alpha)
-- **File:** `store-assets/promo-small-440x280.png` *(not yet created)*
-- **Suggested design:** App icon centered on a solid brand color background with "HabiCard" wordmark below
+- **File:** `store-assets/promo-small-440x280.jpg` — ✅ Done
 
 ### Marquee Promo Tile
 - **Size:** 1400x560px
-- **Format:** JPEG or 24-bit PNG (no alpha)
-- **File:** `store-assets/promo-marquee-1400x560.png` *(not yet created)*
-- **Suggested design:** App icon left, key feature list right, on brand gradient background
+- **File:** `store-assets/promo-marquee-1400x560.jpg` — ✅ Done
 
 ---
 
+## v1.0.2 — Aug 2026 pass
+
+- Removed the unused `"tabs"` permission from the manifest — the extension only calls `chrome.tabs.create`, which requires no permission at all. Declared-but-unused permissions are the #1 Chrome Web Store rejection reason.
+- Fixed a `customStorage.ts` type error (unrelated to the store, but part of keeping the build clean).
+- Full Privacy Practices tab answers (single purpose, permission justification, data disclosure, certification) now live in `store-assets/HabiCard-Chrome-Store-Submission-Guide.pdf`.
+
 ## Checklist Before Resubmitting
 
-- [ ] `https://habicard.com/privacy` is live with a real privacy policy
-- [ ] `https://habicard.com/support` exists (or add a support email instead)
-- [ ] At least 2 screenshots uploaded (1280x800)
-- [ ] Store icon uploaded (128x128) — file ready at `store-assets/icon-128.png`
-- [ ] Description pasted in from above
-- [ ] Summary matches manifest description
-- [ ] Homepage URL set to `https://habicard.com/`
+- [x] `https://habicard.com/privacy` is live with a real privacy policy
+- [x] `https://habicard.com/support` exists
+- [x] 4 screenshots uploaded (1280x800)
+- [x] Store icon uploaded (128x128) — file ready at `store-assets/icon-128.png`
+- [x] Description pasted in from above
+- [x] Summary matches manifest description
+- [x] Homepage URL set to `https://habicard.com/`
+- [ ] Privacy Practices tab filled in per `HabiCard-Chrome-Store-Submission-Guide.pdf`
+- [ ] Upload `store-assets/habicard-extension-v1.0.2.zip` as the package

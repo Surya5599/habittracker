@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import * as Linking from 'expo-linking';
 import { View, Text, TouchableOpacity, Alert, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
 import tw from 'twrnc';
 import { supabase } from '../lib/supabase';
@@ -12,13 +13,18 @@ export const SignInScreen = ({ navigation, onGuestLogin }) => {
     const [loading, setLoading] = useState(false);
     const [isResetMode, setIsResetMode] = useState(false);
     const [isNewAccount, setIsNewAccount] = useState(false);
-    // Signup confirmation goes to a static hand-off page that forwards the tokens into
-    // habicard://auth/callback, so the person ends up signed in *in the app*. Pointing
-    // this straight at the app scheme would strand anyone who opens the email on a
-    // desktop or in a client that won't follow a custom scheme. Use the canonical www
-    // host: habicard.com 301s to www, and Supabase matches the redirect allow-list against
-    // the URL we send, not where it eventually lands.
-    const signUpRedirectUrl = 'https://www.habicard.com/auth/mobile-callback';
+    // Signup confirmation goes to a static hand-off page that forwards the tokens into this
+    // build's URL scheme, so the person ends up signed in *in the app*. Pointing the email
+    // straight at the scheme would strand anyone who opens it on a desktop, or in a client
+    // that won't follow a custom scheme. Use the canonical www host: habicard.com 301s to
+    // www, and Supabase matches the allow-list against the URL we send, not where it lands.
+    //
+    // The scheme travels as a query parameter because dev and preview builds answer to
+    // habicard-dev:// and habicard-preview:// — a page hardcoding habicard:// could only
+    // ever hand off to production. The page validates it against a fixed list.
+    const appScheme = Linking.createURL('auth/callback').split('://')[0];
+    const signUpRedirectUrl =
+        `https://www.habicard.com/auth/mobile-callback?scheme=${encodeURIComponent(appScheme)}`;
 
     // Password recovery deliberately stays on the web: the set-a-new-password UI lives at
     // /update-password and the app has no equivalent screen. Do not repoint this at

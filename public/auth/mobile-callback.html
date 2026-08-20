@@ -122,7 +122,12 @@
 
 <script>
   (function () {
-    var APP_SCHEME_URL = 'habicard://auth/callback';
+    // Which build asked for this hand-off. The dev and preview variants answer to their own
+    // URL schemes, so a hardcoded habicard:// would only ever reach a production build.
+    // Validated against a fixed list rather than trusted: this page forwards a session to
+    // whatever it names, so an arbitrary value must never get through.
+    var ALLOWED_SCHEMES = ['habicard', 'habicard-preview', 'habicard-dev'];
+    var DEFAULT_SCHEME = 'habicard';
 
     // The fragment never reaches the server, so read it here and pass it along verbatim.
     var hash = window.location.hash.replace(/^#/, '');
@@ -148,12 +153,20 @@
       return;
     }
 
-    var target = APP_SCHEME_URL + (search ? '?' + search : '') + (hash ? '#' + hash : '');
+    // Older emails were sent without ?scheme=, so absent or unrecognised falls back to the
+    // production scheme rather than failing.
+    var requestedScheme = new URLSearchParams(search).get('scheme');
+    var scheme = ALLOWED_SCHEMES.indexOf(requestedScheme) !== -1 ? requestedScheme : DEFAULT_SCHEME;
+
+    // Hand the app everything except our own routing parameter.
+    var forwarded = new URLSearchParams(search);
+    forwarded.delete('scheme');
+    var forwardedQuery = forwarded.toString();
+
+    var suffix = (forwardedQuery ? '?' + forwardedQuery : '') + (hash ? '#' + hash : '');
+    var target = scheme + '://auth/callback' + suffix;
     document.getElementById('open-app').setAttribute('href', target);
-    document.getElementById('open-web').setAttribute(
-      'href',
-      '/auth/callback' + (search ? '?' + search : '') + (hash ? '#' + hash : '')
-    );
+    document.getElementById('open-web').setAttribute('href', '/auth/callback' + suffix);
 
     // Try the app straight away. If it isn't installed nothing visible happens and the
     // buttons above are still there, which is why they are rendered before this runs.

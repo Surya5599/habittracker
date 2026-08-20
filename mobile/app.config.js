@@ -1,23 +1,26 @@
 const APP_VARIANT = process.env.APP_VARIANT || 'production';
 
+// One EAS project holds all three variants, so the slug is fixed: it identifies the
+// project that extra.eas.projectId points at, and EAS refuses a build when the two
+// disagree. Variants differ by what's installed on the device — display name, URL
+// scheme, and application id.
+const SLUG = 'habicard';
+
 const variants = {
   production: {
     name: 'HabiCard',
-    slug: 'habicard',
     scheme: 'habicard',
     iosBundleIdentifier: 'com.suryasingh.habicard',
     androidPackage: 'com.suryasingh.habicard',
   },
   preview: {
     name: 'HabiCard Preview',
-    slug: 'habicard-preview',
     scheme: 'habicard-preview',
     iosBundleIdentifier: 'com.suryasingh.habicard.preview',
     androidPackage: 'com.suryasingh.habicard.preview',
   },
   development: {
     name: 'HabiCard Dev',
-    slug: 'habicard-dev',
     scheme: 'habicard-dev',
     iosBundleIdentifier: 'com.suryasingh.habicard.dev',
     androidPackage: 'com.suryasingh.habicard.dev',
@@ -29,7 +32,7 @@ const selectedVariant = variants[APP_VARIANT] || variants.production;
 module.exports = {
   expo: {
     name: selectedVariant.name,
-    slug: selectedVariant.slug,
+    slug: SLUG,
     version: '1.0.0',
     scheme: selectedVariant.scheme,
     description: 'HabiCard is a calming, card-based habit tracker with daily logs, notes, and analytics.',

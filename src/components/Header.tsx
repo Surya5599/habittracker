@@ -1,5 +1,8 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Calendar, LogIn, LogOut, BarChart2, Plus, BookOpen, Flame, Sun, CheckCircle, Bell, ArrowUpDown, ListTodo, List, Bot, Sparkles } from 'lucide-react';
+import { ChromeLogo } from './ChromeLogo';
+
+const CHROME_EXTENSION_URL = 'https://chromewebstore.google.com/detail/habicard-habit-tracker/bjmipgjaandcekaeookkfpacggnodoaj';
 import { MONTHS } from '../constants';
 import { Habit, Theme, MonthStats, MonthlyGoal, MonthlyGoals } from '../types';
 import { useTranslation } from 'react-i18next';
@@ -341,11 +344,16 @@ export const Header: React.FC<HeaderProps> = ({
                     <Plus size={14} strokeWidth={3} />
                 </button>
 
-                {/* Log Today — desktop only (mobile version lives in Row 2) */}
-                <button onClick={onLogToday} className={`hidden sm:flex ${logTodayBtnCls}`}>
-                    <Plus size={14} strokeWidth={2.5} />
-                    Log Today
-                </button>
+                {/* Get the Chrome extension — desktop only */}
+                <a
+                    href={CHROME_EXTENSION_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-orange-600 hover:bg-orange-700 text-ink-inverse transition-colors mr-2"
+                >
+                    <ChromeLogo size={14} />
+                    Get the Extension!
+                </a>
 
                 {/* Add Habit — icon-only on mobile, full label on sm+ */}
                 <button

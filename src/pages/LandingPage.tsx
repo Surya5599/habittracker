@@ -18,6 +18,9 @@ import {
   Zap,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { ChromeLogo } from '../components/ChromeLogo';
+
+const CHROME_EXTENSION_URL = 'https://chromewebstore.google.com/detail/habicard-habit-tracker/bjmipgjaandcekaeookkfpacggnodoaj';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthForm } from '../components/AuthForm';
 import { useTheme } from '../hooks/useTheme';
@@ -767,6 +770,14 @@ export const LandingPage: React.FC = () => {
             >
               Start for Free <ArrowRight className="h-6 w-6" />
             </button>
+            <a
+              href={CHROME_EXTENSION_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shadow-neo inline-flex items-center justify-center gap-3 rounded-xl border-3 border-edge-strong bg-surface px-6 py-4 text-lg font-black text-ink-strong transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-neo-sm sm:px-8 sm:text-xl"
+            >
+              <ChromeLogo size={24} /> Get the Extension
+            </a>
           </div>
 
           <div className="mt-3 flex flex-wrap items-center gap-3 text-sm font-bold sm:mt-4 sm:gap-4">

@@ -247,7 +247,7 @@ export const MonthlyView: React.FC<MonthlyViewProps> = ({
                                             return (
                                                 <td key={day}
                                                     className={`p-1 border-r border-edge-subtle transition-colors duration-300`}
-                                                    style={{ height: 32, backgroundColor: isToday ? 'var(--theme-primary-faint)' : (isFull ? 'var(--status-complete-tint)' : undefined) }}
+                                                    style={{ height: 32, backgroundColor: isToday ? 'var(--today-tint)' : (isFull ? 'var(--status-complete-tint)' : undefined) }}
                                                 >
                                                     <button
                                                         onClick={() => {

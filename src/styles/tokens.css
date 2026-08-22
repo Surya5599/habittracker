@@ -50,6 +50,11 @@
   --theme-secondary-soft: color-mix(in srgb, var(--theme-secondary) 12%, transparent);
   --theme-secondary-strong: color-mix(in srgb, var(--theme-secondary) 25%, transparent);
 
+  /* Today's column in the Month Grid, tinted with the secondary hue. Light mode
+     stays at the 8% faint step; dark mode needs far more lift because 8% of a
+     pastel over #1a1a1a is all but invisible — see the dark override below. */
+  --today-tint: var(--theme-secondary-faint);
+
   /* Theme colour for FOREGROUNDS on a light surface — icons, text, small marks.
      The faint/soft/strong trio above are alpha tints meant for backgrounds; using
      the raw --theme-primary as a foreground instead is what made 8 of the 13
@@ -203,6 +208,10 @@
      (#2d2d2d) sits at 1.26:1 raw. Lightening 45% toward white clears 4.5:1 for
      all 13; Monochrome is the binding preset, capping at 59%. */
   --theme-primary-ink-on-surface: color-mix(in srgb, var(--theme-primary) 55%, white);
+
+  /* 8% over the near-black surface reads as no highlight at all, so the today
+     column gets a much lighter tint in dark mode. */
+  --today-tint: color-mix(in srgb, var(--theme-secondary) 30%, transparent);
 
   --canvas: #0d0d0d;         /* --dark-bg */
   --surface: #1a1a1a;        /* --dark-surface */
